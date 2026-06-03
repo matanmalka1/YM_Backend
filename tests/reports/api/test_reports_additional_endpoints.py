@@ -134,9 +134,9 @@ def test_reports_advance_payments_endpoint_month_filter(client, test_db, advisor
     payload = response.json()
     assert payload["year"] == 2026
     assert payload["month"] == 1
-    assert payload["total_expected"] == 1000.0
-    assert payload["total_paid"] == 500.0
-    assert payload["total_gap"] == 500.0
+    assert payload["total_expected"] == "1000.00"
+    assert payload["total_paid"] == "500.00"
+    assert payload["total_gap"] == "500.00"
     assert "business_id" not in payload["items"][0]
     assert "business_name" not in payload["items"][0]
     assert payload["items"][0]["overdue_count"] == 1

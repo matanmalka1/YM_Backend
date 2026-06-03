@@ -2,7 +2,7 @@ from datetime import datetime
 from types import SimpleNamespace
 
 from app.common.enums import EntityType
-from app.permanent_documents.models.permanent_document import DocumentType
+from app.permanent_documents.models.permanent_document import PermanentDocumentType
 from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
@@ -32,7 +32,7 @@ def test_client_builder_events():
 
 def test_document_and_signature_lifecycle_builder_events():
     document = SimpleNamespace(
-        document_type=DocumentType.ID_COPY,
+        document_type=PermanentDocumentType.ID_COPY,
         uploaded_at=datetime(2026, 1, 5, 11, 0),
     )
     signature_request = SimpleNamespace(

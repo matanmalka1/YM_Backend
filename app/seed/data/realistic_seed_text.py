@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from app.binders.models.binder_intake_material import MaterialType
 from app.charge.models.charge import ChargeType
-from app.permanent_documents.models.permanent_document import DocumentType
+from app.permanent_documents.models.permanent_document import PermanentDocumentType
 from app.signature_requests.models.signature_request import SignatureRequestType
 from app.vat_reports.models.vat_enums import ExpenseCategory, InvoiceType
 
@@ -27,19 +27,19 @@ CHARGE_TYPE_DETAILS = {
 }
 
 DOCUMENT_TYPE_DETAILS = {
-    DocumentType.ID_COPY: ("צילום תעודת זהות", "teudat_zehut.pdf"),
-    DocumentType.POWER_OF_ATTORNEY: ("ייפוי כוח לרשות המסים", "yipui_koach.pdf"),
-    DocumentType.ENGAGEMENT_AGREEMENT: ("הסכם התקשרות חתום", "heskem_hitkashrut.pdf"),
-    DocumentType.TAX_FORM: ("טופס מס תקופתי", "tofes_mas.pdf"),
-    DocumentType.RECEIPT: ("קבלה מספק", "kabala.pdf"),
-    DocumentType.INVOICE_DOC: ("חשבונית מס", "heshbonit_mas.pdf"),
-    DocumentType.BANK_APPROVAL: ("אישור ניהול חשבון בנק", "ishur_bank.pdf"),
-    DocumentType.WITHHOLDING_CERTIFICATE: (
+    PermanentDocumentType.ID_COPY: ("צילום תעודת זהות", "teudat_zehut.pdf"),
+    PermanentDocumentType.POWER_OF_ATTORNEY: ("ייפוי כוח לרשות המסים", "yipui_koach.pdf"),
+    PermanentDocumentType.ENGAGEMENT_AGREEMENT: ("הסכם התקשרות חתום", "heskem_hitkashrut.pdf"),
+    PermanentDocumentType.TAX_FORM: ("טופס מס תקופתי", "tofes_mas.pdf"),
+    PermanentDocumentType.RECEIPT: ("קבלה מספק", "kabala.pdf"),
+    PermanentDocumentType.INVOICE_DOC: ("חשבונית מס", "heshbonit_mas.pdf"),
+    PermanentDocumentType.BANK_APPROVAL: ("אישור ניהול חשבון בנק", "ishur_bank.pdf"),
+    PermanentDocumentType.WITHHOLDING_CERTIFICATE: (
         "אישור ניכוי מס במקור",
         "nikui_mas_bamakor.pdf",
     ),
-    DocumentType.NII_APPROVAL: ("אישור ביטוח לאומי", "bituah_leumi.pdf"),
-    DocumentType.OTHER: ("מסמך תומך נוסף", "mismach_tomech.pdf"),
+    PermanentDocumentType.NII_APPROVAL: ("אישור ביטוח לאומי", "bituah_leumi.pdf"),
+    PermanentDocumentType.OTHER: ("מסמך תומך נוסף", "mismach_tomech.pdf"),
 }
 
 MATERIAL_DESCRIPTIONS = {

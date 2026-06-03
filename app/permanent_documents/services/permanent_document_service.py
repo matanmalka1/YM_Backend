@@ -17,7 +17,7 @@ from app.infrastructure.storage import StorageProvider, get_storage_provider
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
-    DocumentType,
+    PermanentDocumentType,
     PermanentDocument,
 )
 from app.permanent_documents.repositories.permanent_document_query_repository import (
@@ -41,9 +41,9 @@ from app.permanent_documents.services.messages import (
 from app.utils.time_utils import utcnow
 
 _DEFAULT_REQUIRED_TYPES = [
-    DocumentType.ID_COPY.value,
-    DocumentType.POWER_OF_ATTORNEY.value,
-    DocumentType.ENGAGEMENT_AGREEMENT.value,
+    PermanentDocumentType.ID_COPY.value,
+    PermanentDocumentType.POWER_OF_ATTORNEY.value,
+    PermanentDocumentType.ENGAGEMENT_AGREEMENT.value,
 ]
 
 
@@ -124,7 +124,7 @@ class PermanentDocumentService:
             )
 
         scope = DocumentScope.BUSINESS if business_id is not None else DocumentScope.CLIENT
-        DocumentType(document_type)
+        PermanentDocumentType(document_type)
 
         file_bytes = file_data.read()
         file_size = len(file_bytes)

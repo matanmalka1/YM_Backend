@@ -94,8 +94,8 @@ class AnnualReportDetailResponse(AnnualReportResponse):
     internal_notes: str | None = None
     amendment_reason: str | None = None
     # שדות מ-AnnualReport (מס מחושב)
-    tax_refund_amount: float | None = None
-    tax_due_amount: float | None = None
+    tax_refund_amount: ApiDecimal | None = None
+    tax_due_amount: ApiDecimal | None = None
     # סיכום פיננסי — מחושב בשירות
     total_income: ApiDecimal | None = None
     total_expenses: ApiDecimal | None = None

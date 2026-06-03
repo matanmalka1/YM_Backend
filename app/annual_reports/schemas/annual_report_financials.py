@@ -136,8 +136,8 @@ class TaxCalculationResponse(BaseModel):
     effective_rate: float
     national_insurance: NationalInsuranceResponse
     brackets: list[BracketBreakdownItem]
-    total_liability: ApiDecimal | None = None
-    total_credit_points: float = 0.0
+    total_liability: ApiDecimal
+    total_credit_points: float
 
 
 # ── Advances summary ──────────────────────────────────────────────────────────

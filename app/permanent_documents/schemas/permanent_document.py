@@ -4,7 +4,7 @@ from app.core.api_types import ApiDateTime
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
-    DocumentType,
+    PermanentDocumentType,
 )
 
 
@@ -14,7 +14,7 @@ class PermanentDocumentResponse(BaseModel):
     client_name: str | None = None
     business_id: int | None = None  # nullable — CLIENT scope
     scope: DocumentScope
-    document_type: DocumentType
+    document_type: PermanentDocumentType
     storage_key: str
     original_filename: str | None = None
     file_size_bytes: int | None = None
@@ -46,7 +46,7 @@ class DocumentVersionsResponse(BaseModel):
 
 class OperationalSignalsResponse(BaseModel):
     client_record_id: int
-    missing_documents: list[DocumentType]
+    missing_documents: list[PermanentDocumentType]
 
 
 class DocumentDownloadUrlResponse(BaseModel):

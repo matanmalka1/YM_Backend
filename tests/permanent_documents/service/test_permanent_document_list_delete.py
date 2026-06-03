@@ -5,7 +5,7 @@ from app.common.enums import IdNumberType
 from app.core.exceptions import NotFoundError
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
-    DocumentType,
+    PermanentDocumentType,
 )
 from app.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
@@ -53,7 +53,7 @@ def test_list_business_documents_and_delete_document(test_db):
         client_record_id=business.client_id,
         business_id=business.id,
         scope=DocumentScope.CLIENT,
-        document_type=DocumentType.ID_COPY,
+        document_type=PermanentDocumentType.ID_COPY,
         storage_key="businesses/1/id_copy/2025.pdf",
         uploaded_by=user.id,
         tax_year=2025,
@@ -62,7 +62,7 @@ def test_list_business_documents_and_delete_document(test_db):
         client_record_id=business.client_id,
         business_id=business.id,
         scope=DocumentScope.CLIENT,
-        document_type=DocumentType.POWER_OF_ATTORNEY,
+        document_type=PermanentDocumentType.POWER_OF_ATTORNEY,
         storage_key="businesses/1/power_of_attorney/2024.pdf",
         uploaded_by=user.id,
         tax_year=2024,

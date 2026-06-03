@@ -61,21 +61,21 @@ def test_aging_report_buckets_and_sorting(client, test_db, advisor_headers):
     assert resp.status_code == 200
     body = resp.json()
 
-    assert body["total_outstanding"] == 1_150.0
-    assert body["summary"]["total_current"] == 100.0
-    assert body["summary"]["total_30_days"] == 200.0
-    assert body["summary"]["total_60_days"] == 300.0
-    assert body["summary"]["total_90_plus"] == 550.0
+    assert body["total_outstanding"] == "1150.00"
+    assert body["summary"]["total_current"] == "100.00"
+    assert body["summary"]["total_30_days"] == "200.00"
+    assert body["summary"]["total_60_days"] == "300.00"
+    assert body["summary"]["total_90_plus"] == "550.00"
 
     items = body["items"]
     assert len(items) == 2
     # Sorted by total outstanding desc
     assert items[0]["client_record_id"] == client_a.id
-    assert items[0]["current"] == 100.0
-    assert items[0]["days_30"] == 200.0
-    assert items[0]["days_60"] == 300.0
-    assert items[0]["days_90_plus"] == 400.0
-    assert items[0]["total_outstanding"] == 1_000.0
+    assert items[0]["current"] == "100.00"
+    assert items[0]["days_30"] == "200.00"
+    assert items[0]["days_60"] == "300.00"
+    assert items[0]["days_90_plus"] == "400.00"
+    assert items[0]["total_outstanding"] == "1000.00"
     assert items[0]["oldest_invoice_days"] >= 120
 
 

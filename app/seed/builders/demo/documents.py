@@ -6,7 +6,7 @@ from random import Random
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
-    DocumentType,
+    PermanentDocumentType,
     PermanentDocument,
 )
 
@@ -55,11 +55,11 @@ def create_documents(db, rng: Random, clients, businesses, users):
         )
 
     for client in clients:
-        doc_types = [DocumentType.ID_COPY, DocumentType.POWER_OF_ATTORNEY]
+        doc_types = [PermanentDocumentType.ID_COPY, PermanentDocumentType.POWER_OF_ATTORNEY]
         if rng.random() < 0.8:
-            doc_types.append(DocumentType.ENGAGEMENT_AGREEMENT)
+            doc_types.append(PermanentDocumentType.ENGAGEMENT_AGREEMENT)
         if rng.random() < 0.55:
-            doc_types.append(DocumentType.BANK_APPROVAL)
+            doc_types.append(PermanentDocumentType.BANK_APPROVAL)
 
         for doc_type in doc_types:
             doc_label, filename = DOCUMENT_TYPE_DETAILS[doc_type]
@@ -114,11 +114,11 @@ def create_documents(db, rng: Random, clients, businesses, users):
             )
             doc_type = rng.choice(
                 [
-                    DocumentType.INVOICE_DOC,
-                    DocumentType.RECEIPT,
-                    DocumentType.TAX_FORM,
-                    DocumentType.WITHHOLDING_CERTIFICATE,
-                    DocumentType.NII_APPROVAL,
+                    PermanentDocumentType.INVOICE_DOC,
+                    PermanentDocumentType.RECEIPT,
+                    PermanentDocumentType.TAX_FORM,
+                    PermanentDocumentType.WITHHOLDING_CERTIFICATE,
+                    PermanentDocumentType.NII_APPROVAL,
                 ]
             )
             doc_label, filename = DOCUMENT_TYPE_DETAILS[doc_type]

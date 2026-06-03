@@ -5,7 +5,7 @@ from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
-    DocumentType,
+    PermanentDocumentType,
 )
 from app.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
@@ -66,7 +66,7 @@ def test_get_download_url_and_replace_document(client, test_db, advisor_headers)
         client_record_id=business.client_id,
         business_id=business.id,
         scope=DocumentScope.CLIENT,
-        document_type=DocumentType.ID_COPY,
+        document_type=PermanentDocumentType.ID_COPY,
         storage_key="businesses/x/id_copy/original.pdf",
         uploaded_by=1,
     )
@@ -93,7 +93,7 @@ def test_delete_document_marks_deleted(client, test_db, advisor_headers):
         client_record_id=business.client_id,
         business_id=business.id,
         scope=DocumentScope.CLIENT,
-        document_type=DocumentType.POWER_OF_ATTORNEY,
+        document_type=PermanentDocumentType.POWER_OF_ATTORNEY,
         storage_key="businesses/x/power_of_attorney/doc.pdf",
         uploaded_by=1,
     )

@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.common.source_types import WorkQueueSourceType
 from app.core.action_schemas import ActionDescriptor
+from app.users.models.user import UserRole
 
 
 class WorkQueueUrgency(str, PyEnum):
@@ -41,7 +42,7 @@ class LinkedTaskSummary(BaseModel):
     due_date: date | None = None
     priority: str | None = None
     assigned_user_id: int | None = None
-    assigned_role: str | None = None
+    assigned_role: UserRole | None = None
 
 
 class WorkQueueWarning(BaseModel):
@@ -52,6 +53,7 @@ class WorkQueueWarning(BaseModel):
 
 class WorkQueueItem(BaseModel):
     id: str = Field(
+        pattern=r"^\w+:\d+$",
         description=(
             "Stable composite queue key in the form '{source_type}:{source_id}', "
             "for example 'charge:123'."

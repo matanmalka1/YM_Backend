@@ -39,7 +39,7 @@ class AdvancePaymentRow(BaseModel):
     created_at: ApiDateTime
     updated_at: ApiDateTime | None = None
 
-    @computed_field
+    @computed_field(return_type=ApiDecimal)
     @property
     def delta(self) -> Decimal:
         return self.expected_amount - self.paid_amount
@@ -139,7 +139,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     missing_turnover: bool = False
     advance_rate: ApiDecimal | None = None  # snapshot from payment
 
-    @computed_field
+    @computed_field(return_type=ApiDecimal)
     @property
     def delta(self) -> Decimal:
         return self.expected_amount - self.paid_amount

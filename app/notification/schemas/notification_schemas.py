@@ -37,7 +37,7 @@ class NotificationSendRequest(BaseModel):
     trigger: NotificationTrigger
     entity_id: int | None = Field(None, gt=0)
     business_id: int | None = Field(None, gt=0)
-    channel: Literal["email"] | None = None
+    channel: Literal["email"] | None = None  # whatsapp defined in NotificationChannel but delivery not yet implemented
     overrides: NotificationSendOverrides | None = None
     confirm_recent_duplicate: bool = False
 

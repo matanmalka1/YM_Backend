@@ -6,6 +6,7 @@ from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     PrimaryAnnualReportForm,
 )
+from app.core.api_types import ApiDecimal
 
 
 class VatComplianceReportItemResponse(BaseModel):
@@ -41,19 +42,19 @@ class AdvancePaymentReportItemResponse(BaseModel):
     client_record_id: int
     office_client_number: int | None = None
     client_name: str
-    total_expected: float
-    total_paid: float
+    total_expected: ApiDecimal
+    total_paid: ApiDecimal
     overdue_count: int
-    gap: float
+    gap: ApiDecimal
 
 
 class AdvancePaymentCollectionsReportResponse(BaseModel):
     year: int
     month: int | None = None
-    total_expected: float
-    total_paid: float
+    total_expected: ApiDecimal
+    total_paid: ApiDecimal
     collection_rate: float
-    total_gap: float
+    total_gap: ApiDecimal
     items: list[AdvancePaymentReportItemResponse]
 
 
@@ -80,26 +81,26 @@ class AnnualReportStatusReportResponse(BaseModel):
 class AgingReportItemResponse(BaseModel):
     client_record_id: int
     client_name: str
-    total_outstanding: float
-    current: float
-    days_30: float
-    days_60: float
-    days_90_plus: float
+    total_outstanding: ApiDecimal
+    current: ApiDecimal
+    days_30: ApiDecimal
+    days_60: ApiDecimal
+    days_90_plus: ApiDecimal
     oldest_invoice_date: date | None = None
     oldest_invoice_days: int | None = None
 
 
 class AgingReportSummaryResponse(BaseModel):
     total_clients: int
-    total_current: float
-    total_30_days: float
-    total_60_days: float
-    total_90_plus: float
+    total_current: ApiDecimal
+    total_30_days: ApiDecimal
+    total_60_days: ApiDecimal
+    total_90_plus: ApiDecimal
 
 
 class AgingReportResponse(BaseModel):
     report_date: date
-    total_outstanding: float
+    total_outstanding: ApiDecimal
     items: list[AgingReportItemResponse]
     summary: AgingReportSummaryResponse
     capped: bool

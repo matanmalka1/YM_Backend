@@ -35,7 +35,7 @@ class BinderReceiveRequest(BaseModel):
     received_by: int
     open_new_binder: bool = False  # True = סמן קלסר קיים כמלא ופתח חדש
     notes: str | None = None
-    materials: list[BinderIntakeMaterialRequest] = Field(default_factory=list)
+    materials: list[BinderIntakeMaterialRequest] = Field(..., min_length=1)
 
 
 class BinderHandoverToClientRequest(BaseModel):

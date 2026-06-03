@@ -57,7 +57,7 @@ class TestFiling:
         assert response.status_code == 200
         data = response.json()
         assert data["is_overridden"] is True
-        assert data["final_vat_amount"] == "200.0"
+        assert data["final_vat_amount"] == "200.00"
 
     def test_override_without_justification_400(self, client, advisor_headers, vat_client):
         item_id = setup_ready_item(client, advisor_headers, vat_client, "2025-03")

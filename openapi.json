@@ -12694,20 +12694,32 @@
             "title": "Month"
           },
           "total_expected": {
-            "type": "number",
-            "title": "Total Expected"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Expected",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_paid": {
-            "type": "number",
-            "title": "Total Paid"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Paid",
+            "examples": [
+              "123.45"
+            ]
           },
           "collection_rate": {
             "type": "number",
             "title": "Collection Rate"
           },
           "total_gap": {
-            "type": "number",
-            "title": "Total Gap"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Gap",
+            "examples": [
+              "123.45"
+            ]
           },
           "items": {
             "items": {
@@ -13108,9 +13120,12 @@
           },
           "delta": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "format": "decimal",
             "title": "Delta",
-            "readOnly": true
+            "readOnly": true,
+            "examples": [
+              "123.45"
+            ]
           },
           "timing_status": {
             "type": "string",
@@ -13161,20 +13176,32 @@
             "title": "Client Name"
           },
           "total_expected": {
-            "type": "number",
-            "title": "Total Expected"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Expected",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_paid": {
-            "type": "number",
-            "title": "Total Paid"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Paid",
+            "examples": [
+              "123.45"
+            ]
           },
           "overdue_count": {
             "type": "integer",
             "title": "Overdue Count"
           },
           "gap": {
-            "type": "number",
-            "title": "Gap"
+            "type": "string",
+            "format": "decimal",
+            "title": "Gap",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -13386,9 +13413,12 @@
           },
           "delta": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "format": "decimal",
             "title": "Delta",
-            "readOnly": true
+            "readOnly": true,
+            "examples": [
+              "123.45"
+            ]
           },
           "timing_status": {
             "type": "string",
@@ -13688,24 +13718,44 @@
             "title": "Client Name"
           },
           "total_outstanding": {
-            "type": "number",
-            "title": "Total Outstanding"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Outstanding",
+            "examples": [
+              "123.45"
+            ]
           },
           "current": {
-            "type": "number",
-            "title": "Current"
+            "type": "string",
+            "format": "decimal",
+            "title": "Current",
+            "examples": [
+              "123.45"
+            ]
           },
           "days_30": {
-            "type": "number",
-            "title": "Days 30"
+            "type": "string",
+            "format": "decimal",
+            "title": "Days 30",
+            "examples": [
+              "123.45"
+            ]
           },
           "days_60": {
-            "type": "number",
-            "title": "Days 60"
+            "type": "string",
+            "format": "decimal",
+            "title": "Days 60",
+            "examples": [
+              "123.45"
+            ]
           },
           "days_90_plus": {
-            "type": "number",
-            "title": "Days 90 Plus"
+            "type": "string",
+            "format": "decimal",
+            "title": "Days 90 Plus",
+            "examples": [
+              "123.45"
+            ]
           },
           "oldest_invoice_date": {
             "anyOf": [
@@ -13751,8 +13801,12 @@
             "title": "Report Date"
           },
           "total_outstanding": {
-            "type": "number",
-            "title": "Total Outstanding"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Outstanding",
+            "examples": [
+              "123.45"
+            ]
           },
           "items": {
             "items": {
@@ -13791,20 +13845,36 @@
             "title": "Total Clients"
           },
           "total_current": {
-            "type": "number",
-            "title": "Total Current"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Current",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_30_days": {
-            "type": "number",
-            "title": "Total 30 Days"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total 30 Days",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_60_days": {
-            "type": "number",
-            "title": "Total 60 Days"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total 60 Days",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_90_plus": {
-            "type": "number",
-            "title": "Total 90 Plus"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total 90 Plus",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -14586,7 +14656,11 @@
           "tax_refund_amount": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -14597,7 +14671,11 @@
           "tax_due_amount": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -16423,6 +16501,7 @@
               "$ref": "#/components/schemas/BinderIntakeMaterialRequest"
             },
             "type": "array",
+            "minItems": 1,
             "title": "Materials"
           }
         },
@@ -16430,7 +16509,8 @@
         "required": [
           "client_record_id",
           "received_at",
-          "received_by"
+          "received_by",
+          "materials"
         ],
         "title": "BinderReceiveRequest",
         "description": "קבלת חומרים לקלסר.\nאם binder_number קיים ופעיל — מוסיף intake לקלסר קיים.\nאם לא — יוצר קלסר חדש."
@@ -19494,7 +19574,7 @@
         ],
         "title": "DocumentStatus"
       },
-      "DocumentType-Input": {
+      "DocumentType": {
         "type": "string",
         "enum": [
           "tax_invoice",
@@ -20586,13 +20666,12 @@
           "assigned_role": {
             "anyOf": [
               {
-                "type": "string"
+                "$ref": "#/components/schemas/UserRole"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Assigned Role"
+            ]
           }
         },
         "type": "object",
@@ -21383,7 +21462,7 @@
           },
           "missing_documents": {
             "items": {
-              "$ref": "#/components/schemas/app__permanent_documents__models__permanent_document__DocumentType"
+              "$ref": "#/components/schemas/PermanentDocumentType"
             },
             "type": "array",
             "title": "Missing Documents"
@@ -21879,7 +21958,7 @@
             "$ref": "#/components/schemas/DocumentScope"
           },
           "document_type": {
-            "$ref": "#/components/schemas/app__permanent_documents__models__permanent_document__DocumentType"
+            "$ref": "#/components/schemas/PermanentDocumentType"
           },
           "storage_key": {
             "type": "string",
@@ -22046,6 +22125,22 @@
           "uploaded_at"
         ],
         "title": "PermanentDocumentResponse"
+      },
+      "PermanentDocumentType": {
+        "type": "string",
+        "enum": [
+          "id_copy",
+          "power_of_attorney",
+          "engagement_agreement",
+          "tax_form",
+          "receipt",
+          "invoice_doc",
+          "bank_approval",
+          "withholding_certificate",
+          "nii_approval",
+          "other"
+        ],
+        "title": "PermanentDocumentType"
       },
       "PrefillTurnoverResponse": {
         "properties": {
@@ -22531,7 +22626,11 @@
           "tax_refund_amount": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -22542,7 +22641,11 @@
           "tax_due_amount": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -24877,24 +24980,16 @@
             "title": "Brackets"
           },
           "total_liability": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Liability"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Liability",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_credit_points": {
             "type": "number",
-            "title": "Total Credit Points",
-            "default": 0.0
+            "title": "Total Credit Points"
           }
         },
         "type": "object",
@@ -24909,7 +25004,9 @@
           "net_profit",
           "effective_rate",
           "national_insurance",
-          "brackets"
+          "brackets",
+          "total_liability",
+          "total_credit_points"
         ],
         "title": "TaxCalculationResponse"
       },
@@ -26552,7 +26649,7 @@
           "document_type": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/DocumentType-Input"
+                "$ref": "#/components/schemas/DocumentType"
               },
               {
                 "type": "null"
@@ -26610,7 +26707,7 @@
           "document_type": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/app__vat_reports__models__vat_enums__DocumentType"
+                "$ref": "#/components/schemas/DocumentType"
               },
               {
                 "type": "null"
@@ -26844,7 +26941,7 @@
           "document_type": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/DocumentType-Input"
+                "$ref": "#/components/schemas/DocumentType"
               },
               {
                 "type": "null"
@@ -27738,6 +27835,7 @@
         "properties": {
           "id": {
             "type": "string",
+            "pattern": "^\\w+:\\d+$",
             "title": "Id",
             "description": "Stable composite queue key in the form '{source_type}:{source_id}', for example 'charge:123'."
           },
@@ -28094,34 +28192,6 @@
           "label"
         ],
         "title": "WorkQueueWarning"
-      },
-      "app__permanent_documents__models__permanent_document__DocumentType": {
-        "type": "string",
-        "enum": [
-          "id_copy",
-          "power_of_attorney",
-          "engagement_agreement",
-          "tax_form",
-          "receipt",
-          "invoice_doc",
-          "bank_approval",
-          "withholding_certificate",
-          "nii_approval",
-          "other"
-        ],
-        "title": "DocumentType"
-      },
-      "app__vat_reports__models__vat_enums__DocumentType": {
-        "type": "string",
-        "enum": [
-          "tax_invoice",
-          "transaction_invoice",
-          "receipt",
-          "consolidated",
-          "self_invoice",
-          "credit_note"
-        ],
-        "title": "DocumentType"
       }
     },
     "securitySchemes": {

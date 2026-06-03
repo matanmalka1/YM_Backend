@@ -2,7 +2,7 @@ from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
-    DocumentType,
+    PermanentDocumentType,
 )
 from app.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
@@ -26,7 +26,7 @@ def _doc(db, business: Business, annual_report_id: int | None = None):
         client_record_id=business.client_id,
         business_id=business.id,
         scope=DocumentScope.CLIENT,
-        document_type=DocumentType.ID_COPY,
+        document_type=PermanentDocumentType.ID_COPY,
         storage_key="businesses/x/id_copy/api.pdf",
         uploaded_by=1,
         annual_report_id=annual_report_id,

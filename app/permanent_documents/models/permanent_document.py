@@ -39,7 +39,7 @@ from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
 
-class DocumentType(str, PyEnum):
+class PermanentDocumentType(str, PyEnum):
     ID_COPY = "id_copy"  # צילום ת.ז.
     POWER_OF_ATTORNEY = "power_of_attorney"  # ייפוי כוח
     ENGAGEMENT_AGREEMENT = "engagement_agreement"  # הסכם התקשרות
@@ -66,9 +66,9 @@ class DocumentScope(str, PyEnum):
 
 # מסמכים שמשויכים תמיד לאדם (לא לעסק ספציפי)
 CLIENT_SCOPE_TYPES = {
-    DocumentType.ID_COPY,
-    DocumentType.POWER_OF_ATTORNEY,
-    DocumentType.ENGAGEMENT_AGREEMENT,
+    PermanentDocumentType.ID_COPY,
+    PermanentDocumentType.POWER_OF_ATTORNEY,
+    PermanentDocumentType.ENGAGEMENT_AGREEMENT,
 }
 
 
@@ -87,7 +87,7 @@ class PermanentDocument(Base):
     scope: Mapped[DocumentScope] = mapped_column(pg_enum(DocumentScope), nullable=False)
 
     # ── Document identity ─────────────────────────────────────────────────────
-    document_type: Mapped[DocumentType] = mapped_column(pg_enum(DocumentType), nullable=False)
+    document_type: Mapped[PermanentDocumentType] = mapped_column(pg_enum(PermanentDocumentType, name="documenttype"), nullable=False)
     storage_key: Mapped[str] = mapped_column(String, nullable=False)  # מפתח ב-S3/R2
     original_filename: Mapped[str | None] = mapped_column(String, nullable=True)
     file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)

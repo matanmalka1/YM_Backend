@@ -21,7 +21,7 @@ from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import NotFoundError
 from app.permanent_documents.models.permanent_document import (
     DocumentScope,
-    DocumentType,
+    PermanentDocumentType,
     PermanentDocument,
 )
 from app.vat_reports.models.vat_enums import VatWorkItemStatus
@@ -227,7 +227,7 @@ def test_documents_card_counts_present_separately(test_db, test_user):
             PermanentDocument(
                 client_record_id=client_id,
                 scope=DocumentScope.CLIENT,
-                document_type=DocumentType.ID_COPY,
+                document_type=PermanentDocumentType.ID_COPY,
                 storage_key=f"key-{i}-doc",
                 is_present=is_present,
                 uploaded_by=test_user.id,
