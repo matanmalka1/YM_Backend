@@ -118,10 +118,12 @@ def main() -> None:
         if norm in frontend_norm:
             continue
 
-        findings.append({
-            "location": f"{method} {path}",
-            "message": "Not found in frontend endpoint files or known external routes",
-        })
+        findings.append(
+            {
+                "location": f"{method} {path}",
+                "message": "Not found in frontend endpoint files or known external routes",
+            }
+        )
 
     if not args.json:
         if findings:

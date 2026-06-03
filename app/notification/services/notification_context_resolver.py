@@ -156,9 +156,7 @@ class NotificationContextResolver:
             raise NotFoundError("הקלסר לא נמצא", "BINDER.NOT_FOUND")
         return binder.binder_number
 
-    def _resolve_annual_report_tax_year(
-        self, annual_report_id: int, client_record_id: int
-    ) -> int:
+    def _resolve_annual_report_tax_year(self, annual_report_id: int, client_record_id: int) -> int:
         from app.annual_reports.models.annual_report_model import AnnualReport
 
         report = self.db.get(AnnualReport, annual_report_id)
@@ -198,18 +196,14 @@ class NotificationContextResolver:
             "deadline_note": deadline_note,
         }
 
-    def _resolve_signature_context(
-        self, signature_request_id: int, client_record_id: int
-    ) -> dict:
+    def _resolve_signature_context(self, signature_request_id: int, client_record_id: int) -> dict:
         from app.signature_requests.models.signature_request import SignatureRequest
 
         sig = self.db.get(SignatureRequest, signature_request_id)
         if sig is None or sig.client_record_id != client_record_id:
             raise NotFoundError("בקשת חתימה לא נמצאה", "SIGNATURE_REQUEST.NOT_FOUND")
         signature_link = (
-            f"{settings.FRONTEND_BASE_URL}/sign/{sig.signing_token}"
-            if sig.signing_token
-            else ""
+            f"{settings.FRONTEND_BASE_URL}/sign/{sig.signing_token}" if sig.signing_token else ""
         )
         return {
             "document_title": sig.title,

@@ -163,9 +163,7 @@ def test_timeline_notification_events_only_sent_and_failed(test_db, test_user):
     events = svc._build_notification_events(client.id)
 
     event_types = {e["event_type"] for e in events}
-    notification_ids_in_events = {
-        e["metadata"]["notification_id"] for e in events
-    }
+    notification_ids_in_events = {e["metadata"]["notification_id"] for e in events}
 
     assert "notification_sent" in event_types
     assert "notification_failed" in event_types

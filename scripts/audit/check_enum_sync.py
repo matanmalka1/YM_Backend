@@ -39,6 +39,7 @@ def _setup_env() -> None:
     if _SETUP_DONE:
         return
     import os
+
     os.environ.setdefault("APP_ENV", "development")
     os.environ.setdefault("JWT_SECRET", "dev-seed-secret")
     env_file = ROOT_DIR / ".env.development"
@@ -84,7 +85,11 @@ def _discover_all_python_enums() -> dict[str, set[str]]:
             continue
         for attr_name in dir(mod):
             obj = getattr(mod, attr_name, None)
-            if isinstance(obj, EnumMeta) and issubclass(obj, str) and obj.__module__ == mod.__name__:
+            if (
+                isinstance(obj, EnumMeta)
+                and issubclass(obj, str)
+                and obj.__module__ == mod.__name__
+            ):
                 result[attr_name] = {m.value for m in obj}  # type: ignore[union-attr]
     return result
 
@@ -134,45 +139,56 @@ def _get_ts_array_values(file_rel: str, array_name: str) -> set[str] | None:
 # Core comparison
 # ---------------------------------------------------------------------------
 
+
 def _check_enum(enum_name: str, ts_ref: str) -> list[dict]:
     findings = []
     ts_file, _, ts_array = ts_ref.partition(":")
 
     py_values = _get_python_enum_values(enum_name)
     if py_values is None:
-        findings.append({
-            "location": f"Python:{enum_name}",
-            "message": f"Could not load Python enum {enum_name!r}",
-        })
+        findings.append(
+            {
+                "location": f"Python:{enum_name}",
+                "message": f"Could not load Python enum {enum_name!r}",
+            }
+        )
         return findings
 
     ts_values = _get_ts_array_values(ts_file, ts_array)
     if ts_values is None:
-        findings.append({
-            "location": f"frontend/{ts_file}:{ts_array}",
-            "message": f"TS array {ts_array!r} not found in {ts_file}",
-        })
+        findings.append(
+            {
+                "location": f"frontend/{ts_file}:{ts_array}",
+                "message": f"TS array {ts_array!r} not found in {ts_file}",
+            }
+        )
         return findings
 
     missing_in_ts = py_values - ts_values
     extra_in_ts = ts_values - py_values
 
     for v in sorted(missing_in_ts):
-        findings.append({
-            "location": f"{enum_name} → {ts_array}",
-            "message": f"Value {v!r} in Python but missing in TS",
-        })
+        findings.append(
+            {
+                "location": f"{enum_name} → {ts_array}",
+                "message": f"Value {v!r} in Python but missing in TS",
+            }
+        )
     for v in sorted(extra_in_ts):
-        findings.append({
-            "location": f"{ts_array} → {enum_name}",
-            "message": f"Value {v!r} in TS but missing in Python enum",
-        })
+        findings.append(
+            {
+                "location": f"{ts_array} → {enum_name}",
+                "message": f"Value {v!r} in TS but missing in Python enum",
+            }
+        )
 
     return findings
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Compare Python enums against frontend TS constants")
+    parser = argparse.ArgumentParser(
+        description="Compare Python enums against frontend TS constants"
+    )
     add_common_args(parser)
     parser.add_argument("--enum", help="Check only this enum (Python class name)")
     args = parser.parse_args()
@@ -201,10 +217,7 @@ def main() -> None:
     # Report unmapped enums (informational)
     if not args.json and not args.enum:
         all_py = _discover_all_python_enums()
-        unmapped = sorted(
-            n for n in all_py
-            if n not in sync_map and n not in ENUM_BACKEND_ONLY
-        )
+        unmapped = sorted(n for n in all_py if n not in sync_map and n not in ENUM_BACKEND_ONLY)
         if unmapped:
             print()
             for name in unmapped:

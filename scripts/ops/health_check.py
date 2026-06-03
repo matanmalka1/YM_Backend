@@ -82,9 +82,13 @@ def _status_line(label: str, status: int, ok_range: tuple[int, int] = (200, 299)
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Health check key API endpoints")
-    parser.add_argument("--url", default="http://localhost:8000", help="Base URL (default: http://localhost:8000)")
+    parser.add_argument(
+        "--url", default="http://localhost:8000", help="Base URL (default: http://localhost:8000)"
+    )
     parser.add_argument("--email", default=os.environ.get("HEALTH_EMAIL", ""), help="Login email")
-    parser.add_argument("--password", default=os.environ.get("HEALTH_PASSWORD", ""), help="Login password")
+    parser.add_argument(
+        "--password", default=os.environ.get("HEALTH_PASSWORD", ""), help="Login password"
+    )
     args = parser.parse_args()
 
     base = args.url.rstrip("/")
@@ -121,7 +125,9 @@ def main() -> None:
                 if not _status_line("GET  /api/v1/auth/me", status):
                     failures += 1
             else:
-                print(f"       {YELLOW}⚠{RESET}  Could not extract access_token from login response")
+                print(
+                    f"       {YELLOW}⚠{RESET}  Could not extract access_token from login response"
+                )
                 failures += 1
     else:
         print(f"  {DIM}--  auth check skipped (no --email/--password){RESET}")

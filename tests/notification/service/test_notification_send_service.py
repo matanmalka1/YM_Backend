@@ -95,6 +95,7 @@ class TestPreviewTriggerValidation:
 
         # Stub db.get to return None → NotFoundError (past the guard we're testing)
         from app.core.exceptions import NotFoundError
+
         svc.db = SimpleNamespace(get=lambda *_: None)
         with pytest.raises(NotFoundError):
             svc.preview(req, triggered_by=1)
@@ -149,13 +150,18 @@ class TestAnnualReportSendIntegration:
 
     def test_annual_send_saves_annual_report_id_on_record(self, test_db, test_user):
         client = seed_client_identity(
-            test_db, full_name="Annual Integration Client", id_number="AIC-001",
+            test_db,
+            full_name="Annual Integration Client",
+            id_number="AIC-001",
             email="annual-int@test.com",
         )
         svc = AnnualReportService(test_db)
         report = svc.create_report(
-            client_record_id=client.id, tax_year=2025, client_type="individual",
-            created_by=test_user.id, created_by_name=test_user.full_name,
+            client_record_id=client.id,
+            tax_year=2025,
+            client_type="individual",
+            created_by=test_user.id,
+            created_by_name=test_user.full_name,
         )
         svc.repo.update(report.id, status=AnnualReportStatus.PENDING_CLIENT)
 
@@ -172,13 +178,18 @@ class TestAnnualReportSendIntegration:
 
     def test_annual_send_cooldown_blocks_immediate_resend(self, test_db, test_user):
         client = seed_client_identity(
-            test_db, full_name="Annual Cooldown Client", id_number="AIC-002",
+            test_db,
+            full_name="Annual Cooldown Client",
+            id_number="AIC-002",
             email="annual-cooldown@test.com",
         )
         svc = AnnualReportService(test_db)
         report = svc.create_report(
-            client_record_id=client.id, tax_year=2024, client_type="individual",
-            created_by=test_user.id, created_by_name=test_user.full_name,
+            client_record_id=client.id,
+            tax_year=2024,
+            client_type="individual",
+            created_by=test_user.id,
+            created_by_name=test_user.full_name,
         )
         svc.repo.update(report.id, status=AnnualReportStatus.PENDING_CLIENT)
 

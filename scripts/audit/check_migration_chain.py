@@ -49,11 +49,19 @@ def _parse_migration(path: Path) -> dict:
     for node in ast.walk(tree):
         if isinstance(node, ast.Assign):
             for target in node.targets:
-                if isinstance(target, ast.Name) and target.id in ("revision", "down_revision", "branch_labels"):
+                if isinstance(target, ast.Name) and target.id in (
+                    "revision",
+                    "down_revision",
+                    "branch_labels",
+                ):
                     _extract_val(node.value, target.id)
         elif isinstance(node, ast.AnnAssign):
             target = node.target
-            if isinstance(target, ast.Name) and target.id in ("revision", "down_revision", "branch_labels"):
+            if isinstance(target, ast.Name) and target.id in (
+                "revision",
+                "down_revision",
+                "branch_labels",
+            ):
                 if node.value is not None:
                     _extract_val(node.value, target.id)
 
@@ -76,16 +84,20 @@ def _check(migrations: list[dict]) -> list[dict]:
     for m in migrations:
         rev = m.get("revision")
         if rev is None:
-            findings.append({
-                "location": m["file"],
-                "message": "Could not parse revision ID",
-            })
+            findings.append(
+                {
+                    "location": m["file"],
+                    "message": "Could not parse revision ID",
+                }
+            )
             continue
         if rev in revisions:
-            findings.append({
-                "location": m["file"],
-                "message": f"Duplicate revision ID: {rev!r} (also in {revisions[rev]['file']})",
-            })
+            findings.append(
+                {
+                    "location": m["file"],
+                    "message": f"Duplicate revision ID: {rev!r} (also in {revisions[rev]['file']})",
+                }
+            )
         revisions[rev] = m
 
     all_revisions = set(revisions.keys())
@@ -97,11 +109,13 @@ def _check(migrations: list[dict]) -> list[dict]:
         down = m.get("down_revision")
 
         if isinstance(down, tuple):
-            findings.append({
-                "location": m["file"],
-                "message": f"Merge point detected — down_revision is a tuple: {down}. "
-                           "This project does not use merge migrations.",
-            })
+            findings.append(
+                {
+                    "location": m["file"],
+                    "message": f"Merge point detected — down_revision is a tuple: {down}. "
+                    "This project does not use merge migrations.",
+                }
+            )
             for d in down:
                 heads.discard(d)
             continue
@@ -110,29 +124,40 @@ def _check(migrations: list[dict]) -> list[dict]:
             roots.append(m)
         else:
             if down not in all_revisions:
-                findings.append({
-                    "location": m["file"],
-                    "message": f"Broken reference: down_revision={down!r} does not exist",
-                })
+                findings.append(
+                    {
+                        "location": m["file"],
+                        "message": f"Broken reference: down_revision={down!r} does not exist",
+                    }
+                )
             heads.discard(down)
 
     if len(roots) == 0:
-        findings.append({"location": "alembic/versions/", "message": "No root migration found (down_revision=None)"})
+        findings.append(
+            {
+                "location": "alembic/versions/",
+                "message": "No root migration found (down_revision=None)",
+            }
+        )
     elif len(roots) > 1:
         for r in roots:
-            findings.append({
-                "location": r["file"],
-                "message": "Multiple root migrations — only one migration may have down_revision=None",
-            })
+            findings.append(
+                {
+                    "location": r["file"],
+                    "message": "Multiple root migrations — only one migration may have down_revision=None",
+                }
+            )
 
     if len(heads) > 1:
         for h in heads:
             m = revisions.get(h, {})
-            findings.append({
-                "location": m.get("file", h),
-                "message": f"Multiple head migrations — revision {h!r} has no child. "
-                           "Run 'alembic merge heads' or check for stale files.",
-            })
+            findings.append(
+                {
+                    "location": m.get("file", h),
+                    "message": f"Multiple head migrations — revision {h!r} has no child. "
+                    "Run 'alembic merge heads' or check for stale files.",
+                }
+            )
 
     return findings
 

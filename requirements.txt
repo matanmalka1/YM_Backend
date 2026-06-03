@@ -17,6 +17,7 @@ openpyxl==3.1.5
 reportlab==4.5.1
 python-bidi==0.6.10
 requests==2.34.2
+ruff==0.15.15
 sentry-sdk==2.61.1
 slowapi==0.1.9
 boto3==1.43.21

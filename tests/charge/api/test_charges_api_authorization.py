@@ -54,8 +54,14 @@ def test_secretary_can_mutate_charges(client, secretary_headers, test_db):
     charge_id = create_res.json()["id"]
     assert create_res.json()["amount"] == "50.00"
 
-    assert client.post(f"/api/v1/charges/{charge_id}/issue", headers=secretary_headers).status_code == 200
-    assert client.post(f"/api/v1/charges/{charge_id}/cancel", headers=secretary_headers).status_code == 200
+    assert (
+        client.post(f"/api/v1/charges/{charge_id}/issue", headers=secretary_headers).status_code
+        == 200
+    )
+    assert (
+        client.post(f"/api/v1/charges/{charge_id}/cancel", headers=secretary_headers).status_code
+        == 200
+    )
 
 
 def test_secretary_can_read_charges(client, secretary_headers, advisor_headers, test_db):

@@ -26,7 +26,5 @@ class NotificationDeliveryService:
             return False, "email channel not configured"
         ok, err = email_channel.send(recipient, body, subject=subject)
         if not ok:
-            logger.error(
-                "email delivery failed recipient=%s error=%s", recipient, err
-            )
+            logger.error("email delivery failed recipient=%s error=%s", recipient, err)
         return ok, err

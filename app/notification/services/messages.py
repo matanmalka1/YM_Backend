@@ -23,11 +23,7 @@ TEMPLATES: dict[str, dict[str, str]] = {
     },
     "binder_general_reminder": {
         "subject": "תזכורת בנוגע לקלסר שלך",
-        "body": (
-            "שלום {client_name},\n\n"
-            "{message}\n\n"
-            "בברכה,\n{sender_name}\n{office_name}"
-        ),
+        "body": ("שלום {client_name},\n\n{message}\n\nבברכה,\n{sender_name}\n{office_name}"),
     },
     "invoice_issued": {
         "subject": "חשבונית חדשה הונפקה עבורך",
@@ -95,27 +91,15 @@ TEMPLATES: dict[str, dict[str, str]] = {
     },
     "client_missing_information": {
         "subject": "פרטים חסרים בתיק שלך",
-        "body": (
-            "שלום {client_name},\n\n"
-            "{message}\n\n"
-            "בברכה,\n{sender_name}\n{office_name}"
-        ),
+        "body": ("שלום {client_name},\n\n{message}\n\nבברכה,\n{sender_name}\n{office_name}"),
     },
     "client_documents_request": {
         "subject": "בקשה להעברת מסמכים",
-        "body": (
-            "שלום {client_name},\n\n"
-            "{message}\n\n"
-            "בברכה,\n{sender_name}\n{office_name}"
-        ),
+        "body": ("שלום {client_name},\n\n{message}\n\nבברכה,\n{sender_name}\n{office_name}"),
     },
     "client_general_message": {
         "subject": "הודעה ממשרדנו",
-        "body": (
-            "שלום {client_name},\n\n"
-            "{message}\n\n"
-            "בברכה,\n{sender_name}\n{office_name}"
-        ),
+        "body": ("שלום {client_name},\n\n{message}\n\nבברכה,\n{sender_name}\n{office_name}"),
     },
 }
 

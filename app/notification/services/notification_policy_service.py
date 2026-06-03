@@ -24,11 +24,13 @@ _FROZEN_CLOSED_ALLOWED = {
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus as _ARS
 
-_ANNUAL_REPORT_DOCUMENTS_REQUEST_ALLOWED_STATUSES = frozenset({
-    _ARS.NOT_STARTED,
-    _ARS.COLLECTING_DOCS,
-    _ARS.IN_PREPARATION,
-})
+_ANNUAL_REPORT_DOCUMENTS_REQUEST_ALLOWED_STATUSES = frozenset(
+    {
+        _ARS.NOT_STARTED,
+        _ARS.COLLECTING_DOCS,
+        _ARS.IN_PREPARATION,
+    }
+)
 
 
 @dataclass
@@ -119,9 +121,7 @@ class NotificationPolicyService:
         if trigger == NotificationTrigger.INVOICE_ISSUED:
             if db is None or entity_id is None:
                 return PolicyResult(blocked=True, reason="חסר מזהה חיוב לאימות")
-            result = self._check_invoice_issued(
-                db, entity_id, client_record_id=client_record_id
-            )
+            result = self._check_invoice_issued(db, entity_id, client_record_id=client_record_id)
             if result is not None:
                 return result
 
@@ -131,17 +131,13 @@ class NotificationPolicyService:
         ):
             if db is None or entity_id is None:
                 return PolicyResult(blocked=True, reason="חסר מזהה בקשת חתימה לאימות")
-            result = self._check_signature_request(
-                db, entity_id, client_record_id=client_record_id
-            )
+            result = self._check_signature_request(db, entity_id, client_record_id=client_record_id)
             if result is not None:
                 return result
 
         return PolicyResult(blocked=False)
 
-    def _check_binder_ready_for_handover(
-        self, db: Session, binder_id: int
-    ) -> PolicyResult | None:
+    def _check_binder_ready_for_handover(self, db: Session, binder_id: int) -> PolicyResult | None:
         from app.binders.models.binder import Binder, BinderLocationStatus
 
         binder = db.get(Binder, binder_id)
@@ -266,10 +262,7 @@ class NotificationPolicyService:
                 return PolicyResult(
                     blocked=False,
                     warnings=[
-                        (
-                            f"תזכורת לתשלום נשלחה לפני {days_since} ימים. "
-                            "ניתן לשלוח שוב לאחר אישור."
-                        )
+                        (f"תזכורת לתשלום נשלחה לפני {days_since} ימים. ניתן לשלוח שוב לאחר אישור.")
                     ],
                 )
         return None

@@ -54,35 +54,51 @@ def _inspect(table_filter: str | None) -> list[dict]:
 
     result = []
     for table in table_names:
-        entry: dict = {"table": table, "columns": [], "indexes": [], "foreign_keys": [], "check_constraints": []}
+        entry: dict = {
+            "table": table,
+            "columns": [],
+            "indexes": [],
+            "foreign_keys": [],
+            "check_constraints": [],
+        }
 
         for col in insp.get_columns(table, schema="public"):
-            entry["columns"].append({
-                "name": col["name"],
-                "type": str(col["type"]),
-                "nullable": col["nullable"],
-                "default": str(col.get("default") or ""),
-            })
+            entry["columns"].append(
+                {
+                    "name": col["name"],
+                    "type": str(col["type"]),
+                    "nullable": col["nullable"],
+                    "default": str(col.get("default") or ""),
+                }
+            )
 
         for idx in insp.get_indexes(table, schema="public"):
-            entry["indexes"].append({
-                "name": idx["name"],
-                "columns": idx["column_names"],
-                "unique": idx["unique"],
-                "dialect_options": {k: v for k, v in (idx.get("dialect_options") or {}).items()},
-            })
+            entry["indexes"].append(
+                {
+                    "name": idx["name"],
+                    "columns": idx["column_names"],
+                    "unique": idx["unique"],
+                    "dialect_options": {
+                        k: v for k, v in (idx.get("dialect_options") or {}).items()
+                    },
+                }
+            )
 
         for fk in insp.get_foreign_keys(table, schema="public"):
-            entry["foreign_keys"].append({
-                "columns": fk["constrained_columns"],
-                "references": f"{fk['referred_table']}.{fk['referred_columns']}",
-            })
+            entry["foreign_keys"].append(
+                {
+                    "columns": fk["constrained_columns"],
+                    "references": f"{fk['referred_table']}.{fk['referred_columns']}",
+                }
+            )
 
         pk = insp.get_pk_constraint(table, schema="public")
         entry["primary_key"] = pk.get("constrained_columns", [])
 
         uq = insp.get_unique_constraints(table, schema="public")
-        entry["unique_constraints"] = [{"name": u["name"], "columns": u["column_names"]} for u in uq]
+        entry["unique_constraints"] = [
+            {"name": u["name"], "columns": u["column_names"]} for u in uq
+        ]
 
         try:
             cc = insp.get_check_constraints(table, schema="public")

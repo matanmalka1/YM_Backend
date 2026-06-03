@@ -82,10 +82,14 @@ def _confirm() -> None:
 
 def _drop_schema(db_url: str) -> None:
     print("[1/5] Dropping and recreating public schema...")
-    _run([
-        "psql", db_url,
-        "-c", "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
-    ])
+    _run(
+        [
+            "psql",
+            db_url,
+            "-c",
+            "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
+        ]
+    )
 
 
 def _delete_migrations() -> None:
@@ -103,11 +107,15 @@ def _delete_migrations() -> None:
 
 def _autogenerate_migration() -> None:
     print("[3/5] Autogenerating fresh migration...")
-    _run([
-        str(VENV_ALEMBIC), "revision",
-        "--autogenerate",
-        "-m", "initial",
-    ])
+    _run(
+        [
+            str(VENV_ALEMBIC),
+            "revision",
+            "--autogenerate",
+            "-m",
+            "initial",
+        ]
+    )
 
     # autogenerate cannot detect bare sequences — inject it manually
     migration_files = sorted(VERSIONS_DIR.glob("*.py"))
@@ -116,7 +124,9 @@ def _autogenerate_migration() -> None:
         raise SystemExit("Migration file not found after autogenerate")
     migration_file = migration_files[-1]
     content = migration_file.read_text()
-    sequence_line = '    op.execute("CREATE SEQUENCE IF NOT EXISTS client_office_number_seq START 100001")\n'
+    sequence_line = (
+        '    op.execute("CREATE SEQUENCE IF NOT EXISTS client_office_number_seq START 100001")\n'
+    )
     marker = "def upgrade() -> None:\n"
     if sequence_line not in content:
         # insert after the opening of upgrade(), before the first op. call
@@ -166,8 +176,12 @@ def main() -> None:
 
     parser = argparse.ArgumentParser(description="Reset local dev DB to clean state")
     parser.add_argument("--yes", "-y", action="store_true", help="Skip confirmation prompt")
-    parser.add_argument("--preserve-users", action="store_true", help="Keep existing users after seed")
-    parser.add_argument("--clients", type=int, default=60, help="Number of fake clients to seed (default: 60)")
+    parser.add_argument(
+        "--preserve-users", action="store_true", help="Keep existing users after seed"
+    )
+    parser.add_argument(
+        "--clients", type=int, default=60, help="Number of fake clients to seed (default: 60)"
+    )
     args = parser.parse_args()
 
     if not args.yes:

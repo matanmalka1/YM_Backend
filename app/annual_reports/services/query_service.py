@@ -59,7 +59,9 @@ class AnnualReportQueryService(AnnualReportBaseService):
                 client_record_id=client_record_id,
                 status=status,
             )
-            total = self.repo.count_by_tax_year(tax_year, client_record_id=client_record_id, status=status)
+            total = self.repo.count_by_tax_year(
+                tax_year, client_record_id=client_record_id, status=status
+            )
         else:
             items = self.repo.list_all(
                 page=page,

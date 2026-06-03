@@ -57,7 +57,9 @@ def test_get_last_for_binder_trigger_returns_newest_matching_notification(test_d
     test_db.commit()
 
     assert (
-        repo.get_last_for_binder_trigger(binder.id, NotificationTrigger.BINDER_READY_FOR_HANDOVER).id
+        repo.get_last_for_binder_trigger(
+            binder.id, NotificationTrigger.BINDER_READY_FOR_HANDOVER
+        ).id
         == newer.id
     )
 

@@ -107,8 +107,14 @@ class ChargeRepository(BaseRepository[Charge]):
         page_size: int = 20,
     ) -> list[Charge]:
         stmt = self._base_stmt(
-            client_record_id, business_id, business_ids, status, charge_type,
-            period, issued_after, issued_before,
+            client_record_id,
+            business_id,
+            business_ids,
+            status,
+            charge_type,
+            period,
+            issued_after,
+            issued_before,
         )
         if stmt is None:
             return []
@@ -152,8 +158,14 @@ class ChargeRepository(BaseRepository[Charge]):
         issued_before: date | None = None,
     ) -> int:
         base = self._base_stmt(
-            client_record_id, business_id, business_ids, status, charge_type,
-            period, issued_after, issued_before,
+            client_record_id,
+            business_id,
+            business_ids,
+            status,
+            charge_type,
+            period,
+            issued_after,
+            issued_before,
         )
         if base is None:
             return 0

@@ -3,6 +3,7 @@ Flow-7 gap: dedicated tests for StatusCardService.get_status_card().
 
 Covers aggregation logic and field computations for each card section.
 """
+
 from datetime import date, datetime
 from decimal import Decimal
 
@@ -71,6 +72,7 @@ def test_empty_client_returns_zero_counts(test_db):
 
 # ── VAT card ──────────────────────────────────────────────────────────────────
 
+
 def test_vat_card_counts_only_requested_year(test_db):
     client_id = _client(test_db, "SC-VAT-001")
     for period, net_vat, status in [
@@ -113,6 +115,7 @@ def test_vat_card_latest_period_is_lexicographic_max(test_db):
 
 
 # ── Annual report card ────────────────────────────────────────────────────────
+
 
 def _annual_report(db, client_id: int, year: int, **kwargs) -> AnnualReport:
     entry = create_tax_calendar_entry_for_annual(db, year)
@@ -161,13 +164,14 @@ def test_annual_report_card_empty_when_no_report_for_year(test_db):
 
 # ── Charges card ──────────────────────────────────────────────────────────────
 
+
 def test_charges_card_sums_issued_charges_only(test_db):
     client_id = _client(test_db, "SC-CH-001")
     for amount, status in [
         (Decimal("500.00"), ChargeStatus.ISSUED),
         (Decimal("300.00"), ChargeStatus.ISSUED),
-        (Decimal("200.00"), ChargeStatus.PAID),    # excluded
-        (Decimal("100.00"), ChargeStatus.DRAFT),   # excluded
+        (Decimal("200.00"), ChargeStatus.PAID),  # excluded
+        (Decimal("100.00"), ChargeStatus.DRAFT),  # excluded
     ]:
         test_db.add(
             Charge(
@@ -186,6 +190,7 @@ def test_charges_card_sums_issued_charges_only(test_db):
 
 
 # ── Binders card ──────────────────────────────────────────────────────────────
+
 
 def test_binders_card_counts_active_and_in_office(test_db):
     client_id = _client(test_db, "SC-BN-001")
@@ -214,6 +219,7 @@ def test_binders_card_counts_active_and_in_office(test_db):
 
 # ── Documents card ────────────────────────────────────────────────────────────
 
+
 def test_documents_card_counts_present_separately(test_db, test_user):
     client_id = _client(test_db, "SC-DOC-001")
     for i, is_present in enumerate([True, True, False]):
@@ -236,6 +242,7 @@ def test_documents_card_counts_present_separately(test_db, test_user):
 
 
 # ── Year default ──────────────────────────────────────────────────────────────
+
 
 def test_year_defaults_to_current_year_when_not_provided(test_db):
     from app.utils.time_utils import utcnow

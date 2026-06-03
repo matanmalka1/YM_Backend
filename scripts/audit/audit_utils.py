@@ -16,6 +16,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 # FastAPI route loading
 # ---------------------------------------------------------------------------
 
+
 def load_app_routes() -> list[dict[str, str]]:
     """Return all registered FastAPI routes as {method, path} dicts.
 
@@ -47,6 +48,7 @@ def _setup_env() -> None:
         sys.path.insert(0, str(ROOT_DIR))
     # Redirect all logging to stderr so --json output stays clean
     import logging
+
     logging.basicConfig(stream=sys.stderr)
 
 
@@ -54,8 +56,8 @@ def _setup_env() -> None:
 # Path normalization
 # ---------------------------------------------------------------------------
 
-_PARAM_RE = re.compile(r"\{[^}]+\}")          # FastAPI {param}
-_TS_PARAM_RE = re.compile(r"\$\{[^}]+\}")     # TS template ${param}
+_PARAM_RE = re.compile(r"\{[^}]+\}")  # FastAPI {param}
+_TS_PARAM_RE = re.compile(r"\$\{[^}]+\}")  # TS template ${param}
 _TRAILING_SLASH = re.compile(r"/+$")
 
 
@@ -118,11 +120,7 @@ def extract_frontend_paths() -> list[str]:
     # Prepend /api/v1 to paths that don't already have it and aren't public
     normalized: list[str] = []
     for p in paths:
-        if (
-            p.startswith("/api/")
-            or p in {"/", "/health", "/info"}
-            or p.startswith("/sign/")
-        ):
+        if p.startswith("/api/") or p in {"/", "/health", "/info"} or p.startswith("/sign/"):
             normalized.append(p)
         else:
             normalized.append("/api/v1" + p)
@@ -180,6 +178,7 @@ def print_findings(
 # ---------------------------------------------------------------------------
 # Shared arg helpers
 # ---------------------------------------------------------------------------
+
 
 def add_common_args(parser: Any) -> None:
     """Add --json and --fail-on-findings to any argparse parser."""

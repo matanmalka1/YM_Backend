@@ -138,9 +138,7 @@ def test_send_blocked_for_frozen_client_no_record(test_db):
 
 
 def test_send_allowed_for_frozen_client_with_exempt_trigger(test_db):
-    cr_id = _make_client(
-        test_db, email="frozen-exempt@test.com", status=ClientStatus.FROZEN
-    )
+    cr_id = _make_client(test_db, email="frozen-exempt@test.com", status=ClientStatus.FROZEN)
     svc = NotificationSendService(test_db)
 
     req = NotificationSendRequest(

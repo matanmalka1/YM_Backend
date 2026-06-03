@@ -5,6 +5,7 @@ When a binder intake includes a material with material_type='vat' and a vat_repo
 pointing to a PENDING_MATERIALS VatWorkItem, the service advances it to MATERIAL_RECEIVED
 and writes an audit entry.
 """
+
 from datetime import date
 
 from sqlalchemy import select
@@ -92,9 +93,7 @@ def test_vat_material_advance_writes_audit_entry(test_db, test_user):
     )
 
     audit_rows = list(
-        test_db.scalars(
-            select(VatAuditLog).where(VatAuditLog.work_item_id == vat_item.id)
-        )
+        test_db.scalars(select(VatAuditLog).where(VatAuditLog.work_item_id == vat_item.id))
     )
     assert len(audit_rows) == 1
     assert audit_rows[0].old_value == VatWorkItemStatus.PENDING_MATERIALS.value

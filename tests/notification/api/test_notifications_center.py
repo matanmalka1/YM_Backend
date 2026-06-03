@@ -50,8 +50,12 @@ def test_page_size_allowed_values_and_invalid_value(client, test_db, advisor_hea
     _notification(test_db, seeded.id)
     test_db.commit()
 
-    assert client.get("/api/v1/notifications?page_size=25", headers=advisor_headers).status_code == 200
-    assert client.get("/api/v1/notifications?page_size=50", headers=advisor_headers).status_code == 200
+    assert (
+        client.get("/api/v1/notifications?page_size=25", headers=advisor_headers).status_code == 200
+    )
+    assert (
+        client.get("/api/v1/notifications?page_size=50", headers=advisor_headers).status_code == 200
+    )
 
     invalid = client.get("/api/v1/notifications?page_size=30", headers=advisor_headers)
     assert invalid.status_code == 422
@@ -104,9 +108,7 @@ def test_date_from_date_to_boundaries(client, test_db, advisor_headers):
     test_db.commit()
 
     resp = client.get(
-        "/api/v1/notifications"
-        "?date_from=2026-01-10T09:00:00"
-        "&date_to=2026-01-20T17:00:00",
+        "/api/v1/notifications?date_from=2026-01-10T09:00:00&date_to=2026-01-20T17:00:00",
         headers=advisor_headers,
     )
 

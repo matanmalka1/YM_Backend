@@ -43,6 +43,7 @@ def _get_dependency_names(route) -> set[str]:  # type: ignore[no-untyped-def]
     endpoint = getattr(route, "endpoint", None)
     if endpoint:
         import inspect
+
         sig = inspect.signature(endpoint)
         for param in sig.parameters.values():
             annotation = param.annotation
@@ -50,7 +51,11 @@ def _get_dependency_names(route) -> set[str]:  # type: ignore[no-untyped-def]
                 for meta in annotation.__metadata__:
                     dep_fn = getattr(meta, "dependency", None)
                     if dep_fn:
-                        dep_name = getattr(dep_fn, "__name__", "") or getattr(dep_fn, "__qualname__", "") or ""
+                        dep_name = (
+                            getattr(dep_fn, "__name__", "")
+                            or getattr(dep_fn, "__qualname__", "")
+                            or ""
+                        )
                         names.add(dep_name)
                         sub = getattr(dep_fn, "dependencies", None) or []
                         _collect(sub)
@@ -97,15 +102,19 @@ def main() -> None:
             has_role, has_auth = _is_auth_protected(dep_names)
 
             if not has_auth:
-                findings.append({
-                    "location": f"{method} {path}",
-                    "message": "No auth dependency found (missing require_role or get_current_user)",
-                })
+                findings.append(
+                    {
+                        "location": f"{method} {path}",
+                        "message": "No auth dependency found (missing require_role or get_current_user)",
+                    }
+                )
             elif not has_role:
-                findings.append({
-                    "location": f"{method} {path}",
-                    "message": "Has get_current_user but no require_role — intentional? Add to AUTH_ONLY_ROUTES if so",
-                })
+                findings.append(
+                    {
+                        "location": f"{method} {path}",
+                        "message": "Has get_current_user but no require_role — intentional? Add to AUTH_ONLY_ROUTES if so",
+                    }
+                )
 
     if not args.json:
         if findings:

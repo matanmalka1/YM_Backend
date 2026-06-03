@@ -108,11 +108,19 @@ class NotificationAutoSendService:
                 "NOTIFICATION.AUTO_SEND_TRIGGER_NOT_ALLOWED",
             )
         if not idempotency_key.strip():
-            raise AppError("idempotency_key נדרש לשליחה אוטומטית", "NOTIFICATION.MISSING_IDEMPOTENCY_KEY")
+            raise AppError(
+                "idempotency_key נדרש לשליחה אוטומטית", "NOTIFICATION.MISSING_IDEMPOTENCY_KEY"
+            )
         req_hash = _hash_auto(
-            trigger.value, client_record_id, idempotency_key,
-            entity_id, binder_id, annual_report_id,
-            signature_request_id, business_id, entity_type,
+            trigger.value,
+            client_record_id,
+            idempotency_key,
+            entity_id,
+            binder_id,
+            annual_report_id,
+            signature_request_id,
+            business_id,
+            entity_type,
         )
 
         existing = self.repo.find_by_idempotency_key(

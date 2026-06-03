@@ -84,7 +84,16 @@ def main() -> None:
             continue
 
         # Skip FastAPI built-ins and infra paths
-        if path in ("/", "/ready", "/health", "/info", "/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"):
+        if path in (
+            "/",
+            "/ready",
+            "/health",
+            "/info",
+            "/docs",
+            "/redoc",
+            "/openapi.json",
+            "/docs/oauth2-redirect",
+        ):
             continue
 
         if not _looks_like_list(path):
@@ -93,11 +102,13 @@ def main() -> None:
         checked += 1
 
         if not _has_pagination(route):
-            findings.append({
-                "location": f"GET {path}",
-                "message": "Looks like a list endpoint but has no pagination params "
-                           "(page/page_size/limit). Add to NO_PAGINATION_EXCEPTIONS if intentional.",
-            })
+            findings.append(
+                {
+                    "location": f"GET {path}",
+                    "message": "Looks like a list endpoint but has no pagination params "
+                    "(page/page_size/limit). Add to NO_PAGINATION_EXCEPTIONS if intentional.",
+                }
+            )
 
     if not args.json:
         if findings:

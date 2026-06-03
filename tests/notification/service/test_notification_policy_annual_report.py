@@ -15,6 +15,7 @@ from app.notification.services.notification_policy_service import (
 
 def _make_client(client_record_id: int = 10):
     from app.clients.enums import ClientStatus
+
     return SimpleNamespace(id=client_record_id, status=ClientStatus.ACTIVE)
 
 
@@ -91,6 +92,7 @@ class _FakeDB:
 
     def __exit__(self, *_):
         from app.notification.repositories import notification_repository as _nr_module
+
         _nr_module.NotificationRepository = self._original  # type: ignore[assignment]
 
     def get(self, model, pk):

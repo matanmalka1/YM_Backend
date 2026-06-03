@@ -44,12 +44,8 @@ class NotificationTemplateRenderer:
             body = tmpl["body"].format(**full_context)
             subject = tmpl["subject"].format(**full_context)
         except KeyError as exc:
-            logger.error(
-                "NotificationTemplateRenderer: missing key=%s trigger=%s", exc, trigger
-            )
-            raise AppError(
-                f"שדה חובה חסר בתבנית ההודעה: {exc}", _TEMPLATE_ERROR_CODE
-            ) from exc
+            logger.error("NotificationTemplateRenderer: missing key=%s trigger=%s", exc, trigger)
+            raise AppError(f"שדה חובה חסר בתבנית ההודעה: {exc}", _TEMPLATE_ERROR_CODE) from exc
 
         if _check_visible_placeholder(body) or _check_visible_placeholder(subject):
             logger.error(

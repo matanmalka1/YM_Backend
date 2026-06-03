@@ -14,6 +14,7 @@ from app.notification.models.notification import (
 
 # ── Request schemas ───────────────────────────────────────────────────────────
 
+
 class NotificationPreviewRequest(BaseModel):
     client_record_id: int = Field(gt=0)
     trigger: NotificationTrigger
@@ -43,6 +44,7 @@ class NotificationSendRequest(BaseModel):
 
 # ── Result schemas ────────────────────────────────────────────────────────────
 
+
 class NotificationResult(BaseModel):
     status: Literal["sent", "failed", "skipped", "blocked"]
     notification_id: int | None = None
@@ -61,6 +63,7 @@ class NotificationPreviewResponse(BaseModel):
 
 
 # ── Read schemas ──────────────────────────────────────────────────────────────
+
 
 class NotificationResponse(BaseModel):
     id: int
@@ -107,6 +110,7 @@ class NotificationListResponse(BaseModel):
 
 
 # ── Bulk result ───────────────────────────────────────────────────────────────
+
 
 class BulkNotificationResultItem(BaseModel):
     entity_id: int | None = None

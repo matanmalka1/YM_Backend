@@ -6,6 +6,7 @@ Verifies that freezing or closing a client cascades to:
   - All non-terminal AnnualReports → CANCELED
   - All IN_OFFICE binders → capacity_status = FULL (F-040 fixed)
 """
+
 from datetime import date
 
 from sqlalchemy import select
@@ -88,9 +89,7 @@ def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(test
     """freeze → status FROZEN, VatWorkItems CANCELED, AnnualReports CANCELED, binder FULL."""
     client_id = _setup_client_with_cascade_data(test_db)
 
-    ClientUpdateService(test_db).update_client(
-        client_id, actor_id=1, status=ClientStatus.FROZEN
-    )
+    ClientUpdateService(test_db).update_client(client_id, actor_id=1, status=ClientStatus.FROZEN)
     test_db.flush()
 
     record = ClientRecordRepository(test_db).get_by_id(client_id)
@@ -109,9 +108,7 @@ def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(test
     assert len(annual_reports) == 1
     assert all(r.status == AnnualReportStatus.CANCELED for r in annual_reports)
 
-    binders = list(
-        test_db.scalars(select(Binder).where(Binder.client_record_id == client_id))
-    )
+    binders = list(test_db.scalars(select(Binder).where(Binder.client_record_id == client_id)))
     assert len(binders) == 1
     assert binders[0].capacity_status == BinderCapacityStatus.FULL
     assert binders[0].location_status == BinderLocationStatus.IN_OFFICE
@@ -121,9 +118,7 @@ def test_close_cascade_mirrors_freeze_cascade(test_db):
     """close → same cascade as freeze; CLOSED status persists."""
     client_id = _setup_client_with_cascade_data(test_db)
 
-    ClientUpdateService(test_db).update_client(
-        client_id, actor_id=1, status=ClientStatus.CLOSED
-    )
+    ClientUpdateService(test_db).update_client(client_id, actor_id=1, status=ClientStatus.CLOSED)
     test_db.flush()
 
     record = ClientRecordRepository(test_db).get_by_id(client_id)
@@ -135,9 +130,7 @@ def test_close_cascade_mirrors_freeze_cascade(test_db):
     )
     assert all(item.status == VatWorkItemStatus.CANCELED for item in vat_items)
 
-    binders = list(
-        test_db.scalars(select(Binder).where(Binder.client_record_id == client_id))
-    )
+    binders = list(test_db.scalars(select(Binder).where(Binder.client_record_id == client_id)))
     assert all(b.capacity_status == BinderCapacityStatus.FULL for b in binders)
 
 
@@ -159,9 +152,7 @@ def test_freeze_does_not_cancel_filed_vat_items(test_db):
         created_by=1,
     )
 
-    ClientUpdateService(test_db).update_client(
-        seeded.id, actor_id=1, status=ClientStatus.FROZEN
-    )
+    ClientUpdateService(test_db).update_client(seeded.id, actor_id=1, status=ClientStatus.FROZEN)
     test_db.refresh(filed_item)
 
     assert filed_item.status == VatWorkItemStatus.FILED
@@ -188,9 +179,7 @@ def test_binder_already_full_stays_full_after_cascade(test_db):
     test_db.add(binder)
     test_db.flush()
 
-    ClientUpdateService(test_db).update_client(
-        seeded.id, actor_id=1, status=ClientStatus.FROZEN
-    )
+    ClientUpdateService(test_db).update_client(seeded.id, actor_id=1, status=ClientStatus.FROZEN)
     test_db.refresh(binder)
 
     assert binder.capacity_status == BinderCapacityStatus.FULL

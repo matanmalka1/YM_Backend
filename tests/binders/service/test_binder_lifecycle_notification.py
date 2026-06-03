@@ -12,7 +12,9 @@ from app.notification.schemas.notification_schemas import NotificationResult
 from tests.helpers.identity import seed_client_identity
 
 
-def _receive(db, client_id: int, user_id: int, period_month: int = 1, open_new: bool = False) -> Binder:
+def _receive(
+    db, client_id: int, user_id: int, period_month: int = 1, open_new: bool = False
+) -> Binder:
     binder, _, _ = BinderService(db).receive_binder(
         client_record_id=client_id,
         received_at=date(2026, 1, 1),
@@ -44,7 +46,9 @@ def test_mark_ready_for_handover_returns_tuple(test_db, test_user):
     assert notification.status in ("sent", "skipped", "failed", "blocked")
 
 
-def test_mark_ready_for_handover_auto_send_called_with_correct_params(test_db, test_user, monkeypatch):
+def test_mark_ready_for_handover_auto_send_called_with_correct_params(
+    test_db, test_user, monkeypatch
+):
     """auto_send receives expected trigger, binder_id, client_record_id, idempotency_key."""
     client = seed_client_identity(test_db, full_name="AutoSend Client", id_number="NB-AUTOSEND")
     binder = _receive(test_db, client.id, test_user.id)
@@ -159,7 +163,9 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
     assert all_records[1] == 1  # exactly one record created
 
 
-def test_auto_send_idempotency_different_entity_id_returns_cached_record(test_db, test_user, monkeypatch):
+def test_auto_send_idempotency_different_entity_id_returns_cached_record(
+    test_db, test_user, monkeypatch
+):
     """Same key but different entity_id: hash mismatch is logged, cached record still returned."""
     from app.notification.models.notification import NotificationTrigger
     from app.notification.services.notification_auto_send_service import NotificationAutoSendService

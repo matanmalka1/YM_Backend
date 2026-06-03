@@ -37,9 +37,7 @@ _SIGNATURE_TRIGGERS = {
 }
 
 _GENERIC_ENTITY_TRIGGERS = (
-    _CHARGE_TRIGGERS
-    | {NotificationTrigger.VAT_DOCUMENTS_REMINDER}
-    | _SIGNATURE_TRIGGERS
+    _CHARGE_TRIGGERS | {NotificationTrigger.VAT_DOCUMENTS_REMINDER} | _SIGNATURE_TRIGGERS
 )
 from app.notification.repositories.notification_repository import NotificationRepository
 from app.notification.schemas.notification_schemas import (
@@ -67,6 +65,7 @@ from app.notification.services.notification_template_renderer import (
 )
 
 logger = get_logger(__name__)
+
 
 def _hash_request(
     trigger: str,
@@ -117,9 +116,13 @@ class NotificationSendService:
         triggered_by: int,
     ) -> NotificationPreviewResponse:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
-            raise AppError("הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", "NOTIFICATION.AUTO_ONLY_TRIGGER")
+            raise AppError(
+                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", "NOTIFICATION.AUTO_ONLY_TRIGGER"
+            )
         if request.trigger in _ANNUAL_TRIGGERS and not request.entity_id:
-            raise AppError("חובה לספק מזהה דוח שנתי לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID")
+            raise AppError(
+                "חובה לספק מזהה דוח שנתי לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID"
+            )
         if request.trigger in _GENERIC_ENTITY_TRIGGERS and not request.entity_id:
             raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID")
 
@@ -167,9 +170,7 @@ class NotificationSendService:
             triggered_by_user_id=triggered_by,
         )
 
-        body, subject, error_reason = self.renderer.build_preview(
-            request.trigger, ctx, person_name
-        )
+        body, subject, error_reason = self.renderer.build_preview(request.trigger, ctx, person_name)
         if error_reason:
             return NotificationPreviewResponse(
                 can_send=False,
@@ -196,9 +197,13 @@ class NotificationSendService:
         idempotency_key: str,
     ) -> NotificationResult:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
-            raise AppError("הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", "NOTIFICATION.AUTO_ONLY_TRIGGER")
+            raise AppError(
+                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", "NOTIFICATION.AUTO_ONLY_TRIGGER"
+            )
         if request.trigger in _ANNUAL_TRIGGERS and not request.entity_id:
-            raise AppError("חובה לספק מזהה דוח שנתי לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID")
+            raise AppError(
+                "חובה לספק מזהה דוח שנתי לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID"
+            )
         if request.trigger in _GENERIC_ENTITY_TRIGGERS and not request.entity_id:
             raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID")
 
@@ -261,9 +266,7 @@ class NotificationSendService:
             else default_subject
         )
         body_value = (
-            overrides.body
-            if overrides is not None and overrides.body is not None
-            else default_body
+            overrides.body if overrides is not None and overrides.body is not None else default_body
         )
 
         # Validate subject/body after policy — blocked clients don't raise validation errors
@@ -418,5 +421,6 @@ class NotificationSendService:
         if signature_request_id is None:
             return None
         from app.signature_requests.models.signature_request import SignatureRequest
+
         sig = self.db.get(SignatureRequest, signature_request_id)
         return sig.signer_email if sig else None

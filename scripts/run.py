@@ -173,8 +173,14 @@ REGISTRY: Registry = {
                 "dev/reset_dev_db.py",
                 [
                     _option("Reset with defaults, 60 clients", ["--yes"], dangerous=True),
-                    _option("Reset with custom client count", ["--yes", "__clients__"], dangerous=True),
-                    _option("Reset and preserve existing users", ["--yes", "--preserve-users"], dangerous=True),
+                    _option(
+                        "Reset with custom client count", ["--yes", "__clients__"], dangerous=True
+                    ),
+                    _option(
+                        "Reset and preserve existing users",
+                        ["--yes", "--preserve-users"],
+                        dangerous=True,
+                    ),
                 ],
             ),
             "seed": _script(
@@ -182,10 +188,18 @@ REGISTRY: Registry = {
                 "dev/seed_fake_data.py",
                 [
                     _option("Seed with defaults", ["--reset"], dangerous=True),
-                    _option("Seed onboarding only", ["--reset", "--onboarding-only"], dangerous=True),
+                    _option(
+                        "Seed onboarding only", ["--reset", "--onboarding-only"], dangerous=True
+                    ),
                     _option("Seed users only", ["--reset", "--users-only"], dangerous=True),
-                    _option("Seed preserving existing users", ["--reset", "--preserve-users"], dangerous=True),
-                    _option("Seed with custom client count", ["--reset", "__clients__"], dangerous=True),
+                    _option(
+                        "Seed preserving existing users",
+                        ["--reset", "--preserve-users"],
+                        dangerous=True,
+                    ),
+                    _option(
+                        "Seed with custom client count", ["--reset", "__clients__"], dangerous=True
+                    ),
                 ],
             ),
             "tax-calendar": _script(
@@ -261,6 +275,7 @@ REGISTRY: Registry = {
 # ---------------------------------------------------------------------------
 # UI helpers
 # ---------------------------------------------------------------------------
+
 
 def _clear() -> None:
     if sys.stdout.isatty():
@@ -382,6 +397,7 @@ def _pause() -> None:
 # Script execution
 # ---------------------------------------------------------------------------
 
+
 def _ensure_runtime() -> None:
     if not VENV_PYTHON.exists():
         raise SystemExit(
@@ -463,7 +479,9 @@ def _run_audit_all(output_dir: Path | None) -> int:
     total = 0
     failed: list[str] = []
     summary: dict[str, Any] = {"timestamp": timestamp, "checks": {}}
-    audit_scripts = {key: value for key, value in REGISTRY["audit"]["scripts"].items() if key != "all"}
+    audit_scripts = {
+        key: value for key, value in REGISTRY["audit"]["scripts"].items() if key != "all"
+    }
 
     for key, meta in audit_scripts.items():
         if run_dir:
@@ -496,7 +514,9 @@ def _run_audit_all(output_dir: Path | None) -> int:
         summary["total_findings"] = total
         summary["failed_checks"] = failed
         summary_path = run_dir / "summary.json"
-        summary_path.write_text(json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        summary_path.write_text(
+            json.dumps(summary, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
         print(f"\n  Summary: {D}{summary_path}{X}")
 
     print()
@@ -511,6 +531,7 @@ def _run_audit_all(output_dir: Path | None) -> int:
 # ---------------------------------------------------------------------------
 # Option execution
 # ---------------------------------------------------------------------------
+
 
 def _resolve_args(args: list[str]) -> list[str] | None:
     resolved: list[str] = []
@@ -564,7 +585,16 @@ def _resolve_args(args: list[str]) -> list[str] | None:
             phone = _prompt("Phone, optional")
             if not name or not email or not password:
                 return None
-            resolved += ["--full-name", name, "--email", email, "--password", password, "--role", role]
+            resolved += [
+                "--full-name",
+                name,
+                "--email",
+                email,
+                "--password",
+                password,
+                "--role",
+                role,
+            ]
             if phone:
                 resolved += ["--phone", phone]
 
@@ -577,7 +607,9 @@ def _resolve_args(args: list[str]) -> list[str] | None:
         elif arg == "__output__":
             i += 1
             dir_arg = args[i] if i < len(args) else "__dir__"
-            dir_value = _prompt("Output directory", "reports/audit") if dir_arg == "__dir__" else dir_arg
+            dir_value = (
+                _prompt("Output directory", "reports/audit") if dir_arg == "__dir__" else dir_arg
+            )
             resolved += ["__audit_output__", dir_value]
 
         else:
@@ -648,6 +680,7 @@ def _run_raw(category: str, script_key: str, meta: ScriptMeta, args: list[str]) 
 # Menu levels
 # ---------------------------------------------------------------------------
 
+
 def _menu_options(category: str, script_key: str) -> None:
     meta = REGISTRY[category]["scripts"][script_key]
     while True:
@@ -698,6 +731,7 @@ def _menu_main() -> None:
 # ---------------------------------------------------------------------------
 # Direct command mode
 # ---------------------------------------------------------------------------
+
 
 def _parse_option_number(raw: str, total: int) -> int | None:
     if not raw.isdigit():

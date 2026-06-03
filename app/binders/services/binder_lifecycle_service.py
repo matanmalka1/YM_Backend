@@ -165,9 +165,7 @@ class BinderLifecycleService:
             notes or BINDER_MARKED_READY_FOR_HANDOVER,
         )
         if binder.client_record_id:
-            idempotency_key = (
-                f"binder_ready_{binder.id}_{binder.ready_for_handover_at.isoformat()}"
-            )
+            idempotency_key = f"binder_ready_{binder.id}_{binder.ready_for_handover_at.isoformat()}"
             notification_result = self.auto_send_service.auto_send(
                 trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
                 client_record_id=binder.client_record_id,

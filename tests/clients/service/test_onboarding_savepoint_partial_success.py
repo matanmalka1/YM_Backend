@@ -5,6 +5,7 @@ best_effort=True creates each year's AnnualReport inside an independent SAVEPOIN
 When year 2 fails, only year 2 is rolled back; year 1 persists.
 When best_effort=False, any failure propagates out immediately.
 """
+
 from datetime import date
 from unittest.mock import patch
 
