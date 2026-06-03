@@ -44,13 +44,15 @@ class AuthService:
 
     @staticmethod
     def hash_password(password: str) -> str:
-        """Hash password using bcrypt."""
+        if len(password.encode()) > 72:
+            raise ValueError("Password must not exceed 72 bytes")
         salt = bcrypt.gensalt()
         return bcrypt.hashpw(password.encode(), salt).decode()
 
     @staticmethod
     def verify_password(password: str, password_hash: str) -> bool:
-        """Verify password against bcrypt hash."""
+        if len(password.encode()) > 72:
+            return False
         return bcrypt.checkpw(password.encode(), password_hash.encode())
 
     def authenticate(self, email: str, password: str) -> User | None:
