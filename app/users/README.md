@@ -1,10 +1,12 @@
 ## Scope
+
 This file owns only:
+
 - A pointer to the canonical domain doc.
 
 Source of truth: reference
 
-> **Canonical doc:** [`docs/docs/domains/users.md`](../../../docs/docs/domains/users.md)
+> **Canonical doc:** [`docs/domains/users.md`](../../../docs/domains/users.md)
 
 ## Tests
 

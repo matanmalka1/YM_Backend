@@ -1,8 +1,11 @@
 ## Scope
+
 This file owns only:
+
 - Backend-local service/repository implementation patterns not covered by canonical rules.
 
 This file must not contain:
+
 - Project-wide architecture rules that override YM_Docs.
 - Layer responsibilities, repository inventories, or rules already owned by the canonical docs.
 - Frontend rules.
@@ -11,17 +14,19 @@ This file must not contain:
 Source of truth: reference
 
 Canonical project-wide rules:
-- `../docs/docs/architecture/backend.md`
-- `../docs/docs/workflow/verification.md`
+
+- `../docs/architecture/backend.md`
+- `../docs/workflow/verification.md`
 
 Related reference:
-- `BaseRepository` CRUD primitives are inventoried in `../docs/docs/project/backend-module-map.md`.
+
+- `BaseRepository` CRUD primitives are inventoried in `../docs/project/backend-module-map.md`.
 
 # Backend Architecture Reference
 
 Backend-local implementation patterns for new backend work and incremental
 refactors. Layer responsibilities, repository/service rules, the raw-SQL ban, and
-the domain vertical slice are canonical in `../docs/docs/architecture/backend.md`;
+the domain vertical slice are canonical in `../docs/architecture/backend.md`;
 this file only records concrete patterns that the canonical rules do not specify.
 
 ## BaseService and transactions

@@ -1,16 +1,19 @@
 ## Scope
+
 This file owns only:
+
 - Implemented backend behavior for the actions metadata and execution registry.
 - Current service, repository, model, and API ownership boundaries for this domain.
 
 This file must not contain:
+
 - Historical implementation plans.
 - Future product behavior that is not implemented.
 - Cross-domain architecture rules.
 
 Source of truth: mandatory
 
-> **Note:** No canonical doc exists yet for the actions domain in `docs/docs/domains/`.
+> **Note:** No canonical doc exists yet for the actions domain in `docs/domains/`.
 
 # Actions Module
 
@@ -22,6 +25,7 @@ Also owns cross-domain application workflows that do not belong to a single doma
 ## Scope
 
 This module provides:
+
 - Canonical dashboard action builder (`build_action`)
 - Canonical confirm builder (`build_confirm`)
 - Domain action factories for binders, businesses, charges, VAT work items, and annual reports
@@ -35,6 +39,7 @@ This module provides:
 This module does not define database tables.
 
 Primary output model for domain actions is `ActionDescriptor`:
+
 - `key` (action key)
 - `label` (Hebrew user label)
 - `type` (`link|mutation|modal`)
@@ -44,6 +49,7 @@ Primary output model for domain actions is `ActionDescriptor`:
 - `confirm` plus flat `confirm_title` / `confirm_message`
 
 Confirm metadata is also typed (`ActionConfirm`) and currently supports:
+
 - `title`
 - `message`
 - `confirm_label`
@@ -51,6 +57,7 @@ Confirm metadata is also typed (`ActionConfirm`) and currently supports:
 - `inputs` (optional; currently validated for supported input types only)
 
 Common action producers:
+
 - `get_binder_actions(binder)`
 - `get_business_actions(business, user_role=None)`
 - `get_charge_actions(charge)`
@@ -58,6 +65,7 @@ Common action producers:
 - `generate_client_obligations_result(...)`
 
 Implementation references:
+
 - Registry: `app/actions/action_registry.py`
 - Descriptor schema/builders: `app/core/action_schemas.py`, `app/core/action_builders.py`
 - Shared helpers: `app/actions/action_helpers.py`
@@ -116,6 +124,7 @@ Validation and error envelopes are handled by the endpoint that executes each ac
 ## Tests
 
 Actions behavior is covered by direct and domain tests, including:
+
 - `tests/actions/test_action_registry.py`
 - `tests/actions/test_business_actions.py`
 - `tests/actions/test_obligation_orchestrator.py`

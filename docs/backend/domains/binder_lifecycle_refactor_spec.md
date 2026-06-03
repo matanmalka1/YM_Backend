@@ -1,16 +1,19 @@
 ## Scope
+
 This file owns only:
+
 - A pointer to the canonical binder domain doc and archive.
 
 Source of truth: historical
 
-Historical. Canonical domain doc: `docs/docs/domains/binders.md`. Archived original: `docs/docs/archive/binders-legacy.md`.
+Historical. Canonical domain doc: `docs/domains/binders.md`. Archived original: `docs/archive/binders-legacy.md`.
 
 # Binder Lifecycle Refactor — Task Spec
 
 Status: completed refactor notes, not an active task list.
 
 Current implementation verified 2026-05-29:
+
 - `Binder` has `location_status` and `capacity_status`; no `Binder.status` field exists.
 - `BinderLocationStatus`: `in_office`, `ready_for_handover`, `handed_over`.
 - `BinderCapacityStatus`: `open`, `full`.
@@ -135,15 +138,15 @@ Frontend owns Hebrew labels in one constants file.
 
 ```ts
 export const BINDER_LOCATION_STATUS_LABELS = {
-  in_office: 'במשרד',
-  ready_for_handover: 'מוכן למסירה',
-  handed_over: 'נמסר ללקוח',
-} as const
+  in_office: "במשרד",
+  ready_for_handover: "מוכן למסירה",
+  handed_over: "נמסר ללקוח",
+} as const;
 
 export const BINDER_CAPACITY_STATUS_LABELS = {
-  open: 'פתוח',
-  full: 'מלא',
-} as const
+  open: "פתוח",
+  full: "מלא",
+} as const;
 ```
 
 Frontend tests must not rely on Hebrew labels for lifecycle logic.
@@ -189,12 +192,12 @@ Final action names:
 
 ```ts
 export type BinderAction =
-  | 'receive_material'
-  | 'mark_full'
-  | 'reopen_capacity'
-  | 'mark_ready_for_handover'
-  | 'revert_ready_for_handover'
-  | 'handover_to_client'
+  | "receive_material"
+  | "mark_full"
+  | "reopen_capacity"
+  | "mark_ready_for_handover"
+  | "revert_ready_for_handover"
+  | "handover_to_client";
 ```
 
 Rule:
