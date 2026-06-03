@@ -44,7 +44,7 @@ def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser
         months_covered=request.months_covered,
         actor_id=user.id,
     )
-    return _response_builder(db).build(charge)
+    return _response_builder(db).build(charge, user.role)
 
 
 @router.post(
@@ -54,7 +54,7 @@ def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser
 )
 def issue_charge(charge_id: int, db: DBSession, user: CurrentUser):
     charge = BillingService(db).issue_charge(charge_id, actor_id=user.id)
-    return _response_builder(db).build(charge)
+    return _response_builder(db).build(charge, user.role)
 
 
 @router.post(
@@ -64,7 +64,7 @@ def issue_charge(charge_id: int, db: DBSession, user: CurrentUser):
 )
 def mark_charge_paid(charge_id: int, db: DBSession, user: CurrentUser):
     charge = BillingService(db).mark_charge_paid(charge_id, actor_id=user.id)
-    return _response_builder(db).build(charge)
+    return _response_builder(db).build(charge, user.role)
 
 
 @router.post(
@@ -79,7 +79,7 @@ def cancel_charge(
     request: ChargeCancelRequest = Body(default_factory=ChargeCancelRequest),
 ):
     charge = BillingService(db).cancel_charge(charge_id, actor_id=user.id, reason=request.reason)
-    return _response_builder(db).build(charge)
+    return _response_builder(db).build(charge, user.role)
 
 
 @router.get(
@@ -89,6 +89,7 @@ def cancel_charge(
 )
 def list_charges(
     db: DBSession,
+    user: CurrentUser,
     business_id: int | None = None,
     client_record_id: int | None = None,
     status_filter: str | None = Query(None, alias="status"),
@@ -109,6 +110,7 @@ def list_charges(
         issued_before=issued_before,
         page=page,
         page_size=page_size,
+        user_role=user.role,
     )
 
 
@@ -117,9 +119,9 @@ def list_charges(
     response_model=ChargeResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
-def get_charge(charge_id: int, db: DBSession):
+def get_charge(charge_id: int, db: DBSession, user: CurrentUser):
     charge = BillingService(db).get_charge(charge_id)
-    return _response_builder(db).build(charge)
+    return _response_builder(db).build(charge, user.role)
 
 
 @router.post(

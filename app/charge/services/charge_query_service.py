@@ -17,6 +17,7 @@ from app.clients.repositories.client_record_read_repository import (
     get_full_records_bulk,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.users.models.user import UserRole
 
 
 class ChargeQueryService:
@@ -143,6 +144,7 @@ class ChargeQueryService:
         issued_before: date | None = None,
         page: int = 1,
         page_size: int = 20,
+        user_role: UserRole | None = None,
     ) -> ChargeListResponse:
         items, total, client_name_map, business_name_map, office_client_number_map = (
             self.list_charges(
@@ -163,7 +165,7 @@ class ChargeQueryService:
             data["client_name"] = client_name_map.get(charge.id)
             data["business_name"] = business_name_map.get(charge.id)
             data["office_client_number"] = office_client_number_map.get(charge.id)
-            data["available_actions"] = get_charge_actions(charge)
+            data["available_actions"] = get_charge_actions(charge, user_role=user_role)
             return ChargeResponse(**data)
 
         client_record = (

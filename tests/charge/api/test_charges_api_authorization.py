@@ -77,10 +77,13 @@ def test_secretary_can_read_charges(client, secretary_headers, advisor_headers, 
     payload = list_res.json()
     assert payload["total"] == 1
     assert payload["items"][0]["id"] == charge_id
+    assert payload["items"][0]["available_actions"] == []
 
     get_res = client.get(f"/api/v1/charges/{charge_id}", headers=secretary_headers)
     assert get_res.status_code == 200
-    assert get_res.json()["id"] == charge_id
+    get_payload = get_res.json()
+    assert get_payload["id"] == charge_id
+    assert get_payload["available_actions"] == []
 
 
 def test_charges_requires_auth(client):
