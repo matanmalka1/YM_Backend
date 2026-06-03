@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 from datetime import datetime
 
 from sqlalchemy import ForeignKey, Index, Sequence, Text, column, text
@@ -13,10 +12,8 @@ from app.database import Base
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
-office_client_number_seq = Sequence(
-    "client_office_number_seq", start=100001, metadata=Base.metadata
-)
-_IS_TEST_ENV = (os.getenv("APP_ENV") or "").strip().lower() == "test"
+# No metadata= so create_all never emits CREATE SEQUENCE; Alembic migration 0001 handles that.
+office_client_number_seq = Sequence("client_office_number_seq", start=100001)
 
 
 class ClientRecord(SoftDeletableMixin, Base):
@@ -30,11 +27,7 @@ class ClientRecord(SoftDeletableMixin, Base):
         ForeignKey("legal_entities.id"), nullable=False, index=True
     )
 
-    office_client_number: Mapped[int] = mapped_column(
-        office_client_number_seq,
-        server_default=None if _IS_TEST_ENV else office_client_number_seq.next_value(),
-        nullable=False,
-    )
+    office_client_number: Mapped[int] = mapped_column(nullable=False)
     accountant_id: Mapped[int | None] = mapped_column(
         ForeignKey("users.id"), nullable=True, index=True
     )
@@ -77,10 +70,15 @@ class ClientRecord(SoftDeletableMixin, Base):
 
 @event.listens_for(ClientRecord, "before_insert")
 def _assign_test_office_client_number(_mapper, connection, target: ClientRecord) -> None:
-    if not _IS_TEST_ENV or target.office_client_number is not None:
+    if target.office_client_number is not None:
         return
 
-    current_max = connection.scalar(
-        select(func.max(ClientRecord.office_client_number)).select_from(ClientRecord.__table__)
-    )
-    target.office_client_number = (current_max or 100000) + 1
+    if connection.dialect.name == "postgresql":
+        target.office_client_number = connection.scalar(
+            text("SELECT nextval('client_office_number_seq')")
+        )
+    else:
+        current_max = connection.scalar(
+            select(func.max(ClientRecord.office_client_number)).select_from(ClientRecord.__table__)
+        )
+        target.office_client_number = (current_max or 100000) + 1
