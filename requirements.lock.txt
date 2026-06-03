@@ -47,8 +47,10 @@ six==1.17.0
 slowapi==0.1.9
 SQLAlchemy==2.0.50
 starlette==0.52.1
+./tax_rules_config
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.7.0
 uvicorn==0.48.0
+vulture==2.16
 wrapt==2.2.1
