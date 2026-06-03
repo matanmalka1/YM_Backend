@@ -26,6 +26,16 @@ class AnnualReportLifecycleRepository:
     def list_overdue(
         self, tax_year: int | None = None, page: int = 1, page_size: int = 20
     ) -> list[AnnualReport]:
+        stmt = self._overdue_stmt(tax_year=tax_year)
+        stmt = stmt.order_by(AnnualReport.filing_deadline.asc())
+        stmt = self.apply_pagination(stmt, page, page_size)
+        return list(self.db.scalars(stmt).all())
+
+    def count_overdue(self, tax_year: int | None = None) -> int:
+        overdue_ids = self._overdue_stmt(tax_year=tax_year).with_only_columns(AnnualReport.id)
+        return self.db.scalar(select(func.count()).select_from(overdue_ids.subquery())) or 0
+
+    def _overdue_stmt(self, tax_year: int | None = None):
         now = utcnow()
         open_statuses = [
             AnnualReportStatus.NOT_STARTED,
@@ -41,9 +51,7 @@ class AnnualReportLifecycleRepository:
         )
         if tax_year:
             stmt = stmt.where(AnnualReport.tax_year == tax_year)
-        stmt = stmt.order_by(AnnualReport.filing_deadline.asc())
-        stmt = self.apply_pagination(stmt, page, page_size)
-        return list(self.db.scalars(stmt).all())
+        return stmt
 
     def sum_financials_by_year(self, tax_year: int) -> dict:
         stmt = scope_to_active_clients_stmt(

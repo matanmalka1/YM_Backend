@@ -5,6 +5,7 @@ from app.annual_reports.integrations.tax_rules_registry import (
 )
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportDetailResponse,
+    AnnualReportListResponse,
     AnnualReportResponse,
     ScheduleEntryResponse,
     StatusHistoryResponse,
@@ -79,9 +80,15 @@ class AnnualReportQueryService(AnnualReportBaseService):
 
     def get_overdue(
         self, tax_year: int | None = None, page: int = 1, page_size: int = 20
-    ) -> list[AnnualReportResponse]:
+    ) -> AnnualReportListResponse:
         reports = self.repo.list_overdue(tax_year=tax_year, page=page, page_size=page_size)
-        return self._to_responses(reports)
+        total = self.repo.count_overdue(tax_year=tax_year)
+        return AnnualReportListResponse(
+            items=self._to_responses(reports),
+            page=page,
+            page_size=page_size,
+            total=total,
+        )
 
     def get_status_history(self, report_id: int) -> list:
         self._get_or_raise(report_id)

@@ -2142,11 +2142,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/AnnualReportResponse"
-                  },
-                  "title": "Response List Overdue Api V1 Annual Reports Overdue Get"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
                 }
               }
             }
@@ -20111,11 +20107,11 @@
           "override_amount": {
             "anyOf": [
               {
-                "type": "number"
-              },
-              {
                 "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -26709,6 +26705,15 @@
             "type": "boolean",
             "title": "Ceiling Warning",
             "default": false
+          },
+          "gross_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Gross Amount",
+            "readOnly": true,
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -26725,7 +26730,8 @@
           "deduction_rate",
           "is_exceptional",
           "created_by",
-          "created_at"
+          "created_at",
+          "gross_amount"
         ],
         "title": "VatInvoiceResponse"
       },
@@ -27411,34 +27417,52 @@
           },
           "total_output_vat": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Output Vat"
+            "format": "decimal",
+            "title": "Total Output Vat",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_input_vat": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Input Vat"
+            "format": "decimal",
+            "title": "Total Input Vat",
+            "examples": [
+              "123.45"
+            ]
           },
           "net_vat": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Net Vat"
+            "format": "decimal",
+            "title": "Net Vat",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_output_net": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Output Net"
+            "format": "decimal",
+            "title": "Total Output Net",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_input_net": {
             "type": "string",
-            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
-            "title": "Total Input Net"
+            "format": "decimal",
+            "title": "Total Input Net",
+            "examples": [
+              "123.45"
+            ]
           },
           "final_vat_amount": {
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$"
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -27475,7 +27499,10 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "date-time"
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
               },
               {
                 "type": "null"
@@ -27561,12 +27588,18 @@
           "created_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Created At"
+            "title": "Created At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
           },
           "updated_at": {
             "type": "string",
             "format": "date-time",
-            "title": "Updated At"
+            "title": "Updated At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
           },
           "submission_deadline": {
             "anyOf": [
@@ -27705,7 +27738,8 @@
         "properties": {
           "id": {
             "type": "string",
-            "title": "Id"
+            "title": "Id",
+            "description": "Stable composite queue key in the form '{source_type}:{source_id}', for example 'charge:123'."
           },
           "source_type": {
             "$ref": "#/components/schemas/WorkQueueSourceType"

@@ -3,7 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.core.api_types import ApiDecimal
 from app.utils.id_validation import validate_israeli_id_checksum
@@ -106,6 +106,11 @@ class VatInvoiceResponse(BaseModel):
     created_at: date  # Date במודל
     # Non-null only on create response — True when annual turnover crosses 80% of OSEK PATUR ceiling
     ceiling_warning: bool = False
+
+    @computed_field
+    @property
+    def gross_amount(self) -> ApiDecimal:
+        return self.net_amount + self.vat_amount
 
     model_config = {"from_attributes": True}
 

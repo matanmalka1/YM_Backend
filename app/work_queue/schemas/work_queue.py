@@ -51,7 +51,12 @@ class WorkQueueWarning(BaseModel):
 
 
 class WorkQueueItem(BaseModel):
-    id: str
+    id: str = Field(
+        description=(
+            "Stable composite queue key in the form '{source_type}:{source_id}', "
+            "for example 'charge:123'."
+        )
+    )
     source_type: WorkQueueSourceType
     source_id: int
     title: str

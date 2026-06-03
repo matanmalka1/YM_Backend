@@ -1,13 +1,13 @@
 """Pydantic request / response schemas for the VAT Reports module."""
 
 import re
-from datetime import date, datetime
-from decimal import Decimal
+from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
 
 from app.common.enums import SubmissionMethod, VatType
 from app.core.action_schemas import ActionDescriptor
+from app.core.api_types import ApiDateTime, ApiDecimal
 from app.vat_reports.models.vat_enums import VatWorkItemStatus
 
 # ── Work Item ─────────────────────────────────────────────────────────────────
@@ -39,16 +39,16 @@ class VatWorkItemResponse(BaseModel):
     period_type: VatType  # snapshot at creation — immutable historical record
     status: VatWorkItemStatus
     pending_materials_note: str | None = None
-    total_output_vat: Decimal
-    total_input_vat: Decimal
-    net_vat: Decimal
-    total_output_net: Decimal  # קיים במודל — שדה 87
-    total_input_net: Decimal  # קיים במודל — שדה 66
-    final_vat_amount: Decimal | None = None
+    total_output_vat: ApiDecimal
+    total_input_vat: ApiDecimal
+    net_vat: ApiDecimal
+    total_output_net: ApiDecimal  # קיים במודל — שדה 87
+    total_input_net: ApiDecimal  # קיים במודל — שדה 66
+    final_vat_amount: ApiDecimal | None = None
     is_overridden: bool
     override_justification: str | None = None
     submission_method: SubmissionMethod | None = None  # שם חדש במודל
-    filed_at: datetime | None = None
+    filed_at: ApiDateTime | None = None
     filed_by: int | None = None
     filed_by_name: str | None = None
     submission_reference: str | None = None
@@ -57,8 +57,8 @@ class VatWorkItemResponse(BaseModel):
     created_by: int
     assigned_to: int | None = None
     assigned_to_name: str | None = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: ApiDateTime
+    updated_at: ApiDateTime
     # Derived — not stored
     submission_deadline: date | None = None
     statutory_deadline: date | None = None
@@ -155,7 +155,7 @@ class VatWorkItemLookupResponse(BaseModel):
 
 class FileVatReturnRequest(BaseModel):
     submission_method: SubmissionMethod  # שם חדש — תואם המודל
-    override_amount: Decimal | None = None
+    override_amount: ApiDecimal | None = None
     override_justification: str | None = None
     submission_reference: str | None = None
     is_amendment: bool = False

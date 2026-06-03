@@ -78,7 +78,7 @@ def list_annual_reports(
     )
 
 
-@router.get("/overdue", response_model=list[AnnualReportResponse])
+@router.get("/overdue", response_model=AnnualReportListResponse)
 def list_overdue(
     db: DBSession,
     user: CurrentUser,
