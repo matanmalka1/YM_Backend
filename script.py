@@ -1,5 +1,5 @@
 """
-UML / domain diagram generator for the Binder & Billing CRM backend.
+UML / domain diagram generator for the YM Tax CRM backend.
 
 Why PlantUML over pyreverse:
   pyreverse cannot reliably extract SQLAlchemy relationships, FK cardinality,

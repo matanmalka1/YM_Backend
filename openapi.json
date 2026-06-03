@@ -1956,7 +1956,7 @@
           "annual-reports"
         ],
         "summary": "List Annual Reports",
-        "description": "List annual reports (optionally filter by tax_year).",
+        "description": "List annual reports (optionally filter by tax_year, client_record_id, status).",
         "operationId": "list_annual_reports_api_v1_annual_reports_get",
         "security": [
           {
@@ -1978,6 +1978,38 @@
                 }
               ],
               "title": "Tax Year"
+            }
+          },
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
             }
           },
           {
@@ -2847,6 +2879,38 @@
         ],
         "parameters": [
           {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -2967,6 +3031,38 @@
             "schema": {
               "type": "integer",
               "title": "Tax Year"
+            }
+          },
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
             }
           },
           {
@@ -3381,7 +3477,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_TaxCalendarGroupResponse_"
+                  "$ref": "#/components/schemas/TaxCalendarGroupListResponse"
                 }
               }
             }
@@ -7454,6 +7550,51 @@
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
+            }
+          },
+          {
+            "name": "search",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          },
+          {
+            "name": "event_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          },
+          {
+            "name": "important_only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "boolean",
+              "default": false,
+              "title": "Important Only"
             }
           }
         ],
@@ -16506,7 +16647,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File"
           }
         },
@@ -16520,7 +16661,7 @@
         "properties": {
           "file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File"
           }
         },
@@ -16542,7 +16683,7 @@
           },
           "file": {
             "type": "string",
-            "format": "binary",
+            "contentMediaType": "application/octet-stream",
             "title": "File"
           },
           "business_id": {
@@ -21600,37 +21741,6 @@
         ],
         "title": "PaginatedResponse[TaskResponse]"
       },
-      "PaginatedResponse_TaxCalendarGroupResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/TaxCalendarGroupResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[TaxCalendarGroupResponse]"
-      },
       "PaginatedResponse_UserAuditLogResponse_": {
         "properties": {
           "items": {
@@ -25187,6 +25297,41 @@
         ],
         "title": "TaxCalendarGroupItemsResponse"
       },
+      "TaxCalendarGroupListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaxCalendarGroupResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "summary": {
+            "$ref": "#/components/schemas/TaxCalendarGroupsSummary"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
+          "summary"
+        ],
+        "title": "TaxCalendarGroupListResponse"
+      },
       "TaxCalendarGroupResponse": {
         "properties": {
           "tax_calendar_entry_id": {
@@ -25269,6 +25414,39 @@
           "overdue_count"
         ],
         "title": "TaxCalendarGroupResponse"
+      },
+      "TaxCalendarGroupsSummary": {
+        "properties": {
+          "groups": {
+            "type": "integer",
+            "title": "Groups"
+          },
+          "linked": {
+            "type": "integer",
+            "title": "Linked"
+          },
+          "open": {
+            "type": "integer",
+            "title": "Open"
+          },
+          "overdue": {
+            "type": "integer",
+            "title": "Overdue"
+          },
+          "done": {
+            "type": "integer",
+            "title": "Done"
+          }
+        },
+        "type": "object",
+        "required": [
+          "groups",
+          "linked",
+          "open",
+          "overdue",
+          "done"
+        ],
+        "title": "TaxCalendarGroupsSummary"
       },
       "TaxCalendarSummaryResponse": {
         "properties": {

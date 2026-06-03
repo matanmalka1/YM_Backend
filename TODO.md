@@ -70,5 +70,7 @@ Last verified from code, migrations, and tests: 2026-05-17.
 - [ ] Add direct authority filing/integration layer.
   - Missing live filing/status integrations with Israeli authorities.
 
+
+# DO NOT Execute unless explicitly TOLD
 - [ ] Add client self-service portal.
   - Missing client login, document upload by client, task/status visibility, and approval flows outside public signature links.
