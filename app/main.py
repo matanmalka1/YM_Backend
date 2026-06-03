@@ -22,10 +22,14 @@ logger = get_logger(__name__)
 if settings.APP_ENV == "development":
     logger.info("CORS allowed origins: %s", settings.CORS_ALLOWED_ORIGINS)
 
+_is_production = settings.APP_ENV == "production"
 app = FastAPI(
     title="Binder & Billing CRM",
     version="1.0.0",
     lifespan=lifespan,
+    openapi_url=None if _is_production else "/openapi.json",
+    docs_url=None if _is_production else "/docs",
+    redoc_url=None if _is_production else "/redoc",
 )
 
 
