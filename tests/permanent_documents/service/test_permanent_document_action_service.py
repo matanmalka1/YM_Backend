@@ -52,5 +52,7 @@ def test_list_versions_returns_empty_for_missing_document_type(test_db):
     business = _business(test_db)
     service = PermanentDocumentActionService(test_db)
 
-    versions = service.get_document_versions(business.client_id, PermanentDocumentType.POWER_OF_ATTORNEY)
+    versions = service.get_document_versions(
+        business.client_id, PermanentDocumentType.POWER_OF_ATTORNEY
+    )
     assert versions == []

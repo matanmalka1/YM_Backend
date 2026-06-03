@@ -57,7 +57,7 @@ class WorkQueueItem(BaseModel):
         description=(
             "Stable composite queue key in the form '{source_type}:{source_id}', "
             "for example 'charge:123'."
-        )
+        ),
     )
     source_type: WorkQueueSourceType
     source_id: int

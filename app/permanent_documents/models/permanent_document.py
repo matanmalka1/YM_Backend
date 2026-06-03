@@ -87,7 +87,9 @@ class PermanentDocument(Base):
     scope: Mapped[DocumentScope] = mapped_column(pg_enum(DocumentScope), nullable=False)
 
     # ── Document identity ─────────────────────────────────────────────────────
-    document_type: Mapped[PermanentDocumentType] = mapped_column(pg_enum(PermanentDocumentType, name="documenttype"), nullable=False)
+    document_type: Mapped[PermanentDocumentType] = mapped_column(
+        pg_enum(PermanentDocumentType, name="documenttype"), nullable=False
+    )
     storage_key: Mapped[str] = mapped_column(String, nullable=False)  # מפתח ב-S3/R2
     original_filename: Mapped[str | None] = mapped_column(String, nullable=True)
     file_size_bytes: Mapped[int | None] = mapped_column(BigInteger, nullable=True)

@@ -42,9 +42,7 @@ def test_annual_report_overdue_endpoint(client, test_db, advisor_headers, test_u
     assert body["page"] == 1
     assert body["page_size"] == 20
     assert body["total"] >= 1
-    overdue_ids = {
-        item.get("business_id", item.get("client_record_id")) for item in body["items"]
-    }
+    overdue_ids = {item.get("business_id", item.get("client_record_id")) for item in body["items"]}
     assert old_client.id in overdue_ids
     assert new_client.id not in overdue_ids
 
