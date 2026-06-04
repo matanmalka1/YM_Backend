@@ -14,6 +14,9 @@ from app.annual_reports.integrations.tax_rules_registry import (
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
+from app.annual_reports.models.annual_report_schedule_entry import (
+    AnnualReportScheduleEntry,
+)
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
@@ -396,16 +399,9 @@ class AnnualReportFinancialService:
 
         schedules = self.report_repo.get_schedules(report_id)
         required = [s for s in schedules if s.is_required]
-        if required:
-            incomplete = [s for s in required if not s.is_complete]
-            if incomplete:
-                for schedule in incomplete:
-                    label = self._SCHEDULE_LABELS.get(
-                        schedule.schedule.value, schedule.schedule.value
-                    )
-                    issues.append(INCOMPLETE_REQUIRED_SCHEDULE_ISSUE.format(label=label))
-            else:
-                passed += 1
+        schedule_issues = self._required_schedule_issues(required)
+        if schedule_issues:
+            issues.extend(schedule_issues)
         else:
             passed += 1
 
@@ -433,6 +429,20 @@ class AnnualReportFinancialService:
             issues=issues,
             completion_pct=completion_pct,
         )
+
+    def _required_schedule_issues(
+        self, required_schedules: list[AnnualReportScheduleEntry]
+    ) -> list[str]:
+        return [
+            INCOMPLETE_REQUIRED_SCHEDULE_ISSUE.format(
+                label=self._schedule_label(schedule.schedule.value)
+            )
+            for schedule in required_schedules
+            if not schedule.is_complete
+        ]
+
+    def _schedule_label(self, schedule_value: str) -> str:
+        return self._SCHEDULE_LABELS.get(schedule_value, schedule_value)
 
     def save_tax_calculation(
         self,
