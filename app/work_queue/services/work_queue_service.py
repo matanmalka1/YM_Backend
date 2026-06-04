@@ -343,7 +343,7 @@ class WorkQueueService:
         business_id: int | None,
         include_task_history: bool,
     ) -> list[WorkQueueItem]:
-        if WorkQueueSourceType.TASK in excluded or business_id is not None:
+        if WorkQueueSourceType.TASK in excluded:
             return system_items
 
         system_by_key = {
@@ -418,6 +418,9 @@ class WorkQueueService:
                     )
                 )
 
+            # Standalone task rows have no business scope — skip when business_id filter is active.
+            if business_id is not None:
+                continue
             if client_record_id is None:
                 rows.append(standalone)
             elif standalone.client_record_id == client_record_id:

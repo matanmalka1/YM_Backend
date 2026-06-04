@@ -30,7 +30,7 @@ def advance_payment_items(
     stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
         AdvancePayment.deleted_at.is_(None),
         AdvancePayment.status.in_([AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PARTIAL]),
-        AdvancePayment.due_date <= cutoff,
+        (AdvancePayment.due_date_effective <= cutoff) | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
     )
     if client_record_id is not None:
         stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
@@ -38,13 +38,14 @@ def advance_payment_items(
     ctx.preload_client_identities(payment.client_record_id for payment in payments)
     items: list[WorkQueueItem] = []
     for payment in payments:
+        effective_due_date = payment.due_date_effective or payment.due_date
         metadata = advance_payment_metadata(payment)
         items.append(
             ctx.item(
                 WorkQueueSourceType.ADVANCE_PAYMENT,
                 payment.id,
                 f"מקדמה: {metadata['period_label']}",
-                payment.due_date,
+                effective_due_date,
                 payment.client_record_id,
                 status_label=payment.status.value
                 if hasattr(payment.status, "value")

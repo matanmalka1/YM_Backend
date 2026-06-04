@@ -87,7 +87,7 @@ def advance_payment_metadata(payment) -> dict[str, Any]:
         "period_label": _period_label(payment.period, months_count),
         "period_months_count": months_count,
         "frequency": "bimonthly" if months_count == 2 else "monthly",
-        "due_date": _date_value(payment.due_date),
+        "due_date": _date_value(payment.due_date_effective or payment.due_date),
         "status": _enum_value(payment.status),
         "expected_amount": _money(expected),
         "paid_amount": _money(paid),
