@@ -71,6 +71,7 @@ from app.audit.constants import (
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError, NotFoundError
 from app.vat_reports.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
@@ -128,7 +129,7 @@ class AnnualReportFinancialService:
                 INVALID_INCOME_SOURCE_ERROR.format(source_type=source_type),
                 "ANNUAL_REPORT.INVALID_TYPE",
             )
-        line = self.income_repo.add_line(
+        line = self.income_repo.create_for_report(
             report_id, IncomeSourceType(source_type), amount, description
         )
         EntityAuditWriter(self.db).append(
@@ -154,46 +155,37 @@ class AnnualReportFinancialService:
             )
             fields["source_type"] = IncomeSourceType(fields["source_type"])
         update_fields = {k: v for k, v in fields.items() if v is not None}
-        old_line = self.income_repo.get_by_report_and_id(report_id, line_id)
-        if not old_line:
-            raise NotFoundError(
-                INCOME_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
-            )
-        if not update_fields:
-            return IncomeLineResponse.model_validate(old_line)
-        old_value = income_line_snapshot(old_line)
-        line = self.income_repo.update_for_report(report_id, line_id, **update_fields)
+        line = self.income_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
             )
+        if not update_fields:
+            return IncomeLineResponse.model_validate(line)
+        old_value = income_line_snapshot(line)
+        line = self.income_repo.apply_updates(line, update_fields)
         EntityAuditWriter(self.db).append(
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
             action=ACTION_INCOME_UPDATED,
             old_value=old_value,
-            new_value={k: audit_scalar(v) for k, v in update_fields.items()},
+            new_value={k: audit_scalar(k, v) for k, v in update_fields.items()},
         )
         return IncomeLineResponse.model_validate(line)
 
     def delete_income(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
-        line = self.income_repo.get_by_report_and_id(report_id, line_id)
+        line = self.income_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
             )
         old_value = income_line_snapshot(line)
-        if not self.income_repo.delete_for_report(report_id, line_id):
-            raise NotFoundError(
-                INCOME_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
-            )
+        self.income_repo.delete_line(line)
         EntityAuditWriter(self.db).append(
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
@@ -228,7 +220,7 @@ class AnnualReportFinancialService:
             if recognition_rate is not None
             else default_recognition_rate(expense_category)
         )
-        line = self.expense_repo.add_line(
+        line = self.expense_repo.create_for_report(
             annual_report_id=report_id,
             category=expense_category,
             amount=amount,
@@ -260,46 +252,37 @@ class AnnualReportFinancialService:
             )
             fields["category"] = ExpenseCategoryType(fields["category"])
         update_fields = {k: v for k, v in fields.items() if v is not None}
-        old_line = self.expense_repo.get_by_report_and_id(report_id, line_id)
-        if not old_line:
-            raise NotFoundError(
-                EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
-            )
-        if not update_fields:
-            return ExpenseLineResponse.model_validate(old_line)
-        old_value = expense_line_snapshot(old_line)
-        line = self.expense_repo.update_for_report(report_id, line_id, **update_fields)
+        line = self.expense_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
             )
+        if not update_fields:
+            return ExpenseLineResponse.model_validate(line)
+        old_value = expense_line_snapshot(line)
+        line = self.expense_repo.apply_updates(line, update_fields)
         EntityAuditWriter(self.db).append(
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
             action=ACTION_EXPENSE_UPDATED,
             old_value=old_value,
-            new_value={k: audit_scalar(v) for k, v in update_fields.items()},
+            new_value={k: audit_scalar(k, v) for k, v in update_fields.items()},
         )
         return ExpenseLineResponse.model_validate(line)
 
     def delete_expense(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
-        line = self.expense_repo.get_by_report_and_id(report_id, line_id)
+        line = self.expense_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
             )
         old_value = expense_line_snapshot(line)
-        if not self.expense_repo.delete_for_report(report_id, line_id):
-            raise NotFoundError(
-                EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
-            )
+        self.expense_repo.delete_line(line)
         EntityAuditWriter(self.db).append(
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,

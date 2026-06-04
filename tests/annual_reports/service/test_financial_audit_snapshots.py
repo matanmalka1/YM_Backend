@@ -15,6 +15,7 @@ from app.annual_reports.models.annual_report_income_line import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.financial_service import AnnualReportFinancialService
+from app.annual_reports.services.financial_line_helpers import audit_scalar
 from app.audit.constants import (
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,
@@ -236,12 +237,12 @@ def test_empty_financial_line_updates_do_not_write_audit(test_db, test_user):
 def test_financial_line_repositories_reject_unsupported_update_fields(test_db, test_user):
     report = _create_report(test_db, test_user)
     service = AnnualReportFinancialService(test_db)
-    income = service.income_repo.add_line(
+    income = service.income_repo.create_for_report(
         report.id,
         IncomeSourceType.SALARY,
         Decimal("500.00"),
     )
-    expense = service.expense_repo.add_line(
+    expense = service.expense_repo.create_for_report(
         report.id,
         ExpenseCategoryType.OFFICE_RENT,
         Decimal("500.00"),
@@ -249,10 +250,10 @@ def test_financial_line_repositories_reject_unsupported_update_fields(test_db, t
     )
 
     with pytest.raises(ValueError, match="Unsupported income line update field"):
-        service.income_repo.update_for_report(report.id, income.id, id=999)
+        service.income_repo.apply_updates(income, {"id": 999})
 
     with pytest.raises(ValueError, match="Unsupported expense line update field"):
-        service.expense_repo.update_for_report(report.id, expense.id, created_at=None)
+        service.expense_repo.apply_updates(expense, {"created_at": None})
 
 
 def test_cannot_update_income_line_from_another_report(test_db, test_user):
@@ -286,6 +287,24 @@ def test_cannot_update_income_line_from_another_report(test_db, test_user):
         ).all()
         == []
     )
+
+
+def test_audit_scalar_rejects_arbitrary_objects_with_field_context():
+    class Unsupported:
+        pass
+
+    with pytest.raises(TypeError, match="field 'amount'.*Unsupported"):
+        audit_scalar("amount", Unsupported())
+
+
+def test_audit_scalar_supports_expected_scalar_values():
+    assert audit_scalar("source_type", IncomeSourceType.SALARY) == "salary"
+    assert audit_scalar("amount", Decimal("100.00")) == "100.00"
+    assert audit_scalar("description", "x") == "x"
+    assert audit_scalar("count", 1) == 1
+    assert audit_scalar("ratio", 1.5) == 1.5
+    assert audit_scalar("flag", True) is True
+    assert audit_scalar("x", None) is None
 
 
 def test_cannot_delete_income_line_from_another_report(test_db, test_user):

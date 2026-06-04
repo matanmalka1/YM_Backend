@@ -1,5 +1,8 @@
 """Shared helpers for annual-report financial line mutations and audit payloads."""
 
+from decimal import Decimal
+from enum import Enum
+
 from sqlalchemy.orm import Session
 
 from app.annual_reports.services.messages import (
@@ -11,28 +14,40 @@ from app.clients.repositories.client_record_repository import ClientRecordReposi
 from app.core.exceptions import ForbiddenError
 
 
-def audit_scalar(value):
-    return value.value if hasattr(value, "value") else str(value) if value is not None else None
+def audit_scalar(field_name: str, value):
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, Decimal):
+        return str(value)
+    if value is None or isinstance(value, (str, int, float, bool)):
+        return value
+    raise TypeError(
+        f"Unsupported audit scalar for field '{field_name}': {type(value).__name__}"
+    )
 
 
 def income_line_snapshot(line) -> dict:
     return {
         "line_id": line.id,
-        "source_type": audit_scalar(line.source_type),
-        "amount": str(line.amount),
-        "description": line.description,
+        "source_type": audit_scalar("source_type", line.source_type),
+        "amount": audit_scalar("amount", line.amount),
+        "description": audit_scalar("description", line.description),
     }
 
 
 def expense_line_snapshot(line) -> dict:
     return {
         "line_id": line.id,
-        "category": audit_scalar(line.category),
-        "amount": str(line.amount),
-        "recognition_rate": str(line.recognition_rate),
-        "external_document_reference": line.external_document_reference,
-        "supporting_document_id": line.supporting_document_id,
-        "description": line.description,
+        "category": audit_scalar("category", line.category),
+        "amount": audit_scalar("amount", line.amount),
+        "recognition_rate": audit_scalar("recognition_rate", line.recognition_rate),
+        "external_document_reference": audit_scalar(
+            "external_document_reference", line.external_document_reference
+        ),
+        "supporting_document_id": audit_scalar(
+            "supporting_document_id", line.supporting_document_id
+        ),
+        "description": audit_scalar("description", line.description),
     }
 
 

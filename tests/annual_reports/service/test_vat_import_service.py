@@ -323,10 +323,10 @@ def test_manual_financial_mutations_block_closed_or_frozen_clients(test_db, test
     with pytest.raises(ForbiddenError):
         financial.delete_expense(report.id, expense.id, actor_id=test_user.id)
 
-    assert financial.income_repo.get_by_report_and_id(report.id, income.id).amount == Decimal(
+    assert financial.income_repo.get_by_report_and_line_id(report.id, income.id).amount == Decimal(
         "500.00"
     )
-    assert financial.expense_repo.get_by_report_and_id(report.id, expense.id).amount == Decimal(
+    assert financial.expense_repo.get_by_report_and_line_id(report.id, expense.id).amount == Decimal(
         "300.00"
     )
 

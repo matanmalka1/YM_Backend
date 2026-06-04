@@ -1,6 +1,7 @@
 """Repository for AnnualReportExpenseLine entities."""
 
 from decimal import Decimal
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -9,10 +10,9 @@ from app.annual_reports.models.annual_report_expense_line import (
     AnnualReportExpenseLine,
     ExpenseCategoryType,
 )
-from app.common.repositories.base_repository import BaseRepository
 
 
-class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
+class AnnualReportExpenseRepository:
     _UPDATABLE_FIELDS = {
         "category",
         "amount",
@@ -25,7 +25,7 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
     def __init__(self, db: Session):
         self.db = db
 
-    def add_line(
+    def create_for_report(
         self,
         annual_report_id: int,
         category: ExpenseCategoryType,
@@ -55,13 +55,7 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
             .order_by(AnnualReportExpenseLine.category.asc())
         ).all()
 
-    def get_by_id(self, line_id: int) -> AnnualReportExpenseLine | None:
-        raise NotImplementedError(
-            "AnnualReportExpenseRepository.get_by_id is unsafe for annual report financial lines; "
-            "use get_by_report_and_id(report_id, line_id)."
-        )
-
-    def get_by_report_and_id(
+    def get_by_report_and_line_id(
         self, annual_report_id: int, line_id: int
     ) -> AnnualReportExpenseLine | None:
         return self.db.scalars(
@@ -71,18 +65,9 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
             )
         ).first()
 
-    def update(self, line_id: int, **fields) -> AnnualReportExpenseLine | None:
-        raise NotImplementedError(
-            "AnnualReportExpenseRepository.update is unsafe; "
-            "use update_for_report(report_id, line_id, **fields)."
-        )
-
-    def update_for_report(
-        self, annual_report_id: int, line_id: int, **fields
-    ) -> AnnualReportExpenseLine | None:
-        line = self.get_by_report_and_id(annual_report_id, line_id)
-        if not line:
-            return None
+    def apply_updates(
+        self, line: AnnualReportExpenseLine, fields: dict[str, Any]
+    ) -> AnnualReportExpenseLine:
         for k, v in fields.items():
             if k not in self._UPDATABLE_FIELDS:
                 raise ValueError(f"Unsupported expense line update field: {k}")
@@ -90,25 +75,9 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
         self.db.flush()
         return line
 
-    def delete(
-        self,
-        line_id: int,
-        deleted_by: int | None = None,  # pylint: disable=unused-argument
-        *,
-        hard: bool = False,  # pylint: disable=unused-argument
-    ) -> bool:
-        raise NotImplementedError(
-            "AnnualReportExpenseRepository.delete is unsafe; "
-            "use delete_for_report(report_id, line_id)."
-        )
-
-    def delete_for_report(self, annual_report_id: int, line_id: int) -> bool:
-        line = self.get_by_report_and_id(annual_report_id, line_id)
-        if not line:
-            return False
+    def delete_line(self, line: AnnualReportExpenseLine) -> None:
         self.db.delete(line)
         self.db.flush()
-        return True
 
     def total_expenses(self, annual_report_id: int) -> Decimal:
         """Sum of gross (unrecognized) expense amounts."""

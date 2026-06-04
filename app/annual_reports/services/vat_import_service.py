@@ -167,37 +167,37 @@ class VatImportService:
                     "mutation_source": _VAT_IMPORT_SOURCE,
                     "mutation_reason": "force_replace",
                 }
-                if self.income_repo.delete_for_report(report_id, line.id):
-                    lines_deleted += 1
-                    audit.append(
-                        entity_type=ENTITY_ANNUAL_REPORT,
-                        entity_id=report_id,
-                        actor_id=actor_id,
-                        action=ACTION_INCOME_DELETED,
-                        old_value=old_value,
-                        note=(
-                            f"mutation_source={_VAT_IMPORT_SOURCE}; "
-                            f"reason=force_replace; line_id={line.id}"
-                        ),
-                    )
+                self.income_repo.delete_line(line)
+                lines_deleted += 1
+                audit.append(
+                    entity_type=ENTITY_ANNUAL_REPORT,
+                    entity_id=report_id,
+                    actor_id=actor_id,
+                    action=ACTION_INCOME_DELETED,
+                    old_value=old_value,
+                    note=(
+                        f"mutation_source={_VAT_IMPORT_SOURCE}; "
+                        f"reason=force_replace; line_id={line.id}"
+                    ),
+                )
             for line in existing_expenses:
                 old_value = expense_line_snapshot(line) | {
                     "mutation_source": _VAT_IMPORT_SOURCE,
                     "mutation_reason": "force_replace",
                 }
-                if self.expense_repo.delete_for_report(report_id, line.id):
-                    lines_deleted += 1
-                    audit.append(
-                        entity_type=ENTITY_ANNUAL_REPORT,
-                        entity_id=report_id,
-                        actor_id=actor_id,
-                        action=ACTION_EXPENSE_DELETED,
-                        old_value=old_value,
-                        note=(
-                            f"mutation_source={_VAT_IMPORT_SOURCE}; "
-                            f"reason=force_replace; line_id={line.id}"
-                        ),
-                    )
+                self.expense_repo.delete_line(line)
+                lines_deleted += 1
+                audit.append(
+                    entity_type=ENTITY_ANNUAL_REPORT,
+                    entity_id=report_id,
+                    actor_id=actor_id,
+                    action=ACTION_EXPENSE_DELETED,
+                    old_value=old_value,
+                    note=(
+                        f"mutation_source={_VAT_IMPORT_SOURCE}; "
+                        f"reason=force_replace; line_id={line.id}"
+                    ),
+                )
 
         income_total = _decimal_amount(
             self.vat_agg_repo.sum_income_net_by_client_year(
@@ -216,7 +216,7 @@ class VatImportService:
 
         income_lines_created = 0
         if income_total > 0:
-            line = self.income_repo.add_line(
+            line = self.income_repo.create_for_report(
                 report_id,
                 IncomeSourceType.BUSINESS,
                 income_total,
@@ -309,7 +309,7 @@ class VatImportService:
                     )
                 )
                 continue
-            line = self.expense_repo.add_line(
+            line = self.expense_repo.create_for_report(
                 annual_report_id=report_id,
                 category=cat,
                 amount=total,
