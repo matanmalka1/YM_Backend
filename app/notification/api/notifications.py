@@ -1,10 +1,12 @@
 """Notification center HTTP endpoints."""
 
 import datetime
+from enum import IntEnum
 from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
+from app.core.exceptions import AppError
 from app.notification.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -18,12 +20,15 @@ from app.notification.schemas.notification_schemas import (
     NotificationSendRequest,
     NotificationSummaryResponse,
 )
-from app.core.exceptions import AppError
 from app.notification.services.notification_service import NotificationService
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
-_ALLOWED_PAGE_SIZES = {25, 50}
+
+class NotificationPageSize(IntEnum):
+    small = 25
+    large = 50
+
 
 router = APIRouter(
     prefix="/notifications",
@@ -44,18 +49,13 @@ def list_notifications(
     date_from: datetime.datetime | None = None,
     date_to: datetime.datetime | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(25, ge=1, le=50),
+    page_size: NotificationPageSize = Query(NotificationPageSize.small),
 ):
-    if page_size not in _ALLOWED_PAGE_SIZES:
-        raise AppError(
-            f"page_size חייב להיות אחד מהערכים: {sorted(_ALLOWED_PAGE_SIZES)}",
-            "NOTIFICATION.INVALID_PAGE_SIZE",
-            status_code=422,
-        )
     svc = NotificationService(db)
+    page_size_value = int(page_size)
     items, total = svc.list_paginated(
         page=page,
-        page_size=page_size,
+        page_size=page_size_value,
         client_record_id=client_record_id,
         business_id=business_id,
         status=status,
@@ -69,7 +69,7 @@ def list_notifications(
         items=items,
         total=total,
         page=page,
-        page_size=page_size,
+        page_size=page_size_value,
     )
 
 

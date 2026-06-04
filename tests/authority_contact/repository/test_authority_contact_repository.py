@@ -46,11 +46,12 @@ def test_authority_contact_repository_crud_flow(test_db):
         == 1
     )
 
-    updated = repo.update(contact_a.id, phone="999")
+    updated = repo.update_for_client(client.id, contact_a.id, phone="999")
+    assert updated is not None
     assert updated.phone == "999"
     assert updated.updated_at is not None
 
-    deleted = repo.delete(contact_a.id, deleted_by=user.id)
+    deleted = repo.delete_for_client(client.id, contact_a.id, deleted_by=user.id)
     assert deleted is True
     assert contact_a.deleted_at is not None
     assert contact_a.deleted_by == user.id

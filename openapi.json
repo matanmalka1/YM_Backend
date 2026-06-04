@@ -3956,20 +3956,29 @@
         }
       }
     },
-    "/api/v1/clients/authority-contacts/{contact_id}": {
+    "/api/v1/clients/{client_record_id}/authority-contacts/{contact_id}": {
       "get": {
         "tags": [
           "authority-contacts"
         ],
         "summary": "Get Authority Contact",
-        "description": "Get a single authority contact by ID.",
-        "operationId": "get_authority_contact_api_v1_clients_authority_contacts__contact_id__get",
+        "description": "Get a single authority contact by ID, scoped to client.",
+        "operationId": "get_authority_contact_api_v1_clients__client_record_id__authority_contacts__contact_id__get",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "contact_id",
             "in": "path",
@@ -4008,14 +4017,23 @@
           "authority-contacts"
         ],
         "summary": "Update Authority Contact",
-        "description": "Update authority contact.",
-        "operationId": "update_authority_contact_api_v1_clients_authority_contacts__contact_id__patch",
+        "description": "Update authority contact, scoped to client.",
+        "operationId": "update_authority_contact_api_v1_clients__client_record_id__authority_contacts__contact_id__patch",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "contact_id",
             "in": "path",
@@ -4064,14 +4082,23 @@
           "authority-contacts"
         ],
         "summary": "Delete Authority Contact",
-        "description": "Delete authority contact (ADVISOR only).",
-        "operationId": "delete_authority_contact_api_v1_clients_authority_contacts__contact_id__delete",
+        "description": "Delete authority contact (ADVISOR only), scoped to client.",
+        "operationId": "delete_authority_contact_api_v1_clients__client_record_id__authority_contacts__contact_id__delete",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "contact_id",
             "in": "path",
@@ -8250,11 +8277,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "type": "integer",
-              "maximum": 50,
-              "minimum": 1,
-              "default": 25,
-              "title": "Page Size"
+              "$ref": "#/components/schemas/NotificationPageSize",
+              "default": 25
             }
           }
         ],
@@ -21075,6 +21099,14 @@
           "page_size"
         ],
         "title": "NotificationListResponse"
+      },
+      "NotificationPageSize": {
+        "type": "integer",
+        "enum": [
+          25,
+          50
+        ],
+        "title": "NotificationPageSize"
       },
       "NotificationPreviewRequest": {
         "properties": {

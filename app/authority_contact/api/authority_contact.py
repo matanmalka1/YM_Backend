@@ -79,42 +79,46 @@ def list_authority_contacts(
 
 
 @router.get(
-    "/authority-contacts/{contact_id}",
+    "/{client_record_id}/authority-contacts/{contact_id}",
     response_model=AuthorityContactResponse,
 )
 def get_authority_contact(
+    client_record_id: int,
     contact_id: int,
     db: DBSession,
     _: CurrentUser,
 ):
-    """Get a single authority contact by ID."""
+    """Get a single authority contact by ID, scoped to client."""
     service = AuthorityContactService(db)
-    return _to_contact_response(service.get_contact(contact_id))
+    return _to_contact_response(service.get_contact(client_record_id, contact_id))
 
 
 @router.patch(
-    "/authority-contacts/{contact_id}",
+    "/{client_record_id}/authority-contacts/{contact_id}",
     response_model=AuthorityContactResponse,
 )
 def update_authority_contact(
+    client_record_id: int,
     contact_id: int,
     request: AuthorityContactUpdateRequest,
     db: DBSession,
     _: CurrentUser,
 ):
-    """Update authority contact."""
+    """Update authority contact, scoped to client."""
     service = AuthorityContactService(db)
     update_data = request.model_dump(exclude_unset=True)
-    contact = service.update_contact(contact_id, **update_data)
+    contact = service.update_contact(client_record_id, contact_id, **update_data)
     return _to_contact_response(contact)
 
 
 @router.delete(
-    "/authority-contacts/{contact_id}",
+    "/{client_record_id}/authority-contacts/{contact_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
-def delete_authority_contact(contact_id: int, db: DBSession, user: CurrentUser):
-    """Delete authority contact (ADVISOR only)."""
+def delete_authority_contact(
+    client_record_id: int, contact_id: int, db: DBSession, user: CurrentUser
+):
+    """Delete authority contact (ADVISOR only), scoped to client."""
     service = AuthorityContactService(db)
-    service.delete_contact(contact_id, actor_id=user.id)
+    service.delete_contact(client_record_id, contact_id, actor_id=user.id)

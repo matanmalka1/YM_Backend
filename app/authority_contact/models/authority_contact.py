@@ -9,22 +9,9 @@ Israeli context:
   These contacts are referenced in correspondence entries and used when
   filing objections or scheduling hearings.
 
-AuthorityContactLink — many-to-many between contacts and clients/businesses.
-
-  A contact can serve multiple clients (e.g. same assessing officer handles
-  several of the advisor's clients in the same district).
-  A client can have multiple contacts (one per authority type).
-  business_id is optional — some contacts are relevant to all businesses
-  under a client; others are specific to one business (e.g. VAT branch for
-  the company only).
-
-Design decisions:
-- AuthorityContact.business_id: primary association (the business that
-  "owns" this contact record). AuthorityContactLink handles sharing.
-- UniqueConstraint on (contact_id, client_id, business_id) prevents duplicate links.
-  business_id=NULL is a valid distinct value in this constraint (PostgreSQL/SQLite).
-- No soft delete on AuthorityContactLink — links are simply deleted when removed.
-- updated_at on AuthorityContact — contact details (phone, office) change over time.
+Current design:
+  Authority contacts are scoped directly to client_record_id.
+  Each contact belongs to one client record and is soft-deleted via deleted_at/deleted_by.
 """
 
 from datetime import datetime

@@ -44,15 +44,16 @@ class AuthorityContactService:
 
     def update_contact(
         self,
+        client_record_id: int,
         contact_id: int,
         **fields,
     ) -> AuthorityContact:
-        """Update contact details."""
+        """Update contact details, scoped to client_record_id."""
         if "contact_type" in fields:
             ct = fields["contact_type"]
             fields["contact_type"] = ct if isinstance(ct, ContactType) else ContactType(ct)
 
-        updated = self.contact_repo.update(contact_id, **fields)
+        updated = self.contact_repo.update_for_client(client_record_id, contact_id, **fields)
         if not updated:
             raise NotFoundError(f"איש קשר {contact_id} לא נמצא", "AUTHORITY_CONTACT.NOT_FOUND")
         return updated
@@ -75,15 +76,17 @@ class AuthorityContactService:
         total = self.contact_repo.count_by_client_record(client_record_id, contact_type_enum)
         return items, total
 
-    def delete_contact(self, contact_id: int, actor_id: int) -> None:
-        """Soft-delete contact."""
-        success = self.contact_repo.delete(contact_id, deleted_by=actor_id)
+    def delete_contact(self, client_record_id: int, contact_id: int, actor_id: int) -> None:
+        """Soft-delete contact, scoped to client_record_id."""
+        success = self.contact_repo.delete_for_client(
+            client_record_id, contact_id, deleted_by=actor_id
+        )
         if not success:
             raise NotFoundError(f"איש קשר {contact_id} לא נמצא", "AUTHORITY_CONTACT.NOT_FOUND")
 
-    def get_contact(self, contact_id: int) -> AuthorityContact:
-        """Get contact by ID."""
-        contact = self.contact_repo.get_by_id(contact_id)
+    def get_contact(self, client_record_id: int, contact_id: int) -> AuthorityContact:
+        """Get contact by ID, scoped to client_record_id."""
+        contact = self.contact_repo.get_for_client(client_record_id, contact_id)
         if not contact:
             raise NotFoundError(f"איש קשר {contact_id} לא נמצא", "AUTHORITY_CONTACT.NOT_FOUND")
         return contact

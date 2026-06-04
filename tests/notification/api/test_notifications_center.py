@@ -45,21 +45,48 @@ def _notification(
     return item
 
 
-def test_page_size_allowed_values_and_invalid_value(client, test_db, advisor_headers):
+def test_list_notifications_accepts_page_size_25(client, test_db, advisor_headers):
     seeded = _client(test_db, "page-size")
     _notification(test_db, seeded.id)
     test_db.commit()
 
-    assert (
-        client.get("/api/v1/notifications?page_size=25", headers=advisor_headers).status_code == 200
-    )
-    assert (
-        client.get("/api/v1/notifications?page_size=50", headers=advisor_headers).status_code == 200
-    )
+    response = client.get("/api/v1/notifications?page_size=25", headers=advisor_headers)
 
-    invalid = client.get("/api/v1/notifications?page_size=30", headers=advisor_headers)
-    assert invalid.status_code == 422
-    assert invalid.json()["error"]["code"] == "NOTIFICATION.INVALID_PAGE_SIZE"
+    assert response.status_code == 200
+    assert response.json()["page_size"] == 25
+
+
+def test_list_notifications_accepts_page_size_50(client, test_db, advisor_headers):
+    seeded = _client(test_db, "page-size-50")
+    _notification(test_db, seeded.id)
+    test_db.commit()
+
+    response = client.get("/api/v1/notifications?page_size=50", headers=advisor_headers)
+
+    assert response.status_code == 200
+    assert response.json()["page_size"] == 50
+
+
+def test_list_notifications_rejects_page_size_30(client, advisor_headers):
+    response = client.get("/api/v1/notifications?page_size=30", headers=advisor_headers)
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "validation_error"
+
+
+def test_list_notifications_openapi_page_size_contract_is_enum(client):
+    schema = client.app.openapi()
+    parameters = schema["paths"]["/api/v1/notifications"]["get"]["parameters"]
+    page_size_schema = next(
+        parameter["schema"] for parameter in parameters if parameter["name"] == "page_size"
+    )
+    if "$ref" in page_size_schema:
+        schema_name = page_size_schema["$ref"].removeprefix("#/components/schemas/")
+        page_size_schema = schema["components"]["schemas"][schema_name]
+
+    assert page_size_schema["enum"] == [25, 50]
+    assert "minimum" not in page_size_schema
+    assert "maximum" not in page_size_schema
 
 
 def test_trigger_filter_returns_only_matching_records(client, test_db, advisor_headers):

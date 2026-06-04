@@ -71,25 +71,33 @@ class AuthorityContactRepository(BaseRepository[AuthorityContact]):
             select(func.count(AuthorityContact.id)).where(
                 *self._base_where(client_record_id, contact_type)
             )
-        )
+        ) or 0
 
-    def update(self, contact_id: int, **fields) -> AuthorityContact | None:
-        """Update contact fields."""
-        contact = self.get_by_id(contact_id)
+    def get_for_client(
+        self, client_record_id: int, contact_id: int
+    ) -> AuthorityContact | None:
+        stmt = (
+            select(AuthorityContact)
+            .where(
+                AuthorityContact.id == contact_id,
+                AuthorityContact.client_record_id == client_record_id,
+                AuthorityContact.deleted_at.is_(None),
+            )
+        )
+        return self.db.scalars(stmt).first()
+
+    def update_for_client(
+        self, client_record_id: int, contact_id: int, **fields
+    ) -> AuthorityContact | None:
+        contact = self.get_for_client(client_record_id, contact_id)
         return self._update_entity(contact, touch_updated_at=True, **fields)
 
-    def delete(
-        self,
-        contact_id: int,
-        deleted_by: int | None = None,
-        *,
-        hard: bool = False,
+    def delete_for_client(
+        self, client_record_id: int, contact_id: int, deleted_by: int | None = None
     ) -> bool:
-        """Soft-delete contact, preserving the record for audit."""
-        contact = self.get_by_id(contact_id)
+        contact = self.get_for_client(client_record_id, contact_id)
         if not contact:
             return False
-
         contact.deleted_at = utcnow()
         contact.deleted_by = deleted_by
         self.db.flush()

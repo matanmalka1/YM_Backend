@@ -12,12 +12,8 @@ from app.core.exceptions import NotFoundError
 from tests.helpers.identity import seed_client_identity
 
 
-def _client(db):
-    client = seed_client_identity(
-        db,
-        full_name="AC Service Client",
-        id_number="888888888",
-    )
+def _client(db, id_number: str = "888888888"):
+    client = seed_client_identity(db, full_name="AC Service Client", id_number=id_number)
     db.commit()
     return client
 
@@ -29,34 +25,85 @@ def test_add_contact_missing_client_raises_not_found(test_db):
         service.add_contact(
             client_record_id=999,
             contact_type=ContactType.VAT_BRANCH,
-            name="Missing Business",
+            name="Missing Client",
         )
     assert exc_info.value.code == "CLIENT.NOT_FOUND"
 
 
 def test_update_contact_missing_raises_not_found(test_db):
+    client = _client(test_db)
     service = AuthorityContactService(test_db)
 
     with pytest.raises(NotFoundError) as exc_info:
-        service.update_contact(999, name="Nobody")
+        service.update_contact(client.id, 999, name="Nobody")
+
+    assert exc_info.value.code == "AUTHORITY_CONTACT.NOT_FOUND"
+
+
+def test_update_contact_wrong_client_raises_not_found(test_db):
+    owner = _client(test_db, id_number="111000111")
+    other = _client(test_db, id_number="222000222")
+    repo = AuthorityContactRepository(test_db)
+    contact = repo.create(
+        client_record_id=owner.id, contact_type=ContactType.VAT_BRANCH, name="Real Contact"
+    )
+    service = AuthorityContactService(test_db)
+
+    with pytest.raises(NotFoundError) as exc_info:
+        service.update_contact(other.id, contact.id, name="Stolen")
 
     assert exc_info.value.code == "AUTHORITY_CONTACT.NOT_FOUND"
 
 
 def test_delete_contact_missing_raises_not_found(test_db):
+    client = _client(test_db)
     service = AuthorityContactService(test_db)
 
     with pytest.raises(NotFoundError) as exc_info:
-        service.delete_contact(999, actor_id=1)
+        service.delete_contact(client.id, 999, actor_id=1)
 
     assert exc_info.value.code == "AUTHORITY_CONTACT.NOT_FOUND"
 
 
-def test_get_contact_missing_raises_not_found(test_db):
+def test_delete_contact_wrong_client_raises_not_found(test_db):
+    owner = _client(test_db, id_number="333000333")
+    other = _client(test_db, id_number="444000444")
+    repo = AuthorityContactRepository(test_db)
+    contact = repo.create(
+        client_record_id=owner.id, contact_type=ContactType.VAT_BRANCH, name="Real Contact"
+    )
     service = AuthorityContactService(test_db)
 
     with pytest.raises(NotFoundError) as exc_info:
-        service.get_contact(999)
+        service.delete_contact(other.id, contact.id, actor_id=1)
+
+    assert exc_info.value.code == "AUTHORITY_CONTACT.NOT_FOUND"
+
+    # Original contact untouched
+    assert repo.get_by_id(contact.id) is not None
+
+
+def test_get_contact_missing_raises_not_found(test_db):
+    client = _client(test_db)
+    service = AuthorityContactService(test_db)
+
+    with pytest.raises(NotFoundError) as exc_info:
+        service.get_contact(client.id, 999)
+
+    assert exc_info.value.code == "AUTHORITY_CONTACT.NOT_FOUND"
+
+
+def test_get_contact_wrong_client_raises_not_found(test_db):
+    owner = _client(test_db, id_number="555000555")
+    other = _client(test_db, id_number="666000666")
+    repo = AuthorityContactRepository(test_db)
+    contact = repo.create(
+        client_record_id=owner.id, contact_type=ContactType.VAT_BRANCH, name="Real Contact"
+    )
+    service = AuthorityContactService(test_db)
+
+    with pytest.raises(NotFoundError) as exc_info:
+        service.get_contact(other.id, contact.id)
 
     assert exc_info.value.code == "AUTHORITY_CONTACT.NOT_FOUND"
 
@@ -91,7 +138,7 @@ def test_repository_soft_delete_marks_deleted_metadata(test_db):
         name="To Delete",
     )
 
-    deleted = repo.delete(contact.id, deleted_by=42)
+    deleted = repo.delete_for_client(client.id, contact.id, deleted_by=42)
 
     assert deleted is True
     assert repo.get_by_id(contact.id) is None
