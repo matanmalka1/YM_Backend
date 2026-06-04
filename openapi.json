@@ -4249,16 +4249,9 @@
           {
             "name": "X-Idempotency-Key",
             "in": "header",
-            "required": false,
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
               "title": "X-Idempotency-Key"
             }
           }
@@ -6820,16 +6813,9 @@
           {
             "name": "X-Idempotency-Key",
             "in": "header",
-            "required": false,
+            "required": true,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
+              "type": "string",
               "title": "X-Idempotency-Key"
             }
           }
@@ -11955,7 +11941,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/UserRole"
                 },
                 {
                   "type": "null"
@@ -11971,7 +11957,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/WorkQueueSourceType"
                 },
                 {
                   "type": "null"
