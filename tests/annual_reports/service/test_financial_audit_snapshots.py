@@ -26,6 +26,7 @@ from app.audit.constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.models.entity_audit_log import EntityAuditLog
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 from tests.helpers.identity import seed_client_identity
 
@@ -78,6 +79,22 @@ def test_income_delete_stores_old_value_snapshot(test_db, test_user):
         "amount": "123.45",
         "description": "Payroll",
     }
+
+
+def test_manual_financial_mutation_blocks_missing_client_record(test_db, test_user):
+    report = _create_report(test_db, test_user)
+    ClientRecordRepository(test_db).soft_delete(report.client_record_id, deleted_by=test_user.id)
+    service = AnnualReportFinancialService(test_db)
+
+    with pytest.raises(NotFoundError) as exc_info:
+        service.add_income(
+            report.id,
+            "salary",
+            Decimal("100.00"),
+            actor_id=test_user.id,
+        )
+
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_expense_delete_stores_old_value_snapshot(test_db, test_user):

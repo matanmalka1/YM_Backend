@@ -6,12 +6,13 @@ from enum import Enum
 from sqlalchemy.orm import Session
 
 from app.annual_reports.services.messages import (
+    ANNUAL_REPORT_CLIENT_NOT_FOUND,
     CLIENT_CLOSED_FINANCIAL_MUTATION_ERROR,
     CLIENT_FROZEN_FINANCIAL_MUTATION_ERROR,
 )
 from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import ForbiddenError
+from app.core.exceptions import ForbiddenError, NotFoundError
 
 
 def audit_scalar(field_name: str, value):
@@ -53,7 +54,12 @@ def expense_line_snapshot(line) -> dict:
 
 def assert_client_allows_financial_mutation(db: Session, client_record_id: int) -> None:
     client_record = ClientRecordRepository(db).get_by_id(client_record_id)
-    if client_record and client_record.status == ClientStatus.CLOSED:
+    if client_record is None:
+        raise NotFoundError(
+            ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
+            "CLIENT_RECORD.NOT_FOUND",
+        )
+    if client_record.status == ClientStatus.CLOSED:
         raise ForbiddenError(CLIENT_CLOSED_FINANCIAL_MUTATION_ERROR, "CLIENT.CLOSED")
-    if client_record and client_record.status == ClientStatus.FROZEN:
+    if client_record.status == ClientStatus.FROZEN:
         raise ForbiddenError(CLIENT_FROZEN_FINANCIAL_MUTATION_ERROR, "CLIENT.FROZEN")

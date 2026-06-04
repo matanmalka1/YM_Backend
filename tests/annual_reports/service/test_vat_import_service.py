@@ -18,7 +18,8 @@ from app.audit.constants import (
 from app.audit.models.entity_audit_log import EntityAuditLog
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
-from app.core.exceptions import AppError, ForbiddenError
+from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError
 from app.common.enums import VatType
 from app.vat_reports.models.vat_enums import ExpenseCategory, InvoiceType, VatWorkItemStatus
 from app.vat_reports.models.vat_invoice import VatInvoice
@@ -256,6 +257,17 @@ def test_vat_auto_populate_requires_actor_for_audited_mutation(
     assert exc_info.value.code == "ANNUAL_REPORT.AUDIT_ACTOR_REQUIRED"
 
 
+def test_vat_auto_populate_blocks_missing_client_record(test_db, test_user):
+    client, report = _create_report(test_db, test_user, "MISSING")
+    ClientRecordRepository(test_db).soft_delete(client.id, deleted_by=test_user.id)
+    service = VatImportService(test_db)
+
+    with pytest.raises(NotFoundError) as exc_info:
+        service.auto_populate(report.id, force=True, actor_id=test_user.id)
+
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
+
+
 @pytest.mark.parametrize("status", [ClientStatus.CLOSED, ClientStatus.FROZEN])
 def test_vat_auto_populate_blocks_closed_or_frozen_clients_even_force(
     test_db, test_user, monkeypatch, status
@@ -278,9 +290,10 @@ def test_vat_auto_populate_blocks_closed_or_frozen_clients_even_force(
         lambda *args: {},
     )
 
-    with pytest.raises(ForbiddenError):
+    with pytest.raises(ForbiddenError) as exc_info:
         service.auto_populate(report.id, force=True, actor_id=test_user.id)
 
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
     result_count = len(financial.income_repo.list_by_report(report.id))
     assert result_count == 1
 
@@ -300,28 +313,34 @@ def test_manual_financial_mutations_block_closed_or_frozen_clients(test_db, test
     client_record.status = status
     test_db.flush()
 
-    with pytest.raises(ForbiddenError):
+    with pytest.raises(ForbiddenError) as exc_info:
         financial.add_income(report.id, "salary", Decimal("100.00"), actor_id=test_user.id)
-    with pytest.raises(ForbiddenError):
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
+    with pytest.raises(ForbiddenError) as exc_info:
         financial.add_expense(report.id, "office_rent", Decimal("100.00"), actor_id=test_user.id)
-    with pytest.raises(ForbiddenError):
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
+    with pytest.raises(ForbiddenError) as exc_info:
         financial.update_income(
             report.id,
             income.id,
             actor_id=test_user.id,
             amount=Decimal("600.00"),
         )
-    with pytest.raises(ForbiddenError):
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
+    with pytest.raises(ForbiddenError) as exc_info:
         financial.update_expense(
             report.id,
             expense.id,
             actor_id=test_user.id,
             amount=Decimal("400.00"),
         )
-    with pytest.raises(ForbiddenError):
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
+    with pytest.raises(ForbiddenError) as exc_info:
         financial.delete_income(report.id, income.id, actor_id=test_user.id)
-    with pytest.raises(ForbiddenError):
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
+    with pytest.raises(ForbiddenError) as exc_info:
         financial.delete_expense(report.id, expense.id, actor_id=test_user.id)
+    assert exc_info.value.code == f"CLIENT.{status.value.upper()}"
 
     assert financial.income_repo.get_by_report_and_line_id(report.id, income.id).amount == Decimal(
         "500.00"
