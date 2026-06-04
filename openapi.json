@@ -6213,6 +6213,72 @@
         }
       }
     },
+    "/api/v1/binders/{binder_id}/intakes/{intake_id}": {
+      "patch": {
+        "tags": [
+          "binders-history"
+        ],
+        "summary": "Patch Binder Intake",
+        "operationId": "patch_binder_intake_api_v1_binders__binder_id__intakes__intake_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "binder_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Binder Id"
+            }
+          },
+          {
+            "name": "intake_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Intake Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BinderIntakePatchRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BinderIntakeResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clients/{client_record_id}/binders": {
       "get": {
         "tags": [
@@ -13016,6 +13082,18 @@
             "format": "date",
             "title": "Due Date"
           },
+          "due_date_effective": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date Effective"
+          },
           "expected_amount": {
             "type": "string",
             "format": "decimal",
@@ -13248,6 +13326,18 @@
             "type": "string",
             "format": "date",
             "title": "Due Date"
+          },
+          "due_date_effective": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date Effective"
           },
           "expected_amount": {
             "type": "string",
@@ -16274,6 +16364,111 @@
           "created_at"
         ],
         "title": "BinderIntakeMaterialResponse"
+      },
+      "BinderIntakePatchRequest": {
+        "properties": {
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "received_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "client_record_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Record Id"
+          },
+          "binder_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Binder Id"
+          },
+          "business_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Ids"
+          },
+          "annual_report_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Report Ids"
+          },
+          "vat_report_ids": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "integer"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Report Ids"
+          }
+        },
+        "type": "object",
+        "title": "BinderIntakePatchRequest",
+        "description": "עריכת אירוע קבלה קיים."
       },
       "BinderIntakeResponse": {
         "properties": {

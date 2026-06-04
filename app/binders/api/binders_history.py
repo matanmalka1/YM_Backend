@@ -1,7 +1,13 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.binders.schemas.binder import BinderHistoryResponse, BinderIntakeListResponse
+from app.binders.schemas.binder import (
+    BinderHistoryResponse,
+    BinderIntakeListResponse,
+    BinderIntakePatchRequest,
+    BinderIntakeResponse,
+)
 from app.binders.services.binder_history_service import BinderHistoryService
+from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.binders.services.messages import BINDER_NOT_FOUND
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -37,3 +43,20 @@ def get_binder_intakes(binder_id: int, db: DBSession, user: CurrentUser):
     service = BinderHistoryService(db)
     intakes = service.get_binder_intakes(binder_id)
     return BinderIntakeListResponse(binder_id=binder_id, intakes=intakes)
+
+
+@router.patch("/{binder_id}/intakes/{intake_id}", response_model=BinderIntakeResponse)
+def patch_binder_intake(
+    binder_id: int,
+    intake_id: int,
+    request: BinderIntakePatchRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    intake = BinderIntakeEditService(db).edit_intake(
+        intake_id=intake_id,
+        actor_id=user.id,
+        patch=request.model_dump(exclude_none=True),
+        binder_id=binder_id,
+    )
+    return BinderIntakeResponse.model_validate(intake)

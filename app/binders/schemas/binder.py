@@ -131,6 +131,19 @@ class BinderReceiveResult(BaseModel):
     is_new_binder: bool
 
 
+class BinderIntakePatchRequest(BaseModel):
+    """עריכת אירוע קבלה קיים."""
+
+    received_at: date | None = None
+    received_by: int | None = None
+    notes: str | None = None
+    client_record_id: int | None = None
+    binder_id: int | None = None
+    business_ids: list[int] | None = None
+    annual_report_ids: list[int] | None = None
+    vat_report_ids: list[int] | None = None
+
+
 class BinderMarkReadyForHandoverBulkRequest(BaseModel):
     client_record_id: int
     until_period_year: int

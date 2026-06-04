@@ -23,6 +23,7 @@ from app.binders.repositories.binder_intake_repository import BinderIntakeReposi
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.messages import (
     BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED,
+    BINDER_INTAKE_NOT_FOUND,
     BINDER_NOT_FOUND,
 )
 from app.businesses.repositories.business_repository import BusinessRepository
@@ -59,6 +60,7 @@ class BinderIntakeEditService:
         intake_id: int,
         actor_id: int,
         patch: dict[str, Any],
+        binder_id: int | None = None,
     ) -> BinderIntake:
         """
         Apply a partial update to a BinderIntake.
@@ -67,13 +69,12 @@ class BinderIntakeEditService:
         - intake fields: received_at, received_by, notes
         - transfer fields: client_record_id, binder_id
         - linked FK replacements: business_ids, annual_report_ids, vat_report_ids
+
+        binder_id: when provided, the intake must belong to that binder (scoped lookup).
         """
         intake = self.intake_repo.get_by_id(intake_id)
-        if not intake:
-            raise NotFoundError(
-                BINDER_NOT_FOUND.format(binder_id=intake_id),
-                "BINDER.NOT_FOUND",
-            )
+        if not intake or (binder_id is not None and intake.binder_id != binder_id):
+            raise NotFoundError(BINDER_INTAKE_NOT_FOUND, "BINDER_INTAKE.NOT_FOUND")
 
         normalized_patch = self._normalize_patch(patch)
 
@@ -137,7 +138,7 @@ class BinderIntakeEditService:
 
         materials = self.material_repo.list_by_intake(intake.id)
         self._validate_and_apply_fk_updates(
-            intake_id=intake.id,
+            intake=intake,
             actor_id=actor_id,
             materials=materials,
             attr_name="business_id",
@@ -147,7 +148,7 @@ class BinderIntakeEditService:
             owner_attr="legal_entity_id",
         )
         self._validate_and_apply_fk_updates(
-            intake_id=intake.id,
+            intake=intake,
             actor_id=actor_id,
             materials=materials,
             attr_name="annual_report_id",
@@ -157,7 +158,7 @@ class BinderIntakeEditService:
             owner_attr="client_record_id",
         )
         self._validate_and_apply_fk_updates(
-            intake_id=intake.id,
+            intake=intake,
             actor_id=actor_id,
             materials=materials,
             attr_name="vat_report_id",
@@ -214,7 +215,7 @@ class BinderIntakeEditService:
     def _validate_and_apply_fk_updates(
         self,
         *,
-        intake_id: int,
+        intake: BinderIntake,
         actor_id: int,
         materials: list[BinderIntakeMaterial],
         attr_name: str,
@@ -242,7 +243,7 @@ class BinderIntakeEditService:
                 continue
 
             self._apply_logged_change(
-                intake=self.intake_repo.get_by_id(intake_id),
+                intake=intake,
                 actor_id=actor_id,
                 field_name=f"material:{material.id}.{attr_name}",
                 target=material,

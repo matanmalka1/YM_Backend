@@ -17,6 +17,7 @@ BINDER_OFFICE_NUMBER_MISSING = (
 BINDER_HANDOVER_INVALID_BINDERS = (
     "לא ניתן לבצע מסירה: אחד או יותר מהקלסרים אינם מוכנים למסירה או אינם שייכים ללקוח זה"
 )
+BINDER_INTAKE_NOT_FOUND = "אירוע קבלת החומר לא נמצא"
 BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED = (
     "לא ניתן להעביר קבלה ללקוח אחר: אחד או יותר מהשדות המקושרים "
     '(עסק, דוח שנתי, דוח מע"מ) אינם שייכים ללקוח היעד'
