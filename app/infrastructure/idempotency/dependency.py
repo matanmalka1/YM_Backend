@@ -91,13 +91,8 @@ def require_idempotency_key(
     request: Request,
     user: AuthSubject = Depends(get_current_user),
     db: Session = Depends(get_db),
-    x_idempotency_key: str | None = Header(default=None, alias="X-Idempotency-Key"),
+    x_idempotency_key: str = Header(alias="X-Idempotency-Key"),
 ) -> IdempotencyGuard:
-    if not x_idempotency_key:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="מפתח אידמפוטנטיות חובה",
-        )
     set_idempotency_context(x_idempotency_key)
     return IdempotencyGuard(
         key=x_idempotency_key,

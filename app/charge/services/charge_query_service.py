@@ -176,6 +176,10 @@ class ChargeQueryService:
         raw = self.charge_repo.stats_by_status(
             client_record_id=client_record.id if client_record else None,
             charge_type=charge_type,
+            business_id=business_id,
+            period=period,
+            issued_after=issued_after,
+            issued_before=issued_before,
         )
 
         def _stat(key: str) -> ChargeStatusStat:

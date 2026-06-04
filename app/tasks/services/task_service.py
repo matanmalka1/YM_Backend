@@ -5,9 +5,10 @@ from typing import Any
 from sqlalchemy.orm import Session
 
 from app.common.services.base_service import BaseService
-from app.common.source_types import normalize_source_domain
+from app.common.source_types import WorkQueueSourceType, normalize_source_domain
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
+from app.users.models.user import UserRole
 from app.tasks.repositories.task_repository import TaskRepository
 from app.tasks.schemas.task import TaskCreateRequest, TaskUpdateRequest
 from app.tasks.services.source_validator import source_exists
@@ -47,8 +48,8 @@ class TaskService(BaseService):
         status: TaskStatus | None = None,
         priority: TaskPriority | None = None,
         assigned_to_user_id: int | None = None,
-        assigned_role: str | None = None,
-        source_domain: str | None = None,
+        assigned_role: UserRole | None = None,
+        source_domain: WorkQueueSourceType | None = None,
         source_id: int | None = None,
         due_before=None,
         due_after=None,

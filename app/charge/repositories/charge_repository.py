@@ -234,8 +234,12 @@ class ChargeRepository(BaseRepository[Charge]):
         self,
         client_record_id: int | None = None,
         charge_type: str | None = None,
+        business_id: int | None = None,
+        period: str | None = None,
+        issued_after: date | None = None,
+        issued_before: date | None = None,
     ) -> dict[str, dict]:
-        """Return count and total amount per status, ignoring status filter."""
+        """Return count and total amount per status for the same filter slice as the list."""
         stmt = scope_to_active_clients_stmt(
             select(
                 Charge.status,
@@ -248,6 +252,14 @@ class ChargeRepository(BaseRepository[Charge]):
             stmt = stmt.where(Charge.client_record_id == client_record_id)
         if charge_type:
             stmt = stmt.where(Charge.charge_type == charge_type)
+        if business_id is not None:
+            stmt = stmt.where(Charge.business_id == business_id)
+        if period is not None:
+            stmt = stmt.where(Charge.period == period)
+        if issued_after is not None:
+            stmt = stmt.where(Charge.issued_at >= issued_after)
+        if issued_before is not None:
+            stmt = stmt.where(Charge.issued_at <= issued_before)
         stmt = stmt.group_by(Charge.status)
         rows = self.db.execute(stmt).all()
         return {

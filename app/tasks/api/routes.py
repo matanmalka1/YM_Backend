@@ -4,6 +4,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Query, Response
 
+from app.common.source_types import WorkQueueSourceType
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.tasks.schemas.task import (
     TaskCreateRequest,
@@ -28,8 +29,8 @@ def list_tasks(
     status: TaskStatus | None = Query(None),
     priority: TaskPriority | None = Query(None),
     assigned_to_user_id: int | None = Query(None),
-    assigned_role: str | None = Query(None),
-    source_domain: str | None = Query(None),
+    assigned_role: UserRole | None = Query(None),
+    source_domain: WorkQueueSourceType | None = Query(None),
     source_id: int | None = Query(None),
     due_before: date | None = Query(None),
     due_after: date | None = Query(None),

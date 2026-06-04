@@ -6,7 +6,9 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
+from app.common.source_types import WorkQueueSourceType
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
+from app.users.models.user import UserRole
 
 
 def _apply_filters(
@@ -14,8 +16,8 @@ def _apply_filters(
     status: TaskStatus | None,
     priority: TaskPriority | None,
     assigned_to_user_id: int | None,
-    assigned_role: str | None,
-    source_domain: str | None,
+    assigned_role: UserRole | None,
+    source_domain: WorkQueueSourceType | None,
     source_id: int | None,
     due_before: date | None,
     due_after: date | None,
@@ -61,8 +63,8 @@ class TaskRepository(BaseRepository[Task]):
         status: TaskStatus | None = None,
         priority: TaskPriority | None = None,
         assigned_to_user_id: int | None = None,
-        assigned_role: str | None = None,
-        source_domain: str | None = None,
+        assigned_role: UserRole | None = None,
+        source_domain: WorkQueueSourceType | None = None,
         source_id: int | None = None,
         due_before: date | None = None,
         due_after: date | None = None,
