@@ -38,7 +38,7 @@ Ordered by severity.
 - [ ] **[HIGH]** 2026 NI ceiling in `ni_engine.py` is `622_920` — verify against 2026 NII circular
 - [ ] **[HIGH]** 2026 tax brackets in `tax_engine.py` — 5th-bracket ceiling appears lower than 2025; verify against 2026 ITA circular
 - [ ] **[HIGH]** Readiness check uses stale `tax_due/refund_due` — income/expense mutations already call `_invalidate_tax_if_open` but readiness gate still reads persisted values; ensure gate fails when values are cleared
-- [ ] **[HIGH]** `VatImportService.auto_populate` aggregates by `client_record_id` — incorrect for multi-business clients; require explicit `business_id` or add guard
+- [x] **[HIGH]** `VatImportService.auto_populate` aggregates by `client_record_id` — **accepted design.** Annual reports are client-scoped; Business is activity grouping only. Client-wide aggregation is correct. Do not add `business_id`. See `docs/domains/annual-reports.md` Decisions section and `test_vat_auto_populate_aggregates_all_businesses_for_client_year`.
 - [ ] **[MEDIUM]** `amend_report()` lives in `query_service.py` — write operation misplaced; move to `status_service.py`
 - [ ] **[MEDIUM]** `business_name` in `AnnualReportResponse` always equals `client.full_name` — remove or set to `None`; annual reports are client-scoped, not business-scoped
 - [ ] **[MEDIUM]** `advances_summary_service.py` and `get_detail_report` independently compute final balance — consolidate

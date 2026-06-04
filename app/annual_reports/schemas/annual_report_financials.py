@@ -195,6 +195,20 @@ class TaxPreviewResponse(BaseModel):
 # ── VAT auto-populate ─────────────────────────────────────────────────────────
 
 
+class VatAutoPopulateSkippedItem(BaseModel):
+    item_type: Literal["income", "expense"]
+    source: str
+    amount: ApiDecimal
+    reason: Literal["zero_total", "negative_total", "negative_source_contribution"]
+    annual_category: ExpenseCategoryType | None = None
+
+
+class VatAutoPopulateExpenseBreakdownItem(BaseModel):
+    annual_category: ExpenseCategoryType
+    amount: ApiDecimal
+    source_vat_categories: dict[str, ApiDecimal]
+
+
 class VatAutoPopulateResponse(BaseModel):
     annual_report_id: int
     income_lines_created: int
@@ -202,3 +216,6 @@ class VatAutoPopulateResponse(BaseModel):
     income_total: ApiDecimal
     expense_total: ApiDecimal
     lines_deleted: int = 0
+    skipped_items: list[VatAutoPopulateSkippedItem] = Field(default_factory=list)
+    warnings: list[str] = Field(default_factory=list)
+    expense_breakdown: list[VatAutoPopulateExpenseBreakdownItem] = Field(default_factory=list)

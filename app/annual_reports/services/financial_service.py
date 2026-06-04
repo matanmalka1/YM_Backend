@@ -40,10 +40,14 @@ from app.annual_reports.schemas.annual_report_financials import (
     TaxCalculationSaveResponse,
 )
 from app.annual_reports.services.labels import SCHEDULE_LABELS
+from app.annual_reports.services.financial_line_helpers import (
+    assert_client_allows_financial_mutation,
+    audit_scalar,
+    expense_line_snapshot,
+    income_line_snapshot,
+)
 from app.annual_reports.services.messages import (
     ANNUAL_REPORT_NOT_FOUND,
-    CLIENT_CLOSED_CREATE_WORK_ERROR,
-    CLIENT_FROZEN_CREATE_WORK_ERROR,
     CLIENT_NOT_APPROVED_REPORT_ISSUE,
     EXPENSE_LINE_NOT_FOUND,
     INCOME_LINE_NOT_FOUND,
@@ -67,9 +71,7 @@ from app.audit.constants import (
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.enums import ClientStatus
-from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import AppError, ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, NotFoundError
 from app.vat_reports.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -80,31 +82,6 @@ _PRE_SUBMISSION_STATUSES = {
     AnnualReportStatus.IN_PREPARATION,
     AnnualReportStatus.PENDING_CLIENT,
 }
-
-
-def audit_scalar(value):
-    return value.value if hasattr(value, "value") else str(value) if value is not None else None
-
-
-def income_line_snapshot(line) -> dict:
-    return {
-        "line_id": line.id,
-        "source_type": audit_scalar(line.source_type),
-        "amount": str(line.amount),
-        "description": line.description,
-    }
-
-
-def expense_line_snapshot(line) -> dict:
-    return {
-        "line_id": line.id,
-        "category": audit_scalar(line.category),
-        "amount": str(line.amount),
-        "recognition_rate": str(line.recognition_rate),
-        "external_document_reference": line.external_document_reference,
-        "supporting_document_id": line.supporting_document_id,
-        "description": line.description,
-    }
 
 
 class AnnualReportFinancialService:
@@ -133,11 +110,7 @@ class AnnualReportFinancialService:
         return report
 
     def _assert_client_allows_create(self, client_record_id: int) -> None:
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
-        if client_record and client_record.status == ClientStatus.CLOSED:
-            raise ForbiddenError(CLIENT_CLOSED_CREATE_WORK_ERROR, "CLIENT.CLOSED")
-        if client_record and client_record.status == ClientStatus.FROZEN:
-            raise ForbiddenError(CLIENT_FROZEN_CREATE_WORK_ERROR, "CLIENT.FROZEN")
+        assert_client_allows_financial_mutation(self.db, client_record_id)
 
     def add_income(
         self,
@@ -170,7 +143,8 @@ class AnnualReportFinancialService:
     def update_income(
         self, report_id: int, line_id: int, actor_id: int | None = None, **fields
     ) -> IncomeLineResponse:
-        self._get_report_or_raise(report_id)
+        report = self._get_report_or_raise(report_id)
+        assert_client_allows_financial_mutation(self.db, report.client_record_id)
         if "source_type" in fields and fields["source_type"] is not None:
             valid_sources = {e.value for e in IncomeSourceType}
             if fields["source_type"] not in valid_sources:
@@ -206,7 +180,8 @@ class AnnualReportFinancialService:
         return IncomeLineResponse.model_validate(line)
 
     def delete_income(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
-        self._get_report_or_raise(report_id)
+        report = self._get_report_or_raise(report_id)
+        assert_client_allows_financial_mutation(self.db, report.client_record_id)
         line = self.income_repo.get_by_report_and_id(report_id, line_id)
         if not line:
             raise NotFoundError(
@@ -274,7 +249,8 @@ class AnnualReportFinancialService:
     def update_expense(
         self, report_id: int, line_id: int, actor_id: int | None = None, **fields
     ) -> ExpenseLineResponse:
-        self._get_report_or_raise(report_id)
+        report = self._get_report_or_raise(report_id)
+        assert_client_allows_financial_mutation(self.db, report.client_record_id)
         if "category" in fields and fields["category"] is not None:
             valid_categories = {e.value for e in ExpenseCategoryType}
             if fields["category"] not in valid_categories:
@@ -310,7 +286,8 @@ class AnnualReportFinancialService:
         return ExpenseLineResponse.model_validate(line)
 
     def delete_expense(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
-        self._get_report_or_raise(report_id)
+        report = self._get_report_or_raise(report_id)
+        assert_client_allows_financial_mutation(self.db, report.client_record_id)
         line = self.expense_repo.get_by_report_and_id(report_id, line_id)
         if not line:
             raise NotFoundError(

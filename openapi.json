@@ -26265,6 +26265,39 @@
         ],
         "title": "VatAuditTrailResponse"
       },
+      "VatAutoPopulateExpenseBreakdownItem": {
+        "properties": {
+          "annual_category": {
+            "$ref": "#/components/schemas/ExpenseCategoryType"
+          },
+          "amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Amount",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "source_vat_categories": {
+            "additionalProperties": {
+              "type": "string",
+              "format": "decimal",
+              "examples": [
+                "123.45"
+              ]
+            },
+            "type": "object",
+            "title": "Source Vat Categories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "annual_category",
+          "amount",
+          "source_vat_categories"
+        ],
+        "title": "VatAutoPopulateExpenseBreakdownItem"
+      },
       "VatAutoPopulateResponse": {
         "properties": {
           "annual_report_id": {
@@ -26299,6 +26332,27 @@
             "type": "integer",
             "title": "Lines Deleted",
             "default": 0
+          },
+          "skipped_items": {
+            "items": {
+              "$ref": "#/components/schemas/VatAutoPopulateSkippedItem"
+            },
+            "type": "array",
+            "title": "Skipped Items"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Warnings"
+          },
+          "expense_breakdown": {
+            "items": {
+              "$ref": "#/components/schemas/VatAutoPopulateExpenseBreakdownItem"
+            },
+            "type": "array",
+            "title": "Expense Breakdown"
           }
         },
         "type": "object",
@@ -26310,6 +26364,57 @@
           "expense_total"
         ],
         "title": "VatAutoPopulateResponse"
+      },
+      "VatAutoPopulateSkippedItem": {
+        "properties": {
+          "item_type": {
+            "type": "string",
+            "enum": [
+              "income",
+              "expense"
+            ],
+            "title": "Item Type"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Amount",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "zero_total",
+              "negative_total",
+              "negative_source_contribution"
+            ],
+            "title": "Reason"
+          },
+          "annual_category": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExpenseCategoryType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_type",
+          "source",
+          "amount",
+          "reason"
+        ],
+        "title": "VatAutoPopulateSkippedItem"
       },
       "VatClientSummaryResponse": {
         "properties": {

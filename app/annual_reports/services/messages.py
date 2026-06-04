@@ -14,6 +14,8 @@ INVALID_INCOME_SOURCE_ERROR = "סוג הכנסה לא חוקי: '{source_type}'"
 INCOME_LINE_NOT_FOUND = "שורת הכנסה {line_id} לא נמצאה"
 CLIENT_CLOSED_CREATE_WORK_ERROR = "לקוח סגור — לא ניתן ליצור עבודה חדשה"
 CLIENT_FROZEN_CREATE_WORK_ERROR = "לקוח מוקפא — לא ניתן ליצור עבודה חדשה"
+CLIENT_CLOSED_FINANCIAL_MUTATION_ERROR = "לקוח סגור — לא ניתן לשנות נתונים כספיים"
+CLIENT_FROZEN_FINANCIAL_MUTATION_ERROR = "לקוח מוקפא — לא ניתן לשנות נתונים כספיים"
 INVALID_EXPENSE_CATEGORY_ERROR = "קטגוריית הוצאה לא חוקית: '{category}'"
 EXPENSE_LINE_NOT_FOUND = "שורת הוצאה {line_id} לא נמצאה"
 REPORT_NOT_READY_FOR_SUBMISSION = "הדוח אינו מוכן להגשה: {issues}"
@@ -35,6 +37,7 @@ AUTOPOPULATE_INVALID_STATUS = 'ניתן למלא נתוני מע"מ אוטומט
 AUTOPOPULATE_LINES_ALREADY_EXIST = (
     "קיימים נתוני הכנסות/הוצאות בדוח. יש לשלוח force=true למחיקה ומילוי מחדש"
 )
+AUTOPOPULATE_AUDIT_ACTOR_REQUIRED = "נדרש משתמש מבצע למילוי אוטומטי מנתוני מע\"מ"
 VAT_IMPORTED_BUSINESS_INCOME_DESCRIPTION = 'הכנסות עסקיות — יובא ממע"מ'
 VAT_IMPORTED_EXPENSE_DESCRIPTION = 'הוצאות {category} — יובא ממע"מ'
 ANNUAL_DEADLINE_REMINDER_MESSAGE = "תזכורת: מועד מס בעוד {days_before} ימים ({due_date})"

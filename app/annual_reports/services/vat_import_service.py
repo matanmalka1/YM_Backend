@@ -22,13 +22,27 @@ from app.annual_reports.repositories.income_repository import (
 from app.annual_reports.repositories.report_repository import (
     AnnualReportReportRepository,
 )
+from app.annual_reports.services.financial_line_helpers import (
+    assert_client_allows_financial_mutation,
+    expense_line_snapshot,
+    income_line_snapshot,
+)
 from app.annual_reports.services.messages import (
     ANNUAL_REPORT_NOT_FOUND,
+    AUTOPOPULATE_AUDIT_ACTOR_REQUIRED,
     AUTOPOPULATE_INVALID_STATUS,
     AUTOPOPULATE_LINES_ALREADY_EXIST,
     VAT_IMPORTED_BUSINESS_INCOME_DESCRIPTION,
     VAT_IMPORTED_EXPENSE_DESCRIPTION,
 )
+from app.audit.constants import (
+    ACTION_EXPENSE_ADDED,
+    ACTION_EXPENSE_DELETED,
+    ACTION_INCOME_ADDED,
+    ACTION_INCOME_DELETED,
+    ENTITY_ANNUAL_REPORT,
+)
+from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat_reports.repositories.vat_invoice_aggregation_repository import (
     VatInvoiceAggregationRepository,
@@ -70,6 +84,33 @@ _VAT_TO_ANNUAL: dict[str, ExpenseCategoryType] = {
     "other": ExpenseCategoryType.OTHER,
 }
 
+_VAT_IMPORT_SOURCE = "vat_import"
+
+
+def _decimal_amount(value) -> Decimal:
+    return Decimal(str(value))
+
+
+def _skipped_item(
+    *,
+    item_type: str,
+    source: str,
+    amount: Decimal,
+    reason: str,
+    annual_category: str | None = None,
+) -> dict:
+    return {
+        "item_type": item_type,
+        "source": source,
+        "amount": amount,
+        "reason": reason,
+        "annual_category": annual_category,
+    }
+
+
+def _amount_strings(amounts: dict[str, Decimal]) -> dict[str, str]:
+    return {key: str(value) for key, value in amounts.items()}
+
 
 class VatImportService:
     def __init__(self, db: Session):
@@ -79,18 +120,28 @@ class VatImportService:
         self.expense_repo = AnnualReportExpenseRepository(db)
         self.vat_agg_repo = VatInvoiceAggregationRepository(db)
 
-    def auto_populate(self, report_id: int, force: bool = False) -> dict:
+    def auto_populate(
+        self, report_id: int, force: bool = False, actor_id: int | None = None
+    ) -> dict:
         """Import VAT income/expense data into annual report lines.
 
         Returns a summary dict with counts and totals.
         Raises ConflictError if lines already exist and force=False.
         """
+        if actor_id is None:
+            raise AppError(
+                AUTOPOPULATE_AUDIT_ACTOR_REQUIRED,
+                "ANNUAL_REPORT.AUDIT_ACTOR_REQUIRED",
+            )
+
         report = self.report_repo.get_by_id(report_id)
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
                 "ANNUAL_REPORT.NOT_FOUND",
             )
+
+        assert_client_allows_financial_mutation(self.db, report.client_record_id)
 
         if report.status not in _ALLOWED_STATUSES:
             raise AppError(
@@ -101,6 +152,7 @@ class VatImportService:
         existing_income = self.income_repo.list_by_report(report_id)
         existing_expenses = self.expense_repo.list_by_report(report_id)
         lines_deleted = 0
+        audit = EntityAuditWriter(self.db)
 
         if (existing_income or existing_expenses) and not force:
             raise ConflictError(
@@ -110,41 +162,153 @@ class VatImportService:
 
         if force:
             for line in existing_income:
+                old_value = income_line_snapshot(line) | {
+                    "mutation_source": _VAT_IMPORT_SOURCE,
+                    "mutation_reason": "force_replace",
+                }
                 if self.income_repo.delete_for_report(report_id, line.id):
                     lines_deleted += 1
+                    audit.append(
+                        entity_type=ENTITY_ANNUAL_REPORT,
+                        entity_id=report_id,
+                        actor_id=actor_id,
+                        action=ACTION_INCOME_DELETED,
+                        old_value=old_value,
+                        note=(
+                            f"mutation_source={_VAT_IMPORT_SOURCE}; "
+                            f"reason=force_replace; line_id={line.id}"
+                        ),
+                    )
             for line in existing_expenses:
+                old_value = expense_line_snapshot(line) | {
+                    "mutation_source": _VAT_IMPORT_SOURCE,
+                    "mutation_reason": "force_replace",
+                }
                 if self.expense_repo.delete_for_report(report_id, line.id):
                     lines_deleted += 1
+                    audit.append(
+                        entity_type=ENTITY_ANNUAL_REPORT,
+                        entity_id=report_id,
+                        actor_id=actor_id,
+                        action=ACTION_EXPENSE_DELETED,
+                        old_value=old_value,
+                        note=(
+                            f"mutation_source={_VAT_IMPORT_SOURCE}; "
+                            f"reason=force_replace; line_id={line.id}"
+                        ),
+                    )
 
-        income_total = self.vat_agg_repo.sum_income_net_by_client_year(
-            report.client_record_id, report.tax_year
+        income_total = _decimal_amount(
+            self.vat_agg_repo.sum_income_net_by_client_year(
+                report.client_record_id, report.tax_year
+            )
         )
-        expense_by_vat_cat = self.vat_agg_repo.sum_expense_net_by_client_year_grouped(
-            report.client_record_id, report.tax_year
-        )
+        expense_by_vat_cat = {
+            vat_cat: _decimal_amount(amount)
+            for vat_cat, amount in self.vat_agg_repo.sum_expense_net_by_client_year_grouped(
+                report.client_record_id, report.tax_year
+            ).items()
+        }
+
+        skipped_items: list[dict] = []
+        warnings: list[str] = []
 
         income_lines_created = 0
         if income_total > 0:
-            self.income_repo.add_line(
+            line = self.income_repo.add_line(
                 report_id,
                 IncomeSourceType.BUSINESS,
                 income_total,
                 VAT_IMPORTED_BUSINESS_INCOME_DESCRIPTION,
             )
             income_lines_created = 1
+            audit.append(
+                entity_type=ENTITY_ANNUAL_REPORT,
+                entity_id=report_id,
+                actor_id=actor_id,
+                action=ACTION_INCOME_ADDED,
+                new_value=income_line_snapshot(line)
+                | {
+                    "source": _VAT_IMPORT_SOURCE,
+                    "source_total": str(income_total),
+                },
+                note=f"source={_VAT_IMPORT_SOURCE}",
+            )
+        elif income_total < 0:
+            skipped_items.append(
+                _skipped_item(
+                    item_type="income",
+                    source="business",
+                    amount=income_total,
+                    reason="negative_total",
+                )
+            )
+            warnings.append(
+                "VAT import skipped negative business income total; review credit notes or corrections."
+            )
 
-        # Merge VAT categories into annual report categories
         merged: dict[ExpenseCategoryType, Decimal] = {}
+        source_breakdown: dict[ExpenseCategoryType, dict[str, Decimal]] = {}
         for vat_cat, amount in expense_by_vat_cat.items():
             annual_cat = _VAT_TO_ANNUAL.get(vat_cat, ExpenseCategoryType.OTHER)
-            merged[annual_cat] = merged.get(annual_cat, Decimal("0")) + Decimal(str(amount))
+            merged[annual_cat] = merged.get(annual_cat, Decimal("0")) + amount
+            category_breakdown = source_breakdown.setdefault(annual_cat, {})
+            category_breakdown[vat_cat] = category_breakdown.get(vat_cat, Decimal("0")) + amount
 
         expense_lines_created = 0
         expense_total = Decimal("0")
+        expense_breakdown: list[dict] = []
         for cat, total in merged.items():
-            if total <= 0:
+            breakdown = source_breakdown.get(cat, {})
+            for vat_cat, amount in breakdown.items():
+                if total > 0 and amount < 0:
+                    skipped_items.append(
+                        _skipped_item(
+                            item_type="expense",
+                            source=vat_cat,
+                            amount=amount,
+                            reason="negative_source_contribution",
+                            annual_category=cat.value,
+                        )
+                    )
+                    warnings.append(
+                        "VAT import included negative source category "
+                        f"{vat_cat} under {cat.value}; review credits or corrections."
+                    )
+            expense_breakdown.append(
+                {
+                    "annual_category": cat.value,
+                    "amount": total,
+                    "source_vat_categories": breakdown,
+                }
+            )
+            if total < 0:
+                skipped_items.append(
+                    _skipped_item(
+                        item_type="expense",
+                        source="merged_vat_categories",
+                        amount=total,
+                        reason="negative_total",
+                        annual_category=cat.value,
+                    )
+                )
+                warnings.append(
+                    "VAT import skipped negative expense total for "
+                    f"{cat.value}; review credit notes or corrections."
+                )
                 continue
-            self.expense_repo.add_line(
+            if total == 0:
+                skipped_items.append(
+                    _skipped_item(
+                        item_type="expense",
+                        source="merged_vat_categories",
+                        amount=total,
+                        reason="zero_total",
+                        annual_category=cat.value,
+                    )
+                )
+                continue
+            line = self.expense_repo.add_line(
                 annual_report_id=report_id,
                 category=cat,
                 amount=total,
@@ -153,12 +317,27 @@ class VatImportService:
             )
             expense_lines_created += 1
             expense_total += total
+            audit.append(
+                entity_type=ENTITY_ANNUAL_REPORT,
+                entity_id=report_id,
+                actor_id=actor_id,
+                action=ACTION_EXPENSE_ADDED,
+                new_value=expense_line_snapshot(line)
+                | {
+                    "source": _VAT_IMPORT_SOURCE,
+                    "source_vat_categories": _amount_strings(breakdown),
+                },
+                note=f"source={_VAT_IMPORT_SOURCE}",
+            )
 
         return {
             "annual_report_id": report_id,
             "income_lines_created": income_lines_created,
             "expense_lines_created": expense_lines_created,
-            "income_total": float(income_total),
-            "expense_total": float(expense_total),
+            "income_total": income_total if income_total > 0 else Decimal("0"),
+            "expense_total": expense_total,
             "lines_deleted": lines_deleted,
+            "skipped_items": skipped_items,
+            "warnings": warnings,
+            "expense_breakdown": expense_breakdown,
         }

@@ -206,5 +206,5 @@ def auto_populate_from_vat(
 ):
     """מילוי אוטומטי של שורות הכנסה/הוצאה מנתוני מע\"מ של העסק לשנת המס."""
     svc = VatImportService(db)
-    result = svc.auto_populate(report_id, force=force)
+    result = svc.auto_populate(report_id, force=force, actor_id=user.id)
     return VatAutoPopulateResponse(**result)
