@@ -180,10 +180,15 @@ class AnnualReportFinancialService:
                     "ANNUAL_REPORT.INVALID_TYPE",
                 )
             fields["source_type"] = IncomeSourceType(fields["source_type"])
-        old_line = self.income_repo.get_by_id(line_id)
-        old_value = income_line_snapshot(old_line) if old_line else None
-        line = self.income_repo.update(
-            line_id, **{k: v for k, v in fields.items() if v is not None}
+        old_line = self.income_repo.get_by_report_and_id(report_id, line_id)
+        if not old_line:
+            raise NotFoundError(
+                INCOME_LINE_NOT_FOUND.format(line_id=line_id),
+                "ANNUAL_REPORT.LINE_NOT_FOUND",
+            )
+        old_value = income_line_snapshot(old_line)
+        line = self.income_repo.update_for_report(
+            report_id, line_id, **{k: v for k, v in fields.items() if v is not None}
         )
         if not line:
             raise NotFoundError(
@@ -202,9 +207,14 @@ class AnnualReportFinancialService:
 
     def delete_income(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
         self._get_report_or_raise(report_id)
-        line = self.income_repo.get_by_id(line_id)
-        old_value = income_line_snapshot(line) if line else None
-        if not self.income_repo.delete(line_id):
+        line = self.income_repo.get_by_report_and_id(report_id, line_id)
+        if not line:
+            raise NotFoundError(
+                INCOME_LINE_NOT_FOUND.format(line_id=line_id),
+                "ANNUAL_REPORT.LINE_NOT_FOUND",
+            )
+        old_value = income_line_snapshot(line)
+        if not self.income_repo.delete_for_report(report_id, line_id):
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
@@ -277,10 +287,15 @@ class AnnualReportFinancialService:
                     "ANNUAL_REPORT.INVALID_TYPE",
                 )
             fields["category"] = ExpenseCategoryType(fields["category"])
-        old_line = self.expense_repo.get_by_id(line_id)
-        old_value = expense_line_snapshot(old_line) if old_line else None
-        line = self.expense_repo.update(
-            line_id, **{k: v for k, v in fields.items() if v is not None}
+        old_line = self.expense_repo.get_by_report_and_id(report_id, line_id)
+        if not old_line:
+            raise NotFoundError(
+                EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
+                "ANNUAL_REPORT.LINE_NOT_FOUND",
+            )
+        old_value = expense_line_snapshot(old_line)
+        line = self.expense_repo.update_for_report(
+            report_id, line_id, **{k: v for k, v in fields.items() if v is not None}
         )
         if not line:
             raise NotFoundError(
@@ -299,9 +314,14 @@ class AnnualReportFinancialService:
 
     def delete_expense(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
         self._get_report_or_raise(report_id)
-        line = self.expense_repo.get_by_id(line_id)
-        old_value = expense_line_snapshot(line) if line else None
-        if not self.expense_repo.delete(line_id):
+        line = self.expense_repo.get_by_report_and_id(report_id, line_id)
+        if not line:
+            raise NotFoundError(
+                EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
+                "ANNUAL_REPORT.LINE_NOT_FOUND",
+            )
+        old_value = expense_line_snapshot(line)
+        if not self.expense_repo.delete_for_report(report_id, line_id):
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",

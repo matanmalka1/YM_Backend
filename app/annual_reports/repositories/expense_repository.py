@@ -47,12 +47,31 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
         ).all()
 
     def get_by_id(self, line_id: int) -> AnnualReportExpenseLine | None:
+        raise NotImplementedError(
+            "AnnualReportExpenseRepository.get_by_id is unsafe for annual report financial lines; "
+            "use get_by_report_and_id(report_id, line_id)."
+        )
+
+    def get_by_report_and_id(
+        self, annual_report_id: int, line_id: int
+    ) -> AnnualReportExpenseLine | None:
         return self.db.scalars(
-            select(AnnualReportExpenseLine).where(AnnualReportExpenseLine.id == line_id)
+            select(AnnualReportExpenseLine).where(
+                AnnualReportExpenseLine.id == line_id,
+                AnnualReportExpenseLine.annual_report_id == annual_report_id,
+            )
         ).first()
 
     def update(self, line_id: int, **fields) -> AnnualReportExpenseLine | None:
-        line = self.get_by_id(line_id)
+        raise NotImplementedError(
+            "AnnualReportExpenseRepository.update is unsafe; "
+            "use update_for_report(report_id, line_id, **fields)."
+        )
+
+    def update_for_report(
+        self, annual_report_id: int, line_id: int, **fields
+    ) -> AnnualReportExpenseLine | None:
+        line = self.get_by_report_and_id(annual_report_id, line_id)
         if not line:
             return None
         for k, v in fields.items():
@@ -68,7 +87,13 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
         *,
         hard: bool = False,  # pylint: disable=unused-argument
     ) -> bool:
-        line = self.get_by_id(line_id)
+        raise NotImplementedError(
+            "AnnualReportExpenseRepository.delete is unsafe; "
+            "use delete_for_report(report_id, line_id)."
+        )
+
+    def delete_for_report(self, annual_report_id: int, line_id: int) -> bool:
+        line = self.get_by_report_and_id(annual_report_id, line_id)
         if not line:
             return False
         self.db.delete(line)
