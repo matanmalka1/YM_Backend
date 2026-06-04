@@ -184,7 +184,7 @@ ENUM_SYNC_MAP: dict[str, str] = {
     # DocumentType exists in two Python modules with different values.
     # Use module-qualified keys: "module.ClassName"
     "app.vat_reports.models.vat_enums.DocumentType": "features/vatReports/constants.ts:VAT_DOCUMENT_TYPE_VALUES",
-    "app.permanent_documents.models.permanent_document.DocumentType": "features/documents/documents.constants.ts:DOCUMENT_TYPES",
+    "app.permanent_documents.models.permanent_document.PermanentDocumentType": "features/documents/documents.constants.ts:DOCUMENT_TYPES",
     "ChargeStatus": "features/charges/constants.ts:CHARGE_STATUS_VALUES",
     "ChargeType": "features/charges/constants.ts:CHARGE_TYPE_VALUES",
     "UserRole": "features/users/constants.ts:USER_ROLE_VALUES",
