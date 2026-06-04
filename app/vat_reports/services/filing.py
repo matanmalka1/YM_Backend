@@ -17,6 +17,8 @@ from app.vat_reports.services.messages import (
     AMENDMENT_CYCLE_DETECTED,
     FINAL_VAT_AMOUNT_REQUIRED,
     OVERRIDE_JUSTIFICATION_REQUIRED,
+    VAT_AMENDMENT_ID_REQUIRED,
+    VAT_ASSIGNEE_REQUIRED,
     VAT_ITEM_NOT_FOUND,
 )
 
@@ -28,16 +30,16 @@ def _validate_amendment(
 ) -> None:
     amended_item = work_item_repo.get_by_id(amends_item_id)
     if amended_item is None:
-        raise AppError(AMENDED_ITEM_NOT_FOUND, code="AMENDED_ITEM_NOT_FOUND", status_code=404)
+        raise AppError(AMENDED_ITEM_NOT_FOUND, code="VAT.AMENDED_ITEM_NOT_FOUND", status_code=404)
     if amended_item.client_record_id != item.client_record_id:
-        raise AppError(AMENDED_ITEM_WRONG_CLIENT, code="AMENDED_ITEM_WRONG_CLIENT", status_code=400)
+        raise AppError(AMENDED_ITEM_WRONG_CLIENT, code="VAT.AMENDED_ITEM_WRONG_CLIENT", status_code=400)
     if amended_item.status != VatWorkItemStatus.FILED:
-        raise AppError(AMENDED_ITEM_NOT_FILED, code="AMENDED_ITEM_NOT_FILED", status_code=400)
+        raise AppError(AMENDED_ITEM_NOT_FILED, code="VAT.AMENDED_ITEM_NOT_FILED", status_code=400)
 
     current_item = amended_item
     while current_item is not None:
         if current_item.id == item.id:
-            raise AppError(AMENDMENT_CYCLE_DETECTED, code="AMENDMENT_CYCLE", status_code=400)
+            raise AppError(AMENDMENT_CYCLE_DETECTED, code="VAT.AMENDMENT_CYCLE", status_code=400)
         if current_item.amends_item_id is None:
             break
         current_item = work_item_repo.get_by_id(current_item.amends_item_id)
@@ -61,6 +63,12 @@ def file_vat_return(
 
     assert_transition_allowed(item, VatWorkItemStatus.FILED)
 
+    if item.assigned_to is None:
+        raise AppError(VAT_ASSIGNEE_REQUIRED, code="VAT.ASSIGNEE_REQUIRED", status_code=400)
+
+    if is_amendment and amends_item_id is None:
+        raise AppError(VAT_AMENDMENT_ID_REQUIRED, code="VAT.AMENDMENT_ID_REQUIRED", status_code=400)
+
     if amends_item_id is not None:
         _validate_amendment(work_item_repo, item, amends_item_id)
 
@@ -70,7 +78,7 @@ def file_vat_return(
         raise AppError(OVERRIDE_JUSTIFICATION_REQUIRED, "VAT.JUSTIFICATION_REQUIRED")
 
     if item.net_vat is None and override_amount is None:
-        raise AppError(FINAL_VAT_AMOUNT_REQUIRED, code="MISSING_FINAL_AMOUNT", status_code=400)
+        raise AppError(FINAL_VAT_AMOUNT_REQUIRED, code="VAT.MISSING_FINAL_AMOUNT", status_code=400)
 
     if is_overridden:
         final_amount = override_amount

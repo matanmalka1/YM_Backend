@@ -1,8 +1,11 @@
-def create_work_item(client, headers, vat_client, period):
+def create_work_item(client, headers, vat_client, period, assigned_to: int | None = None):
+    body = {"client_record_id": vat_client.id, "period": period}
+    if assigned_to is not None:
+        body["assigned_to"] = assigned_to
     response = client.post(
         "/api/v1/vat/work-items",
         headers=headers,
-        json={"client_record_id": vat_client.id, "period": period},
+        json=body,
     )
     assert response.status_code == 201
     return response.json()["id"]
@@ -34,8 +37,8 @@ def add_income_invoice(client, headers, item_id, payload=None):
     return response.json()
 
 
-def setup_ready_item(client, headers, vat_client, period):
-    item_id = create_work_item(client, headers, vat_client, period)
+def setup_ready_item(client, headers, vat_client, period, assigned_to: int | None = None):
+    item_id = create_work_item(client, headers, vat_client, period, assigned_to=assigned_to)
     add_income_invoice(client, headers, item_id)
     client.post(f"/api/v1/vat/work-items/{item_id}/ready-for-review", headers=headers)
     return item_id

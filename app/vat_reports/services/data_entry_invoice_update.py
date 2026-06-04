@@ -3,6 +3,8 @@
 from datetime import datetime
 from decimal import Decimal
 
+from app.businesses.repositories.business_repository import BusinessRepository
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat_reports.integrations.tax_rules_financials import (
     get_financial_value,
@@ -25,6 +27,7 @@ from app.vat_reports.services.data_entry_common import (
     recalculate_totals,
 )
 from app.vat_reports.services.messages import (
+    VAT_BUSINESS_ACTIVITY_NOT_FOUND,
     VAT_INVOICE_NOT_FOUND_IN_WORK_ITEM,
     VAT_INVOICE_NUMBER_CONFLICT,
     VAT_ITEM_NOT_FOUND,
@@ -73,8 +76,19 @@ def update_invoice(
                 "VAT.CONFLICT",
             )
 
+    if business_activity_id is not None:
+        db = getattr(work_item_repo, "db", None)
+        record = ClientRecordRepository(db).get_by_id(item.client_record_id) if db else None
+        business = BusinessRepository(db).get_by_id(business_activity_id) if db else None
+        if not business or not record or business.legal_entity_id != record.legal_entity_id:
+            raise AppError(
+                VAT_BUSINESS_ACTIVITY_NOT_FOUND,
+                code="BUSINESS_ACTIVITY.NOT_FOUND",
+                status_code=404,
+            )
+
     if gross_amount is not None and gross_amount <= 0:
-        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, code="INVALID_NET_AMOUNT", status_code=400)
+        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, code="VAT.NET_NOT_POSITIVE", status_code=400)
 
     snapshot_before = audit_invoice_snapshot(invoice)
 

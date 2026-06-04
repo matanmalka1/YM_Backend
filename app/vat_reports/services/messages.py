@@ -2,6 +2,8 @@ AMENDED_ITEM_NOT_FOUND = "פריט מתוקן לא נמצא"
 AMENDED_ITEM_WRONG_CLIENT = "פריט מתוקן שייך ללקוח אחר"
 AMENDED_ITEM_NOT_FILED = "ניתן לתקן רק פריט שהוגש"
 AMENDMENT_CYCLE_DETECTED = "זוהתה שרשרת תיקונים מעגלית"
+VAT_AMENDMENT_ID_REQUIRED = "is_amendment=True מחייב amends_item_id"
+VAT_ASSIGNEE_REQUIRED = "לא ניתן להגיש דוח מע\"מ ללא נציג מוקצה (assigned_to)"
 VAT_ITEM_NOT_FOUND = 'פריט עבודה {item_id} למע"מ לא נמצא'
 VAT_CLIENT_NOT_FOUND = "לקוח {client_record_id} לא נמצא"
 OVERRIDE_AMOUNT_MUST_BE_POSITIVE = "סכום דריסה חייב להיות חיובי"
@@ -18,6 +20,7 @@ VAT_OSEK_PATUR_CEILING_EXCEEDED = (
 )
 VAT_CLIENT_CLOSED_ADD_INVOICES = "לקוח זה סגור — לא ניתן להוסיף חשבוניות"
 VAT_BUSINESS_ACTIVITY_WRONG_CLIENT = "פעילות עסקית זו אינה שייכת ללקוח של פריט העבודה"
+VAT_BUSINESS_ACTIVITY_NOT_FOUND = "פעילות עסקית לא נמצאה"
 VAT_INCOME_COUNTERPARTY_NAME = "הכנסות"
 VAT_UNKNOWN_COUNTERPARTY_NAME = "לא ידוע"
 VAT_INVOICE_NUMBER_CONFLICT = "מספר חשבונית '{invoice_number}' כבר קיים לתקופה ולסוג הזה"
