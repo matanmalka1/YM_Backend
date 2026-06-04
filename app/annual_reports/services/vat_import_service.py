@@ -110,11 +110,11 @@ class VatImportService:
 
         if force:
             for line in existing_income:
-                self.income_repo.delete_for_report(report_id, line.id)
-                lines_deleted += 1
+                if self.income_repo.delete_for_report(report_id, line.id):
+                    lines_deleted += 1
             for line in existing_expenses:
-                self.expense_repo.delete_for_report(report_id, line.id)
-                lines_deleted += 1
+                if self.expense_repo.delete_for_report(report_id, line.id):
+                    lines_deleted += 1
 
         income_total = self.vat_agg_repo.sum_income_net_by_client_year(
             report.client_record_id, report.tax_year

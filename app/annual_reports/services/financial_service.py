@@ -100,6 +100,9 @@ def expense_line_snapshot(line) -> dict:
         "line_id": line.id,
         "category": audit_scalar(line.category),
         "amount": str(line.amount),
+        "recognition_rate": str(line.recognition_rate),
+        "external_document_reference": line.external_document_reference,
+        "supporting_document_id": line.supporting_document_id,
         "description": line.description,
     }
 
@@ -160,11 +163,7 @@ class AnnualReportFinancialService:
             entity_id=report_id,
             actor_id=actor_id,
             action=ACTION_INCOME_ADDED,
-            new_value={
-                "source_type": source_type,
-                "amount": str(amount),
-                "description": description,
-            },
+            new_value=income_line_snapshot(line),
         )
         return IncomeLineResponse.model_validate(line)
 
@@ -178,18 +177,19 @@ class AnnualReportFinancialService:
                 raise AppError(
                     INVALID_INCOME_SOURCE_ERROR.format(source_type=fields["source_type"]),
                     "ANNUAL_REPORT.INVALID_TYPE",
-                )
+            )
             fields["source_type"] = IncomeSourceType(fields["source_type"])
+        update_fields = {k: v for k, v in fields.items() if v is not None}
         old_line = self.income_repo.get_by_report_and_id(report_id, line_id)
         if not old_line:
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
             )
+        if not update_fields:
+            return IncomeLineResponse.model_validate(old_line)
         old_value = income_line_snapshot(old_line)
-        line = self.income_repo.update_for_report(
-            report_id, line_id, **{k: v for k, v in fields.items() if v is not None}
-        )
+        line = self.income_repo.update_for_report(report_id, line_id, **update_fields)
         if not line:
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
@@ -201,7 +201,7 @@ class AnnualReportFinancialService:
             actor_id=actor_id,
             action=ACTION_INCOME_UPDATED,
             old_value=old_value,
-            new_value={k: audit_scalar(v) for k, v in fields.items()},
+            new_value={k: audit_scalar(v) for k, v in update_fields.items()},
         )
         return IncomeLineResponse.model_validate(line)
 
@@ -267,11 +267,7 @@ class AnnualReportFinancialService:
             entity_id=report_id,
             actor_id=actor_id,
             action=ACTION_EXPENSE_ADDED,
-            new_value={
-                "category": category,
-                "amount": str(amount),
-                "description": description,
-            },
+            new_value=expense_line_snapshot(line),
         )
         return ExpenseLineResponse.model_validate(line)
 
@@ -285,18 +281,19 @@ class AnnualReportFinancialService:
                 raise AppError(
                     INVALID_EXPENSE_CATEGORY_ERROR.format(category=fields["category"]),
                     "ANNUAL_REPORT.INVALID_TYPE",
-                )
+            )
             fields["category"] = ExpenseCategoryType(fields["category"])
+        update_fields = {k: v for k, v in fields.items() if v is not None}
         old_line = self.expense_repo.get_by_report_and_id(report_id, line_id)
         if not old_line:
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
                 "ANNUAL_REPORT.LINE_NOT_FOUND",
             )
+        if not update_fields:
+            return ExpenseLineResponse.model_validate(old_line)
         old_value = expense_line_snapshot(old_line)
-        line = self.expense_repo.update_for_report(
-            report_id, line_id, **{k: v for k, v in fields.items() if v is not None}
-        )
+        line = self.expense_repo.update_for_report(report_id, line_id, **update_fields)
         if not line:
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
@@ -308,7 +305,7 @@ class AnnualReportFinancialService:
             actor_id=actor_id,
             action=ACTION_EXPENSE_UPDATED,
             old_value=old_value,
-            new_value={k: audit_scalar(v) for k, v in fields.items()},
+            new_value={k: audit_scalar(v) for k, v in update_fields.items()},
         )
         return ExpenseLineResponse.model_validate(line)
 
@@ -432,7 +429,8 @@ class AnnualReportFinancialService:
         )
 
     def get_readiness_check(self, report_id: int) -> ReadinessCheckResponse:
-        self._get_report_or_raise(report_id)
+        total_checks = 4
+        report = self._get_report_or_raise(report_id)
         issues: list[str] = []
         passed = 0
 
@@ -458,7 +456,6 @@ class AnnualReportFinancialService:
             passed += 1
 
         detail = self.detail_repo.get_by_report_id(report_id)
-        report = self._get_report_or_raise(report_id)
         if report.tax_due is None and report.refund_due is None:
             issues.append(MISSING_TAX_CALCULATION_ISSUE)
         else:
@@ -469,7 +466,7 @@ class AnnualReportFinancialService:
         else:
             passed += 1
 
-        completion_pct = round(passed / 4 * 100, 1)
+        completion_pct = round(passed / total_checks * 100, 1)
         return ReadinessCheckResponse(
             annual_report_id=report_id,
             is_ready=len(issues) == 0,

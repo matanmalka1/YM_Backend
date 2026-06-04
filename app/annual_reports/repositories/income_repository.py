@@ -13,6 +13,8 @@ from app.common.repositories.base_repository import BaseRepository
 
 
 class AnnualReportIncomeRepository(BaseRepository[AnnualReportIncomeLine]):
+    _UPDATABLE_FIELDS = {"source_type", "amount", "description"}
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -69,8 +71,9 @@ class AnnualReportIncomeRepository(BaseRepository[AnnualReportIncomeLine]):
         if not line:
             return None
         for k, v in fields.items():
-            if hasattr(line, k):
-                setattr(line, k, v)
+            if k not in self._UPDATABLE_FIELDS:
+                raise ValueError(f"Unsupported income line update field: {k}")
+            setattr(line, k, v)
         self.db.flush()
         return line
 

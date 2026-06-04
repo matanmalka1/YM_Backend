@@ -13,6 +13,15 @@ from app.common.repositories.base_repository import BaseRepository
 
 
 class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
+    _UPDATABLE_FIELDS = {
+        "category",
+        "amount",
+        "recognition_rate",
+        "description",
+        "external_document_reference",
+        "supporting_document_id",
+    }
+
     def __init__(self, db: Session):
         self.db = db
 
@@ -75,8 +84,9 @@ class AnnualReportExpenseRepository(BaseRepository[AnnualReportExpenseLine]):
         if not line:
             return None
         for k, v in fields.items():
-            if hasattr(line, k):
-                setattr(line, k, v)
+            if k not in self._UPDATABLE_FIELDS:
+                raise ValueError(f"Unsupported expense line update field: {k}")
+            setattr(line, k, v)
         self.db.flush()
         return line
 
