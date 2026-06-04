@@ -6,7 +6,7 @@ Charges are informational only — they do not block report submission.
 from sqlalchemy.orm import Session
 
 from app.annual_reports.repositories.report_repository import (
-    AnnualReportReportRepository,
+    AnnualReportRootRepository,
 )
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
 from app.charge.repositories.charge_annual_report_repository import (
@@ -19,7 +19,7 @@ class AnnualReportChargeService:
     def __init__(self, db: Session):
         self.db = db
         self.charge_repo = ChargeAnnualReportRepository(db)
-        self.report_repo = AnnualReportReportRepository(db)
+        self.report_repo = AnnualReportRootRepository(db)
 
     def _get_report_or_raise(self, report_id: int):
         report = self.report_repo.get_by_id(report_id)

@@ -1,6 +1,6 @@
 """VAT data auto-population for annual report income/expense lines.
 
-Reads aggregated VAT invoice data for the report's business and tax year,
+Reads aggregated VAT invoice data for the report's client_record_id and tax year,
 maps expense categories to annual report categories, and creates income/expense
 lines in bulk. Existing lines are only replaced when force=True.
 """
@@ -20,7 +20,7 @@ from app.annual_reports.repositories.income_repository import (
     AnnualReportIncomeRepository,
 )
 from app.annual_reports.repositories.report_repository import (
-    AnnualReportReportRepository,
+    AnnualReportRootRepository,
 )
 from app.annual_reports.services.financial_line_helpers import (
     assert_client_allows_financial_mutation,
@@ -116,7 +116,7 @@ def _amount_strings(amounts: dict[str, Decimal]) -> dict[str, str]:
 class VatImportService:
     def __init__(self, db: Session):
         self.db = db
-        self.report_repo = AnnualReportReportRepository(db)
+        self.report_repo = AnnualReportRootRepository(db)
         self.income_repo = AnnualReportIncomeRepository(db)
         self.expense_repo = AnnualReportExpenseRepository(db)
         self.vat_agg_repo = VatInvoiceAggregationRepository(db)

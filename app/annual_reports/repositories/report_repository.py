@@ -1,4 +1,4 @@
-"""Repository operations for the AnnualReport entity."""
+"""Low-level DB repository for the AnnualReport aggregate root row."""
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -23,7 +23,7 @@ def _sort_col(sort_by: str, order: str):
     return col.asc() if order == "asc" else col.desc()
 
 
-class AnnualReportReportRepository(BaseRepository[AnnualReport]):
+class AnnualReportRootRepository(BaseRepository[AnnualReport]):
     model = AnnualReport
 
     def __init__(self, db: Session):

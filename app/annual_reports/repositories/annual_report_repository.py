@@ -1,4 +1,9 @@
-"""Public AnnualReportRepository facade composed of per-domain repositories."""
+"""Domain repository facade for annual-report repository operations.
+
+AnnualReportRepository intentionally composes the lower-level repository classes used
+by the annual-reports domain. AnnualReportRootRepository owns DB access for the
+AnnualReport aggregate root row.
+"""
 
 from sqlalchemy.orm import Session
 
@@ -6,7 +11,7 @@ from app.annual_reports.repositories.report_lifecycle_repository import (
     AnnualReportLifecycleRepository,
 )
 from app.annual_reports.repositories.report_repository import (
-    AnnualReportReportRepository,
+    AnnualReportRootRepository,
 )
 from app.annual_reports.repositories.schedule_repository import (
     AnnualReportScheduleRepository,
@@ -17,7 +22,7 @@ from app.annual_reports.repositories.status_history_repository import (
 
 
 class AnnualReportRepository(
-    AnnualReportReportRepository,
+    AnnualReportRootRepository,
     AnnualReportLifecycleRepository,
     AnnualReportScheduleRepository,
     AnnualReportStatusHistoryRepository,
