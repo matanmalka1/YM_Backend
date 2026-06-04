@@ -8,7 +8,8 @@ from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 os.environ.setdefault("APP_ENV", "test")
-os.environ.setdefault("JWT_SECRET", "test-secret")
+if len(os.environ.get("JWT_SECRET", "")) < 32:
+    os.environ["JWT_SECRET"] = "test-secret-minimum-32-bytes-value"
 
 import app.core.background_jobs as background_jobs_module
 import app.main as main_module

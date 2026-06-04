@@ -335,6 +335,57 @@ def test_work_queue_pagination_offset_beyond_end(test_db):
 # ── business_id filter semantics ──────────────────────────────────────────────
 
 
+def test_work_queue_advance_payment_uses_effective_due_date_when_set(test_db):
+    """When due_date_effective is set, queue item due_date and metadata must use it, not due_date."""
+    biz = create_business(test_db)
+    original_due = date.today() - timedelta(days=10)
+    effective_due = date.today() + timedelta(days=5)
+    payment = create_linked_advance_payment(
+        test_db,
+        client_record_id=biz.client_id,
+        period="2026-01",
+        due_date=original_due,
+        expected_amount=500,
+        paid_amount=0,
+    )
+    payment.due_date_effective = effective_due
+    payment.due_date_override_reason = "הארכה לצורך בדיקה"
+    test_db.commit()
+
+    items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
+    item = next(i for i in items if i.source_type == WorkQueueSourceType.ADVANCE_PAYMENT)
+
+    assert item.due_date == effective_due
+    assert item.metadata["due_date"] == effective_due.isoformat()
+
+
+
+def test_business_id_filter_merges_linked_tasks_into_charge_rows(test_db):
+    """Tasks linked to a charge must be merged when filtering by business_id."""
+    biz = create_business(test_db)
+    charge = _add_overdue_charge(test_db, biz)
+    task = _add_task_for_source(test_db, source_domain="charge", source_id=charge.id)
+
+    items = WorkQueueService(test_db).list_items(business_id=biz.id)
+    charge_rows = [i for i in items if i.source_type == WorkQueueSourceType.CHARGE]
+
+    assert len(charge_rows) == 1
+    assert charge_rows[0].linked_tasks_count == 1
+    assert charge_rows[0].linked_tasks[0].id == task.id
+    assert not any(i.source_type == WorkQueueSourceType.TASK for i in items)
+
+
+def test_business_id_filter_excludes_standalone_task_rows(test_db):
+    """Standalone tasks (no source or unrelated source) must not appear in business-scoped queue."""
+    biz = create_business(test_db)
+    _add_overdue_charge(test_db, biz)
+    _add_task_for_source(test_db, source_domain=None, source_id=None, title="Unrelated manual task")
+
+    items = WorkQueueService(test_db).list_items(business_id=biz.id)
+
+    assert not any(i.source_type == WorkQueueSourceType.TASK for i in items)
+
+
 def test_business_id_filter_hides_client_level_sources(test_db):
     """When business_id is set, VAT/annual/advance sources must not appear."""
     biz = create_business(test_db)
