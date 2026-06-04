@@ -116,6 +116,10 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         if ns == AnnualReportStatus.SUBMITTED:
             self._assert_filing_readiness(report_id)
 
+        client_record_for_signature = None
+        if ns == AnnualReportStatus.PENDING_CLIENT:
+            client_record_for_signature = self._get_signature_client_context(report)
+
         update_fields: dict = {"status": ns}
 
         if ns == AnnualReportStatus.SUBMITTED:
@@ -177,7 +181,8 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                 changed_by_name,
                 REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON,
             )
-            self._trigger_signature_request(updated, changed_by, changed_by_name)
+            assert client_record_for_signature is not None
+            self._trigger_signature_request(updated, changed_by, changed_by_name, client_record_for_signature)
 
         return self._to_responses([updated])[0]
 

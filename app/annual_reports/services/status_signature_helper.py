@@ -1,7 +1,12 @@
 """Signature request helpers for annual report status transitions."""
 
 from app.annual_reports.services.base import AnnualReportBaseService
-from app.annual_reports.services.messages import ANNUAL_REPORT_APPROVAL_TITLE
+from app.annual_reports.services.messages import (
+    ANNUAL_REPORT_APPROVAL_TITLE,
+    ANNUAL_REPORT_CLIENT_NOT_FOUND,
+    ANNUAL_REPORT_SIGNER_NAME_MISSING,
+)
+from app.core.exceptions import AppError, NotFoundError
 
 
 class AnnualReportSignatureHelper(AnnualReportBaseService):
@@ -30,31 +35,46 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
                 reason=reason,
             )
 
-    def _trigger_signature_request(self, report, created_by: int, created_by_name: str) -> None:
-        from app.clients.repositories.client_record_repository import (
-            ClientRecordRepository,
+    def _get_signature_client_context(self, report):
+        from app.clients.repositories.client_record_repository import ClientRecordRepository
+
+        record = ClientRecordRepository(self.db).get_by_id(report.client_record_id)
+        if not record:
+            raise NotFoundError(
+                ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=report.client_record_id),
+                "CLIENT_RECORD.NOT_FOUND",
+            )
+        return record
+
+    def _resolve_signer_name(self, record) -> str:
+        from app.clients.repositories.client_record_repository import ClientRecordRepository
+
+        name = ClientRecordRepository(self.db).get_signer_name_by_legal_entity_id(
+            record.legal_entity_id
         )
+        if not name:
+            raise AppError(
+                ANNUAL_REPORT_SIGNER_NAME_MISSING,
+                "ANNUAL_REPORT.SIGNER_NAME_MISSING",
+            )
+        return name
+
+    def _trigger_signature_request(self, report, created_by: int, created_by_name: str, record) -> None:
         from app.signature_requests.models.signature_request import SignatureRequestType
         from app.signature_requests.services.signature_request_service import (
             SignatureRequestService,
         )
 
-        record = ClientRecordRepository(self.db).get_by_id(report.client_record_id)
-        if not record:
-            return
-        businesses = self.business_repo.list_by_legal_entity(record.legal_entity_id)
-        business = businesses[0] if businesses else None
-        if not business:
-            return
+        signer_name = self._resolve_signer_name(record)
         svc = SignatureRequestService(self.db)
         svc.create_request(
             client_record_id=report.client_record_id,
-            business_id=business.id,
+            business_id=None,
             created_by=created_by,
             created_by_name=created_by_name,
             request_type=SignatureRequestType.ANNUAL_REPORT_APPROVAL.value,
             title=ANNUAL_REPORT_APPROVAL_TITLE.format(tax_year=report.tax_year),
-            signer_name=business.business_name,
+            signer_name=signer_name,
             annual_report_id=report.id,
             sent_by=created_by,
             sent_by_name=created_by_name,
