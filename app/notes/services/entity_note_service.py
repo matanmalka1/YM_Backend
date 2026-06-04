@@ -1,11 +1,13 @@
 from sqlalchemy.orm import Session
 
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.notes.models.entity_note import EntityNote
 from app.notes.repositories.entity_note_repository import EntityNoteRepository
 from app.users.repositories.user_repository import UserRepository
 
 _NOT_FOUND = "NOTE.NOT_FOUND"
+_CLIENT_ENTITY_TYPE = "client"
 
 
 class EntityNoteService:
@@ -13,6 +15,11 @@ class EntityNoteService:
         self.db = db
         self.repo = EntityNoteRepository(db)
         self.user_repo = UserRepository(db)
+        self.client_repo = ClientRecordRepository(db)
+
+    def _assert_client_exists(self, client_id: int) -> None:
+        if not self.client_repo.get_by_id(client_id):
+            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT.NOT_FOUND")
 
     def _attach_created_by_names(self, notes: list[EntityNote]) -> list[EntityNote]:
         user_ids = sorted({note.created_by for note in notes if note.created_by is not None})
@@ -43,6 +50,8 @@ class EntityNoteService:
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[EntityNote], int]:
+        if entity_type == _CLIENT_ENTITY_TYPE:
+            self._assert_client_exists(entity_id)
         items, total = self.repo.list_for_entity(
             entity_type=entity_type,
             entity_id=entity_id,
@@ -58,6 +67,8 @@ class EntityNoteService:
         note: str,
         created_by: int | None = None,
     ) -> EntityNote:
+        if entity_type == _CLIENT_ENTITY_TYPE:
+            self._assert_client_exists(entity_id)
         note_obj = self.repo.create(
             entity_type=entity_type,
             entity_id=entity_id,
