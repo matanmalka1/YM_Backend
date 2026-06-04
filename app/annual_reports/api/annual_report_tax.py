@@ -6,7 +6,9 @@ from app.annual_reports.schemas.annual_report_financials import (
     TaxCalculationSaveRequest,
     TaxCalculationSaveResponse,
 )
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
+from app.annual_reports.services.tax_service import (
+    AnnualReportTaxService,
+)
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -29,7 +31,7 @@ def save_tax_calculation(
     יש לקרוא ל-GET /tax-calculation תחילה, ולאחר מכן לשמור את התוצאה.
     לא ניתן לשמור גם tax_due וגם refund_due בו-זמנית.
     """
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportTaxService(db)
     return svc.save_tax_calculation(report_id, body.tax_due, body.refund_due)
 
 

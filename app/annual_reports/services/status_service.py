@@ -18,7 +18,7 @@ from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
 
-from . import financial_service
+from . import readiness_service
 from .constants import STAGE_TO_STATUS, VALID_TRANSITIONS
 from .deadlines import extended_deadline, standard_deadline
 from .messages import (
@@ -70,7 +70,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
 
     def _assert_filing_readiness(self, report_id: int) -> None:
         """Raise AppError listing all blocking issues before SUBMITTED transition."""
-        svc = financial_service.AnnualReportFinancialService(self.db)
+        svc = readiness_service.AnnualReportReadinessService(self.db)
         result = svc.get_readiness_check(report_id)
         if not result.is_ready:
             issues_str = "; ".join(result.issues)

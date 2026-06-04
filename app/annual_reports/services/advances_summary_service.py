@@ -12,8 +12,10 @@ from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
 from app.annual_reports.schemas.annual_report_financials import AdvancesSummary
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
+from app.annual_reports.services.tax_service import (
+    AnnualReportTaxService,
+)
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 
@@ -43,7 +45,7 @@ class AnnualReportAdvancesSummaryService:
 
         total = sum((p.paid_amount or Decimal("0")) for p in payments)
 
-        tax_result = AnnualReportFinancialService(self.db).get_tax_calculation(report_id)
+        tax_result = AnnualReportTaxService(self.db).get_tax_calculation(report_id)
         balance = tax_result.tax_after_credits - total
 
         if balance > 0:

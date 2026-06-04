@@ -14,8 +14,8 @@ from app.annual_reports.models.annual_report_income_line import (
     IncomeSourceType,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
 from app.annual_reports.services.financial_line_helpers import audit_scalar
+from app.annual_reports.services.financial_line_service import AnnualReportFinancialLineService
 from app.audit.constants import (
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,
@@ -56,7 +56,7 @@ def _audit_entries(db, report_id: int, action: str) -> list[EntityAuditLog]:
 
 def test_income_delete_stores_old_value_snapshot(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
         report.id,
         "salary",
@@ -84,7 +84,7 @@ def test_income_delete_stores_old_value_snapshot(test_db, test_user):
 def test_manual_financial_mutation_blocks_missing_client_record(test_db, test_user):
     report = _create_report(test_db, test_user)
     ClientRecordRepository(test_db).soft_delete(report.client_record_id, deleted_by=test_user.id)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
 
     with pytest.raises(NotFoundError) as exc_info:
         service.add_income(
@@ -99,7 +99,7 @@ def test_manual_financial_mutation_blocks_missing_client_record(test_db, test_us
 
 def test_expense_delete_stores_old_value_snapshot(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
         report.id,
         "office_rent",
@@ -129,7 +129,7 @@ def test_expense_delete_stores_old_value_snapshot(test_db, test_user):
 
 def test_income_add_stores_snapshot_payload(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
         report.id,
         "salary",
@@ -150,7 +150,7 @@ def test_income_add_stores_snapshot_payload(test_db, test_user):
 
 def test_expense_add_stores_full_snapshot_payload(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
         report.id,
         "office_rent",
@@ -176,7 +176,7 @@ def test_expense_add_stores_full_snapshot_payload(test_db, test_user):
 
 def test_income_update_audit_excludes_none_fields(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
         report.id,
         "salary",
@@ -201,7 +201,7 @@ def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(
     test_db, test_user
 ):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
         report.id,
         "office_rent",
@@ -235,7 +235,7 @@ def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(
 
 def test_empty_financial_line_updates_do_not_write_audit(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     income = service.add_income(report.id, "salary", Decimal("500.00"), actor_id=test_user.id)
     expense = service.add_expense(
         report.id,
@@ -253,7 +253,7 @@ def test_empty_financial_line_updates_do_not_write_audit(test_db, test_user):
 
 def test_financial_line_repositories_reject_unsupported_update_fields(test_db, test_user):
     report = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     income = service.income_repo.create_for_report(
         report.id,
         IncomeSourceType.SALARY,
@@ -276,7 +276,7 @@ def test_financial_line_repositories_reject_unsupported_update_fields(test_db, t
 def test_cannot_update_income_line_from_another_report(test_db, test_user):
     report_a = _create_report(test_db, test_user)
     report_b = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
         report_a.id,
         "salary",
@@ -327,7 +327,7 @@ def test_audit_scalar_supports_expected_scalar_values():
 def test_cannot_delete_income_line_from_another_report(test_db, test_user):
     report_a = _create_report(test_db, test_user)
     report_b = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
         report_a.id,
         "salary",
@@ -353,7 +353,7 @@ def test_cannot_delete_income_line_from_another_report(test_db, test_user):
 def test_cannot_update_expense_line_from_another_report(test_db, test_user):
     report_a = _create_report(test_db, test_user)
     report_b = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
         report_a.id,
         "office_rent",
@@ -386,7 +386,7 @@ def test_cannot_update_expense_line_from_another_report(test_db, test_user):
 def test_cannot_delete_expense_line_from_another_report(test_db, test_user):
     report_a = _create_report(test_db, test_user)
     report_b = _create_report(test_db, test_user)
-    service = AnnualReportFinancialService(test_db)
+    service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
         report_a.id,
         "office_rent",

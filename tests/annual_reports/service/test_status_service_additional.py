@@ -55,16 +55,16 @@ def test_transition_submitted_requires_readiness(test_db, monkeypatch):
     svc.transition_status(report.id, "in_preparation", 1, "A")
     svc.transition_status(report.id, "pending_client", 1, "A")
 
-    class _FinSvc:
+    class _ReadinessSvc:
         def __init__(self, db):
             self.db = db
 
         def get_readiness_check(self, report_id):
             return SimpleNamespace(is_ready=False, issues=["missing docs", "no totals"])
 
-    import app.annual_reports.services.financial_service as fin_mod
+    import app.annual_reports.services.readiness_service as readiness_mod
 
-    monkeypatch.setattr(fin_mod, "AnnualReportFinancialService", _FinSvc)
+    monkeypatch.setattr(readiness_mod, "AnnualReportReadinessService", _ReadinessSvc)
 
     with pytest.raises(AppError) as exc:
         svc.transition_status(report.id, "submitted", 1, "A")
@@ -142,15 +142,15 @@ def test_transition_from_pending_client_cancels_requests(test_db, monkeypatch):
         def list_pending_by_annual_report(self, report_id):
             return [SimpleNamespace(id=9)]
 
-    import app.annual_reports.services.financial_service as fin_mod
+    import app.annual_reports.services.readiness_service as readiness_mod
     import app.signature_requests.repositories.signature_request_repository as sig_repo_mod
     import app.signature_requests.services.signature_request_service as sig_service_mod
 
     monkeypatch.setattr(sig_service_mod, "SignatureRequestService", _SigSvc)
     monkeypatch.setattr(sig_repo_mod, "SignatureRequestRepository", _SigRepo)
     monkeypatch.setattr(
-        fin_mod,
-        "AnnualReportFinancialService",
+        readiness_mod,
+        "AnnualReportReadinessService",
         lambda db: SimpleNamespace(
             get_readiness_check=lambda _rid: SimpleNamespace(is_ready=True, issues=[]),
         ),

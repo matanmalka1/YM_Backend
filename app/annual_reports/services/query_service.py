@@ -1,5 +1,8 @@
 from decimal import Decimal
 
+from app.advance_payments.repositories.advance_payment_aggregation_repository import (
+    AdvancePaymentAggregationRepository,
+)
 from app.annual_reports.integrations.tax_rules_registry import (
     get_default_resident_credit_points,
 )
@@ -10,7 +13,12 @@ from app.annual_reports.schemas.annual_report_responses import (
     ScheduleEntryResponse,
     StatusHistoryResponse,
 )
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
+from app.annual_reports.services.financial_summary_service import (
+    AnnualReportFinancialSummaryService,
+)
+from app.annual_reports.services.tax_service import (
+    AnnualReportTaxService,
+)
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 
 from .base import AnnualReportBaseService
@@ -109,8 +117,9 @@ class AnnualReportQueryService(AnnualReportBaseService):
 
         schedules = self.repo.get_schedules(report_id)
         history = self.repo.get_status_history(report_id)
-        financial_service = AnnualReportFinancialService(self.db)
-        financial_summary = financial_service.get_financial_summary(report_id)
+        financial_summary = AnnualReportFinancialSummaryService(
+            self.db
+        ).get_financial_summary(report_id)
         detail = AnnualReportDetailRepository(self.db).get_by_report_id(report_id)
         orm_report = self.repo.get_by_id(report_id)
         default_credit_points = get_default_resident_credit_points(
@@ -144,11 +153,11 @@ class AnnualReportQueryService(AnnualReportBaseService):
                 float(orm_report.tax_due) if orm_report.tax_due is not None else None
             )
 
-        tax = financial_service.get_tax_calculation(report_id)
+        tax = AnnualReportTaxService(self.db).get_tax_calculation(report_id)
         response.profit = tax.net_profit
         advances_paid = Decimal(
             str(
-                financial_service.advance_repo.sum_paid_by_client_year(
+                AdvancePaymentAggregationRepository(self.db).sum_paid_by_client_year(
                     orm_report.client_record_id, orm_report.tax_year
                 )
             )

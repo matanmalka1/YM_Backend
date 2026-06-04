@@ -6,7 +6,7 @@ import pytest
 from sqlalchemy import select
 
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
+from app.annual_reports.services.financial_line_service import AnnualReportFinancialLineService
 from app.annual_reports.services.vat_import_service import VatImportService
 from app.audit.constants import (
     ACTION_EXPENSE_ADDED,
@@ -19,8 +19,8 @@ from app.audit.models.entity_audit_log import EntityAuditLog
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import AppError, ForbiddenError, NotFoundError
 from app.common.enums import VatType
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError
 from app.vat_reports.models.vat_enums import ExpenseCategory, InvoiceType, VatWorkItemStatus
 from app.vat_reports.models.vat_invoice import VatInvoice
 from app.vat_reports.models.vat_work_item import VatWorkItem
@@ -101,7 +101,7 @@ def test_vat_auto_populate_writes_audit_and_source_breakdown(test_db, test_user,
 
 def test_vat_auto_populate_force_audits_replaced_lines(test_db, test_user, monkeypatch):
     _, report = _create_report(test_db, test_user, "B")
-    financial = AnnualReportFinancialService(test_db)
+    financial = AnnualReportFinancialLineService(test_db)
     financial.add_income(report.id, "salary", Decimal("500.00"), actor_id=test_user.id)
     financial.add_expense(report.id, "office_rent", Decimal("300.00"), actor_id=test_user.id)
     service = VatImportService(test_db)
@@ -273,7 +273,7 @@ def test_vat_auto_populate_blocks_closed_or_frozen_clients_even_force(
     test_db, test_user, monkeypatch, status
 ):
     client, report = _create_report(test_db, test_user, f"D{status.value}")
-    financial = AnnualReportFinancialService(test_db)
+    financial = AnnualReportFinancialLineService(test_db)
     financial.add_income(report.id, "salary", Decimal("500.00"), actor_id=test_user.id)
     client_record = test_db.get(ClientRecord, client.id)
     client_record.status = status
@@ -301,7 +301,7 @@ def test_vat_auto_populate_blocks_closed_or_frozen_clients_even_force(
 @pytest.mark.parametrize("status", [ClientStatus.CLOSED, ClientStatus.FROZEN])
 def test_manual_financial_mutations_block_closed_or_frozen_clients(test_db, test_user, status):
     client, report = _create_report(test_db, test_user, f"E{status.value}")
-    financial = AnnualReportFinancialService(test_db)
+    financial = AnnualReportFinancialLineService(test_db)
     income = financial.add_income(report.id, "salary", Decimal("500.00"), actor_id=test_user.id)
     expense = financial.add_expense(
         report.id,

@@ -20,8 +20,15 @@ from app.annual_reports.schemas.annual_report_financials import (
 from app.annual_reports.services.advances_summary_service import (
     AnnualReportAdvancesSummaryService,
 )
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
+from app.annual_reports.services.financial_line_service import AnnualReportFinancialLineService
+from app.annual_reports.services.financial_summary_service import (
+    AnnualReportFinancialSummaryService,
+)
+from app.annual_reports.services.readiness_service import AnnualReportReadinessService
 from app.annual_reports.services.tax_engine import calculate_tax
+from app.annual_reports.services.tax_service import (
+    AnnualReportTaxService,
+)
 from app.annual_reports.services.vat_import_service import VatImportService
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -59,7 +66,7 @@ def get_tax_preview(body: TaxPreviewRequest, _user: CurrentUser):
 @router.get("/{report_id}/financials", response_model=FinancialSummaryResponse)
 def get_financial_summary(report_id: int, db: DBSession, user: CurrentUser):
     """Income + expense lines and taxable income calculation."""
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialSummaryService(db)
     return svc.get_financial_summary(report_id)
 
 
@@ -69,7 +76,7 @@ def get_financial_summary(report_id: int, db: DBSession, user: CurrentUser):
 @router.get("/{report_id}/tax-calculation", response_model=TaxCalculationResponse)
 def get_tax_calculation(report_id: int, db: DBSession, user: CurrentUser):
     """Israeli 2024 income tax calculation for this report."""
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportTaxService(db)
     return svc.get_tax_calculation(report_id)
 
 
@@ -89,7 +96,7 @@ def get_advances_summary(report_id: int, db: DBSession, user: CurrentUser):
 @router.get("/{report_id}/readiness", response_model=ReadinessCheckResponse)
 def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
     """Return list of issues blocking this report from being filed."""
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportReadinessService(db)
     return svc.get_readiness_check(report_id)
 
 
@@ -104,7 +111,7 @@ def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
 def add_income_line(
     report_id: int, body: IncomeLineCreateRequest, db: DBSession, user: CurrentUser
 ):
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialLineService(db)
     return svc.add_income(
         report_id, body.source_type, body.amount, body.description, actor_id=user.id
     )
@@ -122,7 +129,7 @@ def update_income_line(
     db: DBSession,
     user: CurrentUser,
 ):
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialLineService(db)
     return svc.update_income(
         report_id, line_id, actor_id=user.id, **body.model_dump(exclude_none=True)
     )
@@ -134,7 +141,7 @@ def update_income_line(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
 def delete_income_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialLineService(db)
     svc.delete_income(report_id, line_id, actor_id=user.id)
 
 
@@ -149,7 +156,7 @@ def delete_income_line(report_id: int, line_id: int, db: DBSession, user: Curren
 def add_expense_line(
     report_id: int, body: ExpenseLineCreateRequest, db: DBSession, user: CurrentUser
 ):
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialLineService(db)
     return svc.add_expense(
         report_id,
         body.category,
@@ -174,7 +181,7 @@ def update_expense_line(
     db: DBSession,
     user: CurrentUser,
 ):
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialLineService(db)
     return svc.update_expense(
         report_id, line_id, actor_id=user.id, **body.model_dump(exclude_none=True)
     )
@@ -186,7 +193,7 @@ def update_expense_line(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
 def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
-    svc = AnnualReportFinancialService(db)
+    svc = AnnualReportFinancialLineService(db)
     svc.delete_expense(report_id, line_id, actor_id=user.id)
 
 

@@ -9,10 +9,15 @@ from app.annual_reports.repositories.annual_report_repository import (
 )
 from app.annual_reports.services.annual_report_pdf_builder import build_pdf
 from app.annual_reports.services.detail_service import AnnualReportDetailService
-from app.annual_reports.services.financial_service import AnnualReportFinancialService
+from app.annual_reports.services.financial_summary_service import (
+    AnnualReportFinancialSummaryService,
+)
 from app.annual_reports.services.messages import (
     ANNUAL_REPORT_NOT_FOUND,
     CLIENT_FALLBACK_NAME,
+)
+from app.annual_reports.services.tax_service import (
+    AnnualReportTaxService,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
@@ -38,9 +43,8 @@ class AnnualReportPdfService:
             else CLIENT_FALLBACK_NAME.format(client_record_id=report.client_record_id)
         )
 
-        fin_svc = AnnualReportFinancialService(self.db)
-        summary = fin_svc.get_financial_summary(report_id)
-        tax = fin_svc.get_tax_calculation(report_id)
+        summary = AnnualReportFinancialSummaryService(self.db).get_financial_summary(report_id)
+        tax = AnnualReportTaxService(self.db).get_tax_calculation(report_id)
 
         detail_svc = AnnualReportDetailService(self.db)
         detail = detail_svc.get_detail(report_id)

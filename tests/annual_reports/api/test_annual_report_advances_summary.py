@@ -30,13 +30,13 @@ def _create_report(db):
 
 def _patch_decimal_tax_input(monkeypatch):
     monkeypatch.setattr(
-        "app.annual_reports.services.financial_service.calculate_tax",
+        "app.annual_reports.services.tax_service.calculate_tax",
         lambda taxable_income, *args, **kwargs: _calculate_tax(
             float(taxable_income), *args, **kwargs
         ),
     )
     monkeypatch.setattr(
-        "app.annual_reports.services.financial_service.calculate_national_insurance",
+        "app.annual_reports.services.tax_service.calculate_national_insurance",
         lambda income, *args, **kwargs: _calculate_ni(float(income), *args, **kwargs),
     )
 

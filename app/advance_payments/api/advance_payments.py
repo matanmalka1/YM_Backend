@@ -155,11 +155,11 @@ def update_advance_payment(
     if payment.status == AdvancePaymentStatus.PAID and payment.period:
         try:
             tax_year = parse_period_year(payment.period)
-            from app.annual_reports.services.financial_service import (
-                AnnualReportFinancialService,
+            from app.annual_reports.services.tax_service import (
+                AnnualReportTaxService,
             )
 
-            AnnualReportFinancialService(db).invalidate_tax_if_open(client_record_id, tax_year)
+            AnnualReportTaxService(db).invalidate_tax_if_open(client_record_id, tax_year)
         except Exception:
             pass  # Non-critical: do not fail the payment update if hook errors
     return AdvancePaymentRow.model_validate(payment)
