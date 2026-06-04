@@ -23,6 +23,7 @@ class AdvancePaymentRow(BaseModel):
     period: str
     period_months_count: int
     due_date: date
+    due_date_effective: date | None = None
     expected_amount: ApiDecimal
     paid_amount: ApiDecimal
     status: AdvancePaymentStatus
@@ -47,7 +48,8 @@ class AdvancePaymentRow(BaseModel):
     @computed_field
     @property
     def timing_status(self) -> Literal["overdue", "on_time"]:
-        if self.status != AdvancePaymentStatus.PAID and date.today() > self.due_date:
+        effective = self.due_date_effective or self.due_date
+        if self.status != AdvancePaymentStatus.PAID and date.today() > effective:
             return "overdue"
         return "on_time"
 
@@ -57,7 +59,8 @@ class AdvancePaymentRow(BaseModel):
         if self.paid_at is None or self.status != AdvancePaymentStatus.PAID:
             return False
         paid_date = self.paid_at.date() if isinstance(self.paid_at, datetime) else self.paid_at
-        return paid_date > self.due_date
+        effective = self.due_date_effective or self.due_date
+        return paid_date > effective
 
     model_config = {"from_attributes": True, "use_enum_values": True}
 
@@ -128,6 +131,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     period: str
     period_months_count: int
     due_date: date
+    due_date_effective: date | None = None
     expected_amount: ApiDecimal
     paid_amount: ApiDecimal
     status: AdvancePaymentStatus
@@ -147,7 +151,8 @@ class AdvancePaymentOverviewRow(BaseModel):
     @computed_field
     @property
     def timing_status(self) -> Literal["overdue", "on_time"]:
-        if self.status != AdvancePaymentStatus.PAID and date.today() > self.due_date:
+        effective = self.due_date_effective or self.due_date
+        if self.status != AdvancePaymentStatus.PAID and date.today() > effective:
             return "overdue"
         return "on_time"
 

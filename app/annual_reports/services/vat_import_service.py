@@ -33,6 +33,7 @@ from app.annual_reports.services.messages import (
     AUTOPOPULATE_INVALID_STATUS,
     AUTOPOPULATE_LINES_ALREADY_EXIST,
     VAT_IMPORTED_BUSINESS_INCOME_DESCRIPTION,
+    EXPENSE_CATEGORY_LABELS,
     VAT_IMPORTED_EXPENSE_DESCRIPTION,
 )
 from app.audit.constants import (
@@ -313,7 +314,9 @@ class VatImportService:
                 category=cat,
                 amount=total,
                 recognition_rate=default_recognition_rate(cat),
-                description=VAT_IMPORTED_EXPENSE_DESCRIPTION.format(category=cat.value),
+                description=VAT_IMPORTED_EXPENSE_DESCRIPTION.format(
+                    category_label=EXPENSE_CATEGORY_LABELS.get(cat.value, cat.value)
+                ),
             )
             expense_lines_created += 1
             expense_total += total

@@ -1,4 +1,4 @@
-from app.businesses.models.business import EntityType
+from app.common.enums import EntityType
 
 _SOLE_TRADER_TYPES: frozenset[EntityType] = frozenset(
     {

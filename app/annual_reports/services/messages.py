@@ -39,7 +39,22 @@ AUTOPOPULATE_LINES_ALREADY_EXIST = (
 )
 AUTOPOPULATE_AUDIT_ACTOR_REQUIRED = "נדרש משתמש מבצע למילוי אוטומטי מנתוני מע\"מ"
 VAT_IMPORTED_BUSINESS_INCOME_DESCRIPTION = 'הכנסות עסקיות — יובא ממע"מ'
-VAT_IMPORTED_EXPENSE_DESCRIPTION = 'הוצאות {category} — יובא ממע"מ'
+VAT_IMPORTED_EXPENSE_DESCRIPTION = '{category_label} — יובא ממע"מ'
+
+EXPENSE_CATEGORY_LABELS: dict[str, str] = {
+    "office_rent": "שכירות משרד",
+    "professional_services": "שירותים מקצועיים",
+    "salaries": "שכר עבודה",
+    "depreciation": "פחת",
+    "vehicle": "רכב",
+    "marketing": "שיווק ופרסום",
+    "insurance": "ביטוח",
+    "communication": "תקשורת",
+    "travel": "נסיעות",
+    "training": "הכשרה מקצועית",
+    "bank_fees": "עמלות בנק",
+    "other": "אחר",
+}
 ANNUAL_DEADLINE_REMINDER_MESSAGE = "תזכורת: מועד מס בעוד {days_before} ימים ({due_date})"
 ANNUAL_REPORT_APPROVAL_TITLE = "אישור דוח שנתי {tax_year}"
 ANNUAL_REPORT_DELETED_REASON = "דוח נמחק"
