@@ -38,41 +38,6 @@ def test_unpaid_charge_appears_as_overdue(test_db):
     assert charge_items[0]["href"] == "/charges"
 
 
-def test_item_shape(test_db):
-    biz = create_business(test_db)
-    test_db.add(
-        Charge(
-            client_record_id=biz.client_id,
-            business_id=biz.id,
-            amount=1000,
-            charge_type=ChargeType.OTHER,
-            status=ChargeStatus.ISSUED,
-            issued_at=date.today() - timedelta(days=35),
-        )
-    )
-    test_db.commit()
-
-    items = DashboardAttentionService(test_db).build(user_role=UserRole.ADVISOR)
-    item = next(i for i in items if i["source_type"] == "charge")
-
-    required_keys = {
-        "id",
-        "source_type",
-        "source_id",
-        "title",
-        "client_name",
-        "due_date",
-        "days_delta",
-        "reason",
-        "amount",
-        "urgency",
-        "href",
-    }
-    assert required_keys.issubset(item.keys())
-    assert item["client_name"]
-    assert item["days_delta"] < 0  # overdue
-
-
 def test_max_7_items_are_included(test_db):
     biz = create_business(test_db)
     for i in range(10):

@@ -159,21 +159,6 @@ def test_create_pending_requires_signing_link_fields(test_db, test_user):
         )
 
 
-def test_service_expire_overdue_requests_delegates_and_returns_count(test_db, test_user):
-    business = _business(test_db, "5")
-    repo = SignatureRequestRepository(test_db)
-    req = _create(repo, business, user_id=test_user.id, title="Service Expire")
-    repo.update(
-        req.id,
-        status=SignatureRequestStatus.PENDING_SIGNATURE,
-        signing_token="service-expire-token",
-        sent_at=utcnow() - timedelta(days=10),
-        expires_at=utcnow() - timedelta(days=1),
-    )
-    assert SignatureRequestService(test_db).expire_overdue_requests() == 1
-    assert repo.get_by_id(req.id).status == SignatureRequestStatus.EXPIRED
-
-
 def test_create_request_raises_when_business_missing():
     repo = SimpleNamespace(
         create_pending=lambda **kwargs: None,

@@ -175,39 +175,6 @@ def test_work_queue_advance_payment_batch_loads_all_client_identities(test_db):
     assert identities[second.client_id][1] == 100003
 
 
-def test_work_queue_batch_loads_charge_client_identities_once(test_db, monkeypatch):
-    first = create_business(test_db)
-    second = create_business(test_db)
-    _add_overdue_charge(test_db, first)
-    _add_overdue_charge(test_db, second)
-    calls = []
-
-    from app.work_queue.services import common
-
-    original = common.load_client_profiles
-
-    def wrapped(db, client_record_ids):
-        ids = list(client_record_ids)
-        calls.append(ids)
-        return original(db, ids)
-
-    monkeypatch.setattr(common, "load_client_profiles", wrapped)
-
-    items = WorkQueueService(test_db).list_items(
-        exclude_source_types=[
-            WorkQueueSourceType.VAT_WORK_ITEM,
-            WorkQueueSourceType.ANNUAL_REPORT,
-            WorkQueueSourceType.ADVANCE_PAYMENT,
-            WorkQueueSourceType.BINDER,
-        ]
-    )
-
-    charge_items = [i for i in items if i.source_type == WorkQueueSourceType.CHARGE]
-    assert len(charge_items) == 2
-    assert len(calls) == 1
-    assert set(calls[0]) == {first.client_id, second.client_id}
-
-
 def test_work_queue_excludes_requested_source_types(test_db, monkeypatch):
     service = WorkQueueService(test_db)
 

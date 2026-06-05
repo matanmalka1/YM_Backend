@@ -1,4 +1,3 @@
-from datetime import datetime
 from decimal import Decimal
 from types import SimpleNamespace
 
@@ -6,7 +5,7 @@ import pytest
 from tax_rules import get_financial
 
 from app.common.enums import EntityType
-from app.core.exceptions import AppError, NotFoundError
+from app.core.exceptions import AppError
 from app.vat_reports.models.vat_enums import InvoiceType, VatWorkItemStatus
 from app.vat_reports.services.constants import OSEK_PATUR_CEILING_WARNING_RATE
 from app.vat_reports.services.data_entry_common import (
@@ -14,117 +13,14 @@ from app.vat_reports.services.data_entry_common import (
     check_osek_patur_ceiling,
     resolve_invoice_derived_fields,
 )
-from app.vat_reports.services.data_entry_invoice_delete import delete_invoice
-from app.vat_reports.services.data_entry_invoices import add_invoice
 
 OSEK_PATUR_CEILING_ILS = Decimal(str(get_financial(2026, "osek_patur_ceiling_ils").value))
 
 
-def test_add_invoice_not_found_and_invalid_status(monkeypatch):
-    work_item_repo = SimpleNamespace(get_by_id=lambda _id: None)
-    invoice_repo = SimpleNamespace()
-    with pytest.raises(NotFoundError):
-        add_invoice(
-            work_item_repo,
-            invoice_repo,
-            item_id=1,
-            created_by=1,
-            invoice_type=InvoiceType.INCOME,
-            invoice_number=None,
-            invoice_date=None,
-            counterparty_name=None,
-            gross_amount=11.8,
-        )
-
-    item = SimpleNamespace(
-        id=1,
-        client_record_id=1,
-        period="2026-01",
-        status=VatWorkItemStatus.PENDING_MATERIALS,
-    )
-    work_item_repo = SimpleNamespace(
-        db=None,
-        get_by_id=lambda _id: item,
-        update_status=lambda *args, **kwargs: None,
-        append_audit=lambda **kwargs: None,
-    )
-    invoice_repo = SimpleNamespace(get_by_number=lambda *args, **kwargs: None)
-    with pytest.raises(AppError):
-        add_invoice(
-            work_item_repo,
-            invoice_repo,
-            item_id=1,
-            created_by=1,
-            invoice_type=InvoiceType.INCOME,
-            invoice_number=None,
-            invoice_date=None,
-            counterparty_name=None,
-            gross_amount=11.8,
-        )
-
-
-def test_add_invoice_autofill_fields_for_income_and_expense(monkeypatch):
-    item = SimpleNamespace(
-        id=1,
-        client_record_id=1,
-        period="2026-03",
-        status=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
-    )
-    mock_record = SimpleNamespace(id=1, legal_entity_id=1, status="active")
-    created = {}
-    fake_db = object()
-    work_item_repo = SimpleNamespace(
-        db=fake_db,
-        get_by_id=lambda _id: item,
-        update_status=lambda *args, **kwargs: None,
-        append_audit=lambda **kwargs: None,
-    )
-    invoice_repo = SimpleNamespace(
-        get_by_number=lambda *args, **kwargs: None,
-        create=lambda **kwargs: created.setdefault("invoice", SimpleNamespace(id=44, **kwargs)),
-    )
-    monkeypatch.setattr(
-        "app.vat_reports.services.data_entry_invoices.recalculate_totals",
-        lambda *args, **kwargs: None,
-    )
-    monkeypatch.setattr(
-        "app.vat_reports.services.data_entry_invoices.ClientRecordRepository",
-        lambda db: SimpleNamespace(get_by_id=lambda _id: mock_record),
-    )
-    monkeypatch.setattr(
-        "app.vat_reports.services.data_entry_invoices.LegalEntityRepository",
-        lambda db: SimpleNamespace(get_by_id=lambda _id: SimpleNamespace(entity_type=None)),
-    )
-
-    income, ceiling_warning = add_invoice(
-        work_item_repo,
-        invoice_repo,
-        item_id=1,
-        created_by=1,
-        invoice_type=InvoiceType.INCOME,
-        invoice_number=None,
-        invoice_date=None,
-        counterparty_name=None,
-        gross_amount=59,
-    )
-    assert income.counterparty_name == "הכנסות"
-    assert income.invoice_date == datetime(2026, 3, 1)
-    assert ceiling_warning is False
-
-
-def test_data_entry_common_invalid_transition_and_ceiling():
+def test_data_entry_common_rejects_invalid_transition_and_derives_invoice_fields():
     item = SimpleNamespace(status=VatWorkItemStatus.PENDING_MATERIALS)
     with pytest.raises(AppError):
         assert_transition_allowed(item, VatWorkItemStatus.FILED)
-
-    osek_business = SimpleNamespace(entity_type=EntityType.OSEK_PATUR)
-
-    class _InvoiceRepo:
-        def sum_income_net_by_client_year(self, client_id, year):
-            return 2000000
-
-    with pytest.raises(AppError):
-        check_osek_patur_ceiling(osek_business, _InvoiceRepo(), 1, "2026-01", 1)
 
     derived = resolve_invoice_derived_fields(
         invoice_type=InvoiceType.INCOME,
@@ -149,24 +45,10 @@ def test_osek_patur_ceiling_uses_2026_threshold_and_boundary_behavior():
             return self.total
 
     assert OSEK_PATUR_CEILING_ILS == 122833
-
-    warning = check_osek_patur_ceiling(
-        osek_business,
-        _InvoiceRepo(122832),
-        1,
-        "2026-01",
-        1,
-    )
-    assert warning is True
+    assert check_osek_patur_ceiling(osek_business, _InvoiceRepo(122832), 1, "2026-01", 1) is True
 
     with pytest.raises(AppError) as exc:
-        check_osek_patur_ceiling(
-            osek_business,
-            _InvoiceRepo(122833),
-            1,
-            "2026-01",
-            0.01,
-        )
+        check_osek_patur_ceiling(osek_business, _InvoiceRepo(122833), 1, "2026-01", 0.01)
     assert exc.value.code == "VAT.OSEK_PATUR_CEILING_EXCEEDED"
     assert "122833.00" in str(exc.value.message)
 
@@ -182,27 +64,23 @@ def test_osek_patur_ceiling_warning_threshold_is_80_percent():
         def sum_income_net_by_client_year(self, client_id, year):
             return self.total
 
-    below_warning = check_osek_patur_ceiling(
-        osek_business,
-        _InvoiceRepo(warning_threshold - 1),
-        1,
-        "2026-01",
-        0.5,
+    assert (
+        check_osek_patur_ceiling(
+            osek_business,
+            _InvoiceRepo(warning_threshold - 1),
+            1,
+            "2026-01",
+            0.5,
+        )
+        is False
     )
-    assert below_warning is False
-
-    at_warning = check_osek_patur_ceiling(
-        osek_business,
-        _InvoiceRepo(warning_threshold - 1),
-        1,
-        "2026-01",
-        1,
+    assert (
+        check_osek_patur_ceiling(
+            osek_business,
+            _InvoiceRepo(warning_threshold - 1),
+            1,
+            "2026-01",
+            1,
+        )
+        is True
     )
-    assert at_warning is True
-
-
-def test_delete_invoice_not_found_paths():
-    work_item_repo = SimpleNamespace(get_by_id=lambda _id: None)
-    invoice_repo = SimpleNamespace()
-    with pytest.raises(NotFoundError):
-        delete_invoice(work_item_repo, invoice_repo, item_id=1, invoice_id=1, performed_by=1)

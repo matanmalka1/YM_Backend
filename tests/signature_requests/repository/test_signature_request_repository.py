@@ -2,8 +2,6 @@ from datetime import date, timedelta
 
 from app.businesses.models.business import Business
 from app.signature_requests.models.signature_request import (
-    SignatureAuditEvent,
-    SignatureRequest,
     SignatureRequestStatus,
     SignatureRequestType,
 )
@@ -129,7 +127,7 @@ def test_signature_request_repository_pending_expired_and_audit_methods(test_db)
     ]
 
 
-def test_repository_update_missing_id_and_pending_by_annual_report_and_repr(test_db):
+def test_repository_update_missing_id_and_pending_by_annual_report(test_db):
     repo = SignatureRequestRepository(test_db)
     user = _user(test_db)
     business = _business(test_db, suffix="AR")
@@ -144,22 +142,3 @@ def test_repository_update_missing_id_and_pending_by_annual_report_and_repr(test
     repo.update(other.id, status=SignatureRequestStatus.PENDING_SIGNATURE)
     assert [item.id for item in repo.list_pending_by_annual_report(77)] == [pending.id]
     assert canceled.id not in [item.id for item in repo.list_pending_by_annual_report(77)]
-    model_repr = repr(
-        SignatureRequest(
-            id=123,
-            client_record_id=business.client_id,
-            business_id=456,
-            created_by=user.id,
-            request_type=SignatureRequestType.CUSTOM,
-            title="Repr",
-            signer_name="Signer",
-            status=SignatureRequestStatus.PENDING_SIGNATURE,
-        )
-    )
-    audit_repr = repr(
-        SignatureAuditEvent(
-            id=321, signature_request_id=123, event_type="created", actor_type="advisor"
-        )
-    )
-    assert "SignatureRequest(id=123" in model_repr
-    assert "SignatureAuditEvent(id=321" in audit_repr

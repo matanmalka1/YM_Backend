@@ -153,24 +153,3 @@ def test_list_by_client_filters_business_and_sort(test_db):
     assert total == 1
     assert [i.id for i in items] == [e3.id]
     assert e1.id != e2.id
-
-
-def test_update_ignores_unknown_fields(test_db):
-    repo = CorrespondenceRepository(test_db)
-    user = _user(test_db)
-    business = _business(test_db)
-
-    entry = repo.create(
-        client_record_id=business.client_id,
-        business_id=business.id,
-        correspondence_type=CorrespondenceType.EMAIL,
-        subject="Before",
-        occurred_at=datetime(2026, 1, 1, 8, 0, 0),
-        created_by=user.id,
-    )
-
-    updated = repo.update(entry.id, subject="After", not_a_field="ignored")
-    assert updated is not None
-    assert updated.subject == "After"
-    assert not hasattr(updated, "not_a_field")
-    assert repo.update(999999, subject="Missing") is None

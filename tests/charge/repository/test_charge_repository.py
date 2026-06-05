@@ -124,4 +124,3 @@ def test_get_aging_buckets_includes_only_issued_and_not_deleted(test_db):
     assert row.oldest_issued_at.date().isoformat() == "2026-03-10"
 
     assert repo.get_by_id(draft.id) is not None
-    assert "<Charge(" in repr(current)

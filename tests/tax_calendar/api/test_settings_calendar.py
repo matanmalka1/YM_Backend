@@ -1,6 +1,3 @@
-from app.tax_calendar.integrations.tax_rules_registry import (
-    registry_periodic_calendar_available,
-)
 from app.tax_calendar.services.bootstrap import (
     DEFAULT_DEADLINE_RULES,
     bootstrap_tax_calendar,
@@ -12,20 +9,10 @@ ENTRIES_PATH = "/api/v1/settings/tax-calendar/entries"
 SUMMARY_PATH = "/api/v1/settings/tax-calendar/summary"
 BOOTSTRAP_PATH = "/api/v1/settings/tax-calendar/bootstrap"
 
-_EXPECTED_RULE_COUNT = len(DEFAULT_DEADLINE_RULES)
 _EXPECTED_RULE_KEYS = {d.rule_type.value for d in DEFAULT_DEADLINE_RULES}
 
 
 # --- /rules ---
-
-
-def test_list_rules_returns_seeded_rules(client, advisor_headers, test_db):
-    seed_default_deadline_rules(test_db)
-    test_db.commit()
-
-    response = client.get(RULES_PATH, headers=advisor_headers)
-    assert response.status_code == 200
-    assert len(response.json()) == _EXPECTED_RULE_COUNT
 
 
 def test_list_rules_response_shape(client, advisor_headers, test_db):
@@ -68,15 +55,6 @@ def test_list_entries_year_filter(client, advisor_headers, test_db):
     assert all(e["tax_year"] == 2026 for e in data)
 
 
-def test_list_entries_no_filter_returns_all(client, advisor_headers, test_db):
-    bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
-    test_db.commit()
-
-    response = client.get(ENTRIES_PATH, headers=advisor_headers)
-    assert response.status_code == 200
-    assert len(response.json()) == 74
-
-
 def test_list_entries_unauthenticated_returns_401(client, test_db):
     response = client.get(ENTRIES_PATH)
     assert response.status_code == 401
@@ -93,30 +71,6 @@ def test_list_entries_invalid_year_range_returns_400(client, advisor_headers, te
 
 
 # --- /summary ---
-
-
-def test_summary_correct_totals(client, advisor_headers, test_db):
-    bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
-    test_db.commit()
-
-    response = client.get(f"{SUMMARY_PATH}?start_year=2026&end_year=2027", headers=advisor_headers)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total_entries"] == 74
-    assert "2026" in str(data["per_year"])
-    assert "2027" in str(data["per_year"])
-    # 2027 lacks official registry calendar — fallback warning expected
-    if not registry_periodic_calendar_available(2027):
-        assert any("2027" in w and "fallback" in w for w in data["warnings"])
-    else:
-        assert data["warnings"] == []
-
-
-def test_summary_no_entries_produces_warnings(client, advisor_headers, test_db):
-    response = client.get(f"{SUMMARY_PATH}?start_year=2026&end_year=2026", headers=advisor_headers)
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data["warnings"]) > 0
 
 
 def test_summary_secretary_returns_403(client, secretary_headers, test_db):

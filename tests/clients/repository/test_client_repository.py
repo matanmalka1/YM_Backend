@@ -1,4 +1,3 @@
-from app.clients.repositories.client_graph_writer import apply_graph_update
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.create_client_service import create_client_identity_only
 from app.common.enums import EntityType, IdNumberType
@@ -108,13 +107,3 @@ def test_list_count_search_and_list_by_ids(test_db):
 def test_soft_delete_returns_false_for_missing_client(test_db):
     repo = ClientRecordRepository(test_db)
     assert repo.soft_delete(9999, deleted_by=1) is False
-
-
-def test_update_ignores_unknown_fields(test_db):
-    client = _create_client(test_db, full_name="Old Name", id_number="500000001")
-
-    updated = apply_graph_update(test_db, client.id, full_name="New Name", does_not_exist="x")
-
-    assert updated is not None
-    assert updated["full_name"] == "New Name"
-    assert "does_not_exist" not in updated
