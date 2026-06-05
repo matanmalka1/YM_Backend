@@ -2,6 +2,7 @@ from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
 
+from app.core.exceptions import AppError
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.users.models.user_audit_log import AuditAction
@@ -31,6 +32,8 @@ def list_audit_logs(
     from_ts: datetime | None = Query(None, alias="from"),
     to_ts: datetime | None = Query(None, alias="to"),
 ):
+    if from_ts is not None and to_ts is not None and from_ts > to_ts:
+        raise AppError("טווח תאריכים לא תקין: from חייב להיות לפני to", "USER.INVALID_DATE_RANGE")
     service = AuditLogService(db)
     items, total = service.list_logs(
         page=page,
