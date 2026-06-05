@@ -46,14 +46,20 @@ IMPORT_PATH = "/api/v1/clients/import"
 # ── HTTP-level integration tests ─────────────────────────────────────────────
 
 
-def test_idempotency_missing_header_returns_400(client, advisor_headers, test_db):
+def test_idempotency_missing_header_returns_422(client, advisor_headers, test_db):
     response = client.post(
         IMPORT_PATH,
         headers=advisor_headers,
         files=_upload_file(_import_payload()),
     )
-    assert response.status_code == 400
-    assert response.json()["error"]["message"] == "מפתח אידמפוטנטיות חובה"
+    assert response.status_code == 422
+    assert response.json()["error"]["details"] == [
+        {
+            "field": "X-Idempotency-Key",
+            "message": "Field required",
+            "type": "missing",
+        }
+    ]
 
 
 def test_idempotency_duplicate_request_returns_cached_response(client, advisor_headers, test_db):
