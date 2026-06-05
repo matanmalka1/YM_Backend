@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.core.exceptions import AppError
+from app.core.exceptions import NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
     SignatureRequestStatus,
@@ -9,12 +9,9 @@ from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
 from app.signature_requests.services.messages import (
-    CANCEL_REQUEST_INVALID_STATUS,
     CANCELED_BY_ADVISOR_NOTE,
     SIGNATURE_REQUEST_EXPIRED_NOTE,
-)
-from app.signature_requests.services.signature_request_validations import (
-    get_or_raise_for_update,
+    SIGNATURE_REQUEST_NOT_FOUND,
 )
 from app.utils.time_utils import utcnow
 
@@ -22,17 +19,17 @@ from app.utils.time_utils import utcnow
 def cancel_request(
     repo: SignatureRequestRepository,
     *,
+    client_record_id: int,
     request_id: int,
     canceled_by: int,
     canceled_by_name: str,
     reason: str | None = None,
 ) -> SignatureRequest:
-    req = get_or_raise_for_update(repo, request_id)
-
-    if req.status != SignatureRequestStatus.PENDING_SIGNATURE:
-        raise AppError(
-            CANCEL_REQUEST_INVALID_STATUS.format(status=req.status.value),
-            "SIGNATURE_REQUEST.INVALID_STATUS",
+    req = repo.get_pending_by_client_and_id_for_update(client_record_id, request_id)
+    if not req:
+        raise NotFoundError(
+            SIGNATURE_REQUEST_NOT_FOUND.format(request_id=request_id),
+            "SIGNATURE_REQUEST.NOT_FOUND",
         )
 
     req = repo.update(

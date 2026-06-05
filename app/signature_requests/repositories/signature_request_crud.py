@@ -76,12 +76,16 @@ class SignatureRequestCrudMixin:
         )
         return self.db.scalars(stmt).first()
 
-    def get_by_id_for_update(self, request_id: int) -> SignatureRequest | None:
-        """Fetch with a row-level lock for status transitions."""
+    def get_pending_by_client_and_id_for_update(
+        self, client_record_id: int, request_id: int
+    ) -> SignatureRequest | None:
+        """Fetch a client-scoped pending request with a row-level lock."""
         stmt = (
             select(SignatureRequest)
             .where(
                 SignatureRequest.id == request_id,
+                SignatureRequest.client_record_id == client_record_id,
+                SignatureRequest.status == SignatureRequestStatus.PENDING_SIGNATURE,
                 SignatureRequest.deleted_at.is_(None),
             )
             .with_for_update()
@@ -197,7 +201,7 @@ class SignatureRequestCrudMixin:
         """Update fields on a signature request.
 
         Pass a pre-fetched (optionally locked) ``req`` entity to avoid a second
-        SELECT and keep the lock from get_by_id_for_update() / get_by_token_for_update() alive.
+        SELECT and keep the lock from a scoped transition lookup alive.
         """
         entity = req or self.get_by_id(request_id)
         if entity is None:

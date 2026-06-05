@@ -9714,19 +9714,28 @@
         }
       }
     },
-    "/api/v1/signature-requests/{request_id}/cancel": {
+    "/api/v1/clients/{client_record_id}/signature-requests/{request_id}/cancel": {
       "post": {
         "tags": [
           "signature-requests"
         ],
-        "summary": "Cancel Signature Request",
-        "operationId": "cancel_signature_request_api_v1_signature_requests__request_id__cancel_post",
+        "summary": "Cancel Client Signature Request",
+        "operationId": "cancel_client_signature_request_api_v1_clients__client_record_id__signature_requests__request_id__cancel_post",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "request_id",
             "in": "path",

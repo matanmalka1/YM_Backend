@@ -4,9 +4,11 @@ from fastapi import APIRouter, Depends, Query
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.signature_requests.schemas.signature_request import (
+    CancelRequest,
     SignatureRequestListResponse,
     SignatureRequestResponse,
 )
+from app.signature_requests.services.response_builder import SignatureRequestResponseBuilder
 from app.signature_requests.services.signature_request_service import (
     SignatureRequestService,
 )
@@ -17,6 +19,27 @@ client_router = APIRouter(
     tags=["signature-requests"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
+
+
+@client_router.post(
+    "/clients/{client_record_id}/signature-requests/{request_id}/cancel",
+    response_model=SignatureRequestResponse,
+)
+def cancel_client_signature_request(
+    client_record_id: int,
+    request_id: int,
+    body: CancelRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    req = SignatureRequestService(db).cancel_request(
+        client_record_id=client_record_id,
+        request_id=request_id,
+        canceled_by=user.id,
+        canceled_by_name=user.full_name,
+        reason=body.reason,
+    )
+    return SignatureRequestResponseBuilder(db).build(req)
 
 
 @client_router.get(

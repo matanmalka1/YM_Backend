@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, Query, status
 
 from app.signature_requests.schemas.signature_request import (
-    CancelRequest,
     SignatureRequestCreatedResponse,
     SignatureRequestCreateRequest,
     SignatureRequestListResponse,
-    SignatureRequestResponse,
     SignatureRequestWithAuditResponse,
 )
 from app.signature_requests.services.response_builder import (
@@ -79,25 +77,5 @@ def list_pending_requests(
 def get_signature_request(request_id: int, db: DBSession, user: CurrentUser):
     service = SignatureRequestService(db)
     req = service.get_request(request_id)
-    if not req:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="בקשת החתימה לא נמצאה")
-
     audit_events = service.get_audit_trail(request_id)
     return SignatureRequestResponseBuilder(db).build_with_audit(req, audit_events)
-
-
-@advisor_router.post("/{request_id}/cancel", response_model=SignatureRequestResponse)
-def cancel_signature_request(
-    request_id: int,
-    body: CancelRequest,
-    db: DBSession,
-    user: CurrentUser,
-):
-    service = SignatureRequestService(db)
-    req = service.cancel_request(
-        request_id=request_id,
-        canceled_by=user.id,
-        canceled_by_name=user.full_name,
-        reason=body.reason,
-    )
-    return SignatureRequestResponseBuilder(db).build(req)

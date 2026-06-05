@@ -29,6 +29,7 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
         svc = SignatureRequestService(self.db)
         for req in pending:
             svc.cancel_request(
+                client_record_id=req.client_record_id,
                 request_id=req.id,
                 canceled_by=actor_id,
                 canceled_by_name=actor_name,

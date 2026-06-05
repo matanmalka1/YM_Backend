@@ -109,16 +109,31 @@ class SignatureRequestService:
 
     # ── Advisor / system actions ──────────────────────────────────────────────
 
-    def cancel_request(self, **kwargs):
-        return admin_actions.cancel_request(self.repo, **kwargs)
+    def cancel_request(
+        self,
+        *,
+        client_record_id: int,
+        request_id: int,
+        canceled_by: int,
+        canceled_by_name: str,
+        reason: str | None = None,
+    ) -> SignatureRequest:
+        return admin_actions.cancel_request(
+            self.repo,
+            client_record_id=client_record_id,
+            request_id=request_id,
+            canceled_by=canceled_by,
+            canceled_by_name=canceled_by_name,
+            reason=reason,
+        )
 
     def expire_overdue_requests(self):
         return admin_actions.expire_overdue_requests(self.repo)
 
     # ── Queries ───────────────────────────────────────────────────────────────
 
-    def get_request(self, request_id: int) -> SignatureRequest | None:
-        return self.repo.get_by_id(request_id)
+    def get_request(self, request_id: int) -> SignatureRequest:
+        return get_or_raise(self.repo, request_id)
 
     def get_by_token(self, token: str) -> SignatureRequest | None:
         return self.repo.get_by_token(token)

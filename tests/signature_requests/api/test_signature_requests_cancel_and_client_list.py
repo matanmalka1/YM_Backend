@@ -1,6 +1,10 @@
 from datetime import date
 
 from app.businesses.models.business import Business
+from app.signature_requests.models.signature_request import SignatureRequestStatus
+from app.signature_requests.repositories.signature_request_repository import (
+    SignatureRequestRepository,
+)
 from tests.helpers.identity import seed_client_with_business
 
 
@@ -38,7 +42,7 @@ def test_cancel_signature_request(client, test_db, advisor_headers):
     request_id = _create_signature_request(client, advisor_headers, business, "Cancelable")
 
     cancel_resp = client.post(
-        f"/api/v1/signature-requests/{request_id}/cancel",
+        f"/api/v1/clients/{business.client_id}/signature-requests/{request_id}/cancel",
         headers=advisor_headers,
         json={"reason": "Client asked to stop"},
     )
@@ -66,7 +70,7 @@ def test_list_signature_requests_by_client_with_status_filter(client, test_db, a
 
     req_a_canceled = _create_signature_request(client, advisor_headers, business_a, "Canceled A")
     client.post(
-        f"/api/v1/signature-requests/{req_a_canceled}/cancel",
+        f"/api/v1/clients/{business_a.client_id}/signature-requests/{req_a_canceled}/cancel",
         headers=advisor_headers,
         json={"reason": "No longer needed"},
     )
@@ -100,4 +104,56 @@ def test_get_signature_request_not_found_returns_404(client, advisor_headers):
     resp = client.get("/api/v1/signature-requests/999999", headers=advisor_headers)
 
     assert resp.status_code == 404
-    assert resp.json()["error"]["message"] == "בקשת החתימה לא נמצאה"
+    assert resp.json()["error"]["message"] == "בקשת חתימה 999999 לא נמצאה"
+    assert resp.json()["error"]["code"] == "SIGNATURE_REQUEST.NOT_FOUND"
+
+
+def test_cancel_signature_request_rejects_mismatched_client_scope(
+    client, test_db, advisor_headers
+):
+    business_a = _business(test_db, "D")
+    business_b = _business(test_db, "E")
+    request_id = _create_signature_request(client, advisor_headers, business_a, "Scoped")
+
+    resp = client.post(
+        f"/api/v1/clients/{business_b.client_id}/signature-requests/{request_id}/cancel",
+        headers=advisor_headers,
+        json={},
+    )
+
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "SIGNATURE_REQUEST.NOT_FOUND"
+    detail = client.get(f"/api/v1/signature-requests/{request_id}", headers=advisor_headers)
+    assert detail.json()["status"] == "pending_signature"
+
+
+def test_cancel_signature_request_rejects_terminal_status_as_not_found(
+    client, test_db, advisor_headers
+):
+    business = _business(test_db, "G")
+    request_id = _create_signature_request(client, advisor_headers, business, "Signed")
+    SignatureRequestRepository(test_db).update(request_id, status=SignatureRequestStatus.SIGNED)
+
+    resp = client.post(
+        f"/api/v1/clients/{business.client_id}/signature-requests/{request_id}/cancel",
+        headers=advisor_headers,
+        json={},
+    )
+
+    assert resp.status_code == 404
+    assert resp.json()["error"]["code"] == "SIGNATURE_REQUEST.NOT_FOUND"
+    detail = client.get(f"/api/v1/signature-requests/{request_id}", headers=advisor_headers)
+    assert detail.json()["status"] == "signed"
+
+
+def test_bare_cancel_route_is_not_available(client, test_db, advisor_headers):
+    business = _business(test_db, "F")
+    request_id = _create_signature_request(client, advisor_headers, business, "No bare route")
+
+    resp = client.post(
+        f"/api/v1/signature-requests/{request_id}/cancel",
+        headers=advisor_headers,
+        json={},
+    )
+
+    assert resp.status_code == 404

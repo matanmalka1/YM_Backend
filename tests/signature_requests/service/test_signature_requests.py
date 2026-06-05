@@ -292,19 +292,20 @@ def test_create_request_falls_back_to_business_contact_details():
     assert captured["audit"]["event_type"] == "created"
 
 
-def test_cancel_request_rejects_non_cancelable_status(test_db, test_user):
+def test_cancel_request_requires_pending_request_in_client_scope(test_db, test_user):
     business = _business(test_db, "6")
     repo = SignatureRequestRepository(test_db)
     req = _create(repo, business, user_id=test_user.id, title="Already signed")
     repo.update(req.id, status=SignatureRequestStatus.SIGNED)
-    with pytest.raises(AppError) as exc_info:
+    with pytest.raises(NotFoundError) as exc_info:
         SignatureRequestService(test_db).cancel_request(
+            client_record_id=business.client_id,
             request_id=req.id,
             canceled_by=test_user.id,
             canceled_by_name=test_user.full_name,
             reason="Cancel after sign",
         )
-    assert exc_info.value.code == "SIGNATURE_REQUEST.INVALID_STATUS"
+    assert exc_info.value.code == "SIGNATURE_REQUEST.NOT_FOUND"
 
 
 def test_get_or_raise_and_assert_signable_validation_branches(test_db, test_user):

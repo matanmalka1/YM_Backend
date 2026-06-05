@@ -110,6 +110,14 @@ def test_signature_request_repository_pending_expired_and_audit_methods(test_db)
         active_pending.id,
     ]
     assert repo.count_pending() == 3
+    assert (
+        repo.get_pending_by_client_and_id_for_update(business_a.client_id, active_pending.id).id
+        == active_pending.id
+    )
+    assert (
+        repo.get_pending_by_client_and_id_for_update(business_b.client_id, active_pending.id) is None
+    )
+    assert repo.get_pending_by_client_and_id_for_update(business_a.client_id, canceled.id) is None
     assert [item.id for item in repo.list_expired_pending()] == [expired_pending.id]
     assert canceled.id not in [item.id for item in repo.list_expired_pending()]
     late = repo.append_audit_event(

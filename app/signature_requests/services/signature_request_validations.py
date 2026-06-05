@@ -26,17 +26,6 @@ def get_or_raise(repo: SignatureRequestRepository, request_id: int) -> Signature
     return req
 
 
-def get_or_raise_for_update(repo: SignatureRequestRepository, request_id: int) -> SignatureRequest:
-    """Fetch with a row-level lock. Use for transition entrypoints."""
-    req = repo.get_by_id_for_update(request_id)
-    if not req:
-        raise NotFoundError(
-            SIGNATURE_REQUEST_NOT_FOUND.format(request_id=request_id),
-            "SIGNATURE_REQUEST.NOT_FOUND",
-        )
-    return req
-
-
 def get_by_token_or_raise(repo: SignatureRequestRepository, token: str) -> SignatureRequest:
     req = repo.get_by_token(token)
     if not req:
