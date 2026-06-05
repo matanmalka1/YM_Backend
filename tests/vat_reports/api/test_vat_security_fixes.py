@@ -31,9 +31,7 @@ def _add_invoice(client, headers, item_id, invoice_number="INV-SEC-1"):
 
 
 def _ready(client, headers, item_id):
-    resp = client.post(
-        f"/api/v1/vat/work-items/{item_id}/ready-for-review", headers=headers
-    )
+    resp = client.post(f"/api/v1/vat/work-items/{item_id}/ready-for-review", headers=headers)
     assert resp.status_code == 200
 
 
@@ -178,9 +176,7 @@ def test_update_invoice_raises_vat_net_not_positive_code():
     assert exc_info.value.code == "VAT.NET_NOT_POSITIVE"
 
 
-def test_f009_amendment_errors_use_namespaced_codes(
-    client, advisor_headers, vat_client, test_user
-):
+def test_f009_amendment_errors_use_namespaced_codes(client, advisor_headers, vat_client, test_user):
     """F-009: amendment not-found error must return VAT.AMENDED_ITEM_NOT_FOUND."""
     item_id = setup_ready_item(
         client, advisor_headers, vat_client, "2025-12", assigned_to=test_user.id
@@ -203,9 +199,7 @@ def test_f009_amendment_errors_use_namespaced_codes(
 # ── F-010: is_amendment=True requires amends_item_id ─────────────────────────
 
 
-def test_f010_amendment_flag_without_id_is_rejected(
-    client, advisor_headers, vat_client, test_user
-):
+def test_f010_amendment_flag_without_id_is_rejected(client, advisor_headers, vat_client, test_user):
     """F-010: is_amendment=True without amends_item_id must be rejected."""
     item_id = setup_ready_item(
         client, advisor_headers, vat_client, "2026-01", assigned_to=test_user.id

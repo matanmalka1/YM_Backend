@@ -159,7 +159,9 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         """Per-client aggregates for the collections report."""
         today_expr = func.current_date()
         not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
-        effective_due_date = func.coalesce(AdvancePayment.due_date_effective, AdvancePayment.due_date)
+        effective_due_date = func.coalesce(
+            AdvancePayment.due_date_effective, AdvancePayment.due_date
+        )
         stmt = scope_to_active_clients_stmt(
             select(
                 AdvancePayment.client_record_id,
@@ -191,7 +193,9 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         today_expr = func.current_date()
         paid_expr = AdvancePayment.status == AdvancePaymentStatus.PAID
         not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
-        effective_due_date = func.coalesce(AdvancePayment.due_date_effective, AdvancePayment.due_date)
+        effective_due_date = func.coalesce(
+            AdvancePayment.due_date_effective, AdvancePayment.due_date
+        )
         rows = self.db.execute(
             select(
                 func.coalesce(func.sum(AdvancePayment.expected_amount), 0).label("total_expected"),

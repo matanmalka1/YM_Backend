@@ -104,9 +104,7 @@ def test_cannot_delete_income_line_from_another_report_api(client, test_db, advi
 def test_cannot_update_expense_line_from_another_report_api(client, test_db, advisor_headers):
     report_a = _create_report(test_db)
     report_b = _create_report(test_db)
-    line = AnnualReportFinancialLineService(test_db).add_expense(
-        report_a.id, "office_rent", 500
-    )
+    line = AnnualReportFinancialLineService(test_db).add_expense(report_a.id, "office_rent", 500)
 
     response = client.patch(
         f"/api/v1/annual-reports/{report_b.id}/expenses/{line.id}",
@@ -132,9 +130,7 @@ def test_cannot_update_expense_line_from_another_report_api(client, test_db, adv
 def test_cannot_delete_expense_line_from_another_report_api(client, test_db, advisor_headers):
     report_a = _create_report(test_db)
     report_b = _create_report(test_db)
-    line = AnnualReportFinancialLineService(test_db).add_expense(
-        report_a.id, "office_rent", 500
-    )
+    line = AnnualReportFinancialLineService(test_db).add_expense(report_a.id, "office_rent", 500)
 
     response = client.delete(
         f"/api/v1/annual-reports/{report_b.id}/expenses/{line.id}",

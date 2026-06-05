@@ -182,7 +182,9 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                 REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON,
             )
             assert client_record_for_signature is not None
-            self._trigger_signature_request(updated, changed_by, changed_by_name, client_record_for_signature)
+            self._trigger_signature_request(
+                updated, changed_by, changed_by_name, client_record_for_signature
+            )
 
         return self._to_responses([updated])[0]
 

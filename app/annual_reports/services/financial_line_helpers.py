@@ -22,9 +22,7 @@ def audit_scalar(field_name: str, value):
         return str(value)
     if value is None or isinstance(value, (str, int, float, bool)):
         return value
-    raise TypeError(
-        f"Unsupported audit scalar for field '{field_name}': {type(value).__name__}"
-    )
+    raise TypeError(f"Unsupported audit scalar for field '{field_name}': {type(value).__name__}")
 
 
 def income_line_snapshot(line) -> dict:

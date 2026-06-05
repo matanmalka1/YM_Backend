@@ -81,7 +81,9 @@ def test_get_work_item_includes_user_names_and_deadline_fields(
 def test_list_work_items_supports_status_and_client_name_filters(
     client, advisor_headers, vat_client, test_user
 ):
-    filed_item_id = create_work_item(client, advisor_headers, vat_client, "2026-09", assigned_to=test_user.id)
+    filed_item_id = create_work_item(
+        client, advisor_headers, vat_client, "2026-09", assigned_to=test_user.id
+    )
     pending_item_id = create_work_item(client, advisor_headers, vat_client, "2026-10")
 
     add_resp = client.post(
@@ -137,7 +139,9 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
     material_item_id = create_work_item(client, advisor_headers, vat_client, "2026-02")
     data_entry_item_id = create_work_item(client, advisor_headers, vat_client, "2026-03")
     ready_item_id = create_work_item(client, advisor_headers, vat_client, "2026-04")
-    filed_item_id = create_work_item(client, advisor_headers, vat_client, "2026-05", assigned_to=test_user.id)
+    filed_item_id = create_work_item(
+        client, advisor_headers, vat_client, "2026-05", assigned_to=test_user.id
+    )
     deleted_item_id = create_work_item(client, advisor_headers, vat_client, "2026-06")
     _ = create_work_item(client, advisor_headers, vat_client, "2027-01")
 

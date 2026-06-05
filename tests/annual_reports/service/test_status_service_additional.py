@@ -260,9 +260,7 @@ def _report_at_in_preparation(db, full_name: str, id_number: str):
 
 def test_pending_client_creates_signature_without_business(test_db, monkeypatch):
     """pending_client transition succeeds and creates signature even when no Business exists."""
-    crm_client, report, svc = _report_at_in_preparation(
-        test_db, "No Business Client", "NOBIZ001"
-    )
+    crm_client, report, svc = _report_at_in_preparation(test_db, "No Business Client", "NOBIZ001")
     captured = _patch_sig_service(monkeypatch)
 
     result = svc.transition_status(report.id, "pending_client", 1, "A")

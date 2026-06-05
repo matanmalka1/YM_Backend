@@ -28,6 +28,7 @@ def _create_contact(test_db, client_id: int, contact_type: ContactType = Contact
 
 # ── create ───────────────────────────────────────────────────────────────────
 
+
 def test_create_authority_contact(client, test_db, advisor_headers):
     crm_client = _create_client(test_db)
 
@@ -83,6 +84,7 @@ def test_create_authority_contact_invalid_contact_type_returns_422(
 
 # ── list ─────────────────────────────────────────────────────────────────────
 
+
 def test_list_authority_contacts_filters_by_type(client, test_db, advisor_headers):
     crm_client = _create_client(test_db)
     _create_contact(test_db, crm_client.id, ContactType.VAT_BRANCH)
@@ -101,9 +103,7 @@ def test_list_authority_contacts_filters_by_type(client, test_db, advisor_header
     assert all(item["contact_type"] == "vat_branch" for item in data["items"])
 
 
-def test_list_authority_contacts_invalid_contact_type_returns_422(
-    client, test_db, advisor_headers
-):
+def test_list_authority_contacts_invalid_contact_type_returns_422(client, test_db, advisor_headers):
     crm_client = _create_client(test_db)
 
     response = client.get(
@@ -115,6 +115,7 @@ def test_list_authority_contacts_invalid_contact_type_returns_422(
 
 
 # ── get ──────────────────────────────────────────────────────────────────────
+
 
 def test_get_authority_contact(client, test_db, advisor_headers):
     crm_client = _create_client(test_db)
@@ -156,6 +157,7 @@ def test_get_authority_contact_wrong_client_returns_404(client, test_db, advisor
 
 
 # ── update ───────────────────────────────────────────────────────────────────
+
 
 def test_update_authority_contact(client, test_db, advisor_headers):
     crm_client = _create_client(test_db)
@@ -205,6 +207,7 @@ def test_update_authority_contact_invalid_contact_type_returns_422(
 
 
 # ── delete ───────────────────────────────────────────────────────────────────
+
 
 def test_delete_authority_contact_soft_deletes(client, test_db, advisor_headers):
     crm_client = _create_client(test_db)

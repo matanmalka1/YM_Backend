@@ -117,9 +117,9 @@ class AnnualReportQueryService(AnnualReportBaseService):
 
         schedules = self.repo.get_schedules(report_id)
         history = self.repo.get_status_history(report_id)
-        financial_summary = AnnualReportFinancialSummaryService(
-            self.db
-        ).get_financial_summary(report_id)
+        financial_summary = AnnualReportFinancialSummaryService(self.db).get_financial_summary(
+            report_id
+        )
         detail = AnnualReportDetailRepository(self.db).get_by_report_id(report_id)
         orm_report = self.repo.get_by_id(report_id)
         default_credit_points = get_default_resident_credit_points(

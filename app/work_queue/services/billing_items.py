@@ -30,7 +30,8 @@ def advance_payment_items(
     stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
         AdvancePayment.deleted_at.is_(None),
         AdvancePayment.status.in_([AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PARTIAL]),
-        (AdvancePayment.due_date_effective <= cutoff) | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
+        (AdvancePayment.due_date_effective <= cutoff)
+        | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
     )
     if client_record_id is not None:
         stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)

@@ -359,7 +359,6 @@ def test_work_queue_advance_payment_uses_effective_due_date_when_set(test_db):
     assert item.metadata["due_date"] == effective_due.isoformat()
 
 
-
 def test_business_id_filter_merges_linked_tasks_into_charge_rows(test_db):
     """Tasks linked to a charge must be merged when filtering by business_id."""
     biz = create_business(test_db)

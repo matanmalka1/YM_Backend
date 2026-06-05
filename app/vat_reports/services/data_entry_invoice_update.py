@@ -88,7 +88,9 @@ def update_invoice(
             )
 
     if gross_amount is not None and gross_amount <= 0:
-        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, code="VAT.NET_NOT_POSITIVE", status_code=400)
+        raise AppError(
+            VAT_NET_AMOUNT_POSITIVE_REQUIRED, code="VAT.NET_NOT_POSITIVE", status_code=400
+        )
 
     snapshot_before = audit_invoice_snapshot(invoice)
 

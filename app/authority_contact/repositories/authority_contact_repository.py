@@ -67,22 +67,20 @@ class AuthorityContactRepository(BaseRepository[AuthorityContact]):
         client_record_id: int,
         contact_type: ContactType | None = None,
     ) -> int:
-        return self.db.scalar(
-            select(func.count(AuthorityContact.id)).where(
-                *self._base_where(client_record_id, contact_type)
+        return (
+            self.db.scalar(
+                select(func.count(AuthorityContact.id)).where(
+                    *self._base_where(client_record_id, contact_type)
+                )
             )
-        ) or 0
+            or 0
+        )
 
-    def get_for_client(
-        self, client_record_id: int, contact_id: int
-    ) -> AuthorityContact | None:
-        stmt = (
-            select(AuthorityContact)
-            .where(
-                AuthorityContact.id == contact_id,
-                AuthorityContact.client_record_id == client_record_id,
-                AuthorityContact.deleted_at.is_(None),
-            )
+    def get_for_client(self, client_record_id: int, contact_id: int) -> AuthorityContact | None:
+        stmt = select(AuthorityContact).where(
+            AuthorityContact.id == contact_id,
+            AuthorityContact.client_record_id == client_record_id,
+            AuthorityContact.deleted_at.is_(None),
         )
         return self.db.scalars(stmt).first()
 

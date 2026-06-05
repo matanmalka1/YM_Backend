@@ -59,7 +59,9 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
             )
         return name
 
-    def _trigger_signature_request(self, report, created_by: int, created_by_name: str, record) -> None:
+    def _trigger_signature_request(
+        self, report, created_by: int, created_by_name: str, record
+    ) -> None:
         from app.signature_requests.models.signature_request import SignatureRequestType
         from app.signature_requests.services.signature_request_service import (
             SignatureRequestService,

@@ -158,21 +158,15 @@ def _prepare_financial_mutation(line_service, report_id: int, mutation: str):
         return lambda: line_service.add_income(report_id, "salary", Decimal("100.00"))
     if mutation == "update_income":
         line = line_service.add_income(report_id, "salary", Decimal("100.00"))
-        return lambda: line_service.update_income(
-            report_id, line.id, amount=Decimal("125.00")
-        )
+        return lambda: line_service.update_income(report_id, line.id, amount=Decimal("125.00"))
     if mutation == "delete_income":
         line = line_service.add_income(report_id, "salary", Decimal("100.00"))
         return lambda: line_service.delete_income(report_id, line.id)
     if mutation == "add_expense":
-        return lambda: line_service.add_expense(
-            report_id, "office_rent", Decimal("100.00")
-        )
+        return lambda: line_service.add_expense(report_id, "office_rent", Decimal("100.00"))
     if mutation == "update_expense":
         line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"))
-        return lambda: line_service.update_expense(
-            report_id, line.id, amount=Decimal("125.00")
-        )
+        return lambda: line_service.update_expense(report_id, line.id, amount=Decimal("125.00"))
     if mutation == "delete_expense":
         line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"))
         return lambda: line_service.delete_expense(report_id, line.id)
@@ -190,9 +184,7 @@ def _prepare_financial_mutation(line_service, report_id: int, mutation: str):
         "delete_expense",
     ],
 )
-def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(
-    test_db, mutation
-):
+def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(test_db, mutation):
     c = _client(test_db, f"INV{mutation}")
     report = AnnualReportService(test_db).create_report(c.id, 2026, "corporation", 1, "A")
     line_service = AnnualReportFinancialLineService(test_db)

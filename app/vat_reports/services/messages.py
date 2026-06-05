@@ -3,7 +3,7 @@ AMENDED_ITEM_WRONG_CLIENT = "פריט מתוקן שייך ללקוח אחר"
 AMENDED_ITEM_NOT_FILED = "ניתן לתקן רק פריט שהוגש"
 AMENDMENT_CYCLE_DETECTED = "זוהתה שרשרת תיקונים מעגלית"
 VAT_AMENDMENT_ID_REQUIRED = "is_amendment=True מחייב amends_item_id"
-VAT_ASSIGNEE_REQUIRED = "לא ניתן להגיש דוח מע\"מ ללא נציג מוקצה (assigned_to)"
+VAT_ASSIGNEE_REQUIRED = 'לא ניתן להגיש דוח מע"מ ללא נציג מוקצה (assigned_to)'
 VAT_ITEM_NOT_FOUND = 'פריט עבודה {item_id} למע"מ לא נמצא'
 VAT_CLIENT_NOT_FOUND = "לקוח {client_record_id} לא נמצא"
 OVERRIDE_AMOUNT_MUST_BE_POSITIVE = "סכום דריסה חייב להיות חיובי"

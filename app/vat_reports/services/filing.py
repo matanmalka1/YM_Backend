@@ -32,7 +32,9 @@ def _validate_amendment(
     if amended_item is None:
         raise AppError(AMENDED_ITEM_NOT_FOUND, code="VAT.AMENDED_ITEM_NOT_FOUND", status_code=404)
     if amended_item.client_record_id != item.client_record_id:
-        raise AppError(AMENDED_ITEM_WRONG_CLIENT, code="VAT.AMENDED_ITEM_WRONG_CLIENT", status_code=400)
+        raise AppError(
+            AMENDED_ITEM_WRONG_CLIENT, code="VAT.AMENDED_ITEM_WRONG_CLIENT", status_code=400
+        )
     if amended_item.status != VatWorkItemStatus.FILED:
         raise AppError(AMENDED_ITEM_NOT_FILED, code="VAT.AMENDED_ITEM_NOT_FILED", status_code=400)
 

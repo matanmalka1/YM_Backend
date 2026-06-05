@@ -197,9 +197,7 @@ def test_income_update_audit_excludes_none_fields(test_db, test_user):
     assert json.loads(entry.new_value) == {"amount": "600.00"}
 
 
-def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(
-    test_db, test_user
-):
+def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(test_db, test_user):
     report = _create_report(test_db, test_user)
     service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(

@@ -37,7 +37,7 @@ AUTOPOPULATE_INVALID_STATUS = 'ניתן למלא נתוני מע"מ אוטומט
 AUTOPOPULATE_LINES_ALREADY_EXIST = (
     "קיימים נתוני הכנסות/הוצאות בדוח. יש לשלוח force=true למחיקה ומילוי מחדש"
 )
-AUTOPOPULATE_AUDIT_ACTOR_REQUIRED = "נדרש משתמש מבצע למילוי אוטומטי מנתוני מע\"מ"
+AUTOPOPULATE_AUDIT_ACTOR_REQUIRED = 'נדרש משתמש מבצע למילוי אוטומטי מנתוני מע"מ'
 VAT_IMPORTED_BUSINESS_INCOME_DESCRIPTION = 'הכנסות עסקיות — יובא ממע"מ'
 VAT_IMPORTED_EXPENSE_DESCRIPTION = '{category_label} — יובא ממע"מ'
 

@@ -91,7 +91,9 @@ def test_vat_auto_populate_writes_audit_and_source_breakdown(test_db, test_user,
     assert income_payload["amount"] == "1000.00"
 
     expense_payloads = _audit_payloads(test_db, report.id, ACTION_EXPENSE_ADDED, "new_value")
-    vehicle_payload = next(payload for payload in expense_payloads if payload["category"] == "vehicle")
+    vehicle_payload = next(
+        payload for payload in expense_payloads if payload["category"] == "vehicle"
+    )
     assert vehicle_payload["source"] == "vat_import"
     assert vehicle_payload["source_vat_categories"] == {
         "fuel": "800.00",
@@ -211,9 +213,7 @@ def test_vat_auto_populate_surfaces_negative_source_inside_positive_merge(
     ]
 
 
-def test_vat_auto_populate_empty_vat_data_has_no_skipped_noise(
-    test_db, test_user, monkeypatch
-):
+def test_vat_auto_populate_empty_vat_data_has_no_skipped_noise(test_db, test_user, monkeypatch):
     _, report = _create_report(test_db, test_user, "Z")
     service = VatImportService(test_db)
     monkeypatch.setattr(
@@ -235,9 +235,7 @@ def test_vat_auto_populate_empty_vat_data_has_no_skipped_noise(
     assert result["warnings"] == []
 
 
-def test_vat_auto_populate_requires_actor_for_audited_mutation(
-    test_db, test_user, monkeypatch
-):
+def test_vat_auto_populate_requires_actor_for_audited_mutation(test_db, test_user, monkeypatch):
     _, report = _create_report(test_db, test_user, "N")
     service = VatImportService(test_db)
     monkeypatch.setattr(
@@ -345,9 +343,9 @@ def test_manual_financial_mutations_block_closed_or_frozen_clients(test_db, test
     assert financial.income_repo.get_by_report_and_line_id(report.id, income.id).amount == Decimal(
         "500.00"
     )
-    assert financial.expense_repo.get_by_report_and_line_id(report.id, expense.id).amount == Decimal(
-        "300.00"
-    )
+    assert financial.expense_repo.get_by_report_and_line_id(
+        report.id, expense.id
+    ).amount == Decimal("300.00")
 
 
 def _seed_vat_work_item(db, client_record_id: int, period: str, user_id: int) -> VatWorkItem:
@@ -423,24 +421,40 @@ def test_vat_auto_populate_aggregates_all_businesses_for_client_year(test_db, te
     item_b = _seed_vat_work_item(test_db, client.id, "2026-02", test_user.id)
 
     _seed_vat_invoice(
-        test_db, item_a.id, test_user.id,
-        InvoiceType.INCOME, Decimal("3000.00"), "INV-A1",
+        test_db,
+        item_a.id,
+        test_user.id,
+        InvoiceType.INCOME,
+        Decimal("3000.00"),
+        "INV-A1",
         business_id=biz_a.id,
     )
     _seed_vat_invoice(
-        test_db, item_b.id, test_user.id,
-        InvoiceType.INCOME, Decimal("2000.00"), "INV-B1",
+        test_db,
+        item_b.id,
+        test_user.id,
+        InvoiceType.INCOME,
+        Decimal("2000.00"),
+        "INV-B1",
         business_id=biz_b.id,
     )
     _seed_vat_invoice(
-        test_db, item_a.id, test_user.id,
-        InvoiceType.EXPENSE, Decimal("500.00"), "EXP-A1",
+        test_db,
+        item_a.id,
+        test_user.id,
+        InvoiceType.EXPENSE,
+        Decimal("500.00"),
+        "EXP-A1",
         expense_category=ExpenseCategory.OFFICE,
         business_id=biz_a.id,
     )
     _seed_vat_invoice(
-        test_db, item_b.id, test_user.id,
-        InvoiceType.EXPENSE, Decimal("300.00"), "EXP-B1",
+        test_db,
+        item_b.id,
+        test_user.id,
+        InvoiceType.EXPENSE,
+        Decimal("300.00"),
+        "EXP-B1",
         expense_category=ExpenseCategory.OFFICE,
         business_id=biz_b.id,
     )
