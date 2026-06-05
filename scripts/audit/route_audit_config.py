@@ -212,6 +212,8 @@ ENUM_BACKEND_ONLY: set[str] = {
     # DocumentType exists in two Python modules with different values;
     # the permanent_documents one is backend-only (used in permanent_documents feature, mapped manually)
     "DocumentType",
+    # Short name alias — module-qualified key handles the actual sync check above
+    "PermanentDocumentType",
     # These exist in frontend but aren't simple _VALUES arrays — handled in feature-specific code
     "BusinessStatus",
     "TaskStatus",
