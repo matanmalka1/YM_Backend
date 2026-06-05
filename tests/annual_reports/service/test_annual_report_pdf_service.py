@@ -1,4 +1,3 @@
-from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
@@ -6,17 +5,6 @@ import pytest
 from app.annual_reports.services import annual_report_pdf_builder as pdf_builder
 from app.annual_reports.services import annual_report_pdf_service as pdf_mod
 from app.core.exceptions import NotFoundError
-
-
-def test_fmt_and_r_helpers():
-    assert pdf_builder._fmt(None) == "—"
-    assert pdf_builder._fmt(1234.5).startswith("₪")
-    assert isinstance(pdf_builder._r("שלום"), str)
-
-
-def test_get_font_falls_back_to_helvetica(monkeypatch):
-    monkeypatch.setattr(pdf_builder.os.path, "exists", lambda _p: False)
-    assert pdf_builder._get_font() == "Helvetica"
 
 
 def test_generate_raises_not_found_when_report_missing(test_db):

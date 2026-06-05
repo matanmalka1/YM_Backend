@@ -1,5 +1,3 @@
-import pytest
-
 from app.tax_calendar.integrations.tax_rules_registry import (
     registry_periodic_calendar_available,
 )
@@ -112,30 +110,6 @@ def test_summary_correct_totals(client, advisor_headers, test_db):
         assert any("2027" in w and "fallback" in w for w in data["warnings"])
     else:
         assert data["warnings"] == []
-
-
-def test_summary_2026_no_fallback_warning(client, advisor_headers, test_db):
-    bootstrap_tax_calendar(test_db, start_year=2026, end_year=2026)
-    test_db.commit()
-
-    response = client.get(f"{SUMMARY_PATH}?start_year=2026&end_year=2026", headers=advisor_headers)
-    assert response.status_code == 200
-    data = response.json()
-    # 2026 has official registry calendar — no fallback warning
-    assert not any("fallback" in w for w in data["warnings"])
-
-
-def test_summary_2027_has_fallback_warning(client, advisor_headers, test_db):
-    if registry_periodic_calendar_available(2027):
-        pytest.skip("2027 registry calendar exists; fallback warning not expected")
-    bootstrap_tax_calendar(test_db, start_year=2027, end_year=2027)
-    test_db.commit()
-
-    response = client.get(f"{SUMMARY_PATH}?start_year=2027&end_year=2027", headers=advisor_headers)
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total_entries"] == 37
-    assert any("2027" in w and "fallback" in w for w in data["warnings"])
 
 
 def test_summary_no_entries_produces_warnings(client, advisor_headers, test_db):

@@ -155,26 +155,6 @@ def test_create_signature_request_sends_immediately(client, test_db, advisor_hea
     assert event_types == ["created", "sent"]
 
 
-def test_removed_send_endpoint_returns_404(client, test_db, advisor_headers):
-    resp = client.post(
-        "/api/v1/signature-requests/999999/send",
-        headers=advisor_headers,
-        json={"expiry_days": 7},
-    )
-
-    assert resp.status_code == 404
-
-
-def test_removed_create_and_send_endpoint_is_not_available(client, test_db, advisor_headers):
-    resp = client.post(
-        "/api/v1/signature-requests/create-and-send",
-        headers=advisor_headers,
-        json={},
-    )
-
-    assert resp.status_code in {404, 405}
-
-
 def test_invalid_token_returns_error_on_sign(client):
     resp = client.post("/sign/does-not-exist/approve")
     assert resp.status_code == 400

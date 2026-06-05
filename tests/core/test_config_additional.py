@@ -175,12 +175,6 @@ def test_test_env_defaults_to_sqlite(monkeypatch):
     assert "sqlite" in s.DATABASE_URL
 
 
-def test_settings_singleton_exists():
-    import app.config as config_mod
-
-    assert isinstance(config_mod.settings, config_mod.Settings)
-
-
 def test_sentry_environment_defaults_to_app_env(monkeypatch):
     monkeypatch.delenv("SENTRY_ENVIRONMENT", raising=False)
 

@@ -188,11 +188,6 @@ def test_notifications_summary_zero_for_absent_statuses(client, test_db, advisor
     assert data["total"] == 1
 
 
-def test_unread_count_route_gone(client, advisor_headers):
-    resp = client.get("/api/v1/notifications/unread-count", headers=advisor_headers)
-    assert resp.status_code == 404
-
-
 def test_secretary_can_list(client, test_db, secretary_headers):
     b1 = _business(test_db, "sec1")
     _seed_notification(test_db, b1.id, "sec-notif")

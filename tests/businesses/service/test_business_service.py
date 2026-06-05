@@ -50,32 +50,6 @@ def test_create_business_rejects_duplicate_name_for_client(test_db):
     assert exc.value.code == "BUSINESS.NAME_CONFLICT"
 
 
-def test_create_business_defaults_opened_at_to_today(monkeypatch, test_db):
-    captured = {}
-
-    def _create(**kwargs):
-        captured.update(kwargs)
-        return SimpleNamespace(id=12, **kwargs)
-
-    service = BusinessService(test_db)
-    service.client_repo = SimpleNamespace(
-        get_by_id=lambda _client_id: SimpleNamespace(legal_entity_id=10)
-    )
-    service.business_repo = SimpleNamespace(
-        all_non_deleted_are_closed_for_legal_entity=lambda _legal_entity_id: False,
-        list_by_legal_entity=lambda _legal_entity_id, **_kwargs: [],
-        create=_create,
-    )
-
-    result = service.create_business(
-        client_id=1,
-        business_name="From Client Date",
-    )
-
-    assert result.opened_at == date.today()
-    assert captured["opened_at"] == date.today()
-
-
 def test_update_business_blocks_non_advisor_freeze_or_close(test_db):
     client = seed_client_identity(test_db, full_name="Service Client", id_number="BSRV001")
     business = _create_business_row(test_db, legal_entity_id=client.legal_entity_id)

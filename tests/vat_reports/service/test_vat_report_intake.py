@@ -7,7 +7,7 @@ from app.vat_reports.models.vat_enums import VatWorkItemStatus
 from app.vat_reports.repositories.vat_work_item_repository import VatWorkItemRepository
 from app.vat_reports.services import intake
 from tests.helpers.identity import seed_business, seed_client_identity
-from tests.vat_reports.service.test_vat_report_test_utils import make_item
+from tests.helpers.vat_reports import make_item
 
 
 def _seed(

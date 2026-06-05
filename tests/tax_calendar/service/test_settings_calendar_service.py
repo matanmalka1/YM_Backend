@@ -1,9 +1,5 @@
-import pytest
 from sqlalchemy import select
 
-from app.tax_calendar.integrations.tax_rules_registry import (
-    registry_periodic_calendar_available,
-)
 from app.tax_calendar.models.deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.services.bootstrap import (
@@ -76,9 +72,11 @@ def test_get_summary_2026_no_fallback_warning(test_db):
     assert not any("fallback" in w for w in summary["warnings"])
 
 
-def test_get_summary_2027_has_fallback_warning(test_db):
-    if registry_periodic_calendar_available(2027):
-        pytest.skip("2027 registry calendar exists; fallback warning not expected")
+def test_get_summary_reports_registry_fallback_warning(test_db, monkeypatch):
+    monkeypatch.setattr(
+        "app.tax_calendar.services.settings_calendar_service.missing_registry_years",
+        lambda start_year, end_year: [2027],
+    )
     bootstrap_tax_calendar(test_db, start_year=2027, end_year=2027)
     test_db.commit()
 

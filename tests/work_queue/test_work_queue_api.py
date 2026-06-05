@@ -130,11 +130,6 @@ def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers
     assert history.json()["summary"]["by_task_status"]["done"] == 1
 
 
-def test_work_queue_summary_endpoint_removed(client, advisor_headers):
-    response = client.get("/api/v1/work-queue/summary", headers=advisor_headers)
-    assert response.status_code == 404
-
-
 def test_annual_report_work_queue_route_targets_existing_detail_api(
     client, test_db, advisor_headers
 ):

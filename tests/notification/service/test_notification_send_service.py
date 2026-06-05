@@ -1,7 +1,5 @@
 """Tests: NotificationSendService trigger validation and idempotency."""
 
-from types import SimpleNamespace
-
 import pytest
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
@@ -37,90 +35,60 @@ def _make_send_request(trigger: str, entity_id: int | None = None, business_id: 
     )
 
 
-def _svc(monkeypatch) -> NotificationSendService:
-    """Build a NotificationSendService with all I/O dependencies stubbed out."""
-    monkeypatch.setattr(
-        "app.notification.services.notification_send_service.NotificationRepository",
-        lambda db: None,
-    )
-    monkeypatch.setattr(
-        "app.notification.services.notification_send_service.NotificationPolicyService",
-        lambda: None,
-    )
-    monkeypatch.setattr(
-        "app.notification.services.notification_send_service.NotificationTemplateRenderer",
-        lambda: None,
-    )
-    monkeypatch.setattr(
-        "app.notification.services.notification_send_service.NotificationContextResolver",
-        lambda db: None,
-    )
-    monkeypatch.setattr(
-        "app.notification.services.notification_send_service.EmailChannel",
-        lambda **kw: None,
-    )
-    monkeypatch.setattr(
-        "app.notification.services.notification_send_service.NotificationDeliveryService",
-        lambda: None,
-    )
-    return NotificationSendService.__new__(NotificationSendService)
-
-
 class TestPreviewTriggerValidation:
-    def test_preview_rejects_binder_ready_for_handover(self, monkeypatch):
-        svc = _svc(monkeypatch)
+    def test_preview_rejects_binder_ready_for_handover(self, test_db):
+        svc = NotificationSendService(test_db)
         req = _make_request("binder_ready_for_handover")
         with pytest.raises(AppError) as exc:
             svc.preview(req, triggered_by=1)
         assert exc.value.code == "NOTIFICATION.AUTO_ONLY_TRIGGER"
 
-    def test_preview_rejects_annual_client_reminder_without_entity_id(self, monkeypatch):
-        svc = _svc(monkeypatch)
-        req = _make_request("annual_report_client_reminder", entity_id=None)
+    @pytest.mark.parametrize(
+        "trigger",
+        ["annual_report_client_reminder", "annual_report_documents_request"],
+    )
+    def test_preview_rejects_annual_trigger_without_entity_id(self, test_db, trigger):
+        svc = NotificationSendService(test_db)
+        req = _make_request(trigger, entity_id=None)
         with pytest.raises(AppError) as exc:
             svc.preview(req, triggered_by=1)
         assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
 
-    def test_preview_rejects_annual_documents_request_without_entity_id(self, monkeypatch):
-        svc = _svc(monkeypatch)
-        req = _make_request("annual_report_documents_request", entity_id=None)
-        with pytest.raises(AppError) as exc:
-            svc.preview(req, triggered_by=1)
-        assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
-
-    def test_preview_allows_annual_trigger_with_entity_id(self, monkeypatch):
-        """With entity_id present, guard passes — stub policy blocks further to keep test simple."""
-        svc = _svc(monkeypatch)
+    def test_preview_with_annual_entity_id_reaches_client_lookup(self, test_db):
+        svc = NotificationSendService(test_db)
         req = _make_request("annual_report_client_reminder", entity_id=42)
 
-        # Stub db.get to return None → NotFoundError (past the guard we're testing)
         from app.core.exceptions import NotFoundError
 
-        svc.db = SimpleNamespace(get=lambda *_: None)
         with pytest.raises(NotFoundError):
             svc.preview(req, triggered_by=1)
 
 
 class TestSendTriggerValidation:
-    def test_send_rejects_binder_ready_for_handover(self, monkeypatch):
-        svc = _svc(monkeypatch)
+    def test_send_rejects_binder_ready_for_handover(self, test_db):
+        svc = NotificationSendService(test_db)
         req = _make_send_request("binder_ready_for_handover")
         with pytest.raises(AppError) as exc:
             svc.send(req, triggered_by=1, idempotency_key="00000000-0000-4000-8000-000000000001")
         assert exc.value.code == "NOTIFICATION.AUTO_ONLY_TRIGGER"
 
-    def test_send_rejects_annual_client_reminder_without_entity_id(self, monkeypatch):
-        svc = _svc(monkeypatch)
-        req = _make_send_request("annual_report_client_reminder", entity_id=None)
+    @pytest.mark.parametrize(
+        ("trigger", "idempotency_key"),
+        [
+            ("annual_report_client_reminder", "00000000-0000-4000-8000-000000000002"),
+            ("annual_report_documents_request", "00000000-0000-4000-8000-000000000003"),
+        ],
+    )
+    def test_send_rejects_annual_trigger_without_entity_id(
+        self,
+        test_db,
+        trigger,
+        idempotency_key,
+    ):
+        svc = NotificationSendService(test_db)
+        req = _make_send_request(trigger, entity_id=None)
         with pytest.raises(AppError) as exc:
-            svc.send(req, triggered_by=1, idempotency_key="00000000-0000-4000-8000-000000000002")
-        assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
-
-    def test_send_rejects_annual_documents_request_without_entity_id(self, monkeypatch):
-        svc = _svc(monkeypatch)
-        req = _make_send_request("annual_report_documents_request", entity_id=None)
-        with pytest.raises(AppError) as exc:
-            svc.send(req, triggered_by=1, idempotency_key="00000000-0000-4000-8000-000000000003")
+            svc.send(req, triggered_by=1, idempotency_key=idempotency_key)
         assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
 
 

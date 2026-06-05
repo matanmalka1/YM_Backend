@@ -1,7 +1,6 @@
 import pytest
 
 from app.actions.action_helpers import build_action, build_confirm
-from app.actions.action_registry import get_annual_report_actions
 
 
 def test_build_action_omits_optional_keys_when_none():
@@ -20,10 +19,6 @@ def test_build_action_omits_optional_keys_when_none():
         "method": "post",
         "endpoint": "/e",
     }
-
-
-def test_action_registry_exports_report_deadline_actions():
-    assert callable(get_annual_report_actions)
 
 
 def test_build_confirm_adds_optional_inputs():

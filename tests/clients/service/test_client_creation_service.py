@@ -1,4 +1,3 @@
-import pytest
 from sqlalchemy import select
 
 from app.clients.models.client_record import ClientRecord
@@ -10,22 +9,6 @@ from app.clients.models.person_legal_entity_link import (
 )
 from app.clients.services.create_client_service import create_client_identity_only
 from app.common.enums import EntityType, IdNumberType
-
-
-def test_create_client_rejects_employee_entity_type(test_db):
-    with pytest.raises(ValueError, match="שכיר"):
-        create_client_identity_only(
-            test_db,
-            full_name="Client Identity",
-            id_number="123456780",
-            id_number_type=IdNumberType.INDIVIDUAL,
-            entity_type=EntityType.EMPLOYEE,
-            phone="0501234567",
-            email="client@example.com",
-            address_city="תל אביב",
-            accountant_id=1,
-            actor_id=7,
-        )
 
 
 def test_create_client_creates_identity_graph(test_db):

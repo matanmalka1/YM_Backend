@@ -48,7 +48,6 @@ def test_invoice_repository_getters(test_db):
     assert invoice_repo.get_by_charge_id(charge.id).id == created.id
     assert invoice_repo.exists_for_charge(charge.id) is True
     assert invoice_repo.get_by_id(created.id).external_invoice_id == "INV-EXT-1"
-    assert "<Invoice(" in repr(created)
 
     assert invoice_repo.get_by_charge_id(9999) is None
     assert invoice_repo.exists_for_charge(9999) is False

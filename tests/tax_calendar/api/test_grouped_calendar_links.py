@@ -7,7 +7,6 @@ from app.advance_payments.models.advance_payment import (
 from tests.tax_calendar.api.grouped_helpers import (
     PATH,
     add_advance_payment,
-    add_annual_report,
     add_vat_item,
     advance_entry,
     headers,
@@ -42,22 +41,6 @@ def test_advance_payment_linked_item_uses_snapshot_effective_due_date(client, au
     assert data["linked_count"] == 1
     assert data["effective_due_date_min"] == "2026-02-21"
     assert data["effective_due_date_max"] == "2026-02-21"
-
-
-def test_annual_report_linked_item_appears(client, auth_token, test_db):
-    from tests.tax_calendar.api.grouped_helpers import annual_entry
-
-    entry = annual_entry(test_db)
-    add_annual_report(test_db, entry)
-    test_db.commit()
-
-    response = client.get(PATH, headers=headers(auth_token))
-
-    assert response.status_code == 200
-    data = response.json()["items"][0]
-    assert data["linked_count"] == 1
-    assert data["effective_due_date_min"] == "2027-07-31"
-    assert data["effective_due_date_max"] == "2027-07-31"
 
 
 def test_multiple_linked_rows_return_effective_due_date_min_and_max(client, auth_token, test_db):

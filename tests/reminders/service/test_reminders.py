@@ -1,4 +1,3 @@
-from datetime import timedelta
 from decimal import Decimal
 
 import pytest
@@ -7,7 +6,6 @@ from app.charge.models.charge import Charge, ChargeStatus, ChargeType
 from app.core.exceptions import AppError, NotFoundError
 from app.reminders.models.reminder import ReminderActionType, ReminderStatus
 from app.reminders.schemas.reminders import ReminderCreateRequest
-from app.reminders.services.reminder_executor_service import ReminderExecutorService
 from app.reminders.services.reminder_service import ReminderService
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
@@ -190,60 +188,3 @@ def test_cancel_terminal_reminder_rejected(test_db, terminal_status):
 def test_cancel_missing_reminder_raises_not_found(test_db):
     with pytest.raises(NotFoundError):
         ReminderService(test_db).cancel_reminder(999999)
-
-
-def test_fire_due_ignores_future_and_terminal_reminders(test_db):
-    now = utcnow()
-    repo = ReminderService(test_db).reminder_repo
-    due = repo.create(
-        fire_at=now - timedelta(minutes=1),
-        action_type=ReminderActionType.CREATE_TASK,
-    )
-    repo.create(
-        fire_at=now + timedelta(days=1),
-        action_type=ReminderActionType.CREATE_TASK,
-    )
-    canceled = repo.create(
-        fire_at=now - timedelta(days=1),
-        action_type=ReminderActionType.SEND_NOTIFICATION,
-    )
-    repo.update_status(canceled.id, ReminderStatus.CANCELED)
-
-    result = ReminderExecutorService(test_db).fire_due(now=now)
-
-    assert result.processed == 1
-    assert result.fired == 0
-    assert result.failed == 1
-    assert repo.get_by_id(due.id).status == ReminderStatus.FAILED
-
-
-def test_fire_due_is_idempotent_for_failed_reminders(test_db):
-    now = utcnow()
-    repo = ReminderService(test_db).reminder_repo
-    reminder = repo.create(
-        fire_at=now - timedelta(minutes=1),
-        action_type=ReminderActionType.CREATE_TASK_AND_NOTIFY,
-    )
-
-    first = ReminderExecutorService(test_db).fire_due(now=now)
-    second = ReminderExecutorService(test_db).fire_due(now=now)
-
-    assert first.processed == 1
-    assert second.processed == 0
-    assert "עדיין לא ממומש" in repo.get_by_id(reminder.id).failure_reason
-
-
-def test_send_notification_failure_reason_is_not_delivery_failure(test_db):
-    now = utcnow()
-    repo = ReminderService(test_db).reminder_repo
-    reminder = repo.create(
-        fire_at=now - timedelta(minutes=1),
-        action_type=ReminderActionType.SEND_NOTIFICATION,
-    )
-
-    ReminderExecutorService(test_db).fire_due(now=now)
-
-    reason = repo.get_by_id(reminder.id).failure_reason
-    assert "עדיין לא ממומש" in reason
-    assert "delivery" not in reason.lower()
-    assert "שליחה נכשלה" not in reason

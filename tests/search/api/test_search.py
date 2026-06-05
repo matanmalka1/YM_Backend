@@ -8,16 +8,6 @@ def test_search_endpoint(client, advisor_headers):
     assert "total" in data
 
 
-def test_search_with_query(client, advisor_headers):
-    """Test search with query parameter."""
-    response = client.get(
-        "/api/v1/search?query=test",
-        headers=advisor_headers,
-    )
-
-    assert response.status_code == 200
-
-
 def test_search_requires_auth(client):
     """Test search requires authentication."""
     response = client.get("/api/v1/search")

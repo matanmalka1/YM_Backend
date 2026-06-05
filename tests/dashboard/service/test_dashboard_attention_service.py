@@ -15,12 +15,6 @@ def test_returns_empty_for_non_advisor(test_db):
     assert service.build(user_role=UserRole.SECRETARY) == []
 
 
-def test_returns_list_for_advisor(test_db):
-    service = DashboardAttentionService(test_db)
-    result = service.build(user_role=UserRole.ADVISOR)
-    assert isinstance(result, list)
-
-
 def test_unpaid_charge_appears_as_overdue(test_db):
     biz = create_business(test_db)
     test_db.add(

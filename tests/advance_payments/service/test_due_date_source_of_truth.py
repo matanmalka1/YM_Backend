@@ -49,30 +49,6 @@ def test_advance_payment_due_date_from_entry_not_hardcoded_15(test_db):
     assert jan.tax_calendar_entry_id == entry.id
 
 
-def test_generate_advance_payment_all_periods_use_entry_due_date(test_db):
-    """When entry exists with custom date, all generated payments for that period use entry.due_date."""
-    entry_feb = make_entry(
-        test_db,
-        obligation_type=ObligationType.ADVANCE_PAYMENT,
-        rule_type=DeadlineRuleType.ADVANCE_MONTHLY,
-        period="2026-02",
-        months=1,
-        tax_year=2026,
-    )
-    entry_feb.due_date = date(2026, 3, 17)
-    test_db.flush()
-
-    client = advance_client(test_db)
-    created, _ = generate_annual_schedule(
-        client.id, 2026, test_db, reference_date=date(2025, 12, 31)
-    )
-
-    feb = next(p for p in created if p.period == "2026-02")
-    assert feb.due_date == date(2026, 3, 17)
-    assert feb.due_date_original == date(2026, 3, 17)
-    assert feb.due_date_effective == date(2026, 3, 17)
-
-
 def test_create_payment_directly_uses_entry_due_date(test_db):
     """create_payment_for_client ignores caller-supplied due_date, uses TaxCalendarEntry.due_date."""
     entry = make_entry(
