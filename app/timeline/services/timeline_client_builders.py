@@ -67,10 +67,7 @@ def signature_request_lifecycle_event(sig_request, audit_event) -> dict:
             "annual_report_id": sig_request.annual_report_id,
             "document_id": sig_request.document_id,
             "signer_name": sig_request.signer_name,
-            # decline_reason comes from the current SignatureRequest row, not from the
-            # audit event snapshot.  If the request is later edited or the row is mutated,
-            # this value reflects the latest persisted reason, not the one at decline time.
-            "reason": sig_request.decline_reason if audit_type == "declined" else None,
+            "reason": audit_event.notes if audit_type == "declined" else None,
             "notes": audit_event.notes,
         },
     }

@@ -13779,70 +13779,6 @@
         ],
         "title": "AdvancesSummary"
       },
-      "AdvisorTodayItem": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "label": {
-            "type": "string",
-            "title": "Label"
-          },
-          "sublabel": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Sublabel"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "href": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Href"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "label"
-        ],
-        "title": "AdvisorTodayItem"
-      },
-      "AdvisorTodayResponse": {
-        "properties": {
-          "deadline_items": {
-            "items": {
-              "$ref": "#/components/schemas/AdvisorTodayItem"
-            },
-            "type": "array",
-            "title": "Deadline Items"
-          }
-        },
-        "type": "object",
-        "title": "AdvisorTodayResponse"
-      },
       "AgingReportItemResponse": {
         "properties": {
           "client_record_id": {
@@ -19013,34 +18949,6 @@
         "type": "object",
         "title": "ClientUpdateRequest"
       },
-      "ConfirmDetails": {
-        "properties": {
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "message": {
-            "type": "string",
-            "title": "Message"
-          },
-          "confirm_label": {
-            "type": "string",
-            "title": "Confirm Label"
-          },
-          "cancel_label": {
-            "type": "string",
-            "title": "Cancel Label"
-          }
-        },
-        "type": "object",
-        "required": [
-          "title",
-          "message",
-          "confirm_label",
-          "cancel_label"
-        ],
-        "title": "ConfirmDetails"
-      },
       "ContactType": {
         "type": "string",
         "enum": [
@@ -19409,18 +19317,8 @@
           "vat_stats": {
             "$ref": "#/components/schemas/VatDashboardStats"
           },
-          "quick_actions": {
-            "items": {
-              "$ref": "#/components/schemas/DashboardQuickAction"
-            },
-            "type": "array",
-            "title": "Quick Actions"
-          },
           "attention": {
             "$ref": "#/components/schemas/AttentionResponse"
-          },
-          "advisor_today": {
-            "$ref": "#/components/schemas/AdvisorTodayResponse"
           },
           "recent_activity": {
             "items": {
@@ -19437,143 +19335,6 @@
         ],
         "title": "DashboardOverviewResponse",
         "description": "Dashboard overview — advisor gets full data, secretary gets operational subset."
-      },
-      "DashboardQuickAction": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "key": {
-            "type": "string",
-            "title": "Key"
-          },
-          "label": {
-            "type": "string",
-            "title": "Label"
-          },
-          "method": {
-            "type": "string",
-            "title": "Method"
-          },
-          "endpoint": {
-            "type": "string",
-            "title": "Endpoint"
-          },
-          "payload": {
-            "anyOf": [
-              {
-                "additionalProperties": true,
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Payload"
-          },
-          "confirm": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/ConfirmDetails"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "client_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Name"
-          },
-          "binder_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Binder Number"
-          },
-          "category": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Category"
-          },
-          "due_label": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Due Label"
-          },
-          "description": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Description"
-          },
-          "urgency": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "overdue",
-                  "upcoming"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Urgency"
-          },
-          "due_date": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Due Date"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "key",
-          "label",
-          "method",
-          "endpoint"
-        ],
-        "title": "DashboardQuickAction"
       },
       "DeadlineRuleResponse": {
         "properties": {
@@ -26712,10 +26473,6 @@
             "type": "string",
             "title": "Period Type"
           },
-          "reporting_frequency": {
-            "type": "string",
-            "title": "Reporting Frequency"
-          },
           "grouping_key": {
             "type": "string",
             "title": "Grouping Key"
@@ -26751,7 +26508,6 @@
           "client_name",
           "year",
           "period_type",
-          "reporting_frequency",
           "grouping_key",
           "periods_expected",
           "periods_filed",

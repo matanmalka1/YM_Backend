@@ -1,31 +1,6 @@
 from datetime import date
-from typing import Any, Literal
 
 from pydantic import BaseModel, Field
-
-
-class ConfirmDetails(BaseModel):
-    title: str
-    message: str
-    confirm_label: str
-    cancel_label: str
-
-
-class DashboardQuickAction(BaseModel):
-    id: str
-    key: str
-    label: str
-    method: str
-    endpoint: str
-    payload: dict[str, Any] | None = None
-    confirm: ConfirmDetails | None = None
-    client_name: str | None = None
-    binder_number: str | None = None
-    category: str | None = None  # "binders" | "vat" | "annual_reports"
-    due_label: str | None = None
-    description: str | None = None
-    urgency: Literal["overdue", "upcoming"] | None = None
-    due_date: date | None = None
 
 
 class AttentionBoardItem(BaseModel):
@@ -45,18 +20,6 @@ class AttentionBoardItem(BaseModel):
 class AttentionResponse(BaseModel):
     items: list[AttentionBoardItem] = Field(default_factory=list)
     total: int = 0
-
-
-class AdvisorTodayItem(BaseModel):
-    id: int
-    label: str
-    sublabel: str | None = None
-    description: str | None = None
-    href: str | None = None
-
-
-class AdvisorTodayResponse(BaseModel):
-    deadline_items: list[AdvisorTodayItem] = Field(default_factory=list)
 
 
 class VatDashboardPeriodStat(BaseModel):
@@ -97,7 +60,5 @@ class DashboardOverviewResponse(BaseModel):
     open_charges_count: int = 0
     open_charges_amount_ils: str | None = None
     vat_stats: VatDashboardStats
-    quick_actions: list[DashboardQuickAction] = Field(default_factory=list)
     attention: AttentionResponse = Field(default_factory=AttentionResponse)
-    advisor_today: AdvisorTodayResponse = Field(default_factory=AdvisorTodayResponse)
     recent_activity: list[RecentActivityItem] = Field(default_factory=list)

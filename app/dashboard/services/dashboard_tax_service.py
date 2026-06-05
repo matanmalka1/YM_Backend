@@ -42,7 +42,7 @@ class DashboardTaxService:
             AnnualReportStatus.COLLECTING_DOCS, tax_year=tax_year
         )
 
-        not_started = total_clients - (submitted + in_progress + material_collection)
+        not_started = max(0, total_clients - (submitted + in_progress + material_collection))
 
         submission_percentage = (
             round((submitted / total_clients) * 100, 1) if total_clients > 0 else 0.0

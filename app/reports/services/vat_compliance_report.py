@@ -53,7 +53,6 @@ class VatComplianceReportService:
                     "client_name": client_name,
                     "year": year,
                     "period_type": period_type,
-                    "reporting_frequency": period_type,
                     "grouping_key": grouping_key,
                     "periods_expected": expected,
                     "periods_filed": filed,

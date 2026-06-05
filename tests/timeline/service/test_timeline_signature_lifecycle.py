@@ -66,7 +66,6 @@ def test_signature_lifecycle_events_use_audit_source(test_db, test_user):
         "canceled": datetime(2026, 1, 5, 10, 0, tzinfo=UTC),
         "expired": datetime(2026, 1, 6, 10, 0, tzinfo=UTC),
     }
-    req.decline_reason = "Missing docs"
     for event_type, occurred_at in audit_times.items():
         _add_audit(test_db, req, event_type, occurred_at)
     test_db.commit()
@@ -80,7 +79,8 @@ def test_signature_lifecycle_events_use_audit_source(test_db, test_user):
     assert by_type["signature_request_signed"]["timestamp"] == audit_times["signed"].replace(
         tzinfo=None
     )
-    assert by_type["signature_request_declined"]["metadata"]["reason"] == "Missing docs"
+    # decline reason is read from audit_event.notes (snapshot), not the mutable SignatureRequest row
+    assert by_type["signature_request_declined"]["metadata"]["reason"] == "declined note"
     assert by_type["signature_request_canceled"]["timestamp"] == audit_times["canceled"].replace(
         tzinfo=None
     )
