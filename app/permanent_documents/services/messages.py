@@ -1,4 +1,5 @@
 INVALID_FILE_TYPE_ERROR = "סוג הקובץ אינו נתמך. מותר: PDF, Word, Excel, תמונות"
+CLIENT_SCOPE_VIOLATION_ERROR = "סוג מסמך זה שייך תמיד ללקוח ולא לעסק ספציפי"
 BUSINESS_NOT_FOUND_ERROR = "העסק לא נמצא"
 BUSINESS_CLIENT_MISMATCH_ERROR = "העסק אינו שייך ללקוח"
 FILE_TOO_LARGE_ERROR = "גודל הקובץ חורג מהמותר (מקסימום {max_size_mb}MB)"

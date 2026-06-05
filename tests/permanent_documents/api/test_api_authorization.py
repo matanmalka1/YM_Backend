@@ -26,7 +26,7 @@ def test_secretary_can_upload_documents(client, secretary_headers, test_db):
         data={
             "client_record_id": b.client_id,
             "business_id": b.id,
-            "document_type": "id_copy",
+            "document_type": "tax_form",
         },
         files={"file": ("test.pdf", BytesIO(b"fake content"), "application/pdf")},
     )
@@ -35,7 +35,7 @@ def test_secretary_can_upload_documents(client, secretary_headers, test_db):
     data = response.json()
     assert data["client_record_id"] == b.client_id
     assert data["business_id"] == b.id
-    assert data["document_type"] == "id_copy"
+    assert data["document_type"] == "tax_form"
     assert data["is_present"] is True
 
 
@@ -49,9 +49,9 @@ def test_advisor_can_upload_documents(client, advisor_headers, test_db):
         data={
             "client_record_id": b.client_id,
             "business_id": b.id,
-            "document_type": "power_of_attorney",
+            "document_type": "bank_approval",
         },
-        files={"file": ("poa.pdf", BytesIO(b"fake content"), "application/pdf")},
+        files={"file": ("bank.pdf", BytesIO(b"fake content"), "application/pdf")},
     )
 
     assert response.status_code == 201

@@ -50,25 +50,25 @@ def test_count_by_business_ignores_soft_deleted_documents(test_db):
     active = repo.create(
         client_record_id=business_a.client_id,
         business_id=business_a.id,
-        scope=DocumentScope.CLIENT,
-        document_type=PermanentDocumentType.ID_COPY,
-        storage_key="businesses/1/id_copy/a.pdf",
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.TAX_FORM,
+        storage_key="businesses/1/tax_form/a.pdf",
         uploaded_by=user.id,
     )
     deleted = repo.create(
         client_record_id=business_a.client_id,
         business_id=business_a.id,
-        scope=DocumentScope.CLIENT,
-        document_type=PermanentDocumentType.POWER_OF_ATTORNEY,
-        storage_key="businesses/1/power_of_attorney/b.pdf",
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.BANK_APPROVAL,
+        storage_key="businesses/1/bank_approval/b.pdf",
         uploaded_by=user.id,
     )
     repo.create(
         client_record_id=business_b.client_id,
         business_id=business_b.id,
-        scope=DocumentScope.CLIENT,
-        document_type=PermanentDocumentType.ENGAGEMENT_AGREEMENT,
-        storage_key="businesses/2/engagement_agreement/c.pdf",
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.RECEIPT,
+        storage_key="businesses/2/receipt/c.pdf",
         uploaded_by=user.id,
     )
 

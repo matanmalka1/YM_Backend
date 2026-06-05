@@ -15,6 +15,7 @@ from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import AppError, NotFoundError
 from app.infrastructure.storage import StorageProvider, get_storage_provider
 from app.permanent_documents.models.permanent_document import (
+    CLIENT_SCOPE_TYPES,
     DocumentScope,
     DocumentStatus,
     PermanentDocumentType,
@@ -32,6 +33,7 @@ from app.permanent_documents.services.constants import (
 )
 from app.permanent_documents.services.messages import (
     BUSINESS_NOT_FOUND_ERROR,
+    CLIENT_SCOPE_VIOLATION_ERROR,
     DOCUMENT_NOT_FOUND_ERROR,
     FILE_TOO_LARGE_ERROR,
     INVALID_FILE_TYPE_ERROR,
@@ -116,7 +118,7 @@ class PermanentDocumentService:
                 business = get_business_or_raise(self.db, business_id)
             except NotFoundError as exc:
                 raise NotFoundError(
-                    BUSINESS_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.CLIENT_NOT_FOUND"
+                    BUSINESS_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.BUSINESS_NOT_FOUND"
                 ) from exc
             assert_business_belongs_to_legal_entity(
                 business,
@@ -124,7 +126,13 @@ class PermanentDocumentService:
             )
 
         scope = DocumentScope.BUSINESS if business_id is not None else DocumentScope.CLIENT
-        PermanentDocumentType(document_type)
+        doc_type_enum = PermanentDocumentType(document_type)
+        if doc_type_enum in CLIENT_SCOPE_TYPES and business_id is not None:
+            raise AppError(
+                CLIENT_SCOPE_VIOLATION_ERROR,
+                "PERMANENT_DOCUMENTS.CLIENT_SCOPE_VIOLATION",
+                status_code=422,
+            )
 
         file_bytes = file_data.read()
         file_size = len(file_bytes)
@@ -254,8 +262,8 @@ class PermanentDocumentService:
             ),
         }
 
-    def delete_document(self, document_id: int) -> None:
-        doc = self.document_repo.get_by_id(document_id)
+    def delete_document(self, client_record_id: int, document_id: int) -> None:
+        doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.NOT_FOUND")
         doc.is_deleted = True
@@ -263,13 +271,14 @@ class PermanentDocumentService:
 
     def replace_document(
         self,
+        client_record_id: int,
         document_id: int,
         file_data: BinaryIO,
         filename: str,
         uploaded_by: int,
         mime_type: str | None = None,
     ) -> PermanentDocument:
-        doc = self.document_repo.get_by_id(document_id)
+        doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.NOT_FOUND")
 

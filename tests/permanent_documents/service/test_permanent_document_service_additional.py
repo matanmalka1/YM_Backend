@@ -45,7 +45,7 @@ def test_permanent_document_size_mime_and_download_not_found(test_db, test_user)
     with pytest.raises(AppError) as size_exc:
         service.upload_document(
             client_record_id=b.client_id,
-            document_type=PermanentDocumentType.ID_COPY,
+            document_type=PermanentDocumentType.TAX_FORM,
             file_data=BytesIO(b"x" * (11 * 1024 * 1024)),
             filename="big.pdf",
             uploaded_by=test_user.id,
@@ -58,7 +58,7 @@ def test_permanent_document_size_mime_and_download_not_found(test_db, test_user)
     with pytest.raises(AppError) as mime_exc:
         service.upload_document(
             client_record_id=b.client_id,
-            document_type=PermanentDocumentType.ID_COPY,
+            document_type=PermanentDocumentType.TAX_FORM,
             file_data=BytesIO(b"ok"),
             filename="bad.bin",
             uploaded_by=test_user.id,
@@ -78,14 +78,15 @@ def test_permanent_document_replace_and_version_increment(test_db, test_user):
     service = PermanentDocumentService(test_db, storage=storage)
     doc = service.upload_document(
         client_record_id=b.client_id,
-        document_type=PermanentDocumentType.ID_COPY,
+        document_type=PermanentDocumentType.TAX_FORM,
         file_data=BytesIO(b"first"),
-        filename="id.pdf",
+        filename="tax_form.pdf",
         uploaded_by=test_user.id,
         mime_type="application/pdf",
         business_id=b.id,
     )
     replaced = service.replace_document(
+        client_record_id=b.client_id,
         document_id=doc.id,
         file_data=BytesIO(b"second"),
         filename="id2.pdf",

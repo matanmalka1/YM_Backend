@@ -7088,20 +7088,29 @@
         }
       }
     },
-    "/api/v1/documents/{document_id}": {
+    "/api/v1/documents/client/{client_record_id}/{document_id}": {
       "delete": {
         "tags": [
           "permanent-documents"
         ],
         "summary": "Delete Document",
         "description": "Soft-delete a permanent document (ADVISOR only).",
-        "operationId": "delete_document_api_v1_documents__document_id__delete",
+        "operationId": "delete_document_api_v1_documents_client__client_record_id___document_id__delete",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "document_id",
             "in": "path",
@@ -7129,20 +7138,29 @@
         }
       }
     },
-    "/api/v1/documents/{document_id}/replace": {
+    "/api/v1/documents/client/{client_record_id}/{document_id}/replace": {
       "put": {
         "tags": [
           "permanent-documents"
         ],
         "summary": "Replace Document",
         "description": "Replace the file for an existing document (ADVISOR only).",
-        "operationId": "replace_document_api_v1_documents__document_id__replace_put",
+        "operationId": "replace_document_api_v1_documents_client__client_record_id___document_id__replace_put",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "document_id",
             "in": "path",
@@ -7158,7 +7176,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_replace_document_api_v1_documents__document_id__replace_put"
+                "$ref": "#/components/schemas/Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put"
               }
             }
           }
@@ -16938,7 +16956,7 @@
         ],
         "title": "Body_import_clients_from_excel_api_v1_clients_import_post"
       },
-      "Body_replace_document_api_v1_documents__document_id__replace_put": {
+      "Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put": {
         "properties": {
           "file": {
             "type": "string",
@@ -16950,7 +16968,7 @@
         "required": [
           "file"
         ],
-        "title": "Body_replace_document_api_v1_documents__document_id__replace_put"
+        "title": "Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put"
       },
       "Body_upload_permanent_document_api_v1_documents_upload_post": {
         "properties": {

@@ -102,21 +102,22 @@ def get_download_url(document_id: int, db: DBSession, user: CurrentUser):
 
 
 @router.delete(
-    "/{document_id}",
+    "/client/{client_record_id}/{document_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
-def delete_document(document_id: int, db: DBSession, user: CurrentUser):
+def delete_document(client_record_id: int, document_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete a permanent document (ADVISOR only)."""
-    PermanentDocumentService(db).delete_document(document_id)
+    PermanentDocumentService(db).delete_document(client_record_id, document_id)
 
 
 @router.put(
-    "/{document_id}/replace",
+    "/client/{client_record_id}/{document_id}/replace",
     response_model=PermanentDocumentResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
 def replace_document(
+    client_record_id: int,
     document_id: int,
     file: Annotated[UploadFile, File(...)],
     db: DBSession,
@@ -124,6 +125,7 @@ def replace_document(
 ):
     """Replace the file for an existing document (ADVISOR only)."""
     doc = PermanentDocumentService(db).replace_document(
+        client_record_id=client_record_id,
         document_id=document_id,
         file_data=file.file,
         filename=file.filename or "document",

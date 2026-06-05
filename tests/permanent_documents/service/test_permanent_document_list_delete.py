@@ -52,18 +52,18 @@ def test_list_business_documents_and_delete_document(test_db):
     doc_2025 = repo.create(
         client_record_id=business.client_id,
         business_id=business.id,
-        scope=DocumentScope.CLIENT,
-        document_type=PermanentDocumentType.ID_COPY,
-        storage_key="businesses/1/id_copy/2025.pdf",
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.TAX_FORM,
+        storage_key="businesses/1/tax_form/2025.pdf",
         uploaded_by=user.id,
         tax_year=2025,
     )
     doc_2024 = repo.create(
         client_record_id=business.client_id,
         business_id=business.id,
-        scope=DocumentScope.CLIENT,
-        document_type=PermanentDocumentType.POWER_OF_ATTORNEY,
-        storage_key="businesses/1/power_of_attorney/2024.pdf",
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.BANK_APPROVAL,
+        storage_key="businesses/1/bank_approval/2024.pdf",
         uploaded_by=user.id,
         tax_year=2024,
     )
@@ -74,10 +74,10 @@ def test_list_business_documents_and_delete_document(test_db):
     docs_2025 = service.list_business_documents(business.id, tax_year=2025)
     assert [d.id for d in docs_2025] == [doc_2025.id]
 
-    service.delete_document(doc_2024.id)
+    service.delete_document(business.client_id, doc_2024.id)
     remaining = service.list_business_documents(business.id)
     assert [d.id for d in remaining] == [doc_2025.id]
 
     with pytest.raises(NotFoundError) as exc_info:
-        service.delete_document(doc_2024.id)
+        service.delete_document(business.client_id, doc_2024.id)
     assert exc_info.value.code == "PERMANENT_DOCUMENTS.NOT_FOUND"

@@ -32,9 +32,9 @@ def test_upload_permanent_document(test_db, test_user):
 
     document = service.upload_document(
         client_record_id=business.client_id,
-        document_type=PermanentDocumentType.ID_COPY,
+        document_type=PermanentDocumentType.TAX_FORM,
         file_data=file_data,
-        filename="id_copy.pdf",
+        filename="tax_form.pdf",
         uploaded_by=test_user.id,
         business_id=business.id,
     )
@@ -42,7 +42,7 @@ def test_upload_permanent_document(test_db, test_user):
     assert document is not None
     assert document.client_record_id == business.client_id
     assert document.business_id == business.id
-    assert document.document_type == PermanentDocumentType.ID_COPY
+    assert document.document_type == PermanentDocumentType.TAX_FORM
     assert document.is_present is True
     assert document.uploaded_by == test_user.id
 
@@ -59,7 +59,7 @@ def test_missing_document_types(test_db, test_user):
     assert PermanentDocumentType.POWER_OF_ATTORNEY.value in missing
     assert PermanentDocumentType.ENGAGEMENT_AGREEMENT.value in missing
 
-    # Upload one required document
+    # Upload one required document (client-scoped — id_copy must not have business_id)
     file_data = BytesIO(b"fake content")
     service.upload_document(
         client_record_id=business.client_id,
@@ -67,7 +67,6 @@ def test_missing_document_types(test_db, test_user):
         file_data=file_data,
         filename="id.pdf",
         uploaded_by=test_user.id,
-        business_id=business.id,
     )
 
     # Now only 2 should be missing
@@ -97,7 +96,7 @@ def test_upload_document_business_not_found(test_db):
             uploaded_by=1,
             business_id=99999,
         )
-    assert exc_info.value.code == "PERMANENT_DOCUMENTS.CLIENT_NOT_FOUND"
+    assert exc_info.value.code == "PERMANENT_DOCUMENTS.BUSINESS_NOT_FOUND"
 
 
 def test_upload_document_without_business_uses_client_as_primary_owner(test_db, test_user):
