@@ -7040,20 +7040,29 @@
         }
       }
     },
-    "/api/v1/documents/{document_id}/download-url": {
+    "/api/v1/documents/client/{client_record_id}/{document_id}/download-url": {
       "get": {
         "tags": [
           "permanent-documents"
         ],
         "summary": "Get Download Url",
         "description": "Get a presigned download URL for a document (expires in 1 hour).",
-        "operationId": "get_download_url_api_v1_documents__document_id__download_url_get",
+        "operationId": "get_download_url_api_v1_documents_client__client_record_id___document_id__download_url_get",
         "security": [
           {
             "HTTPBearer": []
           }
         ],
         "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
           {
             "name": "document_id",
             "in": "path",

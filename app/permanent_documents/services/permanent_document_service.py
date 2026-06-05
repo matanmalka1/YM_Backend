@@ -199,8 +199,8 @@ class PermanentDocumentService:
         self.db.refresh(document)
         return document
 
-    def get_download_url(self, document_id: int, expires_in: int = 3600) -> str:
-        doc = self.document_repo.get_by_id(document_id)
+    def get_download_url(self, client_record_id: int, document_id: int, expires_in: int = 3600) -> str:
+        doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.NOT_FOUND")
         return self.storage.get_presigned_url(doc.storage_key, expires_in=expires_in)

@@ -143,7 +143,7 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
             select(PermanentDocument).where(
                 PermanentDocument.id == document_id,
                 PermanentDocument.client_record_id == client_record_id,
-                PermanentDocument.is_deleted == False,  # noqa: E712
+                PermanentDocument.is_deleted.is_(False),
             )
         ).first()
 

@@ -69,7 +69,7 @@ def test_permanent_document_size_mime_and_download_not_found(test_db, test_user)
     assert mime_exc.value.status_code == 422
 
     with pytest.raises(NotFoundError):
-        service.get_download_url(999999)
+        service.get_download_url(b.client_id, 999999)
 
 
 def test_permanent_document_replace_and_version_increment(test_db, test_user):
@@ -95,5 +95,5 @@ def test_permanent_document_replace_and_version_increment(test_db, test_user):
     assert replaced.version == 2
     assert "v2_" in replaced.storage_key
 
-    url = service.get_download_url(replaced.id, expires_in=120)
+    url = service.get_download_url(b.client_id, replaced.id, expires_in=120)
     assert "exp=120" in url

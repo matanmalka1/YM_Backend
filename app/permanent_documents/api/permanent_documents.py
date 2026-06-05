@@ -91,13 +91,13 @@ def get_operational_signals(
 
 
 @router.get(
-    "/{document_id}/download-url",
+    "/client/{client_record_id}/{document_id}/download-url",
     response_model=DocumentDownloadUrlResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
-def get_download_url(document_id: int, db: DBSession, user: CurrentUser):
+def get_download_url(client_record_id: int, document_id: int, db: DBSession, user: CurrentUser):
     """Get a presigned download URL for a document (expires in 1 hour)."""
-    url = PermanentDocumentService(db).get_download_url(document_id)
+    url = PermanentDocumentService(db).get_download_url(client_record_id, document_id)
     return {"url": url}
 
 

@@ -71,7 +71,7 @@ def test_get_download_url_and_replace_document(client, test_db, advisor_headers)
         uploaded_by=1,
     )
 
-    url_resp = client.get(f"/api/v1/documents/{doc.id}/download-url", headers=advisor_headers)
+    url_resp = client.get(f"/api/v1/documents/client/{business.client_id}/{doc.id}/download-url", headers=advisor_headers)
     assert url_resp.status_code == 200
     assert "url" in url_resp.json()
 
@@ -146,6 +146,48 @@ def test_replace_document_wrong_client_returns_404(client, test_db, advisor_head
         f"/api/v1/documents/client/{b2.client_id}/{doc.id}/replace",
         headers=advisor_headers,
         files={"file": ("bad.pdf", BytesIO(b"x"), "application/pdf")},
+    )
+    assert resp.status_code == 404
+
+
+def test_get_download_url_cross_client_returns_404(client, test_db, advisor_headers):
+    b1 = _business(test_db)
+    b2 = _business(test_db)
+    repo = PermanentDocumentRepository(test_db)
+    doc = repo.create(
+        client_record_id=b1.client_id,
+        business_id=b1.id,
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.BANK_APPROVAL,
+        storage_key="businesses/b1/bank_approval/secret.pdf",
+        uploaded_by=1,
+    )
+
+    resp = client.get(
+        f"/api/v1/documents/client/{b2.client_id}/{doc.id}/download-url",
+        headers=advisor_headers,
+    )
+    assert resp.status_code == 404
+
+
+def test_get_download_url_deleted_document_returns_404(client, test_db, advisor_headers):
+    b = _business(test_db)
+    repo = PermanentDocumentRepository(test_db)
+    doc = repo.create(
+        client_record_id=b.client_id,
+        business_id=b.id,
+        scope=DocumentScope.BUSINESS,
+        document_type=PermanentDocumentType.BANK_APPROVAL,
+        storage_key="businesses/b/bank_approval/deleted.pdf",
+        uploaded_by=1,
+    )
+    client.delete(
+        f"/api/v1/documents/client/{b.client_id}/{doc.id}", headers=advisor_headers
+    )
+
+    resp = client.get(
+        f"/api/v1/documents/client/{b.client_id}/{doc.id}/download-url",
+        headers=advisor_headers,
     )
     assert resp.status_code == 404
 
