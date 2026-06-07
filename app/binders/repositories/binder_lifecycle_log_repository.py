@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.binders.models.binder_lifecycle_log import BinderLifecycleLog
@@ -35,17 +35,39 @@ class BinderLifecycleLogRepository(BaseRepository[BinderLifecycleLog]):
         self.db.flush()
         return log
 
-    def list_by_binder(self, binder_id: int) -> list[BinderLifecycleLog]:
-        """Get all lifecycle logs for a binder."""
-        return self.db.scalars(
-            select(BinderLifecycleLog)
-            .where(BinderLifecycleLog.binder_id == binder_id)
-            .order_by(BinderLifecycleLog.changed_at.asc(), BinderLifecycleLog.id.asc())
-        ).all()
+    def list_all_by_binder(
+        self, binder_id: int, limit: int = 500
+    ) -> list[BinderLifecycleLog]:
+        """All lifecycle logs for a binder in chronological order, bounded by limit."""
+        return list(
+            self.db.scalars(
+                select(BinderLifecycleLog)
+                .where(BinderLifecycleLog.binder_id == binder_id)
+                .order_by(BinderLifecycleLog.changed_at.asc(), BinderLifecycleLog.id.asc())
+                .limit(limit)
+            ).all()
+        )
+
+    def list_by_binder_page(
+        self, binder_id: int, page: int, page_size: int
+    ) -> tuple[list[BinderLifecycleLog], int]:
+        """Paginated lifecycle logs for a binder."""
+        base = select(BinderLifecycleLog).where(BinderLifecycleLog.binder_id == binder_id)
+        total: int = self.db.scalar(select(func.count()).select_from(base.subquery())) or 0
+        items = list(
+            self.db.scalars(
+                base.order_by(BinderLifecycleLog.changed_at.asc(), BinderLifecycleLog.id.asc())
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).all()
+        )
+        return items, total
 
     def list_recent(self, limit: int = 20) -> list[BinderLifecycleLog]:
-        return self.db.scalars(
-            select(BinderLifecycleLog)
-            .order_by(BinderLifecycleLog.changed_at.desc(), BinderLifecycleLog.id.desc())
-            .limit(limit)
-        ).all()
+        return list(
+            self.db.scalars(
+                select(BinderLifecycleLog)
+                .order_by(BinderLifecycleLog.changed_at.desc(), BinderLifecycleLog.id.desc())
+                .limit(limit)
+            ).all()
+        )

@@ -47,14 +47,18 @@ class BinderHistoryService:
             for log in logs
         ]
 
-    def get_binder_history(self, binder_id: int) -> tuple[Binder, list[BinderLifecycleLog]] | None:
+    def get_binder_history(
+        self, binder_id: int, page: int = 1, page_size: int = 50
+    ) -> tuple[Binder, list[BinderLifecycleLog], int] | None:
         binder = self.binder_repo.get_by_id(binder_id)
         if not binder:
             return None
-        logs = self.log_repo.list_by_binder(binder_id)
-        return binder, logs
+        logs, total = self.log_repo.list_by_binder_page(binder_id, page, page_size)
+        return binder, logs, total
 
-    def get_binder_intakes(self, binder_id: int) -> list[BinderIntakeResponse]:
+    def get_binder_intakes(
+        self, binder_id: int, page: int = 1, page_size: int = 20
+    ) -> tuple[list[BinderIntakeResponse], int]:
         binder = self.binder_repo.get_by_id(binder_id)
         if not binder:
             raise NotFoundError(
@@ -62,7 +66,7 @@ class BinderHistoryService:
                 "BINDER.NOT_FOUND",
             )
 
-        intakes = self.intake_repo.list_by_binder(binder_id)
+        intakes, total = self.intake_repo.list_by_binder_page(binder_id, page, page_size)
 
         # Batch-fetch user names to avoid N+1 queries.
         user_ids = {i.received_by for i in intakes}
@@ -71,7 +75,6 @@ class BinderHistoryService:
 
         result: list[BinderIntakeResponse] = []
         for intake in intakes:
-            # Populate the materials list for each intake.
             raw_materials = self.material_repo.list_by_intake(intake.id)
             material_responses = [
                 BinderIntakeMaterialResponse.model_validate(m) for m in raw_materials
@@ -88,4 +91,4 @@ class BinderHistoryService:
                     materials=material_responses,
                 )
             )
-        return result
+        return result, total

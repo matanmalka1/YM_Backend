@@ -146,7 +146,7 @@ class TimelineService:
         return value.value if hasattr(value, "value") else str(value)
 
     def _append_lifecycle_change_events(self, events: list[dict], binder) -> None:
-        logs = self.lifecycle_log_repo.list_by_binder(binder.id)
+        logs = self.lifecycle_log_repo.list_all_by_binder(binder.id)
         for lifecycle_log in logs:
             old_value = self._status_str(getattr(lifecycle_log, "old_value", None))
             new_value = self._status_str(getattr(lifecycle_log, "new_value", None))

@@ -44,7 +44,7 @@ def test_mark_full_reopen_and_handover_transitions_write_lifecycle_logs(test_db,
     assert handed_over.handed_over_at == date(2026, 2, 1)
     assert handed_over.handover_recipient_name == "Dana"
 
-    logs = service.lifecycle_log_repo.list_by_binder(binder.id)
+    logs = service.lifecycle_log_repo.list_all_by_binder(binder.id)
     assert [(log.field_name, log.old_value, log.new_value) for log in logs] == [
         ("capacity_status", "open", "full"),
         ("capacity_status", "full", "open"),
@@ -84,7 +84,7 @@ def test_receive_material_writes_audit_log_without_state_change(test_db, test_us
 
     assert received.location_status == BinderLocationStatus.IN_OFFICE
     assert received.capacity_status == BinderCapacityStatus.OPEN
-    logs = service.lifecycle_log_repo.list_by_binder(binder.id)
+    logs = service.lifecycle_log_repo.list_all_by_binder(binder.id)
     assert [(log.field_name, log.old_value, log.new_value) for log in logs] == [
         ("capacity_status", "open", "open"),
     ]

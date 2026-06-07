@@ -5,7 +5,7 @@ from app.binders.models.binder_intake import BinderIntake
 from tests.helpers.identity import seed_client_identity
 
 
-def _seed_binder_and_intakes(db, user_id: int):
+def _seed_binder_and_intakes(db, user_id: int, count: int = 1):
     crm_client = seed_client_identity(
         db,
         full_name="Binder Intake Client",
@@ -24,13 +24,14 @@ def _seed_binder_and_intakes(db, user_id: int):
     db.commit()
     db.refresh(binder)
 
-    intake = BinderIntake(
-        binder_id=binder.id,
-        received_by=user_id,
-        received_at=date.today(),
-        notes="docs",
-    )
-    db.add(intake)
+    for i in range(count):
+        intake = BinderIntake(
+            binder_id=binder.id,
+            received_by=user_id,
+            received_at=date(2024, 1, i + 1),
+            notes=f"docs-{i}",
+        )
+        db.add(intake)
     db.commit()
 
     return binder
@@ -43,8 +44,45 @@ def test_binder_intakes_endpoint_success_and_not_found(client, test_db, advisor_
     assert ok.status_code == 200
     payload = ok.json()
     assert payload["binder_id"] == binder.id
+    assert payload["total"] == 1
+    assert payload["page"] == 1
+    assert payload["page_size"] == 20
     assert len(payload["intakes"]) == 1
     assert payload["intakes"][0]["received_by_name"] == test_user.full_name
 
     missing = client.get("/api/v1/binders/999999/intakes", headers=advisor_headers)
     assert missing.status_code == 404
+
+
+def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user):
+    binder = _seed_binder_and_intakes(test_db, test_user.id, count=3)
+
+    resp = client.get(
+        f"/api/v1/binders/{binder.id}/intakes",
+        params={"page": 1, "page_size": 2},
+        headers=advisor_headers,
+    )
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["total"] == 3
+    assert payload["page"] == 1
+    assert payload["page_size"] == 2
+    assert len(payload["intakes"]) == 2
+
+    resp2 = client.get(
+        f"/api/v1/binders/{binder.id}/intakes",
+        params={"page": 2, "page_size": 2},
+        headers=advisor_headers,
+    )
+    assert resp2.status_code == 200
+    assert len(resp2.json()["intakes"]) == 1
+
+
+def test_binder_intakes_page_size_cap(client, test_db, advisor_headers, test_user):
+    binder = _seed_binder_and_intakes(test_db, test_user.id)
+    resp = client.get(
+        f"/api/v1/binders/{binder.id}/intakes",
+        params={"page_size": 999},
+        headers=advisor_headers,
+    )
+    assert resp.status_code == 422

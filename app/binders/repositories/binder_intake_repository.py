@@ -1,6 +1,6 @@
 from datetime import date
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.binders.models.binder_intake import BinderIntake
@@ -43,10 +43,17 @@ class BinderIntakeRepository(BaseRepository[BinderIntake]):
             .order_by(BinderIntake.received_at.asc())
         ).first()
 
-    def list_by_binder(self, binder_id: int) -> list[BinderIntake]:
-        """Get all intakes for a binder, ordered by received_at ascending."""
-        return self.db.scalars(
-            select(BinderIntake)
-            .where(BinderIntake.binder_id == binder_id)
-            .order_by(BinderIntake.received_at.asc())
-        ).all()
+    def list_by_binder_page(
+        self, binder_id: int, page: int, page_size: int
+    ) -> tuple[list[BinderIntake], int]:
+        """Paginated intakes for a binder."""
+        base = select(BinderIntake).where(BinderIntake.binder_id == binder_id)
+        total: int = self.db.scalar(select(func.count()).select_from(base.subquery())) or 0
+        items = list(
+            self.db.scalars(
+                base.order_by(BinderIntake.received_at.asc())
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).all()
+        )
+        return items, total

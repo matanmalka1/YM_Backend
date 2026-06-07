@@ -55,7 +55,7 @@ def test_binder_receive_creates_initial_lifecycle_log(client, auth_token, test_d
         BinderLifecycleLogRepository,
     )
 
-    logs = BinderLifecycleLogRepository(test_db).list_by_binder(binder_id)
+    logs = BinderLifecycleLogRepository(test_db).list_all_by_binder(binder_id)
 
     assert len(logs) == 2
     assert [(log.field_name, log.old_value, log.new_value) for log in logs] == [

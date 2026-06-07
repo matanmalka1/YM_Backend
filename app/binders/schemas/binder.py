@@ -121,6 +121,9 @@ class BinderIntakeResponse(BaseModel):
 class BinderIntakeListResponse(BaseModel):
     binder_id: int
     intakes: list[BinderIntakeResponse]
+    total: int
+    page: int
+    page_size: int
 
 
 class BinderReceiveResult(BaseModel):
@@ -202,3 +205,6 @@ class BinderHistoryEntry(BaseModel):
 class BinderHistoryResponse(BaseModel):
     binder_id: int
     history: list[BinderHistoryEntry]
+    total: int
+    page: int
+    page_size: int

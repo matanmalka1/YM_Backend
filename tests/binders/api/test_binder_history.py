@@ -52,11 +52,48 @@ def test_binder_history_endpoint_returns_logs(client, test_db, advisor_headers, 
 
     payload = resp.json()
     assert payload["binder_id"] == binder.id
+    assert payload["total"] == 2
+    assert payload["page"] == 1
+    assert payload["page_size"] == 50
     history = payload["history"]
     assert len(history) == 2
     assert history[0]["old_value"] == "null"
     assert history[0]["new_value"] == "in_office"
     assert history[1]["new_value"] == "ready_for_handover"
+
+
+def test_binder_history_pagination(client, test_db, advisor_headers, test_user):
+    binder = _seed_binder_with_history(test_db, test_user.id)
+
+    resp = client.get(
+        f"/api/v1/binders/{binder.id}/history",
+        params={"page": 1, "page_size": 1},
+        headers=advisor_headers,
+    )
+    assert resp.status_code == 200
+    payload = resp.json()
+    assert payload["total"] == 2
+    assert payload["page"] == 1
+    assert payload["page_size"] == 1
+    assert len(payload["history"]) == 1
+
+    resp2 = client.get(
+        f"/api/v1/binders/{binder.id}/history",
+        params={"page": 2, "page_size": 1},
+        headers=advisor_headers,
+    )
+    assert resp2.status_code == 200
+    assert len(resp2.json()["history"]) == 1
+
+
+def test_binder_history_page_size_cap(client, test_db, advisor_headers, test_user):
+    binder = _seed_binder_with_history(test_db, test_user.id)
+    resp = client.get(
+        f"/api/v1/binders/{binder.id}/history",
+        params={"page_size": 999},
+        headers=advisor_headers,
+    )
+    assert resp.status_code == 422
 
 
 def test_binder_history_404_when_missing(client, advisor_headers):
