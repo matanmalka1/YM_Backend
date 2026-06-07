@@ -111,16 +111,21 @@ def test_get_aging_buckets_includes_only_issued_and_not_deleted(test_db):
     repo.update_status(old.id, ChargeStatus.ISSUED, issued_at=datetime(2025, 12, 1))
     repo.soft_delete(old.id, deleted_by=1)
 
-    rows = repo.get_aging_buckets(as_of_date=date(2026, 3, 22))
+    rows, total = repo.get_aging_buckets_paginated(
+        as_of_date=date(2026, 3, 22),
+        page=1,
+        page_size=10,
+    )
+    assert total == 1
     assert len(rows) == 1
 
     row = rows[0]
-    assert row.client_record_id == business.client_id
-    assert float(row.current) == 100.0
-    assert float(row.days_30) == 0.0
-    assert float(row.days_60) == 0.0
-    assert float(row.days_90_plus) == 0.0
-    assert float(row.total) == 100.0
-    assert row.oldest_issued_at.date().isoformat() == "2026-03-10"
+    assert row["client_record_id"] == business.client_id
+    assert float(row["current"]) == 100.0
+    assert float(row["days_30"]) == 0.0
+    assert float(row["days_60"]) == 0.0
+    assert float(row["days_90_plus"]) == 0.0
+    assert float(row["total"]) == 100.0
+    assert row["oldest_issued_at"].date().isoformat() == "2026-03-10"
 
     assert repo.get_by_id(draft.id) is not None

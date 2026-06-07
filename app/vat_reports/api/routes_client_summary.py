@@ -1,5 +1,7 @@
 """Routes: client-level VAT summary and export."""
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
@@ -14,6 +16,8 @@ router = APIRouter(
     tags=["vat-reports"],
 )
 
+_DEFAULT_YEAR_WINDOW = 4
+
 
 @router.get(
     "/clients/{client_record_id}/summary",
@@ -26,8 +30,11 @@ def get_vat_client_summary(
     from_year: int | None = Query(default=None, ge=2000, le=2100),
     to_year: int | None = Query(default=None, ge=2000, le=2100),
 ):
+    current_year = date.today().year
+    resolved_to = to_year if to_year is not None else current_year
+    resolved_from = from_year if from_year is not None else current_year - _DEFAULT_YEAR_WINDOW
     return get_client_summary(
-        db, client_record_id=client_record_id, from_year=from_year, to_year=to_year
+        db, client_record_id=client_record_id, from_year=resolved_from, to_year=resolved_to
     )
 
 

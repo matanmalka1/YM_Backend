@@ -25,6 +25,7 @@ from app.charge.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_read_repository import get_full_records_bulk
 
 _ACTIVITY_LIMIT = 5
+# Fetches more than displayed to allow merging audit + binder rows before trimming to _ACTIVITY_LIMIT.
 _ACTIVITY_FETCH_LIMIT = 20
 
 _ENTITY_LABELS = {

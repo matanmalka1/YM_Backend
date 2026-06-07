@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.tax_calendar.schemas.settings import (
@@ -41,8 +43,11 @@ def list_tax_calendar_entries(
     start_year: int | None = Query(None),
     end_year: int | None = Query(None),
 ) -> list[TaxCalendarEntryResponse]:
-    _check_year_range(start_year, end_year)
-    return settings_calendar_service.list_entries(db, start_year=start_year, end_year=end_year)
+    current_year = date.today().year
+    resolved_start = start_year if start_year is not None else current_year
+    resolved_end = end_year if end_year is not None else current_year + 1
+    _check_year_range(resolved_start, resolved_end)
+    return settings_calendar_service.list_entries(db, start_year=resolved_start, end_year=resolved_end)
 
 
 @router.get(

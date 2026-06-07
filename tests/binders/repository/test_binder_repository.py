@@ -98,7 +98,7 @@ def test_list_active_respects_sort_and_filters(test_db):
     default_order = repo.list_active()
     assert [b.binder_number for b in default_order] == ["BG-2", "BG-1"]
 
-    asc_by_days = repo.list_active(sort_by="days_in_office", sort_dir="desc")
+    asc_by_days = repo.list_active(sort_by="days_in_office", order="desc")
     assert [b.binder_number for b in asc_by_days] == ["BG-1", "BG-2"]
 
     number_filtered = repo.list_active(binder_number="G-1")

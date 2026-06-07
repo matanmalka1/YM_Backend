@@ -60,9 +60,11 @@ def get_annual_report_status_report(
 def get_aging_report(
     db: DBSession,
     as_of_date: date | None = Query(None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
 ):
     service = AgingReportService(db)
-    return service.generate_aging_report(as_of_date=as_of_date)
+    return service.generate_aging_report(as_of_date=as_of_date, page=page, page_size=page_size)
 
 
 @router.get("/aging/export")

@@ -6016,13 +6016,13 @@
             }
           },
           {
-            "name": "sort_dir",
+            "name": "order",
             "in": "query",
             "required": false,
             "schema": {
               "type": "string",
               "default": "desc",
-              "title": "Sort Dir"
+              "title": "Order"
             }
           }
         ],
@@ -6143,7 +6143,6 @@
           "binders-history"
         ],
         "summary": "Get Binder History",
-        "description": "Get audit history for a binder.",
         "operationId": "get_binder_history_api_v1_binders__binder_id__history_get",
         "security": [
           {
@@ -6158,6 +6157,29 @@
             "schema": {
               "type": "integer",
               "title": "Binder Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
             }
           }
         ],
@@ -6191,7 +6213,6 @@
           "binders-history"
         ],
         "summary": "Get Binder Intakes",
-        "description": "Get all material intakes for a binder.",
         "operationId": "get_binder_intakes_api_v1_binders__binder_id__intakes_get",
         "security": [
           {
@@ -6206,6 +6227,29 @@
             "schema": {
               "type": "integer",
               "title": "Binder Id"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
             }
           }
         ],
@@ -6966,6 +7010,61 @@
               ],
               "title": "Tax Year"
             }
+          },
+          {
+            "name": "document_type",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/PermanentDocumentType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Document Type"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DocumentStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
           }
         ],
         "responses": {
@@ -7354,6 +7453,29 @@
               "type": "integer",
               "title": "Year"
             }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
+            }
           }
         ],
         "responses": {
@@ -7518,6 +7640,29 @@
                 }
               ],
               "title": "As Of Date"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 50,
+              "title": "Page Size"
             }
           }
         ],
@@ -8636,7 +8781,7 @@
             }
           },
           {
-            "name": "sort_dir",
+            "name": "order",
             "in": "query",
             "required": false,
             "schema": {
@@ -8646,7 +8791,7 @@
               ],
               "type": "string",
               "default": "desc",
-              "title": "Sort Dir"
+              "title": "Order"
             }
           }
         ],
@@ -11249,6 +11394,42 @@
               "type": "integer",
               "title": "Client Record Id"
             }
+          },
+          {
+            "name": "from_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100,
+                  "minimum": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "From Year"
+            }
+          },
+          {
+            "name": "to_year",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 2100,
+                  "minimum": 2000
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "To Year"
+            }
           }
         ],
         "responses": {
@@ -12416,7 +12597,18 @@
         ],
         "parameters": [
           {
-            "name": "limit",
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
             "in": "query",
             "required": false,
             "schema": {
@@ -12424,18 +12616,7 @@
               "maximum": 200,
               "minimum": 1,
               "default": 50,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
+              "title": "Page Size"
             }
           },
           {
@@ -13890,13 +14071,17 @@
           "summary": {
             "$ref": "#/components/schemas/AgingReportSummaryResponse"
           },
-          "capped": {
-            "type": "boolean",
-            "title": "Capped"
-          },
-          "cap_limit": {
+          "total": {
             "type": "integer",
-            "title": "Cap Limit"
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
@@ -13905,8 +14090,9 @@
           "total_outstanding",
           "items",
           "summary",
-          "capped",
-          "cap_limit"
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "AgingReportResponse"
       },
@@ -14785,6 +14971,21 @@
             ],
             "title": "Total Expenses"
           },
+          "recognized_expenses": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recognized Expenses"
+          },
           "taxable_income": {
             "anyOf": [
               {
@@ -14814,6 +15015,21 @@
               }
             ],
             "title": "Profit"
+          },
+          "tax_after_credits": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax After Credits"
           },
           "final_balance": {
             "anyOf": [
@@ -16151,12 +16367,27 @@
             },
             "type": "array",
             "title": "History"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
           "binder_id",
-          "history"
+          "history",
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "BinderHistoryResponse"
       },
@@ -16172,12 +16403,27 @@
             },
             "type": "array",
             "title": "Intakes"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
           "binder_id",
-          "intakes"
+          "intakes",
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "BinderIntakeListResponse"
       },
@@ -19596,6 +19842,22 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Limit"
+          },
+          "has_more": {
+            "type": "boolean",
+            "title": "Has More",
+            "default": false
           }
         },
         "type": "object",
@@ -21924,11 +22186,26 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
-          "items"
+          "items",
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "PermanentDocumentListResponse"
       },
@@ -26528,6 +26805,18 @@
             "type": "integer",
             "title": "Total Clients"
           },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/VatComplianceReportItemResponse"
@@ -26547,6 +26836,9 @@
         "required": [
           "year",
           "total_clients",
+          "total",
+          "page",
+          "page_size",
           "items",
           "stale_pending"
         ],
@@ -28132,6 +28424,14 @@
             "type": "integer",
             "title": "Total"
           },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
           "summary": {
             "$ref": "#/components/schemas/WorkQueueSummary"
           }
@@ -28140,6 +28440,8 @@
         "required": [
           "items",
           "total",
+          "page",
+          "page_size",
           "summary"
         ],
         "title": "WorkQueueListResponse"

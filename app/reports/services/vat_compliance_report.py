@@ -19,9 +19,10 @@ class VatComplianceReportService:
         self.client_repo = ClientRecordRepository(db)
 
     def get_vat_compliance_report(self, year: int, page: int = 1, page_size: int = 50) -> dict:
-        rows = self.repo.get_compliance_aggregates(year)
-        filed_items = self.repo.get_filed_items(year)
-        client_name_map = self._client_name_map([r.client_record_id for r in rows])
+        rows, total = self.repo.get_compliance_aggregates_paginated(year, page=page, page_size=page_size)
+        page_client_ids = list({r["client_record_id"] for r in rows})
+        filed_items = self.repo.get_filed_items_for_clients(year, page_client_ids)
+        client_name_map = self._client_name_map(page_client_ids)
 
         # ── On-time / late counts per business ───────────────────────────────
         on_time_map: dict[tuple[int, str], int] = {}
@@ -37,19 +38,20 @@ class VatComplianceReportService:
 
         items = []
         for r in rows:
-            client_name = client_name_map.get(r.client_record_id)
+            client_record_id = r["client_record_id"]
+            client_name = client_name_map.get(client_record_id)
             if client_name is None:
                 continue
-            period_type = str(r.period_type.value)
-            grouping_key = f"{r.client_record_id}:{year}:{period_type}"
-            count_key = (r.client_record_id, period_type)
-            expected = int(r.periods_expected)
-            filed = int(r.periods_filed or 0)
+            period_type = str(r["period_type"].value)
+            grouping_key = f"{client_record_id}:{year}:{period_type}"
+            count_key = (client_record_id, period_type)
+            expected = int(r["periods_expected"])
+            filed = int(r["periods_filed"] or 0)
             on_time = on_time_map.get(count_key, 0)
             late = late_map.get(count_key, 0)
             items.append(
                 {
-                    "client_record_id": r.client_record_id,
+                    "client_record_id": client_record_id,
                     "client_name": client_name,
                     "year": year,
                     "period_type": period_type,
@@ -83,17 +85,13 @@ class VatComplianceReportService:
                     }
                 )
 
-        total = len(items)
-        offset = (page - 1) * page_size
-        page_items = items[offset : offset + page_size]
-
         return {
             "year": year,
             "total_clients": total,
             "total": total,
             "page": page,
             "page_size": page_size,
-            "items": page_items,
+            "items": items,
             "stale_pending": stale_pending,
         }
 

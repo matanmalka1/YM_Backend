@@ -256,7 +256,7 @@ def test_source_routes_only_return_existing_frontend_targets():
 # ── Pagination ────────────────────────────────────────────────────────────────
 
 
-def test_work_queue_pagination_limit(test_db):
+def test_work_queue_pagination_page_size(test_db):
     biz = create_business(test_db)
     for days_ago in [31, 32, 33]:
         test_db.add(
@@ -271,15 +271,15 @@ def test_work_queue_pagination_limit(test_db):
         )
     test_db.commit()
 
-    page1 = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, limit=2, offset=0)
-    page2 = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, limit=2, offset=2)
+    page1 = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, page=1, page_size=2)
+    page2 = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, page=2, page_size=2)
 
     assert len(page1) == 2
     assert len(page2) == 1
     assert {i.source_id for i in page1}.isdisjoint({i.source_id for i in page2})
 
 
-def test_work_queue_pagination_offset_beyond_end(test_db):
+def test_work_queue_pagination_page_beyond_end(test_db):
     biz = create_business(test_db)
     test_db.add(
         Charge(
@@ -294,7 +294,7 @@ def test_work_queue_pagination_offset_beyond_end(test_db):
     test_db.commit()
 
     items = WorkQueueService(test_db).list_items(
-        client_record_id=biz.client_id, limit=50, offset=999
+        client_record_id=biz.client_id, page=20, page_size=50
     )
     assert items == []
 
@@ -480,8 +480,8 @@ def test_scope_manual_filters_before_pagination(test_db):
         due_date=utcnow() + timedelta(days=30),
     )
 
-    unfiltered = WorkQueueService(test_db).list_items(limit=1)
-    manual_page = WorkQueueService(test_db).list_items(scope="manual", limit=1)
+    unfiltered = WorkQueueService(test_db).list_items(page_size=1)
+    manual_page = WorkQueueService(test_db).list_items(scope="manual", page_size=1)
 
     assert not any(
         item.source_type == WorkQueueSourceType.TASK and item.source_id == task.id
@@ -503,7 +503,7 @@ def test_search_filters_before_pagination(test_db):
         due_date=utcnow() + timedelta(days=30),
     )
 
-    items = WorkQueueService(test_db).list_items(search="needle", limit=1)
+    items = WorkQueueService(test_db).list_items(search="needle", page_size=1)
 
     assert len(items) == 1
     assert items[0].source_type == WorkQueueSourceType.TASK
@@ -609,7 +609,7 @@ def test_summary_is_computed_before_pagination_and_respects_filters(test_db):
     )
 
     service = WorkQueueService(test_db)
-    page_response = service.list_items_with_total(limit=1)
+    page_response = service.list_items_with_total(page_size=1)
     summary = page_response.summary
     searched = service.list_items_with_total(search="summary").summary
 
@@ -908,7 +908,7 @@ def test_pagination_happens_after_merge(test_db):
             title=f"Task {idx}",
         )
 
-    page = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, limit=2, offset=0)
+    page = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, page=1, page_size=2)
 
     assert len(page) == 2
     assert all(i.source_type == WorkQueueSourceType.CHARGE for i in page)

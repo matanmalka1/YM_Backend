@@ -147,7 +147,7 @@ def test_list_by_client_filters_business_and_sort(test_db):
         contact_id=10,
         from_date=base + timedelta(hours=1),
         to_date=base + timedelta(days=2),
-        sort_dir="asc",
+        order="asc",
     )
 
     assert total == 1

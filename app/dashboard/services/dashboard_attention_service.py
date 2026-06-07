@@ -31,7 +31,7 @@ _URGENCY_ORDER = {
 }
 
 _MAX_ITEMS = 7
-_FALLBACK_MIN = 3
+_ATTENTION_FETCH_PAGE_SIZE = 20
 
 
 def _sort_key(item: WorkQueueItem) -> tuple:
@@ -129,20 +129,17 @@ class DashboardAttentionService:
         if user_role != UserRole.ADVISOR:
             return []
         today = reference_date or israel_today()
+        attention_urgencies = list(_ATTENTION_URGENCIES)
         all_items = WorkQueueService(self.db).list_items(
-            limit=200,
+            urgencies=attention_urgencies,
+            page=1,
+            page_size=_ATTENTION_FETCH_PAGE_SIZE,
             include_client_identity=False,
         )
         all_items = [i for i in all_items if _is_attention_eligible(i)]
 
-        attention = [i for i in all_items if i.urgency in _ATTENTION_URGENCIES]
-
-        if len(attention) < _FALLBACK_MIN:
-            upcoming = [i for i in all_items if i.urgency == WorkQueueUrgency.UPCOMING]
-            attention += upcoming[: _FALLBACK_MIN - len(attention)]
-
-        attention.sort(key=_sort_key)
-        selected = attention[:_MAX_ITEMS]
+        all_items.sort(key=_sort_key)
+        selected = all_items[:_MAX_ITEMS]
         self._attach_client_names(selected)
         return [_to_attention_item(i, today) for i in selected]
 

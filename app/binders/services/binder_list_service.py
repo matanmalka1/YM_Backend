@@ -145,13 +145,13 @@ class BinderListService:
         binder_number: str | None = None,
         year: int | None = None,
         sort_by: str = "period_start",
-        sort_dir: str = "desc",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 20,
         reference_date: date | None = None,
     ) -> tuple[list[BinderResponse], int, dict[str, int]]:
-        if sort_dir not in ("asc", "desc"):
-            sort_dir = "desc"
+        if order not in ("asc", "desc"):
+            order = "desc"
         effective_sort_by = sort_by if sort_by in _ALLOWED_SORT_COLS else "period_start"
 
         ref_date = reference_date or date.today()
@@ -165,7 +165,7 @@ class BinderListService:
             binder_number=binder_number,
             year=year,
             sort_by=effective_sort_by,
-            sort_dir=sort_dir,
+            order=order,
             page=page,
             page_size=page_size,
         )

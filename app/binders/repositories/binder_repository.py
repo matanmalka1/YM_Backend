@@ -96,20 +96,20 @@ class BinderRepository(BaseRepository[Binder]):
         return stmt
 
     @staticmethod
-    def _order_active_paginated_stmt(stmt, *, sort_by: str, sort_dir: str):
-        order_fn = asc if sort_dir == "asc" else desc
-        effective_sort_dir = sort_dir
+    def _order_active_paginated_stmt(stmt, *, sort_by: str, order: str):
+        order_fn = asc if order == "asc" else desc
+        effective_order = order
         if sort_by == "days_in_office":
-            effective_sort_dir = "asc" if sort_dir == "desc" else "desc"
-            order_fn = asc if effective_sort_dir == "asc" else desc
+            effective_order = "asc" if order == "desc" else "desc"
+            order_fn = asc if effective_order == "asc" else desc
 
         if sort_by == "client_name":
             name_order = order_fn(LegalEntity.official_name)
-            period_order = (asc if sort_dir == "asc" else desc)(Binder.period_start)
+            period_order = (asc if order == "asc" else desc)(Binder.period_start)
             return stmt.order_by(
                 nullslast(name_order),
                 nullslast(period_order),
-                Binder.id.asc() if sort_dir == "asc" else Binder.id.desc(),
+                Binder.id.asc() if order == "asc" else Binder.id.desc(),
             )
 
         sort_col_map = {
@@ -160,7 +160,7 @@ class BinderRepository(BaseRepository[Binder]):
         capacity_status: str | None = None,
         binder_number: str | None = None,
         sort_by: str = "period_start",
-        sort_dir: str = "desc",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 1000,
         include_handed_over: bool = False,
@@ -193,9 +193,9 @@ class BinderRepository(BaseRepository[Binder]):
             "capacity_status": Binder.capacity_status,
         }
         col = sort_col_map.get(sort_by, Binder.period_start)
-        effective_dir = sort_dir
+        effective_dir = order
         if sort_by == "days_in_office":
-            effective_dir = "asc" if sort_dir == "desc" else "desc"
+            effective_dir = "asc" if order == "desc" else "desc"
 
         order_fn = asc if effective_dir == "asc" else desc
         # NULLs in period_start (newly opened binders without material) sort last.
@@ -216,7 +216,7 @@ class BinderRepository(BaseRepository[Binder]):
         binder_number: str | None = None,
         year: int | None = None,
         sort_by: str = "period_start",
-        sort_dir: str = "desc",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[Binder], int]:
@@ -240,7 +240,7 @@ class BinderRepository(BaseRepository[Binder]):
         stmt = self._order_active_paginated_stmt(
             stmt,
             sort_by=sort_by,
-            sort_dir=sort_dir,
+            order=order,
         )
         stmt = self.apply_pagination(stmt, page, page_size)
         return list(self.db.scalars(stmt).all()), int(self.db.scalar(count_stmt) or 0)
@@ -257,7 +257,7 @@ class BinderRepository(BaseRepository[Binder]):
         binder_number: str | None = None,
         year: int | None = None,
         sort_by: str = "period_start",
-        sort_dir: str = "desc",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[BinderListRow], int]:
@@ -302,7 +302,7 @@ class BinderRepository(BaseRepository[Binder]):
             **filter_kwargs,
             include_legal_entity=True,
         )
-        proj_stmt = self._order_active_paginated_stmt(proj_stmt, sort_by=sort_by, sort_dir=sort_dir)
+        proj_stmt = self._order_active_paginated_stmt(proj_stmt, sort_by=sort_by, order=order)
         proj_stmt = self.apply_pagination(proj_stmt, page, page_size)
 
         rows = [

@@ -72,11 +72,11 @@ def test_work_queue_api_pagination(client, test_db, advisor_headers):
     test_db.commit()
 
     r1 = client.get(
-        f"/api/v1/work-queue?business_id={biz.id}&limit=2&offset=0",
+        f"/api/v1/work-queue?business_id={biz.id}&page=1&page_size=2",
         headers=advisor_headers,
     )
     r2 = client.get(
-        f"/api/v1/work-queue?business_id={biz.id}&limit=2&offset=2",
+        f"/api/v1/work-queue?business_id={biz.id}&page=2&page_size=2",
         headers=advisor_headers,
     )
 
@@ -86,9 +86,9 @@ def test_work_queue_api_pagination(client, test_db, advisor_headers):
     assert len(r2.json()["items"]) == 1
 
 
-def test_work_queue_api_limit_max_enforced(client, advisor_headers):
+def test_work_queue_api_page_size_max_enforced(client, advisor_headers):
     response = client.get(
-        "/api/v1/work-queue?limit=999",
+        "/api/v1/work-queue?page_size=999",
         headers=advisor_headers,
     )
     assert response.status_code == 422
@@ -113,9 +113,9 @@ def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers
     )
     test_db.commit()
 
-    active = client.get("/api/v1/work-queue?limit=1", headers=advisor_headers)
+    active = client.get("/api/v1/work-queue?page_size=1", headers=advisor_headers)
     history = client.get(
-        "/api/v1/work-queue?include_task_history=true&limit=1",
+        "/api/v1/work-queue?include_task_history=true&page_size=1",
         headers=advisor_headers,
     )
 

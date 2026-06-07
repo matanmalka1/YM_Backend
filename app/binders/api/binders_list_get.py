@@ -29,7 +29,7 @@ def list_binders(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     sort_by: str | None = Query(None),
-    sort_dir: str = Query("desc"),
+    order: str = Query("desc"),
 ):
     """List active binders with optional filters, sorting, and pagination."""
     service = BinderListService(db)
@@ -42,7 +42,7 @@ def list_binders(
         binder_number=binder_number,
         year=year,
         sort_by=sort_by or "period_start",
-        sort_dir=sort_dir,
+        order=order,
         page=page,
         page_size=page_size,
     )

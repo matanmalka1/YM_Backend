@@ -49,7 +49,7 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         contact_id: int | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        sort_dir: Literal["asc", "desc"] = "desc",
+        order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         filters = [Correspondence.deleted_at.is_(None)]
         if client_record_id is not None:
@@ -66,14 +66,18 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             filters.append(Correspondence.occurred_at <= to_date)
 
         total = self.db.scalar(select(func.count(Correspondence.id)).where(*filters)) or 0
-        order = (
+        order_expr = (
             Correspondence.occurred_at.desc()
-            if sort_dir == "desc"
+            if order == "desc"
             else Correspondence.occurred_at.asc()
         )
         offset = (page - 1) * page_size
         items = self.db.scalars(
-            select(Correspondence).where(*filters).order_by(order).offset(offset).limit(page_size)
+            select(Correspondence)
+            .where(*filters)
+            .order_by(order_expr, Correspondence.id.desc())
+            .offset(offset)
+            .limit(page_size)
         ).all()
         return items, total
 
@@ -88,7 +92,7 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         contact_id: int | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        sort_dir: Literal["asc", "desc"] = "desc",
+        order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         return self.list_paginated(
             client_record_id=client_record_id,
@@ -99,7 +103,7 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             contact_id=contact_id,
             from_date=from_date,
             to_date=to_date,
-            sort_dir=sort_dir,
+            order=order,
         )
 
     def list_by_client_record_paginated(
@@ -113,7 +117,7 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         contact_id: int | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        sort_dir: Literal["asc", "desc"] = "desc",
+        order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         filters = [
             Correspondence.deleted_at.is_(None),
@@ -130,14 +134,18 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         if to_date is not None:
             filters.append(Correspondence.occurred_at <= to_date)
         total = self.db.scalar(select(func.count(Correspondence.id)).where(*filters)) or 0
-        order = (
+        order_expr = (
             Correspondence.occurred_at.desc()
-            if sort_dir == "desc"
+            if order == "desc"
             else Correspondence.occurred_at.asc()
         )
         offset = (page - 1) * page_size
         items = self.db.scalars(
-            select(Correspondence).where(*filters).order_by(order).offset(offset).limit(page_size)
+            select(Correspondence)
+            .where(*filters)
+            .order_by(order_expr, Correspondence.id.desc())
+            .offset(offset)
+            .limit(page_size)
         ).all()
         return items, total
 

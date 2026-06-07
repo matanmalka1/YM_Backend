@@ -117,9 +117,14 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
         ).all()
         return dict(rows)
 
-    def get_annual_aggregates(self, client_record_id: int) -> list[dict[str, object]]:
+    def get_annual_aggregates(
+        self,
+        client_record_id: int,
+        from_year: int | None = None,
+        to_year: int | None = None,
+    ) -> list[dict[str, object]]:
         year_expr = cast(func.substr(VatWorkItem.period, 1, 4), Integer).label("year")
-        rows = self.db.execute(
+        stmt = (
             select(
                 year_expr,
                 func.sum(VatWorkItem.total_output_vat).label("total_output_vat"),
@@ -134,9 +139,12 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.deleted_at.is_(None),
             )
-            .group_by(year_expr)
-            .order_by(year_expr.desc())
-        ).all()
+        )
+        if from_year is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(from_year))
+        if to_year is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) <= str(to_year))
+        rows = self.db.execute(stmt.group_by(year_expr).order_by(year_expr.desc())).all()
 
         return [
             {

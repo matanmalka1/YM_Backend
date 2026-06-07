@@ -38,7 +38,7 @@ def list_correspondence_by_client(
     contact_id: int | None = Query(None),
     from_date: datetime | None = Query(None),
     to_date: datetime | None = Query(None),
-    sort_dir: Literal["asc", "desc"] = Query("desc"),
+    order: Literal["asc", "desc"] = Query("desc"),
 ):
     """All correspondence for a client, optionally filtered by business."""
     service = CorrespondenceService(db)
@@ -51,7 +51,7 @@ def list_correspondence_by_client(
         contact_id=contact_id,
         from_date=from_date,
         to_date=to_date,
-        sort_dir=sort_dir,
+        order=order,
     )
     return CorrespondenceListResponse.build(
         items=[CorrespondenceResponse.model_validate(e) for e in entries],

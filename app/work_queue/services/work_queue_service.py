@@ -51,6 +51,7 @@ class WorkQueueFilters:
     search: str | None = None
     source_type: WorkQueueSourceType | None = None
     urgency: WorkQueueUrgency | None = None
+    urgencies: list[WorkQueueUrgency] | None = None
     task_status: TaskStatus | None = None
     linked: WorkQueueLinkedFilter | None = None
     scope: WorkQueueScope | None = None
@@ -109,9 +110,13 @@ def _search_text(item: WorkQueueItem) -> str:
 
 
 def apply_work_queue_filters(
-    items: list[WorkQueueItem], filters: WorkQueueFilters
+    items: list[WorkQueueItem],
+    filters: WorkQueueFilters,
 ) -> list[WorkQueueItem]:
     filtered = items
+    if filters.urgencies is not None:
+        urgency_set = set(filters.urgencies)
+        filtered = [item for item in filtered if item.urgency in urgency_set]
     query = filters.search.strip().casefold() if filters.search else ""
     if query:
         filtered = [item for item in filtered if query in _search_text(item)]
@@ -186,11 +191,12 @@ class WorkQueueService:
         search: str | None = None,
         source_type: WorkQueueSourceType | None = None,
         urgency: WorkQueueUrgency | None = None,
+        urgencies: list[WorkQueueUrgency] | None = None,
         task_status: TaskStatus | None = None,
         linked: WorkQueueLinkedFilter | None = None,
         scope: WorkQueueScope | None = None,
-        limit: int = 50,
-        offset: int = 0,
+        page: int = 1,
+        page_size: int = 50,
         include_client_identity: bool = True,
     ) -> list[WorkQueueItem]:
         ctx = self._context(include_client_identity=include_client_identity)
@@ -204,13 +210,15 @@ class WorkQueueService:
                 search=search,
                 source_type=source_type,
                 urgency=urgency,
+                urgencies=urgencies,
                 task_status=task_status,
                 linked=linked,
                 scope=scope,
             ),
         )
         items.sort(key=self._sort_key)
-        return items[offset : offset + limit]
+        offset = (page - 1) * page_size
+        return items[offset : offset + page_size]
 
     def list_items_with_total(
         self,
@@ -224,8 +232,8 @@ class WorkQueueService:
         task_status: TaskStatus | None = None,
         linked: WorkQueueLinkedFilter | None = None,
         scope: WorkQueueScope | None = None,
-        limit: int = 50,
-        offset: int = 0,
+        page: int = 1,
+        page_size: int = 50,
     ) -> WorkQueueListResponse:
         ctx = self._context()
         all_items = self._filtered_items(
@@ -244,9 +252,12 @@ class WorkQueueService:
             ),
         )
         all_items.sort(key=self._sort_key)
+        offset = (page - 1) * page_size
         return WorkQueueListResponse(
-            items=all_items[offset : offset + limit],
+            items=all_items[offset : offset + page_size],
             total=len(all_items),
+            page=page,
+            page_size=page_size,
             # Summary intentionally reflects the full filtered set before pagination.
             summary=build_work_queue_summary(all_items),
         )

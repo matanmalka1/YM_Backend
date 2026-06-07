@@ -53,7 +53,9 @@ def get_client_summary(
         for r, output_net, input_net in raw_periods
     ]
 
-    raw_annual = summary_repo.get_annual_aggregates(client_record_id)
+    raw_annual = summary_repo.get_annual_aggregates(
+        client_record_id, from_year=from_year, to_year=to_year
+    )
     annual = [VatAnnualSummary.model_validate(row) for row in raw_annual]
 
     return VatClientSummaryResponse(

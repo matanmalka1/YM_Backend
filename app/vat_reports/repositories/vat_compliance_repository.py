@@ -15,11 +15,10 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
     def __init__(self, db: Session):
         self.db = db
 
-    def get_compliance_aggregates(self, year: int) -> list:
-        """Per-client aggregates: expected periods and filed count for a given year."""
+    def _compliance_aggregates_base_stmt(self, year: int):
         year_str = str(year)
         filed_case = case((VatWorkItem.status == VatWorkItemStatus.FILED, 1), else_=0)
-        stmt = (
+        return (
             scope_to_active_clients_stmt(
                 select(
                     VatWorkItem.client_record_id,
@@ -36,10 +35,25 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
             .group_by(VatWorkItem.client_record_id, VatWorkItem.period_type)
             .order_by(VatWorkItem.client_record_id, VatWorkItem.period_type)
         )
-        return self.db.execute(stmt).all()
 
-    def get_filed_items(self, year: int) -> list:
-        """All filed work items for a year with filing timestamps."""
+    def get_compliance_aggregates_paginated(
+        self, year: int, *, page: int, page_size: int
+    ) -> tuple[list, int]:
+        """Paginated compliance aggregates with total count of distinct client/period_type groups."""
+        base = self._compliance_aggregates_base_stmt(year).subquery()
+        count = self.db.scalar(select(func.count()).select_from(base)) or 0
+        rows = self.db.execute(
+            select(base)
+            .order_by(base.c.client_record_id, base.c.period_type)
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).mappings().all()
+        return list(rows), count
+
+    def get_filed_items_for_clients(self, year: int, client_record_ids: list[int]) -> list:
+        """Filed work items for a specific set of clients — used after page selection."""
+        if not client_record_ids:
+            return []
         year_str = str(year)
         stmt = scope_to_active_clients_stmt(
             select(
@@ -55,6 +69,7 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
             VatWorkItem.status == VatWorkItemStatus.FILED,
             VatWorkItem.filed_at.isnot(None),
             VatWorkItem.deleted_at.is_(None),
+            VatWorkItem.client_record_id.in_(client_record_ids),
         )
         return self.db.execute(stmt).all()
 

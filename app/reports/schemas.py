@@ -105,5 +105,6 @@ class AgingReportResponse(BaseModel):
     total_outstanding: ApiDecimal
     items: list[AgingReportItemResponse]
     summary: AgingReportSummaryResponse
-    capped: bool
-    cap_limit: int
+    total: int
+    page: int
+    page_size: int

@@ -38,7 +38,7 @@ def test_list_binders_enriched_filters_and_counters_use_lifecycle_fields(test_db
 
     items, total, counters = service.list_binders_enriched(
         sort_by="client_name",
-        sort_dir="invalid",
+        order="invalid",
         query="AA",
         client_name_filter="alpha",
         binder_number="AA",

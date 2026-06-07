@@ -79,15 +79,16 @@ def test_aging_report_buckets_and_sorting(client, test_db, advisor_headers):
     assert items[0]["oldest_invoice_days"] >= 120
 
 
-def test_aging_report_no_cap_with_large_dataset(client, test_db, advisor_headers):
-    # Service caps to a fixed number of businesses.
-    for _ in range(2001):
+def test_aging_report_paginated_large_dataset(client, test_db, advisor_headers):
+    for _ in range(55):
         seeded_client, b = _client_and_business(test_db)
         _charge(test_db, seeded_client.id, b.id, Decimal("1"), issued_days_ago=5)
 
     resp = client.get("/api/v1/reports/aging", headers=advisor_headers)
     assert resp.status_code == 200
     body = resp.json()
-    assert body["capped"] is True
-    assert body["cap_limit"] == 2000
-    assert body["summary"]["total_clients"] == 2000
+    assert body["total"] >= 55
+    assert body["page"] == 1
+    assert body["page_size"] == 50
+    assert len(body["items"]) == 50
+    assert body["summary"]["total_clients"] >= 55

@@ -267,15 +267,12 @@ class ChargeRepository(BaseRepository[Charge]):
             for s, cnt, total in rows
         }
 
-    def get_aging_buckets(self, as_of_date: date) -> list:
-        """Aggregate unpaid (ISSUED) charges per client into aging buckets via SQL."""
+    def _aging_buckets_base_stmt(self, as_of_date: date):
         cut_30 = as_of_date - timedelta(days=30)
         cut_60 = as_of_date - timedelta(days=60)
         cut_90 = as_of_date - timedelta(days=90)
-
         issued_date = func.date(Charge.issued_at)
-
-        stmt = (
+        return (
             scope_to_active_clients_stmt(
                 select(
                     Charge.client_record_id,
@@ -315,7 +312,34 @@ class ChargeRepository(BaseRepository[Charge]):
             )
             .group_by(Charge.client_record_id)
         )
-        return self.db.execute(stmt).all()
+
+    def get_aging_buckets_paginated(
+        self, as_of_date: date, *, page: int, page_size: int
+    ) -> tuple[list, int]:
+        """Paginated aging buckets ordered by total descending, with count of all groups."""
+        base = self._aging_buckets_base_stmt(as_of_date).subquery()
+        count = self.db.scalar(select(func.count()).select_from(base)) or 0
+        rows = self.db.execute(
+            select(base)
+            .order_by(base.c.total.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        ).mappings().all()
+        return list(rows), count
+
+    def get_aging_totals(self, as_of_date: date):
+        """Sum across all client aging groups for the report summary row."""
+        base = self._aging_buckets_base_stmt(as_of_date).subquery()
+        return self.db.execute(
+            select(
+                func.coalesce(func.sum(base.c.current), 0).label("total_current"),
+                func.coalesce(func.sum(base.c.days_30), 0).label("total_30_days"),
+                func.coalesce(func.sum(base.c.days_60), 0).label("total_60_days"),
+                func.coalesce(func.sum(base.c.days_90_plus), 0).label("total_90_plus"),
+                func.coalesce(func.sum(base.c.total), 0).label("grand_total"),
+                func.count(base.c.client_record_id).label("total_clients"),
+            )
+        ).one()
 
     def soft_delete(self, charge_id: int, deleted_by: int | None = None) -> bool:
         return self._soft_delete_entity(charge_id, deleted_by)

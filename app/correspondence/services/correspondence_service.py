@@ -133,7 +133,7 @@ class CorrespondenceService:
         contact_id: int | None = None,
         from_date: datetime | None = None,
         to_date: datetime | None = None,
-        sort_dir: str = "desc",
+        order: str = "desc",
     ) -> tuple[list[Correspondence], int]:
         """All correspondence for a client, optionally filtered by business context."""
         client_record = self._get_client_record_or_raise(client_record_id)
@@ -148,5 +148,5 @@ class CorrespondenceService:
             contact_id=contact_id,
             from_date=from_date,
             to_date=to_date,
-            sort_dir=sort_dir,
+            order=order,
         )
