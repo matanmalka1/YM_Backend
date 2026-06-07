@@ -11,7 +11,7 @@ Source of truth: reference
 
 # TODO - Verified System Gaps
 
-Last verified from code, migrations, and tests: 2026-05-17.
+Last verified from code, migrations, and tests: 2026-06-07.
 
 ## Critical
 
@@ -60,6 +60,7 @@ Last verified from code, migrations, and tests: 2026-05-17.
 
 - [ ] Add batched alert counts for client sidebar navigation.
   - Current state: notification/work-queue summaries exist per client, but no batched endpoint exists for all sidebar clients.
+  - Docs: tracked as future/planned in `docs/domains/clients.md`, `docs/domains/notifications.md`, and `docs/domains/work-queue.md`.
   - Relevant code: `app/notification/api/notifications.py`, `app/work_queue/api/routes.py`, `../frontend/src/components/layout/ClientSidebar/ClientSidebar.tsx`
 
 ## Product Scope Gaps
