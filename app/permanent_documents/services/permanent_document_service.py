@@ -68,14 +68,6 @@ class PermanentDocumentService:
             )
         return resolved
 
-    def _get_client_record_id(self, client_record_id: int) -> int:
-        record = ClientRecordRepository(self.db).get_by_id(client_record_id)
-        if not record:
-            raise NotFoundError(
-                f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
-            )
-        return record.id
-
     def _build_storage_key(
         self,
         *,
@@ -222,16 +214,19 @@ class PermanentDocumentService:
     def list_client_documents(
         self,
         client_record_id: int,
+        page: int = 1,
+        page_size: int = 20,
         tax_year: int | None = None,
-        document_type: str | None = None,
+        document_type: PermanentDocumentType | None = None,
         status: DocumentStatus | None = None,
-    ) -> list[PermanentDocument]:
+    ) -> tuple[list[PermanentDocument], int]:
         get_client_or_raise(self.db, client_record_id)
-        client_record_id = self._get_client_record_id(client_record_id)
-        return self.document_repo.list_by_client_record(
+        return self.document_repo.list_by_client_record_page(
             client_record_id,
+            page=page,
+            page_size=page_size,
             tax_year=tax_year,
-            document_type=document_type,
+            document_type=document_type.value if document_type is not None else None,
             status=status,
         )
 

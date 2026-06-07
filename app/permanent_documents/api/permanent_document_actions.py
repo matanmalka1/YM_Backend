@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.permanent_documents.schemas.permanent_document import (
     DocumentVersionsResponse,
 )
+from app.permanent_documents.services.constants import DOCUMENT_VERSIONS_DEFAULT_LIMIT
 from app.permanent_documents.services.permanent_document_action_service import (
     PermanentDocumentActionService,
 )
@@ -30,10 +31,14 @@ def get_document_versions(
     document_type: str = Query(...),
     tax_year: int | None = Query(default=None),
 ):
-    docs = PermanentDocumentActionService(db).get_document_versions(
+    docs, has_more = PermanentDocumentActionService(db).get_document_versions(
         client_record_id, document_type, tax_year
     )
-    return DocumentVersionsResponse(items=PermanentDocumentResponseBuilder(db).build_many(docs))
+    return DocumentVersionsResponse(
+        items=PermanentDocumentResponseBuilder(db).build_many(docs),
+        limit=DOCUMENT_VERSIONS_DEFAULT_LIMIT,
+        has_more=has_more,
+    )
 
 
 @router.get(
@@ -47,4 +52,6 @@ def list_by_annual_report(
     user: CurrentUser,
 ):
     docs = PermanentDocumentActionService(db).list_by_annual_report(report_id)
-    return DocumentVersionsResponse(items=PermanentDocumentResponseBuilder(db).build_many(docs))
+    return DocumentVersionsResponse(
+        items=PermanentDocumentResponseBuilder(db).build_many(docs),
+    )

@@ -1,6 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.exceptions import NotFoundError
 from app.permanent_documents.models.permanent_document import PermanentDocument
 from app.permanent_documents.repositories.permanent_document_query_repository import (
     PermanentDocumentQueryRepository,
@@ -14,10 +15,15 @@ class PermanentDocumentActionService:
 
     def get_document_versions(
         self, client_record_id: int, document_type: str, tax_year: int | None = None
-    ) -> list[PermanentDocument]:
-        client_record_id = int(ClientRecordRepository(self.db).get_by_id(client_record_id).id)
+    ) -> tuple[list[PermanentDocument], bool]:
+        record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        if not record:
+            raise NotFoundError(
+                f"רשומת לקוח {client_record_id} לא נמצאה",
+                "CLIENT_RECORD.NOT_FOUND",
+            )
         return self.query_repo.get_all_versions_by_client_record(
-            client_record_id, document_type, tax_year
+            record.id, document_type, tax_year=tax_year
         )
 
     def list_by_annual_report(self, annual_report_id: int) -> list[PermanentDocument]:

@@ -42,7 +42,7 @@ class PermanentDocumentQueryRepository(BaseRepository[PermanentDocument]):
         )
         if tax_year is not None:
             stmt = stmt.where(PermanentDocument.tax_year == tax_year)
-        return self.db.scalars(stmt.order_by(PermanentDocument.version.desc())).all()
+        return list(self.db.scalars(stmt.order_by(PermanentDocument.version.desc())).all())
 
     def get_all_versions_by_client(
         self, client_record_id: int, document_type: str, tax_year: int | None = None
@@ -54,29 +54,42 @@ class PermanentDocumentQueryRepository(BaseRepository[PermanentDocument]):
         )
         if tax_year is not None:
             stmt = stmt.where(PermanentDocument.tax_year == tax_year)
-        return self.db.scalars(stmt.order_by(PermanentDocument.version.desc())).all()
+        return list(self.db.scalars(stmt.order_by(PermanentDocument.version.desc())).all())
 
     def get_all_versions_by_client_record(
-        self, client_record_id: int, document_type: str, tax_year: int | None = None
-    ) -> list[PermanentDocument]:
+        self,
+        client_record_id: int,
+        document_type: str,
+        tax_year: int | None = None,
+        limit: int = 10,
+    ) -> tuple[list[PermanentDocument], bool]:
+        """Return (versions, has_more) — fetches limit+1 to detect overflow."""
         stmt = select(PermanentDocument).where(
             PermanentDocument.client_record_id == client_record_id,
             PermanentDocument.document_type == document_type,
-            PermanentDocument.is_deleted == False,  # noqa: E712
+            PermanentDocument.is_deleted.is_(False),
         )
         if tax_year is not None:
             stmt = stmt.where(PermanentDocument.tax_year == tax_year)
-        return self.db.scalars(stmt.order_by(PermanentDocument.version.desc())).all()
+        rows = list(
+            self.db.scalars(
+                stmt.order_by(PermanentDocument.version.desc()).limit(limit + 1)
+            ).all()
+        )
+        has_more = len(rows) > limit
+        return rows[:limit], has_more
 
     def list_by_annual_report(self, annual_report_id: int) -> list[PermanentDocument]:
-        return self.db.scalars(
-            select(PermanentDocument)
-            .where(
-                PermanentDocument.annual_report_id == annual_report_id,
-                PermanentDocument.is_deleted == False,  # noqa: E712
-            )
-            .order_by(PermanentDocument.uploaded_at.desc())
-        ).all()
+        return list(
+            self.db.scalars(
+                select(PermanentDocument)
+                .where(
+                    PermanentDocument.annual_report_id == annual_report_id,
+                    PermanentDocument.is_deleted == False,  # noqa: E712
+                )
+                .order_by(PermanentDocument.uploaded_at.desc())
+            ).all()
+        )
 
     def missing_by_type(
         self, business_id: int, client_record_id: int, required_types: list[str]

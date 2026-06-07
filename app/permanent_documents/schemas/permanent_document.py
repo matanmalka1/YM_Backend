@@ -38,10 +38,15 @@ class PermanentDocumentResponse(BaseModel):
 
 class PermanentDocumentListResponse(BaseModel):
     items: list[PermanentDocumentResponse]
+    total: int
+    page: int
+    page_size: int
 
 
 class DocumentVersionsResponse(BaseModel):
     items: list[PermanentDocumentResponse]
+    limit: int | None = None
+    has_more: bool = False
 
 
 class OperationalSignalsResponse(BaseModel):

@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
+from app.permanent_documents.models.permanent_document import DocumentStatus, PermanentDocumentType
 from app.permanent_documents.schemas.permanent_document import (
     DocumentDownloadUrlResponse,
     OperationalSignalsResponse,
@@ -65,13 +66,27 @@ def list_client_documents(
     db: DBSession,
     user: CurrentUser,
     tax_year: int | None = Query(default=None),
+    document_type: PermanentDocumentType | None = Query(default=None),
+    status: DocumentStatus | None = Query(default=None),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
 ):
     """List permanent documents for a client."""
     service = PermanentDocumentService(db)
-    documents = service.list_client_documents(client_record_id, tax_year=tax_year)
+    documents, total = service.list_client_documents(
+        client_record_id,
+        page=page,
+        page_size=page_size,
+        tax_year=tax_year,
+        document_type=document_type,
+        status=status,
+    )
 
     return PermanentDocumentListResponse(
-        items=PermanentDocumentResponseBuilder(db).build_many(documents)
+        items=PermanentDocumentResponseBuilder(db).build_many(documents),
+        total=total,
+        page=page,
+        page_size=page_size,
     )
 
 

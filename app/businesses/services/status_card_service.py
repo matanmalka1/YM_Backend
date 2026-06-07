@@ -127,6 +127,5 @@ class StatusCardService:
         return BindersCard(active_count=len(active), in_office_count=in_office)
 
     def _documents_card(self, client_record_id: int) -> DocumentsCard:
-        rows = self._doc_repo.list_by_client_record(client_record_id)
-        present = sum(1 for r in rows if r.is_present)
-        return DocumentsCard(total_count=len(rows), present_count=present)
+        total, present = self._doc_repo.count_present_by_client_record(client_record_id)
+        return DocumentsCard(total_count=total, present_count=present)
