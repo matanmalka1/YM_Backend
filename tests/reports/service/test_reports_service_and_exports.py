@@ -75,17 +75,28 @@ def test_aging_report_service_skips_rows_without_matching_business(test_db):
     service = AgingReportService(test_db)
 
     service.charge_repo = SimpleNamespace(
-        get_aging_buckets=lambda as_of_date: [
-            SimpleNamespace(
-                client_record_id=999_999,
-                total=100,
-                current=100,
-                days_30=0,
-                days_60=0,
-                days_90_plus=0,
-                oldest_issued_at=None,
-            )
-        ]
+        get_aging_buckets_paginated=lambda as_of_date, *, page, page_size: (
+            [
+                {
+                    "client_record_id": 999_999,
+                    "total": 100,
+                    "current": 100,
+                    "days_30": 0,
+                    "days_60": 0,
+                    "days_90_plus": 0,
+                    "oldest_issued_at": None,
+                }
+            ],
+            1,
+        ),
+        get_aging_totals=lambda as_of_date: SimpleNamespace(
+            total_clients=0,
+            total_current=0,
+            total_30_days=0,
+            total_60_days=0,
+            total_90_plus=0,
+            grand_total=0,
+        ),
     )
     service.client_record_repo = SimpleNamespace(list_by_ids=lambda ids: [])
 
