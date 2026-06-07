@@ -29,7 +29,12 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             )
         )
 
-    def get_periods_for_client(self, client_record_id: int) -> list[tuple]:
+    def get_periods_for_client(
+        self,
+        client_record_id: int,
+        from_year: int | None = None,
+        to_year: int | None = None,
+    ) -> list[tuple]:
         net_sq = (
             select(
                 VatInvoice.work_item_id,
@@ -56,7 +61,7 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             .subquery()
         )
 
-        return self.db.execute(
+        stmt = (
             select(
                 VatWorkItem,
                 func.coalesce(net_sq.c.output_net, 0).label("output_net"),
@@ -67,8 +72,12 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.deleted_at.is_(None),
             )
-            .order_by(VatWorkItem.period.desc())
-        ).all()
+        )
+        if from_year is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(from_year))
+        if to_year is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) <= str(to_year))
+        return self.db.execute(stmt.order_by(VatWorkItem.period.desc())).all()
 
     def get_annual_turnover(self, client_record_id: int, year: int):
         """Sum of total_output_net for FILED work items in the given calendar year.

@@ -23,8 +23,12 @@ router = APIRouter(
 def get_vat_client_summary(
     client_record_id: int,
     db: DBSession,
+    from_year: int | None = Query(default=None, ge=2000, le=2100),
+    to_year: int | None = Query(default=None, ge=2000, le=2100),
 ):
-    return get_client_summary(db, client_record_id=client_record_id)
+    return get_client_summary(
+        db, client_record_id=client_record_id, from_year=from_year, to_year=to_year
+    )
 
 
 @router.get(

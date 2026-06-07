@@ -18,7 +18,7 @@ class VatComplianceReportService:
         self.repo = VatComplianceRepository(db)
         self.client_repo = ClientRecordRepository(db)
 
-    def get_vat_compliance_report(self, year: int) -> dict:
+    def get_vat_compliance_report(self, year: int, page: int = 1, page_size: int = 50) -> dict:
         rows = self.repo.get_compliance_aggregates(year)
         filed_items = self.repo.get_filed_items(year)
         client_name_map = self._client_name_map([r.client_record_id for r in rows])
@@ -83,10 +83,17 @@ class VatComplianceReportService:
                     }
                 )
 
+        total = len(items)
+        offset = (page - 1) * page_size
+        page_items = items[offset : offset + page_size]
+
         return {
             "year": year,
-            "total_clients": len(items),
-            "items": items,
+            "total_clients": total,
+            "total": total,
+            "page": page,
+            "page_size": page_size,
+            "items": page_items,
             "stale_pending": stale_pending,
         }
 

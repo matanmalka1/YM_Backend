@@ -30,9 +30,11 @@ router = APIRouter(
 def get_vat_compliance_report(
     db: DBSession,
     year: int = Query(...),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=50, ge=1, le=200),
 ):
     service = VatComplianceReportService(db)
-    return service.get_vat_compliance_report(year)
+    return service.get_vat_compliance_report(year, page=page, page_size=page_size)
 
 
 @router.get("/advance-payments", response_model=AdvancePaymentCollectionsReportResponse)

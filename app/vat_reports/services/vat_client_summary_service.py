@@ -18,7 +18,13 @@ from app.vat_reports.services.messages import VAT_CLIENT_NOT_FOUND
 from app.vat_reports.services.vat_report_queries import get_vat_deadline_fields
 
 
-def get_client_summary(db: Session, *, client_record_id: int) -> VatClientSummaryResponse:
+def get_client_summary(
+    db: Session,
+    *,
+    client_record_id: int,
+    from_year: int | None = None,
+    to_year: int | None = None,
+) -> VatClientSummaryResponse:
     summary_repo = VatClientSummaryRepository(db)
     if not ClientRecordRepository(db).get_by_id(client_record_id):
         raise NotFoundError(
@@ -26,7 +32,9 @@ def get_client_summary(db: Session, *, client_record_id: int) -> VatClientSummar
             "VAT.NOT_FOUND",
         )
 
-    raw_periods = summary_repo.get_periods_for_client(client_record_id)
+    raw_periods = summary_repo.get_periods_for_client(
+        client_record_id, from_year=from_year, to_year=to_year
+    )
     periods = [
         VatPeriodRow(
             work_item_id=r.id,

@@ -33,6 +33,9 @@ class VatComplianceStalePendingResponse(BaseModel):
 class VatComplianceReportResponse(BaseModel):
     year: int
     total_clients: int
+    total: int
+    page: int
+    page_size: int
     items: list[VatComplianceReportItemResponse]
     stale_pending: list[VatComplianceStalePendingResponse]
 
