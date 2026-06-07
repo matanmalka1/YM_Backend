@@ -8,6 +8,7 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
@@ -16,7 +17,6 @@ from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
 from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
-from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 
 
@@ -33,10 +33,11 @@ class AnnualReportAdvancesSummaryService:
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
                 "ANNUAL_REPORT.NOT_FOUND",
             )
+        return self.get_advances_summary_for_report(report)
 
-        client_record_id = ClientRecordRepository(self.db).get_by_id(report.client_record_id).id
+    def get_advances_summary_for_report(self, report: AnnualReport) -> AdvancesSummary:
         payments, count = self.advance_repo.list_by_client_record_year(
-            client_record_id,
+            report.client_record_id,
             report.tax_year,
             status=[AdvancePaymentStatus.PAID],
             page=1,
@@ -45,7 +46,7 @@ class AnnualReportAdvancesSummaryService:
 
         total = sum((p.paid_amount or Decimal("0")) for p in payments)
 
-        tax_result = AnnualReportTaxService(self.db).get_tax_calculation(report_id)
+        tax_result = AnnualReportTaxService(self.db).get_tax_calculation_for_report(report)
         balance = tax_result.tax_after_credits - total
 
         if balance > 0:

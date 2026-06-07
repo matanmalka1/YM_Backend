@@ -21,6 +21,7 @@ from app.core.logging_config import (
     has_request_db_activity,
     log_request_summary,
     reset_request_id,
+    set_request_error,
     set_request_id,
     set_request_summary_context,
 )
@@ -89,6 +90,13 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
             response.headers["X-Request-ID"] = request_id
 
             return response
+        except Exception as exc:
+            set_request_error(exc, error_type=exc.__class__.__name__)
+            logger.exception(
+                "Unhandled request middleware error",
+                extra={"path": request.url.path, "request_id": request_id},
+            )
+            raise
         finally:
             if should_log_summary:
                 duration_ms = (perf_counter() - started_at) * 1000

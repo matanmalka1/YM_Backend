@@ -99,8 +99,10 @@ class AnnualReportDetailResponse(AnnualReportResponse):
     # סיכום פיננסי — מחושב בשירות
     total_income: ApiDecimal | None = None
     total_expenses: ApiDecimal | None = None
+    recognized_expenses: ApiDecimal | None = None
     taxable_income: ApiDecimal | None = None
     profit: ApiDecimal | None = None
+    tax_after_credits: ApiDecimal | None = None
     final_balance: ApiDecimal | None = None
 
 

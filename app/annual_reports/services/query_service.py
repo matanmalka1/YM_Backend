@@ -111,20 +111,18 @@ class AnnualReportQueryService(AnnualReportBaseService):
             AnnualReportDetailRepository,
         )
 
-        report = self.get_report(report_id)
-        if report is None:
+        orm_report = self.repo.get_by_id(report_id)
+        if orm_report is None:
             return None
+        report = self._to_responses([orm_report])[0]
 
         schedules = self.repo.get_schedules(report_id)
         history = self.repo.get_status_history(report_id)
-        financial_summary = AnnualReportFinancialSummaryService(self.db).get_financial_summary(
-            report_id
-        )
+        financial_summary = AnnualReportFinancialSummaryService(
+            self.db
+        ).get_financial_summary_for_report(orm_report)
         detail = AnnualReportDetailRepository(self.db).get_by_report_id(report_id)
-        orm_report = self.repo.get_by_id(report_id)
-        default_credit_points = get_default_resident_credit_points(
-            orm_report.tax_year if orm_report else report.tax_year
-        )
+        default_credit_points = get_default_resident_credit_points(orm_report.tax_year)
         credit_breakdown = AnnualReportCreditPointRepository(self.db).aggregate_breakdown(
             report_id,
             default_resident_points=default_credit_points,
@@ -135,6 +133,7 @@ class AnnualReportQueryService(AnnualReportBaseService):
         response.status_history = [StatusHistoryResponse.model_validate(h) for h in history]
         response.total_income = financial_summary.total_income
         response.total_expenses = financial_summary.gross_expenses
+        response.recognized_expenses = financial_summary.recognized_expenses
         response.taxable_income = financial_summary.taxable_income
 
         if detail:
@@ -145,16 +144,16 @@ class AnnualReportQueryService(AnnualReportBaseService):
         response.pension_credit_points = credit_breakdown["pension_credit_points"]
         response.life_insurance_credit_points = credit_breakdown["life_insurance_credit_points"]
         response.tuition_credit_points = credit_breakdown["tuition_credit_points"]
-        if orm_report:
-            response.tax_refund_amount = (
-                float(orm_report.refund_due) if orm_report.refund_due is not None else None
-            )
-            response.tax_due_amount = (
-                float(orm_report.tax_due) if orm_report.tax_due is not None else None
-            )
+        response.tax_refund_amount = (
+            float(orm_report.refund_due) if orm_report.refund_due is not None else None
+        )
+        response.tax_due_amount = (
+            float(orm_report.tax_due) if orm_report.tax_due is not None else None
+        )
 
-        tax = AnnualReportTaxService(self.db).get_tax_calculation(report_id)
+        tax = AnnualReportTaxService(self.db).get_tax_calculation_for_report(orm_report)
         response.profit = tax.net_profit
+        response.tax_after_credits = tax.tax_after_credits
         advances_paid = Decimal(
             str(
                 AdvancePaymentAggregationRepository(self.db).sum_paid_by_client_year(

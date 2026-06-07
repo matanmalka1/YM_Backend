@@ -1,7 +1,10 @@
 """Annual report financial summary service."""
 
+from decimal import Decimal
+
 from sqlalchemy.orm import Session
 
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
@@ -35,14 +38,19 @@ class AnnualReportFinancialSummaryService:
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
                 "ANNUAL_REPORT.NOT_FOUND",
             )
+        return self.get_financial_summary_for_report(report)
 
-        income_lines = self.income_repo.list_by_report(report_id)
-        expense_lines = self.expense_repo.list_by_report(report_id)
-        total_income = self.income_repo.total_income(report_id)
-        gross_expenses = self.expense_repo.total_expenses(report_id)
-        recognized_expenses = self.expense_repo.total_recognized_expenses(report_id)
+    def get_financial_summary_for_report(self, report: AnnualReport) -> FinancialSummaryResponse:
+        income_lines = self.income_repo.list_by_report(report.id)
+        expense_lines = self.expense_repo.list_by_report(report.id)
+        total_income = sum((line.amount for line in income_lines), Decimal("0"))
+        gross_expenses = sum((line.amount for line in expense_lines), Decimal("0"))
+        recognized_expenses = sum(
+            (line.amount * line.recognition_rate for line in expense_lines),
+            Decimal("0"),
+        )
         return FinancialSummaryResponse(
-            annual_report_id=report_id,
+            annual_report_id=report.id,
             total_income=float(total_income),
             gross_expenses=float(gross_expenses),
             recognized_expenses=float(recognized_expenses),

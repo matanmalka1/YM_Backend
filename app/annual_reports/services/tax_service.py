@@ -11,6 +11,7 @@ from app.annual_reports.integrations.tax_rules_registry import (
     get_default_resident_credit_points,
 )
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
@@ -72,12 +73,15 @@ class AnnualReportTaxService:
 
     def get_tax_calculation(self, report_id: int) -> TaxCalculationResponse:
         report = self._get_report_or_raise(report_id)
-        summary = self.summary_service.get_financial_summary(report_id)
-        detail = self.detail_repo.get_by_report_id(report_id)
+        return self.get_tax_calculation_for_report(report)
+
+    def get_tax_calculation_for_report(self, report: AnnualReport) -> TaxCalculationResponse:
+        summary = self.summary_service.get_financial_summary_for_report(report)
+        detail = self.detail_repo.get_by_report_id(report.id)
         default_credit_points = get_default_resident_credit_points(report.tax_year)
         credit_points = float(
             self.credit_point_repo.total_points_by_report_id(
-                report_id,
+                report.id,
                 default_resident_points=default_credit_points,
             )
         )
