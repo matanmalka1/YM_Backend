@@ -44,6 +44,83 @@ Last verified from code, migrations, and tests: 2026-05-17.
   - Current state: no search param in repo or router.
   - Scope: ILIKE on joined client name + charge description; `app/charge/repositories/charge_repository.py`, `app/charge/api/charge.py`, frontend filter field.
 
+## Cross-Domain: Pagination Audit
+
+- [ ] Paginate permanent document lists for client document tabs.
+  - Severity: High.
+  - Current state: `GET /documents/client/{id}` returns all client documents via `PermanentDocumentRepository.list_by_client_record()` with no `page`, `page_size`, or `total`.
+  - Risk: long-running clients can accumulate hundreds of documents across years, businesses, and document types.
+  - Scope: `app/permanent_documents/api/permanent_documents.py`, `app/permanent_documents/repositories/permanent_document_repository.py`, `app/permanent_documents/schemas/permanent_document.py`, `../frontend/src/features/documents/hooks/useClientDocumentsTab.ts`.
+  - Recommended fix: add `page` / `page_size`, return `items`, `total`, `page`, `page_size`, and add frontend pagination controls.
+
+- [ ] Add pagination to VAT compliance report.
+  - Severity: High.
+  - Current state: `GET /reports/vat-compliance` returns every VAT-active client for a year; report repositories load all rows with `.all()`.
+  - Risk: firms with 100-200+ VAT clients return and render the whole report in one request.
+  - Scope: `app/reports/api/reports.py`, `app/reports/services/vat_compliance_report.py`, `../frontend/src/features/reports/components/VatComplianceReportView.tsx`.
+  - Recommended fix: add backend `page` / `page_size`, push filtering into DB where practical, return a paginated envelope, and add frontend pagination controls.
+
+- [ ] Add pagination to aging report.
+  - Severity: High.
+  - Current state: `GET /reports/aging` returns all aging rows up to the internal `AGING_CHARGE_FETCH_LIMIT = 2000` cap.
+  - Risk: a firm with many open charges renders a large card grid in one shot and the backend silently truncates at the internal cap.
+  - Scope: `app/reports/api/reports.py`, `app/reports/services/reports_service.py`, `../frontend/src/features/reports/components/AgingReportTable.tsx`.
+  - Recommended fix: replace the silent internal cap with explicit `page` / `page_size`, return a paginated envelope, and add frontend pagination controls or virtualization.
+
+- [ ] Paginate binder intake history.
+  - Severity: High.
+  - Current state: `GET /binders/{id}/intakes` returns all intakes for a binder; intake material repository calls are unbounded.
+  - Risk: long-lived binders can accumulate many intake events and materials.
+  - Scope: `app/binders/api/binders_history.py`, `app/binders/repositories/binder_intake_repository.py`, `app/binders/repositories/binder_intake_material_repository.py`.
+  - Recommended fix: add capped pagination or `limit` / `offset` consistent with existing audit history patterns.
+
+- [ ] Paginate binder lifecycle history.
+  - Severity: Medium.
+  - Current state: `GET /binders/{id}/history` returns all lifecycle log rows via `BinderLifecycleLogRepository.list_by_binder()`.
+  - Risk: frequently received and returned binders can build long audit histories.
+  - Scope: `app/binders/api/binders_history.py`, `app/binders/repositories/binder_lifecycle_log_repository.py`.
+  - Recommended fix: add capped pagination or `limit` / `offset` with a default around 50 and max around 200.
+
+- [ ] Bound tax-calendar settings entries.
+  - Severity: Medium.
+  - Current state: `GET /settings/tax-calendar/entries` returns a bare list; `start_year` and `end_year` filters are optional.
+  - Risk: unfiltered admin requests return every materialized entry across all years.
+  - Scope: `app/tax_calendar/api/settings.py`, `app/tax_calendar/repositories/settings_repository.py`.
+  - Recommended fix: require at least one year bound or convert to a paginated response envelope.
+
+- [ ] Add a year range to VAT client summary periods.
+  - Severity: Medium.
+  - Current state: `GET /vat/clients/{id}/summary` fetches every `VatWorkItem` period for the client across all years.
+  - Risk: monthly-reporting clients grow linearly with age.
+  - Scope: `app/vat_reports/repositories/vat_client_summary_repository.py`, `app/vat_reports/services/vat_client_summary_service.py`, VAT client summary API/frontend callers.
+  - Recommended fix: add `year`, `from_year`, or `to_year` filters, default to a bounded recent window, and document the endpoint contract. This is a range-filter issue, not ordinary pagination.
+
+- [ ] Add visible pagination or load-more UI to client signature requests.
+  - Severity: High.
+  - Current state: `SignatureRequestsCard` uses `useClientSignatureRequests()` defaults (`page=1`, `pageSize=10`) and ignores `total`.
+  - Risk: clients with more than 10 signature requests are silently truncated in the UI.
+  - Scope: `../frontend/src/features/signatureRequests/components/SignatureRequestsCard.tsx`, `../frontend/src/features/signatureRequests/hooks/useClientSignatureRequests.ts`.
+  - Recommended fix: add load-more or pagination controls and expose `total > items.length` clearly.
+
+- [ ] Bound or paginate permanent document version history.
+  - Severity: Medium.
+  - Current state: `DocumentVersionsPanel` fetches and renders every version for a document type.
+  - Risk: frequently replaced recurring documents can produce long inline version lists.
+  - Scope: `app/permanent_documents/api/permanent_documents.py`, permanent document query repository/service, `../frontend/src/features/documents/components/DocumentVersionsPanel.tsx`.
+  - Recommended fix: add a server-side limit such as the latest 10 versions plus an optional show-all/load-more flow.
+
+- [ ] Document bounded-but-unpaginated lists.
+  - Severity: Low.
+  - Current state: some endpoints intentionally return small bounded lists but do not document the bound.
+  - Scope: `GET /advance-payments/overview/batches`, `GET /settings/tax-calendar/rules`, dashboard attention and recent activity widgets.
+  - Recommended fix: add code comments or endpoint notes documenting the bound; for dashboard attention, push urgency filtering into the DB before applying the display cap.
+
+- [ ] Clean up API contract drift discovered during pagination audit.
+  - Severity: Medium.
+  - Current state: `GET /work-queue` uses `limit` / `offset`; `GET /binders` and `GET /clients/{id}/correspondence` use `sort_dir` instead of standard `order`.
+  - Scope: `app/work_queue/api/routes.py`, `app/binders/api/binders_list_get.py`, `app/binders/repositories/binder_repository.py`, `app/correspondence/api/correspondence.py`, frontend callers.
+  - Recommended fix: migrate callers to standard `page`, `page_size`, and `order`, then remove non-standard aliases.
+
 ## High
 
 - [ ] Complete invoice provider integration.
