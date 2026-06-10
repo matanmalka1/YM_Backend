@@ -2,7 +2,7 @@ from datetime import date, datetime
 
 import pytest
 
-from app.authority_contact.models.authority_contact import AuthorityContact, ContactType
+from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
 from app.businesses.models.business import Business
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.communications.models.correspondence import CorrespondenceType

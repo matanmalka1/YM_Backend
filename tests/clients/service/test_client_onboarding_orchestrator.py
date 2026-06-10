@@ -95,7 +95,7 @@ def test_onboarding_retry_does_not_duplicate_vat_work_items(test_db):
 def test_onboarding_does_not_create_empty_setup_placeholders(test_db):
     _create_vat_client(test_db, "123456782")
 
-    from app.authority_contact.models.authority_contact import AuthorityContact
+    from app.authority_contacts.models.authority_contact import AuthorityContact
     from app.notes.models.entity_note import EntityNote
     from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 

@@ -12,7 +12,7 @@ import app.annual_reports.models.annual_report_model  # noqa: F401
 import app.annual_reports.models.annual_report_schedule_entry  # noqa: F401
 import app.annual_reports.models.annual_report_status_history  # noqa: F401
 import app.audit.models.entity_audit_log  # noqa: F401
-import app.authority_contact.models.authority_contact  # noqa: F401
+import app.authority_contacts.models.authority_contact  # noqa: F401
 import app.binders.models.binder  # noqa: F401
 import app.binders.models.binder_handover  # noqa: F401
 import app.binders.models.binder_intake  # noqa: F401

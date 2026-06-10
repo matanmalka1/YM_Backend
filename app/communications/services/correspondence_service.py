@@ -2,7 +2,7 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.authority_contact.repositories.authority_contact_repository import (
+from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
 from app.businesses.repositories.business_repository import BusinessRepository

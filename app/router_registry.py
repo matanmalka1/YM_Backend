@@ -4,7 +4,7 @@ import app.model_registry  # noqa: F401 — ensures all ORM models are loaded be
 from app.advance_payments.api.routers import router as advance_payments_router
 from app.annual_reports.api.routers import router as annual_reports_router
 from app.audit.api.routes import router as audit_router
-from app.authority_contact.api.routers import router as authority_contact_router
+from app.authority_contacts.api.routers import router as authority_contact_router
 from app.binders.api.routers import router as binders_router
 from app.businesses.api.routers import router as businesses_router
 from app.charge.api.routers import router as charge_router

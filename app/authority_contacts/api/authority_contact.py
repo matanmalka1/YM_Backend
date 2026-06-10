@@ -1,13 +1,13 @@
 from fastapi import APIRouter, Depends, Query, status
 
-from app.authority_contact.models.authority_contact import ContactType
-from app.authority_contact.schemas.authority_contact import (
+from app.authority_contacts.models.authority_contact import ContactType
+from app.authority_contacts.schemas.authority_contact import (
     AuthorityContactCreateRequest,
     AuthorityContactListResponse,
     AuthorityContactResponse,
     AuthorityContactUpdateRequest,
 )
-from app.authority_contact.services.authority_contact_service import (
+from app.authority_contacts.services.authority_contact_service import (
     AuthorityContactService,
 )
 from app.users.api.deps import CurrentUser, DBSession, require_role

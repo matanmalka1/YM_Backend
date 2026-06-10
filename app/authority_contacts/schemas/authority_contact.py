@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-from app.authority_contact.models.authority_contact import ContactType
+from app.authority_contacts.models.authority_contact import ContactType
 from app.core.api_types import ApiDateTime, PaginatedResponse
 
 

@@ -32,7 +32,7 @@ from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow_aware
 
 if TYPE_CHECKING:
-    from app.authority_contact.models.authority_contact import AuthorityContact
+    from app.authority_contacts.models.authority_contact import AuthorityContact
 
 
 class CorrespondenceType(str, PyEnum):

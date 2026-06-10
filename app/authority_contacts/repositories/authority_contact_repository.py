@@ -1,7 +1,7 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.authority_contact.models.authority_contact import AuthorityContact, ContactType
+from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
 

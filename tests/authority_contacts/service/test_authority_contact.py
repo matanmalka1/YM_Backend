@@ -1,11 +1,11 @@
 import pytest
 from sqlalchemy import select
 
-from app.authority_contact.models.authority_contact import AuthorityContact, ContactType
-from app.authority_contact.repositories.authority_contact_repository import (
+from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
+from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
-from app.authority_contact.services.authority_contact_service import (
+from app.authority_contacts.services.authority_contact_service import (
     AuthorityContactService,
 )
 from app.core.exceptions import NotFoundError

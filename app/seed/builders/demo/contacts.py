@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from random import Random
 
-from app.authority_contact.models.authority_contact import AuthorityContact
+from app.authority_contacts.models.authority_contact import AuthorityContact
 from app.communications.models.correspondence import Correspondence, CorrespondenceType
 
 from ...data.authority_offices import authority_contact_type, authority_office_name

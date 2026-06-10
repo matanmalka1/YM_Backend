@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.authority_contact.api.authority_contact import (
+from app.authority_contacts.api.authority_contact import (
     router as authority_contact_router,
 )
 

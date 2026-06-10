@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.authority_contact.models.authority_contact import ContactType
+from app.authority_contacts.models.authority_contact import ContactType
 
 AUTHORITY_CONTACT_TYPES = [
     ContactType.ASSESSING_OFFICER,

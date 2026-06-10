@@ -1,5 +1,5 @@
-from app.authority_contact.models.authority_contact import ContactType
-from app.authority_contact.repositories.authority_contact_repository import (
+from app.authority_contacts.models.authority_contact import ContactType
+from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
 from app.users.models.user import User, UserRole
