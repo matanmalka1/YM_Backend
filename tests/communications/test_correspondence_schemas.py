@@ -3,8 +3,8 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from pydantic import ValidationError
 
-from app.correspondence.models.correspondence import CorrespondenceType
-from app.correspondence.schemas.correspondence import (
+from app.communications.models.correspondence import CorrespondenceType
+from app.communications.schemas.correspondence import (
     CorrespondenceCreateRequest,
     CorrespondenceListResponse,
     CorrespondenceResponse,

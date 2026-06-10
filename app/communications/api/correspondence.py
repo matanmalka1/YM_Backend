@@ -3,14 +3,14 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.correspondence.models.correspondence import CorrespondenceType
-from app.correspondence.schemas.correspondence import (
+from app.communications.models.correspondence import CorrespondenceType
+from app.communications.schemas.correspondence import (
     CorrespondenceCreateRequest,
     CorrespondenceListResponse,
     CorrespondenceResponse,
     CorrespondenceUpdateRequest,
 )
-from app.correspondence.services.correspondence_service import CorrespondenceService
+from app.communications.services.correspondence_service import CorrespondenceService
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 

@@ -9,7 +9,7 @@ from app.binders.api.routers import router as binders_router
 from app.businesses.api.routers import router as businesses_router
 from app.charge.api.routers import router as charge_router
 from app.clients.api.routers import router as clients_router
-from app.correspondence.api.routers import router as correspondence_router
+from app.communications.api.routers import router as correspondence_router
 from app.dashboard.api.routers import router as dashboard_router
 from app.health.api.routers import router as health_router
 from app.invoice.api.routers import router as invoice_router

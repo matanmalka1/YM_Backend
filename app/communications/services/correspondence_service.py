@@ -11,8 +11,8 @@ from app.businesses.services.business_guards import (
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import ForbiddenError, NotFoundError
-from app.correspondence.models.correspondence import Correspondence, CorrespondenceType
-from app.correspondence.repositories.correspondence_repository import (
+from app.communications.models.correspondence import Correspondence, CorrespondenceType
+from app.communications.repositories.correspondence_repository import (
     CorrespondenceRepository,
 )
 

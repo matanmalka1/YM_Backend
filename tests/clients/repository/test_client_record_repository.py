@@ -128,7 +128,7 @@ def test_update_business_via_legal_entity_id(test_db):
 
 
 def test_correspondence_ownership_raises_not_found_error(test_db):
-    from app.correspondence.services.correspondence_service import CorrespondenceService
+    from app.communications.services.correspondence_service import CorrespondenceService
 
     le_a = LegalEntity(
         id_number="CORR-A", id_number_type=IdNumberType.OTHER, official_name="Client A"

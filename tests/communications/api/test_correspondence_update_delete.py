@@ -1,8 +1,8 @@
 from datetime import date, datetime
 
 from app.businesses.models.business import Business
-from app.correspondence.models.correspondence import CorrespondenceType
-from app.correspondence.services.correspondence_service import CorrespondenceService
+from app.communications.models.correspondence import CorrespondenceType
+from app.communications.services.correspondence_service import CorrespondenceService
 from tests.helpers.identity import seed_client_with_business
 
 

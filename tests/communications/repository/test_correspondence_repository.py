@@ -2,8 +2,8 @@ from datetime import date, datetime, timedelta
 from itertools import count
 
 from app.businesses.models.business import Business
-from app.correspondence.models.correspondence import CorrespondenceType
-from app.correspondence.repositories.correspondence_repository import (
+from app.communications.models.correspondence import CorrespondenceType
+from app.communications.repositories.correspondence_repository import (
     CorrespondenceRepository,
 )
 from app.users.models.user import User, UserRole

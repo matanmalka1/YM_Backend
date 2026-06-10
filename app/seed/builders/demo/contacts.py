@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from random import Random
 
 from app.authority_contact.models.authority_contact import AuthorityContact
-from app.correspondence.models.correspondence import Correspondence, CorrespondenceType
+from app.communications.models.correspondence import Correspondence, CorrespondenceType
 
 from ...data.authority_offices import authority_contact_type, authority_office_name
 from ...data.demo_catalog import (

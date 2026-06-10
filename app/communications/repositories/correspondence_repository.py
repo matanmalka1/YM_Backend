@@ -5,7 +5,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
-from app.correspondence.models.correspondence import Correspondence, CorrespondenceType
+from app.communications.models.correspondence import Correspondence, CorrespondenceType
 from app.utils.time_utils import utcnow_aware
 
 
