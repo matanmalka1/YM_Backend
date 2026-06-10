@@ -7,13 +7,13 @@ from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.models.client_record import ClientRecord
 from app.clients.models.legal_entity import LegalEntity
 from app.core.logging_config import get_logger
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.schemas.notification_schemas import (
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import (
     NotificationPreviewRequest,
     NotificationPreviewResponse,
     NotificationResponse,
@@ -21,7 +21,7 @@ from app.notification.schemas.notification_schemas import (
     NotificationSendRequest,
     NotificationSummaryResponse,
 )
-from app.notification.services.notification_send_service import NotificationSendService
+from app.notifications.services.notification_send_service import NotificationSendService
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def _enrich(
     business_name_map: dict[int, str],
     client_name_map: dict[int, str],
 ) -> NotificationResponse:
-    from app.notification.models.notification import TRIGGER_DOMAIN, TRIGGER_LABELS
+    from app.notifications.models.notification import TRIGGER_DOMAIN, TRIGGER_LABELS
 
     resp = NotificationResponse.model_validate(notification)
     resp.client_name = client_name_map.get(notification.client_record_id)  # type: ignore[attr-defined]

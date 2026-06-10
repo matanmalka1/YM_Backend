@@ -6,9 +6,9 @@ from app.binders.models.binder import Binder, BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.binders.services.binder_service import BinderService
-from app.notification.models.notification import NotificationStatus
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.schemas.notification_schemas import NotificationResult
+from app.notifications.models.notification import NotificationStatus
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import NotificationResult
 from tests.helpers.identity import seed_client_identity
 
 
@@ -123,9 +123,9 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
     """Two auto_send calls with identical key produce one DB record, same notification_id."""
     from types import SimpleNamespace
 
-    from app.notification.models.notification import NotificationTrigger
-    from app.notification.services.notification_auto_send_service import NotificationAutoSendService
-    from app.notification.services.notification_policy_service import PolicyResult
+    from app.notifications.models.notification import NotificationTrigger
+    from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
+    from app.notifications.services.notification_policy_service import PolicyResult
 
     client = seed_client_identity(
         test_db, full_name="Idem Client", id_number="NB-IDEM-DIRECT", email=None
@@ -167,9 +167,9 @@ def test_auto_send_idempotency_different_entity_id_returns_cached_record(
     test_db, test_user, monkeypatch
 ):
     """Same key but different entity_id: hash mismatch is logged, cached record still returned."""
-    from app.notification.models.notification import NotificationTrigger
-    from app.notification.services.notification_auto_send_service import NotificationAutoSendService
-    from app.notification.services.notification_policy_service import PolicyResult
+    from app.notifications.models.notification import NotificationTrigger
+    from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
+    from app.notifications.services.notification_policy_service import PolicyResult
 
     client = seed_client_identity(
         test_db, full_name="Hash Mismatch Client", id_number="NB-HASH-MISMATCH", email=None

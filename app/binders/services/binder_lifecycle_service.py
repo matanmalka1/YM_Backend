@@ -21,9 +21,9 @@ from app.binders.services.messages import (
     BINDER_RECEIVED,
 )
 from app.core.exceptions import AppError, NotFoundError
-from app.notification.models.notification import NotificationTrigger
-from app.notification.schemas.notification_schemas import NotificationResult
-from app.notification.services.notification_auto_send_service import NotificationAutoSendService
+from app.notifications.models.notification import NotificationTrigger
+from app.notifications.schemas.notification_schemas import NotificationResult
+from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
 from app.utils.time_utils import utcnow
 
 

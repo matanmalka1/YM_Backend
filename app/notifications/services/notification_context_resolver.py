@@ -20,7 +20,7 @@ from app.clients.models.person_legal_entity_link import (
 from app.config import settings
 from app.core.exceptions import NotFoundError
 from app.core.logging_config import get_logger
-from app.notification.models.notification import NotificationTrigger
+from app.notifications.models.notification import NotificationTrigger
 from app.users.models.user import User
 
 logger = get_logger(__name__)
@@ -125,7 +125,7 @@ class NotificationContextResolver:
 
     def resolve_client_name(self, client_record_id: int) -> str:
         """Return display name: Person.full_name → LegalEntity.official_name → fallback."""
-        from app.notification.services.messages import FALLBACK_CLIENT_NAME
+        from app.notifications.services.messages import FALLBACK_CLIENT_NAME
 
         person = self.resolve_person(client_record_id)
         if person and person.full_name:

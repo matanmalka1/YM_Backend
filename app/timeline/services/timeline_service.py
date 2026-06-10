@@ -13,8 +13,8 @@ from app.charge.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 from app.invoice.repositories.invoice_repository import InvoiceRepository
-from app.notification.models.notification import NotificationStatus
-from app.notification.repositories.notification_repository import NotificationRepository
+from app.notifications.models.notification import NotificationStatus
+from app.notifications.repositories.notification_repository import NotificationRepository
 from app.timeline.services.timeline_binder_event_builders import (
     binder_received_event,
     binder_handed_over_event,

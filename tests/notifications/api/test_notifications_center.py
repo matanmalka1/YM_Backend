@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import datetime as dt
 
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
+from app.notifications.repositories.notification_repository import NotificationRepository
 from tests.helpers.identity import seed_client_identity
 
 

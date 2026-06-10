@@ -7,12 +7,12 @@ from uuid import UUID
 from fastapi import APIRouter, Depends, Query, Request
 
 from app.core.exceptions import AppError
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notification.schemas.notification_schemas import (
+from app.notifications.schemas.notification_schemas import (
     NotificationListResponse,
     NotificationPreviewRequest,
     NotificationPreviewResponse,
@@ -20,7 +20,7 @@ from app.notification.schemas.notification_schemas import (
     NotificationSendRequest,
     NotificationSummaryResponse,
 )
-from app.notification.services.notification_service import NotificationService
+from app.notifications.services.notification_service import NotificationService
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 

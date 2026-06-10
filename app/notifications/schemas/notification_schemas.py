@@ -5,7 +5,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.api_types import ApiDateTime
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,

@@ -11,13 +11,13 @@ from app.clients.models.person_legal_entity_link import (
     PersonLegalEntityRole,
 )
 from app.common.enums import IdNumberType
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.services.notification_service import NotificationService
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.services.notification_service import NotificationService
 
 
 def _make_client(db, *, email: str = "owner@test.com") -> int:

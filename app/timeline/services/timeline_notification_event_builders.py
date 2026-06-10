@@ -1,4 +1,4 @@
-from app.notification.models.notification import TRIGGER_LABELS, Notification
+from app.notifications.models.notification import TRIGGER_LABELS, Notification
 
 
 def notification_sent_event(n: Notification) -> dict:

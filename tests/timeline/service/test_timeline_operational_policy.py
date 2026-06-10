@@ -11,7 +11,7 @@ from app.annual_reports.models.annual_report_status_history import (
     AnnualReportStatusHistory,
 )
 from app.charge.models.charge import Charge, ChargeStatus, ChargeType
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     Notification,
     NotificationChannel,
     NotificationTrigger,

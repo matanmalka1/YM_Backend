@@ -10,26 +10,26 @@ from app.config import settings
 from app.core.exceptions import AppError, NotFoundError
 from app.core.logging_config import get_logger
 from app.infrastructure.notifications import EmailChannel
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
 
 _AUTO_SEND_ALLOWED_TRIGGERS = {NotificationTrigger.BINDER_READY_FOR_HANDOVER}
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.schemas.notification_schemas import NotificationResult
-from app.notification.services.constants import NOTIFICATION_IDEMPOTENCY_TTL_HOURS
-from app.notification.services.notification_context_resolver import (
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import NotificationResult
+from app.notifications.services.constants import NOTIFICATION_IDEMPOTENCY_TTL_HOURS
+from app.notifications.services.notification_context_resolver import (
     NotificationContextResolver,
 )
-from app.notification.services.notification_delivery_service import (
+from app.notifications.services.notification_delivery_service import (
     NotificationDeliveryService,
 )
-from app.notification.services.notification_policy_service import (
+from app.notifications.services.notification_policy_service import (
     NotificationPolicyService,
 )
-from app.notification.services.notification_template_renderer import (
+from app.notifications.services.notification_template_renderer import (
     NotificationTemplateRenderer,
 )
 

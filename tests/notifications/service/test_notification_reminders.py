@@ -15,13 +15,13 @@ from app.clients.models.person_legal_entity_link import (
     PersonLegalEntityRole,
 )
 from app.common.enums import IdNumberType
-from app.notification.models.notification import NotificationStatus, NotificationTrigger
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.schemas.notification_schemas import (
+from app.notifications.models.notification import NotificationStatus, NotificationTrigger
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import (
     NotificationPreviewRequest,
     NotificationSendRequest,
 )
-from app.notification.services.notification_send_service import NotificationSendService
+from app.notifications.services.notification_send_service import NotificationSendService
 
 
 def _make_client(

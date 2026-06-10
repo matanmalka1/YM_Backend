@@ -6,8 +6,8 @@ from types import SimpleNamespace
 import pytest
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
-from app.notification.models.notification import NotificationStatus, NotificationTrigger
-from app.notification.services.notification_policy_service import (
+from app.notifications.models.notification import NotificationStatus, NotificationTrigger
+from app.notifications.services.notification_policy_service import (
     ANNUAL_REMINDER_COOLDOWN_DAYS,
     NotificationPolicyService,
 )
@@ -36,14 +36,14 @@ def _db(report, last_notification=None):
     NotificationRepository inside notification_policy_service.
 
     The policy uses:
-        from app.notification.repositories.notification_repository import NotificationRepository
+        from app.notifications.repositories.notification_repository import NotificationRepository
         repo = NotificationRepository(db)
         last = repo.get_last_for_annual_report_trigger(...)
 
     We patch the real NotificationRepository class-level to return our fake repo via the
     constructor by subclassing it and overriding __init__ and get_last_for_annual_report_trigger.
     """
-    from app.notification.repositories import notification_repository as _nr_module
+    from app.notifications.repositories import notification_repository as _nr_module
 
     original_class = _nr_module.NotificationRepository
 
@@ -75,7 +75,7 @@ class _FakeDB:
         self._original = None
 
     def __enter__(self):
-        from app.notification.repositories import notification_repository as _nr_module
+        from app.notifications.repositories import notification_repository as _nr_module
 
         self._original = _nr_module.NotificationRepository
         last = self._last_notification
@@ -91,7 +91,7 @@ class _FakeDB:
         return self
 
     def __exit__(self, *_):
-        from app.notification.repositories import notification_repository as _nr_module
+        from app.notifications.repositories import notification_repository as _nr_module
 
         _nr_module.NotificationRepository = self._original  # type: ignore[assignment]
 

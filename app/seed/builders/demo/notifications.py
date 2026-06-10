@@ -4,7 +4,7 @@ from datetime import UTC, datetime, timedelta
 from random import Random
 
 from app.binders.models.binder import BinderLocationStatus
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     Notification,
     NotificationChannel,
     NotificationStatus,

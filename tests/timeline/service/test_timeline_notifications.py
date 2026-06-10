@@ -3,7 +3,7 @@
 from datetime import datetime
 from types import SimpleNamespace
 
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
@@ -100,13 +100,13 @@ def test_timeline_notification_events_only_sent_and_failed(test_db, test_user):
     TimelineService._build_notification_events returns events only for SENT and FAILED.
     SKIPPED and PENDING are excluded.
     """
-    from app.notification.models.notification import (
+    from app.notifications.models.notification import (
         Notification,
         NotificationChannel,
         NotificationStatus,
         NotificationTrigger,
     )
-    from app.notification.repositories.notification_repository import NotificationRepository
+    from app.notifications.repositories.notification_repository import NotificationRepository
     from app.timeline.services.timeline_notification_event_builders import (
         notification_failed_event,
         notification_sent_event,

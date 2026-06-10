@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     Notification,
     NotificationChannel,
     NotificationStatus,

@@ -9,8 +9,8 @@ from sqlalchemy.orm import Session
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
-from app.notification.models.notification import NotificationStatus, NotificationTrigger
-from app.notification.services.constants import (
+from app.notifications.models.notification import NotificationStatus, NotificationTrigger
+from app.notifications.services.constants import (
     ANNUAL_REMINDER_COOLDOWN_DAYS,
     PAYMENT_REMINDER_WARNING_DAYS,
     VAT_REMINDER_WINDOW_DAYS,
@@ -153,7 +153,7 @@ class NotificationPolicyService:
     ) -> PolicyResult | None:
         from app.annual_reports.models.annual_report_enums import AnnualReportStatus
         from app.annual_reports.models.annual_report_model import AnnualReport
-        from app.notification.repositories.notification_repository import NotificationRepository
+        from app.notifications.repositories.notification_repository import NotificationRepository
 
         report = db.get(AnnualReport, annual_report_id)
         if report is None:
@@ -242,7 +242,7 @@ class NotificationPolicyService:
         confirm_recent_duplicate: bool,
     ) -> PolicyResult | None:
         from app.charge.models.charge import Charge, ChargeStatus
-        from app.notification.repositories.notification_repository import NotificationRepository
+        from app.notifications.repositories.notification_repository import NotificationRepository
 
         charge = db.get(Charge, charge_id)
         if charge is None or charge.client_record_id != client_record_id:

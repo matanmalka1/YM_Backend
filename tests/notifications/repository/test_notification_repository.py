@@ -6,12 +6,12 @@ from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
 from app.clients.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
+from app.notifications.repositories.notification_repository import NotificationRepository
 
 
 def _business(test_db, suffix: str) -> Business:

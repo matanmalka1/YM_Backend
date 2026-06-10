@@ -7,13 +7,13 @@ from sqlalchemy import select
 
 from app.charge.models.charge import Charge, ChargeStatus, ChargeType
 from app.common.enums import DeadlineRuleType, EntityType, IdNumberType, ObligationType, VatType
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.services.notification_policy_service import NotificationPolicyService
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.services.notification_policy_service import NotificationPolicyService
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
     SignatureRequestStatus,

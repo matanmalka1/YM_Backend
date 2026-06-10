@@ -11,11 +11,11 @@ from app.clients.models.person_legal_entity_link import (
     PersonLegalEntityRole,
 )
 from app.common.enums import IdNumberType
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
+from app.notifications.repositories.notification_repository import NotificationRepository
 
 
 def _business(test_db, suffix: str) -> Business:

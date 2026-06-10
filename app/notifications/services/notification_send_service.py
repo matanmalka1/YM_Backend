@@ -11,7 +11,7 @@ from app.config import settings
 from app.core.exceptions import AppError, NotFoundError
 from app.core.logging_config import get_logger
 from app.infrastructure.notifications import EmailChannel
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
@@ -39,28 +39,28 @@ _SIGNATURE_TRIGGERS = {
 _GENERIC_ENTITY_TRIGGERS = (
     _CHARGE_TRIGGERS | {NotificationTrigger.VAT_DOCUMENTS_REMINDER} | _SIGNATURE_TRIGGERS
 )
-from app.notification.repositories.notification_repository import NotificationRepository
-from app.notification.schemas.notification_schemas import (
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import (
     NotificationPreviewRequest,
     NotificationPreviewResponse,
     NotificationResult,
     NotificationSendRequest,
 )
-from app.notification.services.constants import (
+from app.notifications.services.constants import (
     BODY_MAX_LENGTH,
     NOTIFICATION_IDEMPOTENCY_TTL_HOURS,
     SUBJECT_MAX_LENGTH,
 )
-from app.notification.services.notification_context_resolver import (
+from app.notifications.services.notification_context_resolver import (
     NotificationContextResolver,
 )
-from app.notification.services.notification_delivery_service import (
+from app.notifications.services.notification_delivery_service import (
     NotificationDeliveryService,
 )
-from app.notification.services.notification_policy_service import (
+from app.notifications.services.notification_policy_service import (
     NotificationPolicyService,
 )
-from app.notification.services.notification_template_renderer import (
+from app.notifications.services.notification_template_renderer import (
     NotificationTemplateRenderer,
 )
 

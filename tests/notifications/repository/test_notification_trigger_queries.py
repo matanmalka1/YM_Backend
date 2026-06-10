@@ -2,11 +2,11 @@ from datetime import date, timedelta
 
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.binders.repositories.binder_repository import BinderRepository
-from app.notification.models.notification import (
+from app.notifications.models.notification import (
     NotificationChannel,
     NotificationTrigger,
 )
-from app.notification.repositories.notification_repository import NotificationRepository
+from app.notifications.repositories.notification_repository import NotificationRepository
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
 from app.utils.time_utils import utcnow
