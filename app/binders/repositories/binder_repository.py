@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow

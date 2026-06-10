@@ -1,8 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.clients.models.person import Person
-from app.clients.models.person_legal_entity_link import (
+from app.legal_entities.models.person import Person
+from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )

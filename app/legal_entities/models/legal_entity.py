@@ -13,7 +13,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
-    from app.clients.models.person_legal_entity_link import PersonLegalEntityLink
+    from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityLink
 
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.database import Base

@@ -3,7 +3,7 @@
 from sqlalchemy import select
 
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from tests.tax_calendar.api.grouped_helpers import (
     add_vat_item,
     headers,

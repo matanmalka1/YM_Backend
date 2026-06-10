@@ -5,7 +5,7 @@ from app.binders.repositories.binder_repository import BinderRepository
 from app.businesses.models.business import Business
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService

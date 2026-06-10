@@ -2,7 +2,7 @@ from datetime import date
 from random import Random
 from types import SimpleNamespace
 
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import AdvancePaymentFrequency
 from app.seed.builders.clients import create_clients
 

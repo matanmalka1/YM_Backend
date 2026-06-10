@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.timeline.repositories.timeline_repository import TimelineRepository
 from app.timeline.services.timeline_client_builders import (
     client_created_event,

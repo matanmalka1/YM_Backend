@@ -12,7 +12,7 @@ from app.advance_payments.models.advance_payment import (
     PaymentMethod,
 )
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import EntityType, ObligationType
 from app.common.obligation_plan import advance_payment_obligation_plan
 from app.tax_calendar.services.materialization_service import (

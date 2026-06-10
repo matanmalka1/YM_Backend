@@ -22,9 +22,9 @@ import app.binders.models.binder_lifecycle_log  # noqa: F401
 import app.businesses.models.business  # noqa: F401
 import app.charges.models.charge  # noqa: F401
 import app.clients.models.client_record  # noqa: F401
-import app.clients.models.legal_entity  # noqa: F401
-import app.clients.models.person  # noqa: F401
-import app.clients.models.person_legal_entity_link  # noqa: F401
+import app.legal_entities.models.legal_entity  # noqa: F401
+import app.legal_entities.models.person  # noqa: F401
+import app.legal_entities.models.person_legal_entity_link  # noqa: F401
 import app.communications.models.correspondence  # noqa: F401
 import app.infrastructure.idempotency.model  # noqa: F401
 import app.invoices.models.invoice  # noqa: F401

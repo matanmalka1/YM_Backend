@@ -11,7 +11,7 @@ from app.advance_payments.services.advance_payment_service import AdvancePayment
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.client_onboarding_service import create_initial_binder
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.common.enums import ObligationType
 from app.common.obligation_plan import (
     advance_payment_obligation_plan,

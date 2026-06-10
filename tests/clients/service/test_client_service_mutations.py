@@ -5,7 +5,7 @@ from sqlalchemy.exc import IntegrityError
 
 from app.binders.repositories.binder_repository import BinderRepository
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_lifecycle_service import ClientLifecycleService
 from app.clients.services.client_query_service import ClientQueryService

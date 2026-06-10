@@ -1,7 +1,7 @@
 """Enrichment helpers for VAT work item query results."""
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.users.repositories.user_repository import UserRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,

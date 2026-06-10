@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import EntityType, VatType
 from app.common.repositories.base_repository import BaseRepository
 

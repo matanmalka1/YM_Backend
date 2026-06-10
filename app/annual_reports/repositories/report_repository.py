@@ -188,7 +188,7 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
     def list_by_tax_year_with_client(self, tax_year: int) -> list:
         """Return (AnnualReport, client_record_id, LegalEntity.official_name) for status report."""
         from app.clients.models.client_record import ClientRecord
-        from app.clients.models.legal_entity import LegalEntity
+        from app.legal_entities.models.legal_entity import LegalEntity
 
         return self.db.execute(
             select(AnnualReport, AnnualReport.client_record_id, LegalEntity.official_name)

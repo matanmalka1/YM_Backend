@@ -5,7 +5,7 @@ from app.binders.repositories.binder_repository import BinderRepository
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.common.enums import EntityType
 from app.search.schemas.search import DocumentSearchResult
 from app.search.services.document_search_service import DocumentSearchService

@@ -7,7 +7,7 @@ from sqlalchemy import select
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.binders.models.binder import Binder
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.vat.models.vat_work_item import VatWorkItem
 
 _CREATE_PAYLOAD = {

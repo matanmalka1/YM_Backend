@@ -20,8 +20,8 @@ from app.clients.create_policy import (
 )
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
-from app.clients.repositories.person_repository import PersonRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.person_repository import PersonRepository
 from app.clients.schemas.client import (
     CreateClientRequest,
 )

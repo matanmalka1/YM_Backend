@@ -9,7 +9,7 @@ from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import IdNumberType
 from app.core.exceptions import NotFoundError

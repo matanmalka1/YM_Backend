@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.core.logging_config import get_logger
 from app.notifications.models.notification import (
     NotificationChannel,

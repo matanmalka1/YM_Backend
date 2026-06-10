@@ -21,9 +21,9 @@ import app.tax_calendar.models.tax_calendar_entry  # noqa: F401
 from app.businesses.models.business import BusinessStatus
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord  # noqa: F401
-from app.clients.models.legal_entity import LegalEntity  # noqa: F401
-from app.clients.models.person import Person  # noqa: F401
-from app.clients.models.person_legal_entity_link import PersonLegalEntityLink  # noqa: F401
+from app.legal_entities.models.legal_entity import LegalEntity  # noqa: F401
+from app.legal_entities.models.person import Person  # noqa: F401
+from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityLink  # noqa: F401
 from app.common.enums import IdNumberType
 from sqlalchemy import select
 

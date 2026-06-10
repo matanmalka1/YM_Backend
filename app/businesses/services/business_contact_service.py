@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.businesses.models.business import Business
-from app.clients.models.person_legal_entity_link import PersonLegalEntityRole
+from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityRole
 
 
 class BusinessContactService:

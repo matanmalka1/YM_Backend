@@ -7,7 +7,7 @@ from sqlalchemy import func, select
 
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from tests.clients.helpers import create_client_via_api
 
 

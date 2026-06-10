@@ -202,7 +202,7 @@ class NotificationPolicyService:
     def _check_vat_documents_reminder(
         self, db: Session, vat_work_item_id: int, client_record_id: int
     ) -> PolicyResult | None:
-        from app.clients.models.legal_entity import LegalEntity
+        from app.legal_entities.models.legal_entity import LegalEntity
         from app.vat.models.vat_enums import VatWorkItemStatus
         from app.vat.models.vat_work_item import VatWorkItem
 

@@ -5,7 +5,7 @@ import pytest
 
 from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType
 from app.utils.time_utils import utcnow
 

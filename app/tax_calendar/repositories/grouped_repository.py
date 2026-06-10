@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import ObligationType
 from app.common.repositories.base_repository import BaseRepository
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry

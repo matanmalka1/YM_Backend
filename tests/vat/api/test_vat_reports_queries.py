@@ -264,7 +264,7 @@ def test_period_options_default_monthly_returns_12_periods(client, advisor_heade
 def test_period_options_bimonthly_uses_odd_months_and_marks_opened(
     client, advisor_headers, vat_client, test_db
 ):
-    from app.clients.models.legal_entity import LegalEntity
+    from app.legal_entities.models.legal_entity import LegalEntity
 
     le = test_db.scalars(
         select(LegalEntity).filter(LegalEntity.id == vat_client.legal_entity_id)

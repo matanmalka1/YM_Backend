@@ -4,7 +4,7 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
     AdvancePaymentAggregationRepository,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 
 
 class AdvancePaymentReportService:

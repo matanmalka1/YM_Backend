@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 class AgingReportService:
     """Aging report and financial reporting service."""
 

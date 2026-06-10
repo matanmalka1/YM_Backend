@@ -13,7 +13,7 @@ from app.audit.constants import (
 from app.audit.models.entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.clients.models.legal_entity import LegalEntity
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.services.client_update_service import ClientUpdateService
 from app.common.enums import EntityType, IdNumberType, VatType
 from app.core.exceptions import ForbiddenError
