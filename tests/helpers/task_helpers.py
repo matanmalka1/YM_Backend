@@ -6,7 +6,7 @@ from datetime import date
 from itertools import count
 
 from app.businesses.models.business import Business, BusinessStatus
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.clients.models.legal_entity import LegalEntity

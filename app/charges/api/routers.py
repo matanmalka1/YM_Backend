@@ -2,7 +2,7 @@
 
 from fastapi import APIRouter
 
-from app.charge.api.charge import router as charge_router
+from app.charges.api.charge import router as charge_router
 
 router = APIRouter()
 router.include_router(charge_router)

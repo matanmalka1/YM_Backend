@@ -2,7 +2,7 @@ import datetime
 
 from fastapi import APIRouter, Body, Depends, Query, Response, status
 
-from app.charge.schemas.charge import (
+from app.charges.schemas.charge import (
     BulkChargeActionRequest,
     BulkChargeActionResponse,
     ChargeCancelRequest,
@@ -10,10 +10,10 @@ from app.charge.schemas.charge import (
     ChargeListResponse,
     ChargeResponse,
 )
-from app.charge.services.billing_service import BillingService
-from app.charge.services.bulk_billing_service import BulkBillingService
-from app.charge.services.charge_query_service import ChargeQueryService
-from app.charge.services.charge_response_builder import ChargeResponseBuilder
+from app.charges.services.billing_service import BillingService
+from app.charges.services.bulk_billing_service import BulkBillingService
+from app.charges.services.charge_query_service import ChargeQueryService
+from app.charges.services.charge_response_builder import ChargeResponseBuilder
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole

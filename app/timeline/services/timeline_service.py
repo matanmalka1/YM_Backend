@@ -9,7 +9,7 @@ from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
 from app.binders.services.messages import BINDER_RECEIVED
 from app.businesses.models.business import Business
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 from app.invoice.repositories.invoice_repository import InvoiceRepository

@@ -1,7 +1,7 @@
 from app.actions.services.charge_actions import get_charge_actions
-from app.charge.models.charge import Charge
-from app.charge.schemas.charge import ChargeResponse
-from app.charge.services.charge_query_service import ChargeQueryService
+from app.charges.models.charge import Charge
+from app.charges.schemas.charge import ChargeResponse
+from app.charges.services.charge_query_service import ChargeQueryService
 from app.users.models.user import UserRole
 
 

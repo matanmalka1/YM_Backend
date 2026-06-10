@@ -1,7 +1,7 @@
 from datetime import datetime
 from types import SimpleNamespace
 
-from app.charge.models.charge import ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.timeline.services.timeline_charge_event_builders import charge_issued_event
 
 

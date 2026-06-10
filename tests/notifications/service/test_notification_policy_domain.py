@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.common.enums import DeadlineRuleType, EntityType, IdNumberType, ObligationType, VatType
 from app.notifications.models.notification import (
     NotificationChannel,

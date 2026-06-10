@@ -3,9 +3,9 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.charge.models.charge import ChargeStatus, ChargeType
-from app.charge.services.constants import MONTHS_COVERED_MAX, PERIOD_REGEX
-from app.charge.services.messages import PERIOD_INVALID_FORMAT
+from app.charges.models.charge import ChargeStatus, ChargeType
+from app.charges.services.constants import MONTHS_COVERED_MAX, PERIOD_REGEX
+from app.charges.services.messages import PERIOD_INVALID_FORMAT
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal
 

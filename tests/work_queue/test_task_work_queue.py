@@ -2,7 +2,7 @@
 
 from datetime import timedelta
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.schemas.work_queue import WorkQueueSourceType, WorkQueueUrgency

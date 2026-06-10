@@ -2,8 +2,8 @@ from datetime import datetime
 
 from sqlalchemy.orm import Session
 
-from app.charge.models.charge import ChargeStatus
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.models.charge import ChargeStatus
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.invoice.models.invoice import Invoice
 from app.invoice.repositories.invoice_repository import InvoiceRepository

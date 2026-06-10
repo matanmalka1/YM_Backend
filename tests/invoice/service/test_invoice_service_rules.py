@@ -3,7 +3,7 @@ from datetime import UTC, date, datetime
 import pytest
 
 from app.businesses.models.business import Business
-from app.charge.services.billing_service import BillingService
+from app.charges.services.billing_service import BillingService
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.invoice.services.invoice_service import InvoiceService
 from tests.helpers.identity import seed_business, seed_client_identity

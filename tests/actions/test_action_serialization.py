@@ -6,7 +6,7 @@ from app.actions.services.report_deadline_actions import get_annual_report_actio
 from app.actions.services.vat_report_actions import get_vat_work_item_actions
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.businesses.models.business import BusinessStatus
-from app.charge.models.charge import ChargeStatus
+from app.charges.models.charge import ChargeStatus
 from app.core.action_serialization import dump_action_descriptor
 from app.users.models.user import UserRole
 from app.vat_reports.models.vat_enums import VatWorkItemStatus

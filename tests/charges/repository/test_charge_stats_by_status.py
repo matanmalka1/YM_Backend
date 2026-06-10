@@ -3,8 +3,8 @@ from decimal import Decimal
 
 import pytest
 from app.businesses.models.business import BusinessStatus
-from app.charge.models.charge import ChargeStatus, ChargeType
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.models.charge import ChargeStatus, ChargeType
+from app.charges.repositories.charge_repository import ChargeRepository
 from tests.helpers.identity import seed_client_with_business
 
 

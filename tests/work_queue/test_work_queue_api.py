@@ -54,7 +54,7 @@ def test_tasks_route_exists(client, advisor_headers):
 
 
 def test_work_queue_api_pagination(client, test_db, advisor_headers):
-    from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+    from app.charges.models.charge import Charge, ChargeStatus, ChargeType
     from tests.helpers.task_helpers import create_business
 
     biz = create_business(test_db)

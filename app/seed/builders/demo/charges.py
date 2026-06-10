@@ -4,7 +4,7 @@ from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from random import Random
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.invoice.models.invoice import Invoice
 
 from ...data.demo_catalog import INVOICE_BASE_URL

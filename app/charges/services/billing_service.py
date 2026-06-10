@@ -11,10 +11,10 @@ from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
     validate_business_for_create,
 )
-from app.charge.models.charge import Charge, ChargeStatus
-from app.charge.repositories.charge_repository import ChargeRepository
-from app.charge.services.billing_audit import record_charge_status_audit
-from app.charge.services.messages import (
+from app.charges.models.charge import Charge, ChargeStatus
+from app.charges.repositories.charge_repository import ChargeRepository
+from app.charges.services.billing_audit import record_charge_status_audit
+from app.charges.services.messages import (
     AMOUNT_MUST_BE_POSITIVE,
     CHARGE_ALREADY_CANCELED,
     CHARGE_CANNOT_CANCEL_PAID,

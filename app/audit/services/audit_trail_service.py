@@ -20,7 +20,7 @@ from app.audit.schemas.entity_audit_log import (
     EntityAuditTrailResponse,
 )
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError
 from app.users.repositories.user_repository import UserRepository

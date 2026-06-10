@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.charge.models.charge import Charge, ChargeStatus
+from app.charges.models.charge import Charge, ChargeStatus
 from app.core.action_builders import mutation_action
 from app.core.action_schemas import ActionDescriptor
 from app.users.models.user import UserRole

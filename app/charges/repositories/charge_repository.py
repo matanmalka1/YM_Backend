@@ -4,7 +4,7 @@ from decimal import Decimal
 from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
-from app.charge.models.charge import Charge, ChargeStatus
+from app.charges.models.charge import Charge, ChargeStatus
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 

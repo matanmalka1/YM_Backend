@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from itertools import count
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from tests.helpers.identity import seed_business, seed_client_identity
 
 _client_seq = count(1)

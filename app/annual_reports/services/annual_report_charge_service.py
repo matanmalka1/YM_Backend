@@ -9,7 +9,7 @@ from app.annual_reports.repositories.report_repository import (
     AnnualReportRootRepository,
 )
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
-from app.charge.repositories.charge_annual_report_repository import (
+from app.charges.repositories.charge_annual_report_repository import (
     ChargeAnnualReportRepository,
 )
 from app.core.exceptions import NotFoundError

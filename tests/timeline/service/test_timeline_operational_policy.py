@@ -10,7 +10,7 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.models.annual_report_status_history import (
     AnnualReportStatusHistory,
 )
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.notifications.models.notification import (
     Notification,
     NotificationChannel,

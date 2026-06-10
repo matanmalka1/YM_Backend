@@ -1,8 +1,8 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from app.charge.models.charge import ChargeType
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.models.charge import ChargeType
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.invoice.repositories.invoice_repository import InvoiceRepository
 from tests.helpers.identity import seed_business, seed_client_identity
 

@@ -3,7 +3,7 @@ from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.orm import Session
 
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.alerts.services.alert_service import DashboardAttentionService
 from app.dashboard.services.recent_activity_service import RecentActivityService

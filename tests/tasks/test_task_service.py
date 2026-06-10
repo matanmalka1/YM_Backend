@@ -1,6 +1,6 @@
 import pytest
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.core.exceptions import ConflictError, NotFoundError
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository

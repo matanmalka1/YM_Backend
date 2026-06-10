@@ -1,7 +1,7 @@
 from datetime import date, datetime
 from types import SimpleNamespace
 
-from app.charge.models.charge import ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.timeline.services.timeline_binder_event_builders import (
     binder_handed_over_event,
     binder_lifecycle_change_event,

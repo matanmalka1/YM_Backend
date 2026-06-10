@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
 from app.reminders.models.reminder import Reminder, ReminderActionType, ReminderStatus
 from app.tasks.models.task import Task, TaskPriority, TaskStatus

@@ -8,8 +8,8 @@ from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
 )
-from app.charge.models.charge import Charge, ChargeStatus
-from app.charge.services.constants import UNPAID_CHARGE_TASK_THRESHOLD_DAYS
+from app.charges.models.charge import Charge, ChargeStatus
+from app.charges.services.constants import UNPAID_CHARGE_TASK_THRESHOLD_DAYS
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.work_queue.schemas.work_queue import (
     WorkQueueItem,

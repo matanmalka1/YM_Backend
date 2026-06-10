@@ -13,7 +13,7 @@ from app.advance_payments.models.advance_payment import (
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder, BinderLocationStatus
-from app.charge.models.charge import Charge, ChargeStatus
+from app.charges.models.charge import Charge, ChargeStatus
 from app.common.source_types import WorkQueueSourceType, source_route
 from app.vat_reports.models.vat_enums import VatWorkItemStatus
 from app.vat_reports.models.vat_work_item import VatWorkItem

@@ -2,7 +2,7 @@
 
 from datetime import date, timedelta
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.alerts.services.alert_service import DashboardAttentionService
 from app.users.models.user import UserRole
 from app.work_queue.schemas.work_queue import WorkQueueUrgency

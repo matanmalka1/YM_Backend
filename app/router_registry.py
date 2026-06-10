@@ -7,7 +7,7 @@ from app.audit.api.routes import router as audit_router
 from app.authority_contacts.api.routers import router as authority_contact_router
 from app.binders.api.routers import router as binders_router
 from app.businesses.api.routers import router as businesses_router
-from app.charge.api.routers import router as charge_router
+from app.charges.api.routers import router as charge_router
 from app.clients.api.routers import router as clients_router
 from app.communications.api.routers import router as correspondence_router
 from app.dashboard.api.routers import router as dashboard_router

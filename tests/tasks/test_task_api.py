@@ -2,7 +2,7 @@ from datetime import date
 
 import pytest
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.tasks.repositories.task_repository import TaskRepository
 from app.utils.time_utils import utcnow
 from tests.helpers.task_helpers import create_business, create_charge

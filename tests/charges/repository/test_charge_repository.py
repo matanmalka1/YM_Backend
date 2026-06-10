@@ -2,8 +2,8 @@ from datetime import date, datetime
 from decimal import Decimal
 
 from app.businesses.models.business import BusinessStatus
-from app.charge.models.charge import ChargeStatus, ChargeType
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.models.charge import ChargeStatus, ChargeType
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
 from tests.helpers.identity import seed_client_with_business

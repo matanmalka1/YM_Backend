@@ -165,7 +165,7 @@ class NotificationContextResolver:
         return report.tax_year
 
     def _resolve_charge_context(self, charge_id: int, client_record_id: int) -> dict:
-        from app.charge.models.charge import Charge
+        from app.charges.models.charge import Charge
 
         charge = self.db.get(Charge, charge_id)
         if charge is None or charge.client_record_id != client_record_id:

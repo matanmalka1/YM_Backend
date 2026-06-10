@@ -21,7 +21,7 @@ from app.binders.models.binder import BinderLocationStatus
 from app.binders.models.binder_lifecycle_log import BinderLifecycleLog
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
-from app.charge.repositories.charge_repository import ChargeRepository
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_read_repository import get_full_records_bulk
 
 _ACTIVITY_LIMIT = 5

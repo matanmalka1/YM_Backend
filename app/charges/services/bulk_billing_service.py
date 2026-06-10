@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
-from app.charge.schemas.charge import BulkChargeFailedItem
-from app.charge.services.billing_service import BillingService
-from app.charge.services.messages import BULK_ACTION_INTERNAL_ERROR
+from app.charges.schemas.charge import BulkChargeFailedItem
+from app.charges.services.billing_service import BillingService
+from app.charges.services.messages import BULK_ACTION_INTERNAL_ERROR
 from app.core.exceptions import AppError
 
 

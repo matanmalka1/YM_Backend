@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.reports.services.advance_payment_report import AdvancePaymentReportService
 from app.reports.services.export_service import ExportService
 from app.reports.services.reports_service import AgingReportService

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder
-from app.charge.models.charge import Charge
+from app.charges.models.charge import Charge
 from app.common.source_types import WorkQueueSourceType
 from app.vat_reports.models.vat_work_item import VatWorkItem
 

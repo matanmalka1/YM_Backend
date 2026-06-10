@@ -1,9 +1,9 @@
 import pytest
 
 from app.businesses.models.business import BusinessStatus
-from app.charge.models.charge import ChargeStatus, ChargeType
-from app.charge.services.billing_service import BillingService
-from app.charge.services.charge_query_service import ChargeQueryService
+from app.charges.models.charge import ChargeStatus, ChargeType
+from app.charges.services.billing_service import BillingService
+from app.charges.services.charge_query_service import ChargeQueryService
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
 from tests.helpers.identity import seed_client_with_business
 

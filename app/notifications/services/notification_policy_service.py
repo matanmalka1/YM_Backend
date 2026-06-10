@@ -241,7 +241,7 @@ class NotificationPolicyService:
         client_record_id: int,
         confirm_recent_duplicate: bool,
     ) -> PolicyResult | None:
-        from app.charge.models.charge import Charge, ChargeStatus
+        from app.charges.models.charge import Charge, ChargeStatus
         from app.notifications.repositories.notification_repository import NotificationRepository
 
         charge = db.get(Charge, charge_id)
@@ -270,7 +270,7 @@ class NotificationPolicyService:
     def _check_invoice_issued(
         self, db: Session, charge_id: int, client_record_id: int
     ) -> PolicyResult | None:
-        from app.charge.models.charge import Charge, ChargeStatus
+        from app.charges.models.charge import Charge, ChargeStatus
 
         charge = db.get(Charge, charge_id)
         if charge is None or charge.client_record_id != client_record_id:

@@ -4,7 +4,7 @@ from decimal import Decimal
 
 import openpyxl
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from tests.helpers.identity import seed_business, seed_client_identity
 
 

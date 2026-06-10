@@ -2,7 +2,7 @@ from decimal import Decimal
 
 import pytest
 
-from app.charge.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.core.exceptions import AppError, NotFoundError
 from app.reminders.models.reminder import ReminderActionType, ReminderStatus
 from app.reminders.schemas.reminders import ReminderCreateRequest
