@@ -1,7 +1,7 @@
 from datetime import UTC, datetime
 
 from app.common.enums import VatType
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import VatWorkItemStatus
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 from tests.reports.api.test_reports_additional_endpoints import (
     _create_client_and_business,

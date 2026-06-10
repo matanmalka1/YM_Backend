@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 from app.actions.services.vat_report_actions import get_vat_work_item_actions
 from app.users.models.user import UserRole
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import VatWorkItemStatus
 
 
 def test_ready_for_review_advisor_actions():

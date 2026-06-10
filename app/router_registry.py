@@ -24,7 +24,7 @@ from app.tasks.api.routes import router as tasks_router
 from app.tax_calendar.api.routers import router as tax_calendar_router
 from app.timeline.api.routers import router as timeline_router
 from app.users.api.routers import router as users_router
-from app.vat_reports.api.routers import router as vat_reports_router
+from app.vat.api.routers import router as vat_reports_router
 from app.work_queue.api.routes import router as work_queue_router
 
 

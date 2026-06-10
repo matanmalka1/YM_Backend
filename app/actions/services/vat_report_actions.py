@@ -3,8 +3,8 @@ from __future__ import annotations
 from app.core.action_builders import mutation_action
 from app.core.action_schemas import ActionDescriptor
 from app.users.models.user import UserRole
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 def _is_advisor(user_role: UserRole | str | None) -> bool:

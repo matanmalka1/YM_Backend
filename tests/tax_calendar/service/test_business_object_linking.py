@@ -18,10 +18,10 @@ from app.tax_calendar.services.link_diagnostics import (
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
-from app.vat_reports.repositories.vat_work_item_repository import VatWorkItemRepository
-from app.vat_reports.services.intake import create_work_item
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
+from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
+from app.vat.services.intake import create_work_item
 from tests.tax_calendar.service.linking_helpers import (
     advance_client,
     annual_client,

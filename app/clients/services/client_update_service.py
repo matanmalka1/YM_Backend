@@ -20,7 +20,7 @@ from app.clients.repositories.client_record_read_repository import (
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
-from app.vat_reports.services.client_status_service import (
+from app.vat.services.client_status_service import (
     VatWorkItemClientStatusService,
 )
 

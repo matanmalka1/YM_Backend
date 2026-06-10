@@ -20,8 +20,8 @@ from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.repositories.vat_work_item_write_repository import (
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 
@@ -163,7 +163,7 @@ class BinderIntakeService:
         performed_by: int,
     ) -> None:
         """Advance PENDING_MATERIALS → MATERIAL_RECEIVED for linked VAT work items."""
-        from app.vat_reports.services.constants import ACTION_STATUS_CHANGED
+        from app.vat.services.constants import ACTION_STATUS_CHANGED
 
         vat_repo = VatWorkItemRepository(self.db)
         seen: set[int] = set()

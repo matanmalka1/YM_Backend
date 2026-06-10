@@ -180,7 +180,7 @@ class NotificationContextResolver:
     def _resolve_vat_context(self, vat_work_item_id: int, client_record_id: int) -> dict:
         import datetime as _dt
 
-        from app.vat_reports.models.vat_work_item import VatWorkItem
+        from app.vat.models.vat_work_item import VatWorkItem
 
         item = self.db.get(VatWorkItem, vat_work_item_id)
         if item is None or item.client_record_id != client_record_id:

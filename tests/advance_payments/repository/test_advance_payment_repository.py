@@ -18,9 +18,9 @@ from app.tax_calendar.services.materialization_service import (
 )
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
-from app.vat_reports.repositories.vat_client_summary_repository import (
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
+from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
 from tests.helpers.identity import seed_client_identity

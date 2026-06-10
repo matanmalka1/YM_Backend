@@ -18,8 +18,8 @@ from app.common.obligation_plan import advance_payment_obligation_plan
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 
 from ..shared.client_refs import get_seed_client_record, get_seed_client_record_id
 

@@ -22,8 +22,8 @@ from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_update_service import ClientUpdateService
 from app.common.enums import EntityType, IdNumberType, VatType
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_linked_vat_work_item,

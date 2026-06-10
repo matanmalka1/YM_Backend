@@ -14,8 +14,8 @@ from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import UserRole
-from app.vat_reports.models.vat_audit_log import VatAuditLog
-from app.vat_reports.models.vat_enums import (
+from app.vat.models.vat_audit_log import VatAuditLog
+from app.vat.models.vat_enums import (
     CounterpartyIdType,
     DocumentType,
     ExpenseCategory,
@@ -23,8 +23,8 @@ from app.vat_reports.models.vat_enums import (
     VatRateType,
     VatWorkItemStatus,
 )
-from app.vat_reports.models.vat_invoice import VatInvoice
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_invoice import VatInvoice
+from app.vat.models.vat_work_item import VatWorkItem
 
 from ...data.demo_catalog import VAT_COUNTERPARTIES
 from ...data.random_utils import generate_valid_israeli_id

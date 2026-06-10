@@ -18,7 +18,7 @@ from app.businesses.models.business import Business, BusinessStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import VatType
 from app.core.exceptions import AppError
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import SeededClient, seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_tax_calendar_entry_for_annual,

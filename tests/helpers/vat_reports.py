@@ -1,6 +1,6 @@
 from unittest.mock import MagicMock
 
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import VatWorkItemStatus
 
 
 def make_item(

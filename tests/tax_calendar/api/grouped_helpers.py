@@ -12,8 +12,8 @@ from app.annual_reports.models.annual_report_enums import (
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.common.enums import DeadlineRuleType, ObligationType, VatType
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.tax_calendar.service.linking_helpers import (
     advance_client,
     annual_client,

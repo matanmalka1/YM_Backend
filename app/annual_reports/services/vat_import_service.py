@@ -45,7 +45,7 @@ from app.audit.constants import (
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.core.exceptions import AppError, ConflictError, NotFoundError
-from app.vat_reports.repositories.vat_invoice_aggregation_repository import (
+from app.vat.repositories.vat_invoice_aggregation_repository import (
     VatInvoiceAggregationRepository,
 )
 

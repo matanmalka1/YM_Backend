@@ -6,7 +6,7 @@ from sqlalchemy import select
 
 from app.annual_reports import models as annual_report_models
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
-from app.vat_reports.repositories.vat_compliance_repository import (
+from app.vat.repositories.vat_compliance_repository import (
     VatComplianceRepository,
 )
 from app.work_queue.schemas.work_queue import WorkQueueItem, WorkQueueSourceType

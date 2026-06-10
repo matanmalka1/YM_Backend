@@ -29,7 +29,7 @@ from app.binders.services.messages import (
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError, NotFoundError
-from app.vat_reports.repositories.vat_work_item_write_repository import (
+from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 

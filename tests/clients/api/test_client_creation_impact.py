@@ -11,7 +11,7 @@ from app.clients.services.create_client_service import create_client_identity_on
 from app.clients.services.impact_preview_service import compute_creation_impact
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.tax_calendar.services.bootstrap import bootstrap_tax_calendar
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 def test_preview_impact_returns_backend_vat_exempt_ceiling(client, advisor_headers):

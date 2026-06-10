@@ -15,8 +15,8 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder, BinderLocationStatus
 from app.charges.models.charge import Charge, ChargeStatus
 from app.common.source_types import WorkQueueSourceType, source_route
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 @dataclass(frozen=True)

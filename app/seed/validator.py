@@ -14,7 +14,7 @@ from app.common.enums import EntityType
 from app.tax_calendar.services.link_diagnostics import (
     find_active_null_tax_calendar_links,
 )
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 class SeedIntegrityError(RuntimeError):

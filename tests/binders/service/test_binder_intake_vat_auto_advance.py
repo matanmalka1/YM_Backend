@@ -12,9 +12,9 @@ from sqlalchemy import select
 
 from app.binders.services.binder_intake_service import BinderIntakeService
 from app.common.enums import IdNumberType, VatType
-from app.vat_reports.models.vat_audit_log import VatAuditLog
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_audit_log import VatAuditLog
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 

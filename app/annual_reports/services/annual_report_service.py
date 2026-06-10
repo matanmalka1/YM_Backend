@@ -12,7 +12,7 @@ from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.core.exceptions import NotFoundError
 from app.users.repositories.user_repository import UserRepository
-from app.vat_reports.repositories.vat_work_item_write_repository import (
+from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 

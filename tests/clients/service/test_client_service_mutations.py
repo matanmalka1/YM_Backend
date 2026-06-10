@@ -18,7 +18,7 @@ from app.clients.services.create_client_service import (
 from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
-from app.vat_reports.repositories.vat_client_summary_repository import VatClientSummaryRepository
+from app.vat.repositories.vat_client_summary_repository import VatClientSummaryRepository
 from tests.helpers.identity import seed_client_identity
 
 

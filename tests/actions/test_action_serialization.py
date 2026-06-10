@@ -9,7 +9,7 @@ from app.businesses.models.business import BusinessStatus
 from app.charges.models.charge import ChargeStatus
 from app.core.action_serialization import dump_action_descriptor
 from app.users.models.user import UserRole
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import VatWorkItemStatus
 
 
 def test_charge_cancel_serializes_correct_frontend_shape():

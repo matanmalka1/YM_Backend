@@ -17,7 +17,7 @@ from app.common.period_utils import (
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat_reports.repositories.vat_work_item_stats_repository import (
+from app.vat.repositories.vat_work_item_stats_repository import (
     VatWorkItemStatsRepository,
 )
 

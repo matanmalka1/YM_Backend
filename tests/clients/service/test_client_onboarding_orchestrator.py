@@ -10,7 +10,7 @@ from app.clients.services.client_onboarding_orchestrator import (
 from app.clients.services.create_client_service import create_client_identity_only
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.tax_calendar.services.bootstrap import bootstrap_tax_calendar
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_client_identity
 
 

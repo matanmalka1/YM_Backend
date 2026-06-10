@@ -7,7 +7,7 @@ from app.clients.models.legal_entity import LegalEntity
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.reports.constants import VAT_STALE_PENDING_DAYS
 from app.utils.time_utils import utcnow
-from app.vat_reports.repositories.vat_compliance_repository import (
+from app.vat.repositories.vat_compliance_repository import (
     VatComplianceRepository,
 )
 

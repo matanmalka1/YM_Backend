@@ -9,8 +9,8 @@ from app.common.enums import AdvancePaymentFrequency, VatType
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)

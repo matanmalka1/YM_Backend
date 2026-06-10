@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 class TaxCalendarLinkDiagnosticsRepository:

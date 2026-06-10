@@ -6,7 +6,7 @@ from app.clients.schemas.client_record_response import (
     ClientRecordResponse,
 )
 from app.utils.time_utils import utcnow
-from app.vat_reports.repositories.vat_client_summary_repository import (
+from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
 

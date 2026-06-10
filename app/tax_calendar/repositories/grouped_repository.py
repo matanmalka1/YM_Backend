@@ -11,7 +11,7 @@ from app.clients.models.legal_entity import LegalEntity
 from app.common.enums import ObligationType
 from app.common.repositories.base_repository import BaseRepository
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 @dataclass(frozen=True)

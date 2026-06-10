@@ -8,7 +8,7 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder
 from app.charges.models.charge import Charge
 from app.common.source_types import WorkQueueSourceType
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_work_item import VatWorkItem
 
 
 def source_exists(db: Session, source_type: WorkQueueSourceType, source_id: int) -> bool:

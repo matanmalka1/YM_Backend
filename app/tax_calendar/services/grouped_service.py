@@ -14,7 +14,7 @@ from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupResponse,
     TaxCalendarGroupsSummary,
 )
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import VatWorkItemStatus
 
 VAT_DONE = {VatWorkItemStatus.FILED}
 ADVANCE_DONE = {AdvancePaymentStatus.PAID}

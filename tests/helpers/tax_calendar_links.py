@@ -5,8 +5,8 @@ from app.common.enums import ObligationType, VatType
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.repositories.vat_work_item_repository import VatWorkItemRepository
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 
 
 def create_tax_calendar_entry_for_period(db, obligation_type, period, period_months_count):

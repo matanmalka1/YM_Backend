@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from app.common.enums import EntityType, IdNumberType, VatType
 from app.core.api_types import ApiDecimal
-from app.vat_reports.integrations.tax_rules_financials import get_financial_value
+from app.vat.integrations.tax_rules_financials import get_financial_value
 
 
 def derive_id_number_type(entity_type: EntityType) -> IdNumberType:

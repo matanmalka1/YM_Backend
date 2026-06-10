@@ -203,8 +203,8 @@ class NotificationPolicyService:
         self, db: Session, vat_work_item_id: int, client_record_id: int
     ) -> PolicyResult | None:
         from app.clients.models.legal_entity import LegalEntity
-        from app.vat_reports.models.vat_enums import VatWorkItemStatus
-        from app.vat_reports.models.vat_work_item import VatWorkItem
+        from app.vat.models.vat_enums import VatWorkItemStatus
+        from app.vat.models.vat_work_item import VatWorkItem
 
         item = db.get(VatWorkItem, vat_work_item_id)
         if item is None or item.client_record_id != client_record_id:

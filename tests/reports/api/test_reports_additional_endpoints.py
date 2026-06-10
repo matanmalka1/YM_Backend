@@ -13,8 +13,8 @@ from app.annual_reports.models.annual_report_enums import (
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.common.enums import VatType
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
-from app.vat_reports.models.vat_work_item import VatWorkItem
+from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_tax_calendar_entry_for_annual,

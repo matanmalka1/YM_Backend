@@ -24,7 +24,7 @@ from app.documents.permanent_documents.models.permanent_document import (
     PermanentDocumentType,
     PermanentDocument,
 )
-from app.vat_reports.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import VatWorkItemStatus
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_linked_vat_work_item,

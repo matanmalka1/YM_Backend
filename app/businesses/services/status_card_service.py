@@ -27,8 +27,8 @@ from app.documents.permanent_documents.repositories.permanent_document_repositor
     PermanentDocumentRepository,
 )
 from app.utils.time_utils import utcnow
-from app.vat_reports.models.vat_work_item import VatWorkItemStatus
-from app.vat_reports.repositories.vat_work_item_write_repository import (
+from app.vat.models.vat_work_item import VatWorkItemStatus
+from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 
