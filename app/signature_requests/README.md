@@ -2,10 +2,14 @@
 
 This file owns only:
 
-- A pointer to the canonical domain documentation.
+- A pointer to the canonical domain doc.
 
 Source of truth: reference
 
-# Signature Requests Module
+> **Canonical doc:** [`docs/domains/signature-requests.md`](../../../docs/domains/signature-requests.md)
 
-Historical. Canonical domain doc: `docs/domains/signature-requests.md`. Archived original: `docs/archive/signature-requests-legacy.md`.
+## Tests
+
+```bash
+pytest tests/signature_requests -q
+```
