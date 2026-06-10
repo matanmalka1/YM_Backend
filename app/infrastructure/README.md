@@ -99,8 +99,8 @@ There is no dedicated infrastructure-only test suite currently.
 
 Infrastructure behavior is covered indirectly through domain tests, including:
 - Notification domain tests:
-  - `tests/notification/service/test_notification.py`
-  - `tests/notification/repository/test_notification_repository.py`
+  - `tests/notifications/service/test_notification.py`
+  - `tests/notifications/repository/test_notification_repository.py`
 - Permanent-documents domain tests:
   - `tests/permanent_documents/api/test_permanent_documents.py`
   - `tests/permanent_documents/service/test_permanent_document.py`
@@ -109,5 +109,5 @@ Infrastructure behavior is covered indirectly through domain tests, including:
 Run related integration tests:
 
 ```bash
-pytest tests/notification tests/permanent_documents -q
+pytest tests/notifications tests/permanent_documents -q
 ```

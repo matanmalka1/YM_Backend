@@ -6,10 +6,10 @@ This file owns only:
 
 Source of truth: reference
 
-> **Canonical doc:** [`docs/domains/vat-reports.md`](../../../docs/domains/vat-reports.md)
+> **Canonical doc:** [`docs/domains/vat.md`](../../../docs/domains/vat.md)
 
 ## Tests
 
 ```bash
-JWT_SECRET=test-secret pytest -q tests/vat_reports
+JWT_SECRET=test-secret pytest -q tests/vat
 ```

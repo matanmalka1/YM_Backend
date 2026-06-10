@@ -6,7 +6,7 @@ This file owns only:
 
 Source of truth: reference
 
-> **Canonical doc:** [`docs/domains/permanent-documents.md`](../../../docs/domains/permanent-documents.md)
+> **Canonical doc:** [`docs/domains/permanent-documents.md`](../../../../docs/domains/permanent-documents.md)
 
 ## Tests
 

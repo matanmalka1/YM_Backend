@@ -6,10 +6,10 @@ This file owns only:
 
 Source of truth: reference
 
-> **Canonical doc:** [`docs/domains/authority-contact.md`](../../../docs/domains/authority-contact.md)
+> **Canonical doc:** [`docs/domains/authority-contacts.md`](../../../docs/domains/authority-contacts.md)
 
 ## Tests
 
 ```bash
-pytest tests/authority_contact -q
+pytest tests/authority_contacts -q
 ```

@@ -6,10 +6,10 @@ This file owns only:
 
 Source of truth: reference
 
-> **Canonical doc:** [`docs/domains/notifications.md`](../../../docs/domains/notifications.md)
+> **Canonical doc:** [`docs/domains/documents.md`](../../../docs/domains/documents.md)
 
 ## Tests
 
 ```bash
-pytest tests/notifications -q
+pytest tests/documents -q
 ```
