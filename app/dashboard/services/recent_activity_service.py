@@ -7,6 +7,12 @@ from app.annual_reports.repositories.annual_report_repository import (
 )
 from app.audit.constants import (
     ACTION_CREATED,
+    ACTION_EXPENSE_ADDED,
+    ACTION_EXPENSE_DELETED,
+    ACTION_EXPENSE_UPDATED,
+    ACTION_INCOME_ADDED,
+    ACTION_INCOME_DELETED,
+    ACTION_INCOME_UPDATED,
     ACTION_ISSUED,
     ACTION_PAID,
     ACTION_STATUS_CHANGED,
@@ -52,6 +58,12 @@ _ACTION_LABELS = {
         ENTITY_CHARGE: "עודכן סטטוס חיוב",
         ENTITY_CLIENT: "עודכן סטטוס לקוח",
     },
+    ACTION_INCOME_ADDED: {ENTITY_ANNUAL_REPORT: "נוספה שורת הכנסה בדוח שנתי"},
+    ACTION_INCOME_UPDATED: {ENTITY_ANNUAL_REPORT: "עודכנה שורת הכנסה בדוח שנתי"},
+    ACTION_INCOME_DELETED: {ENTITY_ANNUAL_REPORT: "נמחקה שורת הכנסה בדוח שנתי"},
+    ACTION_EXPENSE_ADDED: {ENTITY_ANNUAL_REPORT: "נוספה שורת הוצאה בדוח שנתי"},
+    ACTION_EXPENSE_UPDATED: {ENTITY_ANNUAL_REPORT: "עודכנה שורת הוצאה בדוח שנתי"},
+    ACTION_EXPENSE_DELETED: {ENTITY_ANNUAL_REPORT: "נמחקה שורת הוצאה בדוח שנתי"},
 }
 
 _ACTIVITY_TYPES = {
@@ -60,6 +72,12 @@ _ACTIVITY_TYPES = {
     ACTION_PAID: "done",
     ACTION_STATUS_CHANGED: "done",
     ACTION_UPDATED: "updated",
+    ACTION_INCOME_ADDED: "created",
+    ACTION_INCOME_UPDATED: "updated",
+    ACTION_INCOME_DELETED: "updated",
+    ACTION_EXPENSE_ADDED: "created",
+    ACTION_EXPENSE_UPDATED: "updated",
+    ACTION_EXPENSE_DELETED: "updated",
 }
 
 
@@ -169,7 +187,10 @@ class RecentActivityService:
         return "עודכן מחזור חיי קלסר"
 
     def _label(self, row: EntityAuditLog) -> str:
-        if row.note and not row.note.startswith("{"):
+        # `note` is only a human-readable label when it is free text. System-written
+        # notes are key=value metadata (e.g. "source=vat_import") and must never leak
+        # to the dashboard — fall through to the action/entity label table instead.
+        if row.note and not row.note.startswith("{") and "=" not in row.note:
             return row.note
 
         label_by_entity = _ACTION_LABELS.get(row.action, {})
