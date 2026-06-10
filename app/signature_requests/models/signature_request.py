@@ -28,11 +28,15 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Index, Integer, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.annual_reports.models.annual_report_model import AnnualReport
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
@@ -123,12 +127,12 @@ class SignatureRequest(Base):
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    annual_report: Mapped["AnnualReport | None"] = relationship(
+    annual_report: Mapped[AnnualReport | None] = relationship(
         "AnnualReport",
         foreign_keys="[SignatureRequest.annual_report_id]",
         viewonly=True,
     )
-    audit_events: Mapped[list["SignatureAuditEvent"]] = relationship(
+    audit_events: Mapped[list[SignatureAuditEvent]] = relationship(
         "SignatureAuditEvent", back_populates="signature_request"
     )
 
@@ -178,7 +182,7 @@ class SignatureAuditEvent(Base):
     occurred_at: Mapped[datetime.datetime] = mapped_column(nullable=False, default=utcnow)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    signature_request: Mapped["SignatureRequest"] = relationship(
+    signature_request: Mapped[SignatureRequest] = relationship(
         "SignatureRequest", back_populates="audit_events"
     )
 

@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Index, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.legal_entities.models.person import Person
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
@@ -34,7 +38,7 @@ class PersonLegalEntityLink(Base):
 
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
 
-    person: Mapped["Person"] = relationship(
+    person: Mapped[Person] = relationship(
         "Person", foreign_keys=[person_id], lazy="select", viewonly=True
     )
 

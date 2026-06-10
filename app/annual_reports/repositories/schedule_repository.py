@@ -7,11 +7,10 @@ from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
 from app.annual_reports.models.annual_report_schedule_entry import (
     AnnualReportScheduleEntry,
 )
-from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
 
 
-class AnnualReportScheduleRepository(BaseRepository[AnnualReportScheduleEntry]):
+class AnnualReportScheduleRepository:
     def __init__(self, db: Session):
         self.db = db
 

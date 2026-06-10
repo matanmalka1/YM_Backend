@@ -2,11 +2,15 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.annual_reports.models.annual_report_model import AnnualReport
 from app.utils.time_utils import utcnow
 
 
@@ -32,7 +36,7 @@ class AnnualReportDetail(Base):
         unique=True,
     )
 
-    report: Mapped["AnnualReport"] = relationship(
+    report: Mapped[AnnualReport] = relationship(
         "AnnualReport", back_populates="detail", uselist=False
     )
 

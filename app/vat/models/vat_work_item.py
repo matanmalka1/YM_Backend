@@ -17,10 +17,10 @@ Israeli context:
 
 from __future__ import annotations
 
-
 from datetime import date, datetime
 from decimal import Decimal
 from importlib import import_module
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     ForeignKey,
@@ -34,6 +34,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.common.enums import SubmissionMethod, VatType
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.vat.models.vat_invoice import VatInvoice
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus
@@ -119,12 +122,12 @@ class VatWorkItem(Base):
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    invoices: Mapped[list["VatInvoice"]] = relationship(
+    invoices: Mapped[list[VatInvoice]] = relationship(
         "VatInvoice",
         back_populates="work_item",
         cascade="all, delete-orphan",
     )
-    original_item: Mapped["VatWorkItem | None"] = relationship(
+    original_item: Mapped[VatWorkItem | None] = relationship(
         "VatWorkItem",
         foreign_keys="[VatWorkItem.amends_item_id]",
         remote_side="VatWorkItem.id",

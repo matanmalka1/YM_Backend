@@ -3,11 +3,16 @@ from __future__ import annotations
 import datetime
 from decimal import Decimal
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.annual_reports.models.annual_report_model import AnnualReport
+    from app.invoices.models.invoice import Invoice
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
@@ -88,10 +93,10 @@ class Charge(Base):
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    annual_report: Mapped["AnnualReport | None"] = relationship(
+    annual_report: Mapped[AnnualReport | None] = relationship(
         "AnnualReport", foreign_keys="[Charge.annual_report_id]", viewonly=True
     )
-    invoice: Mapped["Invoice | None"] = relationship(
+    invoice: Mapped[Invoice | None] = relationship(
         "Invoice", foreign_keys="[Invoice.charge_id]", uselist=False
     )
 

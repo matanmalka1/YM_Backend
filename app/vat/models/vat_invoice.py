@@ -13,9 +13,9 @@ Design decisions:
 
 from __future__ import annotations
 
-
 from datetime import date
 from decimal import Decimal
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     ForeignKey,
@@ -27,6 +27,9 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.vat.models.vat_work_item import VatWorkItem
 from app.utils.enum_utils import pg_enum
 from app.vat.models.vat_enums import (
     CounterpartyIdType,
@@ -47,7 +50,7 @@ class VatInvoice(Base):
         index=True,
     )
 
-    work_item: Mapped["VatWorkItem"] = relationship("VatWorkItem", back_populates="invoices")
+    work_item: Mapped[VatWorkItem] = relationship("VatWorkItem", back_populates="invoices")
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     # Optional tag: which BusinessActivity (branch/shop/service) contributed this invoice.
     # NULL = untagged (valid — e.g. client has only one activity or is a COMPANY_LTD).

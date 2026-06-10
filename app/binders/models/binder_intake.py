@@ -1,11 +1,15 @@
 from __future__ import annotations
 
 from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.binders.models.binder import Binder
 from app.utils.time_utils import utcnow
 
 
@@ -27,7 +31,7 @@ class BinderIntake(Base):
         index=True,
     )
 
-    binder: Mapped["Binder"] = relationship("Binder", back_populates="intakes")
+    binder: Mapped[Binder] = relationship("Binder", back_populates="intakes")
 
     # When the material was received.
     received_at: Mapped[date] = mapped_column(nullable=False)

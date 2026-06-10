@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import date, datetime
 from enum import Enum as PyEnum
+from typing import TYPE_CHECKING
 
 from sqlalchemy import (
     ForeignKey,
@@ -15,6 +16,9 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.common.soft_delete import SoftDeletableMixin
 from app.database import Base
+
+if TYPE_CHECKING:
+    from app.legal_entities.models.legal_entity import LegalEntity
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
@@ -45,7 +49,7 @@ class Business(SoftDeletableMixin, Base):
         ForeignKey("legal_entities.id"), nullable=False, index=True
     )
 
-    legal_entity: Mapped["LegalEntity"] = relationship(
+    legal_entity: Mapped[LegalEntity] = relationship(
         "LegalEntity",
         foreign_keys=[legal_entity_id],
         lazy="select",
