@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
-from app.permanent_documents.models.permanent_document import PermanentDocument
+from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.signature_requests.models.signature_request import (
     SignatureAuditEvent,
     SignatureRequest,

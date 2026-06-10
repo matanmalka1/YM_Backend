@@ -30,7 +30,7 @@ import app.infrastructure.idempotency.model  # noqa: F401
 import app.invoice.models.invoice  # noqa: F401
 import app.notes.models.entity_note  # noqa: F401
 import app.notification.models.notification  # noqa: F401
-import app.permanent_documents.models.permanent_document  # noqa: F401
+import app.documents.permanent_documents.models.permanent_document  # noqa: F401
 import app.reminders.models.reminder  # noqa: F401
 import app.signature_requests.models.signature_request  # noqa: F401
 import app.tasks.models.task  # noqa: F401

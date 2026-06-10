@@ -2,7 +2,7 @@ from datetime import datetime
 from types import SimpleNamespace
 
 from app.common.enums import EntityType
-from app.permanent_documents.models.permanent_document import PermanentDocumentType
+from app.documents.permanent_documents.models.permanent_document import PermanentDocumentType
 from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,

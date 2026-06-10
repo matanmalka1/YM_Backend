@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from app.binders.models.binder_intake_material import MaterialType
 from app.charge.models.charge import ChargeType
-from app.permanent_documents.models.permanent_document import PermanentDocumentType
+from app.documents.permanent_documents.models.permanent_document import PermanentDocumentType
 from app.signature_requests.models.signature_request import SignatureRequestType
 from app.vat_reports.models.vat_enums import ExpenseCategory, InvoiceType
 

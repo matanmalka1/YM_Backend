@@ -2,7 +2,7 @@ from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_read_repository import get_full_records_bulk
-from app.permanent_documents.repositories.permanent_document_repository import (
+from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
 from app.search.schemas.search import DocumentSearchResult

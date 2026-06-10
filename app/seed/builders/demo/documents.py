@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import UTC, datetime, timedelta
 from random import Random
 
-from app.permanent_documents.models.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
     PermanentDocumentType,

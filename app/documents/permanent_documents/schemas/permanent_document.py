@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from app.core.api_types import ApiDateTime
-from app.permanent_documents.models.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
     PermanentDocumentType,

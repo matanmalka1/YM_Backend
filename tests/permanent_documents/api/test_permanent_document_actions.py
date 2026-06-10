@@ -1,10 +1,10 @@
 from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
-from app.permanent_documents.models.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocumentType,
 )
-from app.permanent_documents.repositories.permanent_document_repository import (
+from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
 from tests.helpers.identity import seed_client_with_business

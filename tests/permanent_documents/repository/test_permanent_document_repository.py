@@ -3,12 +3,12 @@ from sqlalchemy.dialects import postgresql
 
 from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
-from app.permanent_documents.models.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocumentType,
     PermanentDocument,
 )
-from app.permanent_documents.repositories.permanent_document_repository import (
+from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
 from app.users.models.user import User, UserRole

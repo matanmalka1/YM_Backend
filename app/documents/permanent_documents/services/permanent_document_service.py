@@ -14,24 +14,24 @@ from app.clients.repositories.client_record_repository import ClientRecordReposi
 from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import AppError, NotFoundError
 from app.infrastructure.storage import StorageProvider, get_storage_provider
-from app.permanent_documents.models.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import (
     CLIENT_SCOPE_TYPES,
     DocumentScope,
     DocumentStatus,
     PermanentDocumentType,
     PermanentDocument,
 )
-from app.permanent_documents.repositories.permanent_document_query_repository import (
+from app.documents.permanent_documents.repositories.permanent_document_query_repository import (
     PermanentDocumentQueryRepository,
 )
-from app.permanent_documents.repositories.permanent_document_repository import (
+from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
-from app.permanent_documents.services.constants import (
+from app.documents.permanent_documents.services.constants import (
     ALLOWED_MIME_TYPES,
     MAX_FILE_SIZE_BYTES,
 )
-from app.permanent_documents.services.messages import (
+from app.documents.permanent_documents.services.messages import (
     BUSINESS_NOT_FOUND_ERROR,
     CLIENT_SCOPE_VIOLATION_ERROR,
     DOCUMENT_NOT_FOUND_ERROR,

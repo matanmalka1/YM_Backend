@@ -19,7 +19,7 @@ from app.businesses.services.status_card_service import StatusCardService
 from app.charge.models.charge import Charge, ChargeStatus, ChargeType
 from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import NotFoundError
-from app.permanent_documents.models.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocumentType,
     PermanentDocument,

@@ -2,7 +2,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
-from app.permanent_documents.models.permanent_document import PermanentDocument
+from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 
 
 class PermanentDocumentQueryRepository(BaseRepository[PermanentDocument]):

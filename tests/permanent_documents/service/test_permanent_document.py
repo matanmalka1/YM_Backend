@@ -5,8 +5,8 @@ import pytest
 from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
 from app.core.exceptions import NotFoundError
-from app.permanent_documents.models.permanent_document import PermanentDocumentType
-from app.permanent_documents.services.permanent_document_service import (
+from app.documents.permanent_documents.models.permanent_document import PermanentDocumentType
+from app.documents.permanent_documents.services.permanent_document_service import (
     PermanentDocumentService,
 )
 from tests.helpers.identity import seed_client_identity, seed_client_with_business

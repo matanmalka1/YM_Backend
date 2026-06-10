@@ -97,7 +97,7 @@ def test_onboarding_does_not_create_empty_setup_placeholders(test_db):
 
     from app.authority_contact.models.authority_contact import AuthorityContact
     from app.notes.models.entity_note import EntityNote
-    from app.permanent_documents.models.permanent_document import PermanentDocument
+    from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 
     assert test_db.scalar(select(func.count(AuthorityContact.id))) == 0
     assert test_db.scalar(select(func.count(PermanentDocument.id))) == 0

@@ -23,7 +23,7 @@ from app.charge.models.charge import ChargeStatus
 from app.charge.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
-from app.permanent_documents.repositories.permanent_document_repository import (
+from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
 from app.utils.time_utils import utcnow

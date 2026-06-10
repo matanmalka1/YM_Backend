@@ -15,7 +15,7 @@ from app.health.api.routers import router as health_router
 from app.invoice.api.routers import router as invoice_router
 from app.notes.api.routers import router as notes_router
 from app.notification.api.routers import router as notification_router
-from app.permanent_documents.api.routers import router as permanent_documents_router
+from app.documents.permanent_documents.api.routers import router as permanent_documents_router
 from app.reminders.api import routers as reminders
 from app.reports.api.routers import router as reports_router
 from app.search.api.routers import router as search_router

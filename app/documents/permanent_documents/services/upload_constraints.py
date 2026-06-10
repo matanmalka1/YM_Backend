@@ -1,4 +1,4 @@
-from app.permanent_documents.services.constants import (
+from app.documents.permanent_documents.services.constants import (
     ALLOWED_MIME_TYPES,
     MAX_FILE_SIZE_BYTES,
 )

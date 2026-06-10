@@ -15,7 +15,7 @@ from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
 if TYPE_CHECKING:
-    from app.permanent_documents.models.permanent_document import PermanentDocument
+    from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 
 
 class ExpenseCategoryType(str, PyEnum):

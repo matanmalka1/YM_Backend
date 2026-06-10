@@ -2,10 +2,10 @@
 
 from fastapi import APIRouter
 
-from app.permanent_documents.api.permanent_document_actions import (
+from app.documents.permanent_documents.api.permanent_document_actions import (
     router as permanent_document_actions_router,
 )
-from app.permanent_documents.api.permanent_documents import (
+from app.documents.permanent_documents.api.permanent_documents import (
     router as permanent_documents_router,
 )
 

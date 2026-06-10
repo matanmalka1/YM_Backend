@@ -1,8 +1,8 @@
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_read_repository import get_full_records_bulk
-from app.permanent_documents.models.permanent_document import PermanentDocument
-from app.permanent_documents.schemas.permanent_document import PermanentDocumentResponse
+from app.documents.permanent_documents.models.permanent_document import PermanentDocument
+from app.documents.permanent_documents.schemas.permanent_document import PermanentDocumentResponse
 
 
 class PermanentDocumentResponseBuilder:

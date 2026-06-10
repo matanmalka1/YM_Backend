@@ -15,7 +15,7 @@ class SignalsService:
 
     def __init__(self, db: Session):
         self.db = db
-        from app.permanent_documents.services.permanent_document_service import (
+        from app.documents.permanent_documents.services.permanent_document_service import (
             PermanentDocumentService,
         )
 

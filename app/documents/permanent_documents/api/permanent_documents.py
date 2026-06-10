@@ -2,17 +2,17 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
-from app.permanent_documents.models.permanent_document import DocumentStatus, PermanentDocumentType
-from app.permanent_documents.schemas.permanent_document import (
+from app.documents.permanent_documents.models.permanent_document import DocumentStatus, PermanentDocumentType
+from app.documents.permanent_documents.schemas.permanent_document import (
     DocumentDownloadUrlResponse,
     OperationalSignalsResponse,
     PermanentDocumentListResponse,
     PermanentDocumentResponse,
 )
-from app.permanent_documents.services.permanent_document_service import (
+from app.documents.permanent_documents.services.permanent_document_service import (
     PermanentDocumentService,
 )
-from app.permanent_documents.services.response_builder import (
+from app.documents.permanent_documents.services.response_builder import (
     PermanentDocumentResponseBuilder,
 )
 from app.users.api.deps import CurrentUser, DBSession, require_role
