@@ -6925,6 +6925,99 @@
         }
       }
     },
+    "/api/v1/invoices": {
+      "post": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Attach Invoice",
+        "operationId": "attach_invoice_api_v1_invoices_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/InvoiceAttachRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/api/v1/invoices/charge/{charge_id}": {
+      "get": {
+        "tags": [
+          "invoices"
+        ],
+        "summary": "Get Charge Invoice",
+        "operationId": "get_charge_invoice_api_v1_invoices_charge__charge_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "charge_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Charge Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/documents/upload": {
       "post": {
         "tags": [
@@ -20870,6 +20963,107 @@
           "other"
         ],
         "title": "IncomeSourceType"
+      },
+      "InvoiceAttachRequest": {
+        "properties": {
+          "charge_id": {
+            "type": "integer",
+            "title": "Charge Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "external_invoice_id": {
+            "type": "string",
+            "title": "External Invoice Id"
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Issued At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "charge_id",
+          "provider",
+          "external_invoice_id",
+          "issued_at"
+        ],
+        "title": "InvoiceAttachRequest",
+        "description": "צירוף חשבונית חיצונית לחיוב קיים."
+      },
+      "InvoiceResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "charge_id": {
+            "type": "integer",
+            "title": "Charge Id"
+          },
+          "provider": {
+            "type": "string",
+            "title": "Provider"
+          },
+          "external_invoice_id": {
+            "type": "string",
+            "title": "External Invoice Id"
+          },
+          "document_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Url"
+          },
+          "issued_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Issued At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "charge_id",
+          "provider",
+          "external_invoice_id",
+          "issued_at",
+          "created_at"
+        ],
+        "title": "InvoiceResponse"
       },
       "InvoiceType": {
         "type": "string",
