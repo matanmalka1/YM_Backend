@@ -47,7 +47,9 @@ def list_tax_calendar_entries(
     resolved_start = start_year if start_year is not None else current_year
     resolved_end = end_year if end_year is not None else current_year + 1
     _check_year_range(resolved_start, resolved_end)
-    return settings_calendar_service.list_entries(db, start_year=resolved_start, end_year=resolved_end)
+    return settings_calendar_service.list_entries(
+        db, start_year=resolved_start, end_year=resolved_end
+    )
 
 
 @router.get(

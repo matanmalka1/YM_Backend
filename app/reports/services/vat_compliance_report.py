@@ -19,7 +19,9 @@ class VatComplianceReportService:
         self.client_repo = ClientRecordRepository(db)
 
     def get_vat_compliance_report(self, year: int, page: int = 1, page_size: int = 50) -> dict:
-        rows, total = self.repo.get_compliance_aggregates_paginated(year, page=page, page_size=page_size)
+        rows, total = self.repo.get_compliance_aggregates_paginated(
+            year, page=page, page_size=page_size
+        )
         page_client_ids = list({r["client_record_id"] for r in rows})
         filed_items = self.repo.get_filed_items_for_clients(year, page_client_ids)
         client_name_map = self._client_name_map(page_client_ids)

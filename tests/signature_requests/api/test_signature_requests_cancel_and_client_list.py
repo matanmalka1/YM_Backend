@@ -108,9 +108,7 @@ def test_get_signature_request_not_found_returns_404(client, advisor_headers):
     assert resp.json()["error"]["code"] == "SIGNATURE_REQUEST.NOT_FOUND"
 
 
-def test_cancel_signature_request_rejects_mismatched_client_scope(
-    client, test_db, advisor_headers
-):
+def test_cancel_signature_request_rejects_mismatched_client_scope(client, test_db, advisor_headers):
     business_a = _business(test_db, "D")
     business_b = _business(test_db, "E")
     request_id = _create_signature_request(client, advisor_headers, business_a, "Scoped")

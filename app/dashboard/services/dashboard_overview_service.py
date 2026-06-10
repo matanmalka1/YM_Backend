@@ -73,4 +73,3 @@ class DashboardOverviewService:
             return 0, None
         amount_ils = _format_ils(total) if total is not None else None
         return count, amount_ils
-

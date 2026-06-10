@@ -96,7 +96,9 @@ def test_list_by_legal_entity_ids_matches_multiple_entities_and_empty_input(test
     second = _business(test_db, second_entity.id)
     _business(test_db, first_entity.id, deleted=True)
 
-    assert {item.id for item in repo.list_by_legal_entity_ids([first_entity.id, second_entity.id])} == {
+    assert {
+        item.id for item in repo.list_by_legal_entity_ids([first_entity.id, second_entity.id])
+    } == {
         first.id,
         second.id,
     }

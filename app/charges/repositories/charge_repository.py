@@ -319,12 +319,16 @@ class ChargeRepository(BaseRepository[Charge]):
         """Paginated aging buckets ordered by total descending, with count of all groups."""
         base = self._aging_buckets_base_stmt(as_of_date).subquery()
         count = self.db.scalar(select(func.count()).select_from(base)) or 0
-        rows = self.db.execute(
-            select(base)
-            .order_by(base.c.total.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        ).mappings().all()
+        rows = (
+            self.db.execute(
+                select(base)
+                .order_by(base.c.total.desc())
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            )
+            .mappings()
+            .all()
+        )
         return list(rows), count
 
     def get_aging_totals(self, as_of_date: date):

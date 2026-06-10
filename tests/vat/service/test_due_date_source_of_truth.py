@@ -7,6 +7,7 @@ from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from app.vat.services.intake import create_work_item
 from tests.tax_calendar.service.linking_helpers import make_entry, vat_client
 
+
 def test_serializer_prefers_snapshot_over_computed_deadline(test_db):
     """When due_date_effective is set, submission_deadline must come from snapshot, not period+15."""
     entry = make_entry(

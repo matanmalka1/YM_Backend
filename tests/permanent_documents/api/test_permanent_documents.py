@@ -71,7 +71,10 @@ def test_get_download_url_and_replace_document(client, test_db, advisor_headers)
         uploaded_by=1,
     )
 
-    url_resp = client.get(f"/api/v1/documents/client/{business.client_id}/{doc.id}/download-url", headers=advisor_headers)
+    url_resp = client.get(
+        f"/api/v1/documents/client/{business.client_id}/{doc.id}/download-url",
+        headers=advisor_headers,
+    )
     assert url_resp.status_code == 200
     assert "url" in url_resp.json()
 
@@ -181,9 +184,7 @@ def test_get_download_url_deleted_document_returns_404(client, test_db, advisor_
         storage_key="businesses/b/bank_approval/deleted.pdf",
         uploaded_by=1,
     )
-    client.delete(
-        f"/api/v1/documents/client/{b.client_id}/{doc.id}", headers=advisor_headers
-    )
+    client.delete(f"/api/v1/documents/client/{b.client_id}/{doc.id}", headers=advisor_headers)
 
     resp = client.get(
         f"/api/v1/documents/client/{b.client_id}/{doc.id}/download-url",

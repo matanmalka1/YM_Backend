@@ -189,12 +189,15 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
         ).first()
 
     def count_by_business(self, business_id: int) -> int:
-        return self.db.scalar(
-            select(func.count(PermanentDocument.id)).where(
-                PermanentDocument.business_id == business_id,
-                PermanentDocument.is_deleted.is_(False),
+        return (
+            self.db.scalar(
+                select(func.count(PermanentDocument.id)).where(
+                    PermanentDocument.business_id == business_id,
+                    PermanentDocument.is_deleted.is_(False),
+                )
             )
-        ) or 0
+            or 0
+        )
 
     # ── Search ────────────────────────────────────────────────────────────────
 

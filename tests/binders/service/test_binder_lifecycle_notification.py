@@ -124,7 +124,9 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
     from types import SimpleNamespace
 
     from app.notifications.models.notification import NotificationTrigger
-    from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
+    from app.notifications.services.notification_auto_send_service import (
+        NotificationAutoSendService,
+    )
     from app.notifications.services.notification_policy_service import PolicyResult
 
     client = seed_client_identity(
@@ -168,7 +170,9 @@ def test_auto_send_idempotency_different_entity_id_returns_cached_record(
 ):
     """Same key but different entity_id: hash mismatch is logged, cached record still returned."""
     from app.notifications.models.notification import NotificationTrigger
-    from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
+    from app.notifications.services.notification_auto_send_service import (
+        NotificationAutoSendService,
+    )
     from app.notifications.services.notification_policy_service import PolicyResult
 
     client = seed_client_identity(

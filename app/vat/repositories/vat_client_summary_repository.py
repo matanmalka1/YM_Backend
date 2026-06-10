@@ -124,21 +124,18 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
         to_year: int | None = None,
     ) -> list[dict[str, object]]:
         year_expr = cast(func.substr(VatWorkItem.period, 1, 4), Integer).label("year")
-        stmt = (
-            select(
-                year_expr,
-                func.sum(VatWorkItem.total_output_vat).label("total_output_vat"),
-                func.sum(VatWorkItem.total_input_vat).label("total_input_vat"),
-                func.sum(VatWorkItem.net_vat).label("net_vat"),
-                func.count(VatWorkItem.id).label("periods_count"),
-                func.sum(case((VatWorkItem.status == VatWorkItemStatus.FILED, 1), else_=0)).label(
-                    "filed_count"
-                ),
-            )
-            .where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.deleted_at.is_(None),
-            )
+        stmt = select(
+            year_expr,
+            func.sum(VatWorkItem.total_output_vat).label("total_output_vat"),
+            func.sum(VatWorkItem.total_input_vat).label("total_input_vat"),
+            func.sum(VatWorkItem.net_vat).label("net_vat"),
+            func.count(VatWorkItem.id).label("periods_count"),
+            func.sum(case((VatWorkItem.status == VatWorkItemStatus.FILED, 1), else_=0)).label(
+                "filed_count"
+            ),
+        ).where(
+            VatWorkItem.client_record_id == client_record_id,
+            VatWorkItem.deleted_at.is_(None),
         )
         if from_year is not None:
             stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(from_year))

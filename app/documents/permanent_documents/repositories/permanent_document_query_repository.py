@@ -72,9 +72,7 @@ class PermanentDocumentQueryRepository(BaseRepository[PermanentDocument]):
         if tax_year is not None:
             stmt = stmt.where(PermanentDocument.tax_year == tax_year)
         rows = list(
-            self.db.scalars(
-                stmt.order_by(PermanentDocument.version.desc()).limit(limit + 1)
-            ).all()
+            self.db.scalars(stmt.order_by(PermanentDocument.version.desc()).limit(limit + 1)).all()
         )
         has_more = len(rows) > limit
         return rows[:limit], has_more

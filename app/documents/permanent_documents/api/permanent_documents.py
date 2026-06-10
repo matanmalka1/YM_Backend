@@ -2,7 +2,10 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
-from app.documents.permanent_documents.models.permanent_document import DocumentStatus, PermanentDocumentType
+from app.documents.permanent_documents.models.permanent_document import (
+    DocumentStatus,
+    PermanentDocumentType,
+)
 from app.documents.permanent_documents.schemas.permanent_document import (
     DocumentDownloadUrlResponse,
     OperationalSignalsResponse,

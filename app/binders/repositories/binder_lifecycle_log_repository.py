@@ -35,9 +35,7 @@ class BinderLifecycleLogRepository(BaseRepository[BinderLifecycleLog]):
         self.db.flush()
         return log
 
-    def list_all_by_binder(
-        self, binder_id: int, limit: int = 500
-    ) -> list[BinderLifecycleLog]:
+    def list_all_by_binder(self, binder_id: int, limit: int = 500) -> list[BinderLifecycleLog]:
         """All lifecycle logs for a binder in chronological order, bounded by limit."""
         return list(
             self.db.scalars(

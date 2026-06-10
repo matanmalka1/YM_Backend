@@ -68,7 +68,10 @@ def test_pending_client_blocks_when_client_record_missing(test_db, monkeypatch):
         service.transition_status(report.id, "pending_client", 1, "A")
 
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
-    assert AnnualReportRepository(test_db).get_by_id(report.id).status == AnnualReportStatus.IN_PREPARATION
+    assert (
+        AnnualReportRepository(test_db).get_by_id(report.id).status
+        == AnnualReportStatus.IN_PREPARATION
+    )
 
 
 def test_update_deadline_invalid_and_custom_paths(test_db):

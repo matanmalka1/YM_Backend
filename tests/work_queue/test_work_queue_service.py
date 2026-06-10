@@ -271,8 +271,12 @@ def test_work_queue_pagination_page_size(test_db):
         )
     test_db.commit()
 
-    page1 = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, page=1, page_size=2)
-    page2 = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, page=2, page_size=2)
+    page1 = WorkQueueService(test_db).list_items(
+        client_record_id=biz.client_id, page=1, page_size=2
+    )
+    page2 = WorkQueueService(test_db).list_items(
+        client_record_id=biz.client_id, page=2, page_size=2
+    )
 
     assert len(page1) == 2
     assert len(page2) == 1
