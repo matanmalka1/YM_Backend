@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.actions.business_actions import get_business_actions
+from app.actions.services.business_actions import get_business_actions
 from app.businesses.models.business import BusinessStatus
 from app.users.models.user import UserRole
 

@@ -3,7 +3,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.actions.obligation_orchestrator import generate_client_obligations
+from app.actions.services.obligation_orchestrator import generate_client_obligations
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -94,7 +94,7 @@ class ClientOnboardingOrchestrator:
         vat_type,
         reference_date: date,
     ) -> int:
-        from app.actions.obligation_orchestrator import _years_to_generate
+        from app.actions.services.obligation_orchestrator import _years_to_generate
 
         years = _years_to_generate(reference_date)
         created = 0
@@ -134,7 +134,7 @@ class ClientOnboardingOrchestrator:
     ) -> int:
         if frequency is None:
             return 0
-        from app.actions.obligation_orchestrator import _years_to_generate
+        from app.actions.services.obligation_orchestrator import _years_to_generate
 
         years = _years_to_generate(reference_date)
         created = 0

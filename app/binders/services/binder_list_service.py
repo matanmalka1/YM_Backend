@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.actions.action_registry import get_binder_actions, get_binder_actions_for_state
+from app.actions.services.action_registry import get_binder_actions, get_binder_actions_for_state
 from app.binders.models.binder import Binder
 from app.binders.repositories.binder_repository import BinderListRow, BinderRepository
 from app.binders.schemas.binder import BinderResponse

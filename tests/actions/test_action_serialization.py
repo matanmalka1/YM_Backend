@@ -1,9 +1,9 @@
 from types import SimpleNamespace
 
-from app.actions.business_actions import get_business_actions
-from app.actions.charge_actions import get_charge_actions
-from app.actions.report_deadline_actions import get_annual_report_actions
-from app.actions.vat_report_actions import get_vat_work_item_actions
+from app.actions.services.business_actions import get_business_actions
+from app.actions.services.charge_actions import get_charge_actions
+from app.actions.services.report_deadline_actions import get_annual_report_actions
+from app.actions.services.vat_report_actions import get_vat_work_item_actions
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.businesses.models.business import BusinessStatus
 from app.charge.models.charge import ChargeStatus

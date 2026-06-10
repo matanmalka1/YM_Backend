@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.actions.obligation_orchestrator import _years_to_generate
+from app.actions.services.obligation_orchestrator import _years_to_generate
 from app.clients.create_policy import normalize_vat_exempt_ceiling
 from app.clients.schemas.impact import ClientCreationImpactResponse, CreationImpactItem
 from app.common.enums import (

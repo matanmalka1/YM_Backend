@@ -1,4 +1,4 @@
-from app.actions.report_deadline_actions import get_annual_report_actions
+from app.actions.services.report_deadline_actions import get_annual_report_actions
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 
 

@@ -12,7 +12,7 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import select
 
-from app.actions.obligation_orchestrator import generate_client_obligations_result
+from app.actions.services.obligation_orchestrator import generate_client_obligations_result
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.services.create_service import AnnualReportCreateService
 from app.common.enums import EntityType, IdNumberType

@@ -2,7 +2,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.actions.charge_actions import get_charge_actions
+from app.actions.services.charge_actions import get_charge_actions
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.charge.models.charge import Charge
 from app.charge.repositories.charge_repository import ChargeRepository

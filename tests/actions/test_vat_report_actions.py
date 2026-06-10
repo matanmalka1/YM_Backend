@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.actions.vat_report_actions import get_vat_work_item_actions
+from app.actions.services.vat_report_actions import get_vat_work_item_actions
 from app.users.models.user import UserRole
 from app.vat_reports.models.vat_enums import VatWorkItemStatus
 

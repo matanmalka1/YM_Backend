@@ -57,7 +57,7 @@ class AnnualReportBaseService:
             else {}
         )
 
-        from app.actions.report_deadline_actions import get_annual_report_actions
+        from app.actions.services.report_deadline_actions import get_annual_report_actions
 
         result = []
         for r in reports:

@@ -1,6 +1,6 @@
 import pytest
 
-from app.actions import obligation_orchestrator as orchestrator
+from app.actions.services import obligation_orchestrator as orchestrator
 from app.common.enums import EntityType
 
 

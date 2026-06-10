@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.actions.charge_actions import get_charge_actions
+from app.actions.services.charge_actions import get_charge_actions
 from app.charge.models.charge import ChargeStatus
 from app.users.models.user import UserRole
 

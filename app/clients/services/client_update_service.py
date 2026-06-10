@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy.orm import Session
 
-from app.actions.obligation_orchestrator import (
+from app.actions.services.obligation_orchestrator import (
     generate_client_obligations,
     obligation_fields_changed,
 )

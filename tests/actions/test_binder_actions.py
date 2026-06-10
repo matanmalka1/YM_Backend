@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from app.actions.binder_actions import get_binder_actions
+from app.actions.services.binder_actions import get_binder_actions
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 
 

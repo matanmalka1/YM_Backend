@@ -1,6 +1,6 @@
 import pytest
 
-from app.actions.action_helpers import build_action, build_confirm
+from app.actions.services.action_helpers import build_action, build_confirm
 
 
 def test_build_action_omits_optional_keys_when_none():

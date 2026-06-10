@@ -1,6 +1,6 @@
 """Serialization helpers for VAT API responses."""
 
-from app.actions.vat_report_actions import get_vat_work_item_actions
+from app.actions.services.vat_report_actions import get_vat_work_item_actions
 from app.users.models.user import UserRole
 from app.vat_reports.schemas.vat_report import VatWorkItemResponse
 from app.vat_reports.services.vat_report_queries import get_vat_deadline_fields

@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.actions.action_registry import get_business_actions
+from app.actions.services.action_registry import get_business_actions
 from app.businesses.models.business import Business
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.businesses.schemas.business_schemas import (
