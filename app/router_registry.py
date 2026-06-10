@@ -12,7 +12,7 @@ from app.clients.api.routers import router as clients_router
 from app.communications.api.routers import router as correspondence_router
 from app.dashboard.api.routers import router as dashboard_router
 from app.health.api.routers import router as health_router
-from app.invoice.api.routers import router as invoice_router
+from app.invoices.api.routers import router as invoice_router
 from app.notes.api.routers import router as notes_router
 from app.notifications.api.routers import router as notification_router
 from app.documents.permanent_documents.api.routers import router as permanent_documents_router

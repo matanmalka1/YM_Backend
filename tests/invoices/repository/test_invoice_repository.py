@@ -3,7 +3,7 @@ from decimal import Decimal
 
 from app.charges.models.charge import ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository
-from app.invoice.repositories.invoice_repository import InvoiceRepository
+from app.invoices.repositories.invoice_repository import InvoiceRepository
 from tests.helpers.identity import seed_business, seed_client_identity
 
 

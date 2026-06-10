@@ -4,7 +4,7 @@ from itertools import count
 
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.invoice.models.invoice import Invoice
+from app.invoices.models.invoice import Invoice
 from app.notifications.models.notification import (
     Notification,
     NotificationChannel,

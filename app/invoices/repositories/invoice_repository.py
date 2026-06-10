@@ -4,7 +4,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
-from app.invoice.models.invoice import Invoice
+from app.invoices.models.invoice import Invoice
 
 
 class InvoiceRepository(BaseRepository[Invoice]):

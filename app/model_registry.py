@@ -27,7 +27,7 @@ import app.clients.models.person  # noqa: F401
 import app.clients.models.person_legal_entity_link  # noqa: F401
 import app.communications.models.correspondence  # noqa: F401
 import app.infrastructure.idempotency.model  # noqa: F401
-import app.invoice.models.invoice  # noqa: F401
+import app.invoices.models.invoice  # noqa: F401
 import app.notes.models.entity_note  # noqa: F401
 import app.notifications.models.notification  # noqa: F401
 import app.documents.permanent_documents.models.permanent_document  # noqa: F401

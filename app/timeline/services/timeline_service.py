@@ -12,7 +12,7 @@ from app.businesses.models.business import Business
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
-from app.invoice.repositories.invoice_repository import InvoiceRepository
+from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.notifications.models.notification import NotificationStatus
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.timeline.services.timeline_binder_event_builders import (

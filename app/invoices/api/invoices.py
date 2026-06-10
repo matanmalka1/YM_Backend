@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, status
 
 from app.core.exceptions import NotFoundError
-from app.invoice.repositories.invoice_repository import InvoiceRepository
-from app.invoice.schemas.invoice_schemas import InvoiceAttachRequest, InvoiceResponse
-from app.invoice.services.invoice_service import InvoiceService
+from app.invoices.repositories.invoice_repository import InvoiceRepository
+from app.invoices.schemas.invoice_schemas import InvoiceAttachRequest, InvoiceResponse
+from app.invoices.services.invoice_service import InvoiceService
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 

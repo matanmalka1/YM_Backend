@@ -5,7 +5,7 @@ from decimal import Decimal
 from random import Random
 
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.invoice.models.invoice import Invoice
+from app.invoices.models.invoice import Invoice
 
 from ...data.demo_catalog import INVOICE_BASE_URL
 from ...data.realistic_seed_text import CHARGE_TYPE_DETAILS

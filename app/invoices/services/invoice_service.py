@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from app.charges.models.charge import ChargeStatus
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.core.exceptions import AppError, ConflictError, NotFoundError
-from app.invoice.models.invoice import Invoice
-from app.invoice.repositories.invoice_repository import InvoiceRepository
+from app.invoices.models.invoice import Invoice
+from app.invoices.repositories.invoice_repository import InvoiceRepository
 
 
 class InvoiceService:
