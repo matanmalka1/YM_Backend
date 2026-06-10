@@ -3,7 +3,7 @@
 from datetime import date, timedelta
 
 from app.charge.models.charge import Charge, ChargeStatus, ChargeType
-from app.dashboard.services.dashboard_attention_service import DashboardAttentionService
+from app.alerts.services.alert_service import DashboardAttentionService
 from app.users.models.user import UserRole
 from app.work_queue.schemas.work_queue import WorkQueueUrgency
 from tests.helpers.task_helpers import create_business
