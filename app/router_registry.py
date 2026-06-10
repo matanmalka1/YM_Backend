@@ -12,6 +12,7 @@ from app.clients.api.routers import router as clients_router
 from app.correspondence.api.routers import router as correspondence_router
 from app.dashboard.api.routers import router as dashboard_router
 from app.health.api.routers import router as health_router
+from app.invoice.api.routers import router as invoice_router
 from app.notes.api.routers import router as notes_router
 from app.notification.api.routers import router as notification_router
 from app.permanent_documents.api.routers import router as permanent_documents_router
@@ -38,6 +39,7 @@ def register_routers(app: FastAPI) -> None:
     app.include_router(businesses_router, prefix="/api/v1")
     app.include_router(binders_router, prefix="/api/v1")
     app.include_router(charge_router, prefix="/api/v1")
+    app.include_router(invoice_router, prefix="/api/v1")
     app.include_router(permanent_documents_router, prefix="/api/v1")
     app.include_router(reports_router, prefix="/api/v1")
     app.include_router(timeline_router, prefix="/api/v1")
