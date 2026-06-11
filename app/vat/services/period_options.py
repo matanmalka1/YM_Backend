@@ -1,17 +1,15 @@
 """Period options logic for VAT work item creation UI."""
 
-from datetime import date
-
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType
 from app.core.exceptions import AppError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
+from app.utils.time_utils import israel_today
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.services.messages import VAT_CLIENT_EXEMPT, VAT_CLIENT_NOT_FOUND
 from app.vat.services.vat_type_resolver import resolve_effective_vat_type
-from app.utils.time_utils import israel_today
 
 
 def _period_label(period_type: VatType, year: int, month: int) -> str:

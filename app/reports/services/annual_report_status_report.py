@@ -1,7 +1,5 @@
 """Service for the annual report status report grouped by status."""
 
-from datetime import date
-
 from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus

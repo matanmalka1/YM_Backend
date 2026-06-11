@@ -21,11 +21,11 @@ from app.legal_entities.repositories.legal_entity_repository import LegalEntityR
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
+from app.utils.time_utils import israel_today
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.services.intake import create_work_item
-from app.utils.time_utils import israel_today
 
 
 @dataclass(slots=True)

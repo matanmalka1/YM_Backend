@@ -26,7 +26,8 @@ class TaskCreateRequest(BaseModel):
 
 class TaskUpdateRequest(NonEmptyUpdateMixin):
     title: (
-        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)] | None
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)]
+        | None
     ) = None
     description: str | None = None
     priority: TaskPriority | None = None  # non-nullable column
@@ -39,7 +40,7 @@ class TaskUpdateRequest(NonEmptyUpdateMixin):
     action_payload: dict[str, Any] | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "TaskUpdateRequest":
+    def _reject_null_for_required(self) -> TaskUpdateRequest:
         for field in ("title", "priority"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")

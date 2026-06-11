@@ -1,5 +1,4 @@
 from datetime import date
-
 from typing import Annotated
 
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
@@ -54,7 +53,8 @@ class BusinessUpdateRequest(NonEmptyUpdateMixin):
     """עדכון פרטי עסק."""
 
     business_name: (
-        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)] | None
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)]
+        | None
     ) = None
     status: BusinessStatus | None = None  # enum, non-nullable column
     closed_at: date | None = None

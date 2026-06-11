@@ -147,7 +147,12 @@ def test_update_invoice_single_field_leaves_financials_unchanged(
     client, advisor_headers, vat_client
 ):
     item_id, invoice_id = _create_income_invoice(
-        client, advisor_headers, vat_client, "2026-03", invoice_number="INV-SIB", gross_amount="1180.00"
+        client,
+        advisor_headers,
+        vat_client,
+        "2026-03",
+        invoice_number="INV-SIB",
+        gross_amount="1180.00",
     )
 
     resp = client.patch(

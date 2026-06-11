@@ -10,10 +10,10 @@ from app.vat.integrations.tax_rules_financials import (
     get_vat_deduction_rate_for_category,
 )
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
-from app.vat.schemas.vat_invoice_schema import validate_counterparty_pair
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
+from app.vat.schemas.vat_invoice_schema import validate_counterparty_pair
 from app.vat.services.constants import ACTION_INVOICE_UPDATED
 from app.vat.services.data_entry_common import (
     assert_editable,
@@ -45,6 +45,7 @@ def update_invoice(
     A key present with value ``None`` clears a clearable nullable field; the
     request schema already rejects null for non-nullable fields.
     """
+
     # Presence-aware reads: `_sent(key)` => the client included the key.
     def _sent(key: str) -> bool:
         return key in patch
@@ -129,7 +130,9 @@ def update_invoice(
     # Recompute net/vat only when gross_amount or rate_type was sent.
     effective_rate_type = rate_type if _sent("rate_type") else invoice.rate_type
     effective_gross = (
-        gross_amount if _sent("gross_amount") else float(invoice.net_amount) + float(invoice.vat_amount)
+        gross_amount
+        if _sent("gross_amount")
+        else float(invoice.net_amount) + float(invoice.vat_amount)
     )
     if _sent("gross_amount") or _sent("rate_type"):
         net_amount, vat_amount = split_gross_amount(

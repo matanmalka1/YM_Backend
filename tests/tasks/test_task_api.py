@@ -85,9 +85,7 @@ def test_patch_task_empty_body_returns_422(client, advisor_headers):
         "/api/v1/tasks", headers=advisor_headers, json={"title": "Empty patch"}
     ).json()
 
-    resp = client.patch(
-        f"/api/v1/tasks/{created['id']}", headers=advisor_headers, json={}
-    )
+    resp = client.patch(f"/api/v1/tasks/{created['id']}", headers=advisor_headers, json={})
     assert resp.status_code == 422
 
 

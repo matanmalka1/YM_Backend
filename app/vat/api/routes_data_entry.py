@@ -68,9 +68,7 @@ def list_invoices(
     service = VatReportService(db)
     items = service.list_invoices(item_id=item_id, invoice_type=invoice_type)
     # Non-paginated: return all invoices for the work item in one envelope.
-    return VatInvoiceListResponse(
-        items=items, total=len(items), page=1, page_size=len(items)
-    )
+    return VatInvoiceListResponse(items=items, total=len(items), page=1, page_size=len(items))
 
 
 @router.patch(

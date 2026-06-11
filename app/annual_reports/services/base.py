@@ -31,9 +31,7 @@ class AnnualReportBaseService:
             )
         return report
 
-    def _resolve_client_context(
-        self, reports: list[AnnualReport]
-    ) -> tuple[dict, dict]:
+    def _resolve_client_context(self, reports: list[AnnualReport]) -> tuple[dict, dict]:
         """Resolve client records + legal entities for a batch of reports.
 
         Returns (records_by_id, legal_entities_by_id). Shared by both the full

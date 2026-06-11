@@ -68,9 +68,7 @@ def test_list_dto_thin_while_detail_dto_full(client, test_db, advisor_headers):
     ):
         assert absent not in row
 
-    detail = client.get(
-        f"/api/v1/annual-reports/{report_id}", headers=advisor_headers
-    ).json()
+    detail = client.get(f"/api/v1/annual-reports/{report_id}", headers=advisor_headers).json()
     # Detail keeps full shape with grouped calculation + actions/transitions.
     assert "tax_calculation" in detail
     assert {

@@ -6,10 +6,10 @@ from fastapi.responses import FileResponse
 from app.core.exceptions import not_found_response
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
+from app.utils.time_utils import israel_today
 from app.vat.schemas.vat_client_summary_schema import VatClientSummaryResponse
 from app.vat.services.vat_client_summary_service import get_client_summary
 from app.vat.services.vat_export_service import export
-from app.utils.time_utils import israel_today
 
 router = APIRouter(
     prefix="/vat",
