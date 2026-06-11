@@ -28,7 +28,7 @@ SCRIPTS_AUDIT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(SCRIPTS_AUDIT_DIR))
 
-from audit_utils import (  # type: ignore[import]
+from audit_utils import (  # noqa: E402  # type: ignore[import]
     FRONTEND_SRC,
     add_common_args,
     err,
@@ -37,7 +37,10 @@ from audit_utils import (  # type: ignore[import]
     print_findings,
     warn,
 )
-from route_audit_config import ENUM_BACKEND_ONLY, ENUM_SYNC_MAP  # type: ignore[import]
+from route_audit_config import (  # noqa: E402  # type: ignore[import]
+    ENUM_BACKEND_ONLY,
+    ENUM_SYNC_MAP,
+)
 
 _SETUP_DONE = False
 

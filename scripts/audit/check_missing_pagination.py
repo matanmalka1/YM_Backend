@@ -25,7 +25,7 @@ SCRIPTS_AUDIT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(SCRIPTS_AUDIT_DIR))
 
-from audit_utils import (  # type: ignore[import]
+from audit_utils import (  # noqa: E402  # type: ignore[import]
     add_common_args,
     err,
     header,
@@ -33,7 +33,10 @@ from audit_utils import (  # type: ignore[import]
     ok,
     print_findings,
 )
-from route_audit_config import NO_PAGINATION_EXCEPTIONS, NON_LIST_SUFFIXES  # type: ignore[import]
+from route_audit_config import (  # noqa: E402  # type: ignore[import]
+    NO_PAGINATION_EXCEPTIONS,
+    NON_LIST_SUFFIXES,
+)
 
 # Parameter names that indicate pagination is present
 PAGINATION_PARAMS = {"page", "page_size", "limit", "offset", "per_page"}

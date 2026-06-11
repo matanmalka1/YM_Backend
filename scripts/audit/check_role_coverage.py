@@ -22,8 +22,14 @@ SCRIPTS_AUDIT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(SCRIPTS_AUDIT_DIR))
 
-from audit_utils import add_common_args, err, header, ok, print_findings  # type: ignore[import]
-from route_audit_config import AUTH_ONLY_ROUTES, PUBLIC_ROUTES  # type: ignore[import]
+from audit_utils import (  # noqa: E402  # type: ignore[import]
+    add_common_args,
+    err,
+    header,
+    ok,
+    print_findings,
+)
+from route_audit_config import AUTH_ONLY_ROUTES, PUBLIC_ROUTES  # noqa: E402  # type: ignore[import]
 
 
 def _get_dependency_names(route) -> set[str]:  # type: ignore[no-untyped-def]

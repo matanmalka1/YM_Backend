@@ -30,7 +30,7 @@ SCRIPTS_AUDIT_DIR = Path(__file__).resolve().parent
 sys.path.insert(0, str(ROOT_DIR))
 sys.path.insert(0, str(SCRIPTS_AUDIT_DIR))
 
-from audit_utils import (  # type: ignore[import]
+from audit_utils import (  # noqa: E402  # type: ignore[import]
     FRONTEND_SRC,
     add_common_args,
     extract_frontend_paths,
@@ -41,7 +41,7 @@ from audit_utils import (  # type: ignore[import]
     print_findings,
     warn,
 )
-from route_audit_config import KNOWN_EXTERNAL_OR_MANUAL_ROUTES  # type: ignore[import]
+from route_audit_config import KNOWN_EXTERNAL_OR_MANUAL_ROUTES  # noqa: E402  # type: ignore[import]
 
 # Paths to skip entirely (FastAPI built-ins, OpenAPI)
 SKIP_PATHS = {"/docs", "/redoc", "/openapi.json", "/docs/oauth2-redirect"}

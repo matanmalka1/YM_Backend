@@ -574,7 +574,7 @@ def main() -> None:
     # "AnnualReportScheduleEntry". Only after all classes are registered do
     # we introspect relationships.
     print("\n  Pre-importing all modules...")
-    for domain, modules in domain_modules.items():
+    for _domain, modules in domain_modules.items():
         for mod_path in modules:
             try:
                 importlib.import_module(mod_path)

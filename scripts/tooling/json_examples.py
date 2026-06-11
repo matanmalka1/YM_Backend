@@ -12,7 +12,7 @@ ROOT_DIR = Path(__file__).resolve().parents[2]
 if str(ROOT_DIR) not in sys.path:
     sys.path.insert(0, str(ROOT_DIR))
 
-from app.main import app
+from app.main import app  # noqa: E402
 
 FORMAT_EXAMPLES = {
     "date-time": "2026-01-15T10:30:00Z",
