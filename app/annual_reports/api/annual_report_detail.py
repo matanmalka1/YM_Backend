@@ -17,20 +17,6 @@ router = APIRouter(
 )
 
 
-def _enrich_detail_response(response: ReportDetailResponse, db) -> ReportDetailResponse:
-    from app.annual_reports.repositories.annual_report_repository import (
-        AnnualReportRepository,
-    )
-
-    report = AnnualReportRepository(db).get_by_id(response.report_id)
-    if report:
-        response.tax_refund_amount = (
-            float(report.refund_due) if report.refund_due is not None else None
-        )
-        response.tax_due_amount = float(report.tax_due) if report.tax_due is not None else None
-    return response
-
-
 @router.get(
     "/{report_id}/details",
     response_model=ReportDetailResponse,
@@ -41,8 +27,8 @@ def get_annual_report_detail(report_id: int, db: DBSession, user: CurrentUser):
     service = AnnualReportDetailService(db)
     detail = service.get_detail(report_id)
     if detail is None:
-        return _enrich_detail_response(ReportDetailResponse(report_id=report_id), db)
-    return _enrich_detail_response(ReportDetailResponse.model_validate(detail), db)
+        return ReportDetailResponse(report_id=report_id)
+    return ReportDetailResponse.model_validate(detail)
 
 
 @router.patch(
@@ -60,4 +46,4 @@ def update_annual_report_detail(
     service = AnnualReportDetailService(db)
     update_data = request.model_dump(exclude_unset=True)
     detail = service.update_detail(report_id, actor_id=user.id, **update_data)
-    return _enrich_detail_response(ReportDetailResponse.model_validate(detail), db)
+    return ReportDetailResponse.model_validate(detail)

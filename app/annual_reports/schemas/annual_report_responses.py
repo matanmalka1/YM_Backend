@@ -49,7 +49,34 @@ class AnnualReportResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-AnnualReportListResponse = PaginatedResponse[AnnualReportResponse]
+class AnnualReportListItem(BaseModel):
+    """Thin row DTO for annual-report list/card endpoints.
+
+    Only fields rendered by list/history/comparison UIs. Detail-only,
+    calculation, action, and transition fields are intentionally excluded
+    (see AnnualReportDetailResponse for the full detail shape).
+    """
+
+    id: int
+    client_record_id: int
+    office_client_number: int | None = None
+    client_name: str | None = None
+    client_id_number: str | None = None
+    tax_year: int
+    client_type: ClientAnnualFilingType
+    form_type: PrimaryAnnualReportForm
+    status: AnnualReportStatus
+    deadline_type: FilingDeadlineType
+    filing_deadline: ApiDateTime | None = None
+    submitted_at: ApiDateTime | None = None
+    assessment_amount: ApiDecimal | None = None
+    refund_due: ApiDecimal | None = None
+    tax_due: ApiDecimal | None = None
+
+    model_config = {"from_attributes": True}
+
+
+AnnualReportListResponse = PaginatedResponse[AnnualReportListItem]
 
 
 class ScheduleEntryResponse(BaseModel):
@@ -78,32 +105,44 @@ class AnnualReportAuditEntry(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class AnnualReportDetailResponse(AnnualReportResponse):
-    schedules: list[ScheduleEntryResponse] = []
-    status_audit: list[AnnualReportAuditEntry] = []
-    # פרטי מס — מ-AnnualReportDetail
-    pension_contribution: ApiDecimal | None = None
-    donation_amount: ApiDecimal | None = None
-    other_credits: ApiDecimal | None = None
-    # נקודות זיכוי — מ-AnnualReportDetail
-    credit_points: ApiDecimal | None = None
-    pension_credit_points: ApiDecimal | None = None
-    life_insurance_credit_points: ApiDecimal | None = None
-    tuition_credit_points: ApiDecimal | None = None
-    client_approved_at: ApiDateTime | None = None
-    internal_notes: str | None = None
-    amendment_reason: str | None = None
-    # שדות מ-AnnualReport (מס מחושב)
-    tax_refund_amount: ApiDecimal | None = None
-    tax_due_amount: ApiDecimal | None = None
-    # סיכום פיננסי — מחושב בשירות
+class AnnualReportTaxCalculationResponse(BaseModel):
+    """Computed financial/tax outputs for a report detail view.
+
+    Every field here is derived/aggregated in the service (financial summary,
+    tax engine, credit-point breakdown, advances). User-entered deduction
+    inputs (pension_contribution, donation_amount, other_credits) and the
+    persisted outcome columns (refund_due, tax_due, assessment_amount) stay
+    flat on AnnualReportDetailResponse.
+    """
+
+    # סיכום פיננסי — מ-FinancialSummaryService
     total_income: ApiDecimal | None = None
     total_expenses: ApiDecimal | None = None
     recognized_expenses: ApiDecimal | None = None
     taxable_income: ApiDecimal | None = None
+    # מנוע המס / מקדמות
     profit: ApiDecimal | None = None
     tax_after_credits: ApiDecimal | None = None
     final_balance: ApiDecimal | None = None
+    # נקודות זיכוי — מצרף מ-AnnualReportCreditPointRepository
+    credit_points: ApiDecimal | None = None
+    pension_credit_points: ApiDecimal | None = None
+    life_insurance_credit_points: ApiDecimal | None = None
+    tuition_credit_points: ApiDecimal | None = None
+
+
+class AnnualReportDetailResponse(AnnualReportResponse):
+    schedules: list[ScheduleEntryResponse] = []
+    status_audit: list[AnnualReportAuditEntry] = []
+    # ניכויים שמוזנים ידנית — מ-AnnualReportDetail
+    pension_contribution: ApiDecimal | None = None
+    donation_amount: ApiDecimal | None = None
+    other_credits: ApiDecimal | None = None
+    client_approved_at: ApiDateTime | None = None
+    internal_notes: str | None = None
+    amendment_reason: str | None = None
+    # חישובי מס מקובצים
+    tax_calculation: AnnualReportTaxCalculationResponse | None = None
 
 
 class SeasonSummaryResponse(BaseModel):

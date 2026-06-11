@@ -43,6 +43,18 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     )
     assert total_client_reports == 2
     assert [r.id for r in client_reports] == [report_a_2026.id, report_a_2025.id]
+    # List rows are the thin AnnualReportListItem: no detail/calc/action fields.
+    list_item = client_reports[0]
+    for absent in (
+        "schedules",
+        "status_audit",
+        "tax_calculation",
+        "available_actions",
+        "available_transitions",
+        "notes",
+        "created_by",
+    ):
+        assert not hasattr(list_item, absent)
 
     reports_2025, total_2025 = service.list_reports(tax_year=2025, page=1, page_size=20)
     assert total_2025 == 1
@@ -61,6 +73,14 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     detail = service.get_detail_report(report_a_2026.id)
     assert detail is not None
     assert detail.id == report_a_2026.id
-    assert detail.total_income == 0.0
-    assert detail.total_expenses == 0.0
+    # Computed financial outputs are grouped under tax_calculation (item 36).
+    assert detail.tax_calculation is not None
+    assert detail.tax_calculation.total_income == 0.0
+    assert detail.tax_calculation.total_expenses == 0.0
+    # Removed duplicate float copies (item 35) are gone.
+    assert not hasattr(detail, "tax_refund_amount")
+    assert not hasattr(detail, "tax_due_amount")
+    # Detail still carries detail-only + action/transition fields.
     assert len(detail.status_audit) >= 1
+    assert hasattr(detail, "available_actions")
+    assert hasattr(detail, "available_transitions")

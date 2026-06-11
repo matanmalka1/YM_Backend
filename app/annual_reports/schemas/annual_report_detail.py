@@ -13,8 +13,6 @@ class ReportDetailResponse(BaseModel):
     pension_contribution: ApiDecimal | None = None
     donation_amount: ApiDecimal | None = None
     other_credits: ApiDecimal | None = None
-    tax_refund_amount: ApiDecimal | None = None
-    tax_due_amount: ApiDecimal | None = None
     client_approved_at: ApiDateTime | None = None
     internal_notes: str | None = None
     amendment_reason: str | None = None

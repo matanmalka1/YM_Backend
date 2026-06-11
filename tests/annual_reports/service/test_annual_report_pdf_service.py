@@ -41,7 +41,7 @@ def test_build_pdf_runs_when_reportlab_available_or_raises():
         total_liability=120,
         national_insurance=SimpleNamespace(base_amount=10, high_amount=5, total=15),
     )
-    detail = SimpleNamespace(tax_refund_amount=0, tax_due_amount=120)
+    detail = SimpleNamespace(internal_notes=None)
 
     try:
         pdf = pdf_builder.build_pdf(report, "Client", summary, tax, detail)

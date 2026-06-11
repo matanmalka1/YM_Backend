@@ -34,6 +34,10 @@ def test_get_detail_returns_blank_when_missing(client, test_db, advisor_headers)
     assert data["other_credits"] is None
     assert data["client_approved_at"] is None
     assert data["internal_notes"] is None
+    # Dead duplicate float copies removed (api-todo 35b). Canonical refund_due/
+    # tax_due live on the main report DTO, not on ReportDetailResponse.
+    assert "tax_refund_amount" not in data
+    assert "tax_due_amount" not in data
 
 
 def test_update_detail_creates_and_updates(client, test_db, advisor_headers):
@@ -57,6 +61,8 @@ def test_update_detail_creates_and_updates(client, test_db, advisor_headers):
     assert first["client_approved_at"] == "2026-02-15T12:00:00Z"
     assert first["internal_notes"] == "Initial review complete"
     assert first["updated_at"] is None
+    assert "tax_refund_amount" not in first
+    assert "tax_due_amount" not in first
 
     # Second patch should set updated_at
     follow_up = client.patch(

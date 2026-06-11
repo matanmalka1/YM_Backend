@@ -2119,7 +2119,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
                 }
               }
             }
@@ -2192,7 +2192,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
                 }
               }
             }
@@ -2943,7 +2943,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
                 }
               }
             }
@@ -3041,7 +3041,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
                 }
               }
             }
@@ -3181,7 +3181,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
                 }
               }
             }
@@ -15375,66 +15375,6 @@
             ],
             "title": "Other Credits"
           },
-          "credit_points": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Credit Points"
-          },
-          "pension_credit_points": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Pension Credit Points"
-          },
-          "life_insurance_credit_points": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Life Insurance Credit Points"
-          },
-          "tuition_credit_points": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tuition Credit Points"
-          },
           "client_approved_at": {
             "anyOf": [
               {
@@ -15472,140 +15412,15 @@
             ],
             "title": "Amendment Reason"
           },
-          "tax_refund_amount": {
+          "tax_calculation": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
+                "$ref": "#/components/schemas/AnnualReportTaxCalculationResponse"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Tax Refund Amount"
-          },
-          "tax_due_amount": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax Due Amount"
-          },
-          "total_income": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Income"
-          },
-          "total_expenses": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Total Expenses"
-          },
-          "recognized_expenses": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Recognized Expenses"
-          },
-          "taxable_income": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Taxable Income"
-          },
-          "profit": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Profit"
-          },
-          "tax_after_credits": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax After Credits"
-          },
-          "final_balance": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Final Balance"
+            ]
           }
         },
         "type": "object",
@@ -15714,6 +15529,154 @@
         "additionalProperties": false,
         "type": "object",
         "title": "AnnualReportDetailUpdateRequest"
+      },
+      "AnnualReportListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "office_client_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office Client Number"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "client_id_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id Number"
+          },
+          "tax_year": {
+            "type": "integer",
+            "title": "Tax Year"
+          },
+          "client_type": {
+            "$ref": "#/components/schemas/ClientAnnualFilingType"
+          },
+          "form_type": {
+            "$ref": "#/components/schemas/PrimaryAnnualReportForm"
+          },
+          "status": {
+            "$ref": "#/components/schemas/AnnualReportStatus"
+          },
+          "deadline_type": {
+            "$ref": "#/components/schemas/FilingDeadlineType"
+          },
+          "filing_deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filing Deadline"
+          },
+          "submitted_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submitted At"
+          },
+          "assessment_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assessment Amount"
+          },
+          "refund_due": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Refund Due"
+          },
+          "tax_due": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Due"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "client_record_id",
+          "tax_year",
+          "client_type",
+          "form_type",
+          "status",
+          "deadline_type"
+        ],
+        "title": "AnnualReportListItem",
+        "description": "Thin row DTO for annual-report list/card endpoints.\n\nOnly fields rendered by list/history/comparison UIs. Detail-only,\ncalculation, action, and transition fields are intentionally excluded\n(see AnnualReportDetailResponse for the full detail shape)."
       },
       "AnnualReportResponse": {
         "properties": {
@@ -16131,6 +16094,178 @@
           "statuses"
         ],
         "title": "AnnualReportStatusReportResponse"
+      },
+      "AnnualReportTaxCalculationResponse": {
+        "properties": {
+          "total_income": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Income"
+          },
+          "total_expenses": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Total Expenses"
+          },
+          "recognized_expenses": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recognized Expenses"
+          },
+          "taxable_income": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Taxable Income"
+          },
+          "profit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profit"
+          },
+          "tax_after_credits": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax After Credits"
+          },
+          "final_balance": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Balance"
+          },
+          "credit_points": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Points"
+          },
+          "pension_credit_points": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pension Credit Points"
+          },
+          "life_insurance_credit_points": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Life Insurance Credit Points"
+          },
+          "tuition_credit_points": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tuition Credit Points"
+          }
+        },
+        "type": "object",
+        "title": "AnnualReportTaxCalculationResponse",
+        "description": "Computed financial/tax outputs for a report detail view.\n\nEvery field here is derived/aggregated in the service (financial summary,\ntax engine, credit-point breakdown, advances). User-entered deduction\ninputs (pension_contribution, donation_amount, other_credits) and the\npersisted outcome columns (refund_due, tax_due, assessment_amount) stay\nflat on AnnualReportDetailResponse."
       },
       "AnnualTurnover": {
         "properties": {
@@ -22890,11 +23025,11 @@
         ],
         "title": "PaginatedResponse[AnnualReportAuditEntry]"
       },
-      "PaginatedResponse_AnnualReportResponse_": {
+      "PaginatedResponse_AnnualReportListItem_": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/AnnualReportResponse"
+              "$ref": "#/components/schemas/AnnualReportListItem"
             },
             "type": "array",
             "title": "Items"
@@ -22919,7 +23054,7 @@
           "page_size",
           "total"
         ],
-        "title": "PaginatedResponse[AnnualReportResponse]"
+        "title": "PaginatedResponse[AnnualReportListItem]"
       },
       "PaginatedResponse_AuthorityContactResponse_": {
         "properties": {
@@ -23990,36 +24125,6 @@
               }
             ],
             "title": "Other Credits"
-          },
-          "tax_refund_amount": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax Refund Amount"
-          },
-          "tax_due_amount": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax Due Amount"
           },
           "client_approved_at": {
             "anyOf": [

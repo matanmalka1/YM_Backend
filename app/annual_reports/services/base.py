@@ -4,7 +4,10 @@ from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.schemas.annual_report_responses import AnnualReportResponse
+from app.annual_reports.schemas.annual_report_responses import (
+    AnnualReportListItem,
+    AnnualReportResponse,
+)
 from app.annual_reports.services.constants import VALID_TRANSITIONS
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
 from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -28,14 +31,15 @@ class AnnualReportBaseService:
             )
         return report
 
-    def _to_responses(self, reports: list[AnnualReport]) -> list[AnnualReportResponse]:
+    def _resolve_client_context(
+        self, reports: list[AnnualReport]
+    ) -> tuple[dict, dict]:
+        """Resolve client records + legal entities for a batch of reports.
+
+        Returns (records_by_id, legal_entities_by_id). Shared by both the full
+        response mapper and the thin list mapper so the client-context join is
+        only written once.
         """
-        Project ORM instances to AnnualReportResponse, populating client context.
-        Reports are now client-scoped; business_name is resolved from the client's
-        primary business (first non-deleted business) for display purposes.
-        """
-        if not reports:
-            return []
         client_record_ids = {r.client_record_id for r in reports}
         records = (
             {
@@ -56,6 +60,18 @@ class AnnualReportBaseService:
             if legal_entity_ids
             else {}
         )
+        return records, legal_entities
+
+    def _to_responses(self, reports: list[AnnualReport]) -> list[AnnualReportResponse]:
+        """
+        Project ORM instances to AnnualReportResponse, populating client context,
+        available actions, and allowed transitions. Used by detail/single paths.
+        Reports are now client-scoped; business_name is resolved from the client's
+        primary business (first non-deleted business) for display purposes.
+        """
+        if not reports:
+            return []
+        records, legal_entities = self._resolve_client_context(reports)
 
         from app.actions.services.report_deadline_actions import get_annual_report_actions
 
@@ -76,5 +92,27 @@ class AnnualReportBaseService:
             obj.available_transitions = [
                 status for status in AnnualReportStatus if status in allowed
             ]
+            result.append(obj)
+        return result
+
+    def _to_list_items(self, reports: list[AnnualReport]) -> list[AnnualReportListItem]:
+        """
+        Project ORM instances to the thin AnnualReportListItem for list endpoints.
+        Resolves client context but intentionally skips the per-row action and
+        transition computation that the list UI does not render.
+        """
+        if not reports:
+            return []
+        records, legal_entities = self._resolve_client_context(reports)
+
+        result = []
+        for r in reports:
+            obj = AnnualReportListItem.model_validate(r)
+            record = records.get(r.client_record_id)
+            legal_entity = legal_entities.get(record.legal_entity_id) if record else None
+            if record and legal_entity:
+                obj.office_client_number = record.office_client_number
+                obj.client_name = legal_entity.official_name
+                obj.client_id_number = legal_entity.id_number
             result.append(obj)
         return result
