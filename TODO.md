@@ -55,8 +55,12 @@ Last verified from code, migrations, and tests: 2026-06-07.
 ## High
 
 - [ ] Complete invoice provider integration.
-  - Current state: invoice references can be attached internally, but there is no invoice API, provider client, or call from `BillingService.issue_charge()`.
+  - Current state: invoice attach API now exists (`POST /api/v1/invoices`, `GET /api/v1/invoices/charge/{charge_id}`, schemas `InvoiceAttachRequest`/`InvoiceResponse`), but there is still no provider client or call from `BillingService.issue_charge()`.
   - Relevant code: `app/invoice/services/invoice_service.py`, `app/charge/services/billing_service.py`, `app/config.py`
+
+- [ ] Add frontend client for invoice attach/get endpoints.
+  - Current state (2026-06-10): backend exposes `POST /api/v1/invoices` and `GET /api/v1/invoices/charge/{charge_id}`; `openapi.json` + frontend `generated.ts` baseline regenerated, but no app code consumes them yet. The only invoice references in the charges feature are the `invoice_issued` notification trigger, a different concept.
+  - Scope: add `contracts.ts` types + React Query hook (likely `frontend/src/features/charges/api/`), wire into charge UI (e.g. `ChargeDetailDrawer`).
 
 - [ ] Add batched alert counts for client sidebar navigation.
   - Current state: notification/work-queue summaries exist per client, but no batched endpoint exists for all sidebar clients.
