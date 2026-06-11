@@ -76,6 +76,9 @@ class Charge(Base):
 
     # ── Lifecycle timestamps + actors ─────────────────────────────────────────
     created_at: Mapped[datetime.datetime] = mapped_column(default=utcnow, nullable=False)
+    # Set only on real mutation (issue/pay/cancel/soft-delete). NULL until first update —
+    # never faked from created_at. See docs/api-todo.md #46.
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
     created_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     issued_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)

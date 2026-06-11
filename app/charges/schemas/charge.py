@@ -41,6 +41,7 @@ class ChargeResponse(BaseModel):
     months_covered: int
     description: str | None = None
     created_at: ApiDateTime
+    updated_at: ApiDateTime | None = None
     created_by: int | None = None
     issued_at: ApiDateTime | None = None
     issued_by: int | None = None
