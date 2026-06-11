@@ -1,5 +1,7 @@
 from types import SimpleNamespace
 
+import pytest
+
 from app.actions.services.business_actions import get_business_actions
 from app.businesses.models.business import BusinessStatus
 from app.users.models.user import UserRole
@@ -58,8 +60,7 @@ def test_business_actions_uses_client_id_even_when_legal_entity_id_exists():
 def test_business_actions_raises_when_client_id_missing():
     business = SimpleNamespace(id=8, legal_entity_id=77, status=BusinessStatus.ACTIVE)
 
-    try:
+    with pytest.raises(ValueError) as exc:
         get_business_actions(business, user_role=UserRole.ADVISOR)
-        assert False, "Expected ValueError when client_id is missing"
-    except ValueError as exc:
-        assert str(exc) == "Business actions require client_id for endpoint construction"
+
+    assert str(exc.value) == "Business actions require client_id for endpoint construction"

@@ -25,7 +25,7 @@ def test_login_sets_refresh_cookie_ttl(client, test_user):
 
 
 def test_refresh_returns_new_access_token(client, test_user):
-    login = _login(client, test_user.email, "password123")
+    _login(client, test_user.email, "password123")
 
     response = client.post("/api/v1/auth/refresh")
 

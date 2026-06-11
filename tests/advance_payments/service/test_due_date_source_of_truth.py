@@ -3,6 +3,8 @@
 from datetime import date
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
+from app.common.enums import DeadlineRuleType, ObligationType
+from tests.tax_calendar.service.linking_helpers import advance_client, make_entry
 
 
 def generate_annual_schedule(
@@ -14,10 +16,6 @@ def generate_annual_schedule(
         period_months_count=period_months_count,
         reference_date=reference_date,
     )
-
-
-from app.common.enums import DeadlineRuleType, ObligationType
-from tests.tax_calendar.service.linking_helpers import advance_client, make_entry
 
 
 def test_advance_payment_due_date_from_entry_not_hardcoded_15(test_db):

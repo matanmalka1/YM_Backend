@@ -136,7 +136,7 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
         },
     )
     assert pending_resp.status_code == 201
-    material_item_id = create_work_item(client, advisor_headers, vat_client, "2026-02")
+    create_work_item(client, advisor_headers, vat_client, "2026-02")
     data_entry_item_id = create_work_item(client, advisor_headers, vat_client, "2026-03")
     ready_item_id = create_work_item(client, advisor_headers, vat_client, "2026-04")
     filed_item_id = create_work_item(

@@ -135,10 +135,7 @@ def test_guard_in_progress_row_blocks_fn_execution(test_db, test_user):
 
 def test_guard_concurrent_reservation_runs_fn_once(test_db, test_user):
     """Two threads racing on the same key → fn runs at most once."""
-    import hashlib
-
     payload = b"concurrent-body"
-    request_hash = hashlib.sha256(payload).hexdigest()
 
     # Simulate the race: thread A successfully reserves, then thread B tries.
     # We emulate the "B arrives mid-flight" by reserving for A, NOT completing,
