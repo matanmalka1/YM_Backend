@@ -106,6 +106,11 @@ class SignatureRequest(Base):
 
     # ── Lifecycle timestamps ──────────────────────────────────────────────────
     created_at: Mapped[datetime.datetime] = mapped_column(default=utcnow, nullable=False)
+    # Set only on real mutation of the request row (send/sign/decline/cancel/expire/
+    # soft-delete). NULL until first update — never faked from created_at. The
+    # per-event audit trail (SignatureAuditEvent) stays the detailed source of truth
+    # and remains append-only. See docs/api-todo.md #46.
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
     sent_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)
     expires_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)
     expiry_days: Mapped[int] = mapped_column(nullable=False, default=14, server_default="14")

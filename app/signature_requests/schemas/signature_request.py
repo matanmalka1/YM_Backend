@@ -46,6 +46,7 @@ class SignatureRequestResponse(BaseModel):
     annual_report_id: int | None = None
     document_id: int | None = None
     created_at: ApiDateTime
+    updated_at: ApiDateTime | None = None
     sent_at: ApiDateTime | None = None
     expires_at: ApiDateTime | None = None
     signed_at: ApiDateTime | None = None
