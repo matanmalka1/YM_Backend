@@ -6,9 +6,9 @@ from app.annual_reports.schemas.annual_report_requests import (
     SubmitRequest,
 )
 from app.annual_reports.schemas.annual_report_responses import (
+    AnnualReportAuditEntry,
     AnnualReportDetailResponse,
     AnnualReportResponse,
-    StatusHistoryResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
@@ -115,11 +115,11 @@ def update_deadline(
 
 
 @router.get(
-    "/{report_id}/history",
-    response_model=PaginatedResponse[StatusHistoryResponse],
+    "/{report_id}/audit",
+    response_model=PaginatedResponse[AnnualReportAuditEntry],
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def get_status_history(
+def get_report_audit(
     report_id: int,
     db: DBSession,
     user: CurrentUser,
@@ -127,8 +127,8 @@ def get_status_history(
     page_size: int = Query(50, ge=1, le=200),
 ):
     service = AnnualReportService(db)
-    all_history = service.get_status_history(report_id)
-    total = len(all_history)
+    all_audit_entries = service.get_report_audit(report_id)
+    total = len(all_audit_entries)
     start = (page - 1) * page_size
-    items = all_history[start : start + page_size]
+    items = all_audit_entries[start : start + page_size]
     return PaginatedResponse(items=items, page=page, page_size=page_size, total=total)

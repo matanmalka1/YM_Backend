@@ -147,7 +147,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         old_status = report.status
         updated = self.repo.update(report_id, report=report, **update_fields)
 
-        self.repo.append_status_history(
+        self.repo.append_status_audit_entry(
             annual_report_id=report_id,
             from_status=old_status,
             to_status=ns,
@@ -232,7 +232,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             filing_deadline=filing_deadline,
             custom_deadline_note=custom_deadline_note,
         )
-        self.repo.append_status_history(
+        self.repo.append_status_audit_entry(
             annual_report_id=report_id,
             from_status=updated.status,
             to_status=updated.status,

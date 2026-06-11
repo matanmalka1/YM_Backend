@@ -9,7 +9,7 @@ from app.binders.repositories.binder_intake_repository import BinderIntakeReposi
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
 from app.binders.schemas.binder import (
-    BinderHistoryEntry,
+    BinderAuditEntry,
     BinderIntakeMaterialResponse,
     BinderIntakeResponse,
 )
@@ -18,8 +18,8 @@ from app.core.exceptions import NotFoundError
 from app.users.repositories.user_repository import UserRepository
 
 
-class BinderHistoryService:
-    """Binder audit history read service."""
+class BinderAuditService:
+    """Binder audit read service."""
 
     def __init__(self, db: Session):
         self.db = db
@@ -29,13 +29,13 @@ class BinderHistoryService:
         self.material_repo = BinderIntakeMaterialRepository(db)
         self.user_repo = UserRepository(db)
 
-    def build_history_entries(self, logs: list[BinderLifecycleLog]) -> list[BinderHistoryEntry]:
+    def build_audit_entries(self, logs: list[BinderLifecycleLog]) -> list[BinderAuditEntry]:
         """Enrich lifecycle log records with changed_by user names."""
         user_ids = {log.changed_by_user_id for log in logs}
         users = [self.user_repo.get_by_id(uid) for uid in user_ids]
         name_map = {u.id: u.full_name for u in users if u}
         return [
-            BinderHistoryEntry(
+            BinderAuditEntry(
                 field_name=log.field_name,
                 old_value=log.old_value,
                 new_value=log.new_value,
@@ -47,7 +47,7 @@ class BinderHistoryService:
             for log in logs
         ]
 
-    def get_binder_history(
+    def get_binder_audit(
         self, binder_id: int, page: int = 1, page_size: int = 50
     ) -> tuple[Binder, list[BinderLifecycleLog], int] | None:
         binder = self.binder_repo.get_by_id(binder_id)

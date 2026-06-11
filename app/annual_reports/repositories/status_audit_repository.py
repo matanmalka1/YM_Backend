@@ -1,4 +1,4 @@
-"""Repository operations for annual report status history."""
+"""Repository operations for annual report status audit rows."""
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,11 +9,11 @@ from app.annual_reports.models.annual_report_status_history import (
 )
 
 
-class AnnualReportStatusHistoryRepository:
+class AnnualReportStatusAuditRepository:
     def __init__(self, db: Session):
         self.db = db
 
-    def append_status_history(
+    def append_status_audit_entry(
         self,
         annual_report_id: int,
         from_status: AnnualReportStatus | None,
@@ -32,7 +32,9 @@ class AnnualReportStatusHistoryRepository:
         self.db.flush()
         return entry
 
-    def get_status_history(self, annual_report_id: int) -> list[AnnualReportStatusHistory]:
+    def list_status_audit_entries(
+        self, annual_report_id: int
+    ) -> list[AnnualReportStatusHistory]:
         return self.db.scalars(
             select(AnnualReportStatusHistory)
             .where(AnnualReportStatusHistory.annual_report_id == annual_report_id)

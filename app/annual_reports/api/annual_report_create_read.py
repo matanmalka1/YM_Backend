@@ -97,7 +97,7 @@ def list_overdue(
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def get_annual_report(report_id: int, db: DBSession, user: CurrentUser):
-    """Get a single report with its schedule entries and status history."""
+    """Get a single report with its schedule entries and status audit entries."""
     service = AnnualReportService(db)
     detail = service.get_detail_report(report_id)
     if detail is None:

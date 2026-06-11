@@ -66,7 +66,7 @@ class ScheduleEntryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class StatusHistoryResponse(BaseModel):
+class AnnualReportAuditEntry(BaseModel):
     id: int
     annual_report_id: int
     from_status: AnnualReportStatus | None = None
@@ -80,7 +80,7 @@ class StatusHistoryResponse(BaseModel):
 
 class AnnualReportDetailResponse(AnnualReportResponse):
     schedules: list[ScheduleEntryResponse] = []
-    status_history: list[StatusHistoryResponse] = []
+    status_audit: list[AnnualReportAuditEntry] = []
     # פרטי מס — מ-AnnualReportDetail
     pension_contribution: ApiDecimal | None = None
     donation_amount: ApiDecimal | None = None

@@ -187,10 +187,10 @@ class BinderHandoverResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-# ── Lifecycle history ─────────────────────────────────────────────────────────
+# ── Lifecycle audit ───────────────────────────────────────────────────────────
 
 
-class BinderHistoryEntry(BaseModel):
+class BinderAuditEntry(BaseModel):
     field_name: str
     old_value: str
     new_value: str
@@ -202,9 +202,9 @@ class BinderHistoryEntry(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class BinderHistoryResponse(BaseModel):
+class BinderAuditResponse(BaseModel):
     binder_id: int
-    history: list[BinderHistoryEntry]
+    audit: list[BinderAuditEntry]
     total: int
     page: int
     page_size: int

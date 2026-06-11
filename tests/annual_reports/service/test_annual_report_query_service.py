@@ -63,4 +63,4 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     assert detail.id == report_a_2026.id
     assert detail.total_income == 0.0
     assert detail.total_expenses == 0.0
-    assert len(detail.status_history) >= 1
+    assert len(detail.status_audit) >= 1

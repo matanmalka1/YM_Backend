@@ -1,12 +1,12 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.binders.schemas.binder import (
-    BinderHistoryResponse,
+    BinderAuditResponse,
     BinderIntakeListResponse,
     BinderIntakePatchRequest,
     BinderIntakeResponse,
 )
-from app.binders.services.binder_history_service import BinderHistoryService
+from app.binders.services.binder_audit_service import BinderAuditService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.binders.services.messages import BINDER_NOT_FOUND
 from app.core.exceptions import not_found_response
@@ -15,25 +15,25 @@ from app.users.models.user import UserRole
 
 router = APIRouter(
     prefix="/binders",
-    tags=["binders-history"],
+    tags=["binders-audit"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 
 
 @router.get(
-    "/{binder_id}/history",
-    response_model=BinderHistoryResponse,
+    "/{binder_id}/audit",
+    response_model=BinderAuditResponse,
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
-def get_binder_history(
+def get_binder_audit(
     binder_id: int,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=50, ge=1, le=200),
 ):
-    service = BinderHistoryService(db)
-    result = service.get_binder_history(binder_id, page=page, page_size=page_size)
+    service = BinderAuditService(db)
+    result = service.get_binder_audit(binder_id, page=page, page_size=page_size)
     if not result:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -41,9 +41,9 @@ def get_binder_history(
         )
 
     binder, logs, total = result
-    return BinderHistoryResponse(
+    return BinderAuditResponse(
         binder_id=binder.id,
-        history=service.build_history_entries(logs),
+        audit=service.build_audit_entries(logs),
         total=total,
         page=page,
         page_size=page_size,
@@ -62,7 +62,7 @@ def get_binder_intakes(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=100),
 ):
-    service = BinderHistoryService(db)
+    service = BinderAuditService(db)
     intakes, total = service.get_binder_intakes(binder_id, page=page, page_size=page_size)
     return BinderIntakeListResponse(
         binder_id=binder_id,

@@ -2216,7 +2216,7 @@
           "annual-reports"
         ],
         "summary": "Get Annual Report",
-        "description": "Get a single report with its schedule entries and status history.",
+        "description": "Get a single report with its schedule entries and status audit entries.",
         "operationId": "get_annual_report_api_v1_annual_reports__report_id__get",
         "parameters": [
           {
@@ -2820,13 +2820,13 @@
         }
       }
     },
-    "/api/v1/annual-reports/{report_id}/history": {
+    "/api/v1/annual-reports/{report_id}/audit": {
       "get": {
         "tags": [
           "annual-reports"
         ],
-        "summary": "Get Status History",
-        "operationId": "get_status_history_api_v1_annual_reports__report_id__history_get",
+        "summary": "Get Report Audit",
+        "operationId": "get_report_audit_api_v1_annual_reports__report_id__audit_get",
         "parameters": [
           {
             "name": "report_id",
@@ -2867,7 +2867,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_StatusHistoryResponse_"
+                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportAuditEntry_"
                 }
               }
             }
@@ -6262,13 +6262,13 @@
         }
       }
     },
-    "/api/v1/binders/{binder_id}/history": {
+    "/api/v1/binders/{binder_id}/audit": {
       "get": {
         "tags": [
-          "binders-history"
+          "binders-audit"
         ],
-        "summary": "Get Binder History",
-        "operationId": "get_binder_history_api_v1_binders__binder_id__history_get",
+        "summary": "Get Binder Audit",
+        "operationId": "get_binder_audit_api_v1_binders__binder_id__audit_get",
         "parameters": [
           {
             "name": "binder_id",
@@ -6309,7 +6309,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BinderHistoryResponse"
+                  "$ref": "#/components/schemas/BinderAuditResponse"
                 }
               }
             }
@@ -6340,7 +6340,7 @@
     "/api/v1/binders/{binder_id}/intakes": {
       "get": {
         "tags": [
-          "binders-history"
+          "binders-audit"
         ],
         "summary": "Get Binder Intakes",
         "operationId": "get_binder_intakes_api_v1_binders__binder_id__intakes_get",
@@ -6415,7 +6415,7 @@
     "/api/v1/binders/{binder_id}/intakes/{intake_id}": {
       "patch": {
         "tags": [
-          "binders-history"
+          "binders-audit"
         ],
         "summary": "Patch Binder Intake",
         "operationId": "patch_binder_intake_api_v1_binders__binder_id__intakes__intake_id__patch",
@@ -14718,6 +14718,63 @@
         ],
         "title": "AnnualKPIResponse"
       },
+      "AnnualReportAuditEntry": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "annual_report_id": {
+            "type": "integer",
+            "title": "Annual Report Id"
+          },
+          "from_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AnnualReportStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/AnnualReportStatus"
+          },
+          "changed_by": {
+            "type": "integer",
+            "title": "Changed By"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "occurred_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Occurred At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "annual_report_id",
+          "to_status",
+          "changed_by",
+          "occurred_at"
+        ],
+        "title": "AnnualReportAuditEntry"
+      },
       "AnnualReportCard": {
         "properties": {
           "status": {
@@ -15147,12 +15204,12 @@
             "title": "Schedules",
             "default": []
           },
-          "status_history": {
+          "status_audit": {
             "items": {
-              "$ref": "#/components/schemas/StatusHistoryResponse"
+              "$ref": "#/components/schemas/AnnualReportAuditEntry"
             },
             "type": "array",
-            "title": "Status History",
+            "title": "Status Audit",
             "default": []
           },
           "pension_contribution": {
@@ -16398,6 +16455,101 @@
         "type": "object",
         "title": "AuthorityContactUpdateRequest"
       },
+      "BinderAuditEntry": {
+        "properties": {
+          "field_name": {
+            "type": "string",
+            "title": "Field Name"
+          },
+          "old_value": {
+            "type": "string",
+            "title": "Old Value"
+          },
+          "new_value": {
+            "type": "string",
+            "title": "New Value"
+          },
+          "changed_by_user_id": {
+            "type": "integer",
+            "title": "Changed By User Id"
+          },
+          "changed_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Changed By Name"
+          },
+          "changed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Changed At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "field_name",
+          "old_value",
+          "new_value",
+          "changed_by_user_id",
+          "changed_at"
+        ],
+        "title": "BinderAuditEntry"
+      },
+      "BinderAuditResponse": {
+        "properties": {
+          "binder_id": {
+            "type": "integer",
+            "title": "Binder Id"
+          },
+          "audit": {
+            "items": {
+              "$ref": "#/components/schemas/BinderAuditEntry"
+            },
+            "type": "array",
+            "title": "Audit"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          }
+        },
+        "type": "object",
+        "required": [
+          "binder_id",
+          "audit",
+          "total",
+          "page",
+          "page_size"
+        ],
+        "title": "BinderAuditResponse"
+      },
       "BinderCapacityStatus": {
         "type": "string",
         "enum": [
@@ -16681,101 +16833,6 @@
         },
         "type": "object",
         "title": "BinderHandoverToClientRequest"
-      },
-      "BinderHistoryEntry": {
-        "properties": {
-          "field_name": {
-            "type": "string",
-            "title": "Field Name"
-          },
-          "old_value": {
-            "type": "string",
-            "title": "Old Value"
-          },
-          "new_value": {
-            "type": "string",
-            "title": "New Value"
-          },
-          "changed_by_user_id": {
-            "type": "integer",
-            "title": "Changed By User Id"
-          },
-          "changed_by_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Changed By Name"
-          },
-          "changed_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Changed At",
-            "examples": [
-              "2026-01-02T03:04:05Z"
-            ]
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          }
-        },
-        "type": "object",
-        "required": [
-          "field_name",
-          "old_value",
-          "new_value",
-          "changed_by_user_id",
-          "changed_at"
-        ],
-        "title": "BinderHistoryEntry"
-      },
-      "BinderHistoryResponse": {
-        "properties": {
-          "binder_id": {
-            "type": "integer",
-            "title": "Binder Id"
-          },
-          "history": {
-            "items": {
-              "$ref": "#/components/schemas/BinderHistoryEntry"
-            },
-            "type": "array",
-            "title": "History"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "binder_id",
-          "history",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "BinderHistoryResponse"
       },
       "BinderIntakeListResponse": {
         "properties": {
@@ -22342,6 +22399,37 @@
         ],
         "title": "PaginatedResponse[AnnexDataLineResponse]"
       },
+      "PaginatedResponse_AnnualReportAuditEntry_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualReportAuditEntry"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "PaginatedResponse[AnnualReportAuditEntry]"
+      },
       "PaginatedResponse_AnnualReportResponse_": {
         "properties": {
           "items": {
@@ -22558,37 +22646,6 @@
           "total"
         ],
         "title": "PaginatedResponse[SignatureRequestResponse]"
-      },
-      "PaginatedResponse_StatusHistoryResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/StatusHistoryResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[StatusHistoryResponse]"
       },
       "PaginatedResponse_TaskResponse_": {
         "properties": {
@@ -25071,63 +25128,6 @@
           "to_stage"
         ],
         "title": "StageTransitionRequest"
-      },
-      "StatusHistoryResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "annual_report_id": {
-            "type": "integer",
-            "title": "Annual Report Id"
-          },
-          "from_status": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/AnnualReportStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "to_status": {
-            "$ref": "#/components/schemas/AnnualReportStatus"
-          },
-          "changed_by": {
-            "type": "integer",
-            "title": "Changed By"
-          },
-          "note": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Note"
-          },
-          "occurred_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Occurred At",
-            "examples": [
-              "2026-01-02T03:04:05Z"
-            ]
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "annual_report_id",
-          "to_status",
-          "changed_by",
-          "occurred_at"
-        ],
-        "title": "StatusHistoryResponse"
       },
       "StatusTransitionRequest": {
         "properties": {

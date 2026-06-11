@@ -49,7 +49,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
         has_depreciation: bool = False,
         has_exempt_rental: bool = False,
     ) -> AnnualReport:
-        """Create an annual report and initial schedules/history."""
+        """Create an annual report and initial schedules/status audit entry."""
         client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
         if not client_record:
             from app.core.exceptions import NotFoundError
@@ -134,7 +134,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
         # Auto-generate required schedules
         self._generate_schedules(linked_report)
 
-        self.repo.append_status_history(
+        self.repo.append_status_audit_entry(
             annual_report_id=linked_report.id,
             from_status=None,
             to_status=AnnualReportStatus.NOT_STARTED,

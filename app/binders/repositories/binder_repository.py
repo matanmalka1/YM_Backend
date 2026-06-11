@@ -543,7 +543,7 @@ class BinderRepository(BaseRepository[Binder]):
     def close_in_office_by_client_record(self, client_record_id: int) -> int:
         """Mark all IN_OFFICE binders for a client as FULL when the client is frozen or closed.
 
-        Bulk operation — no per-binder history or audit written (matches VAT/annual-report
+        Bulk operation — no per-binder audit written (matches VAT/annual-report
         cancel_open_by_client_record pattern). Returns the number of binders updated.
         """
         rows = self.db.scalars(
