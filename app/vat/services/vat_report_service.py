@@ -130,7 +130,7 @@ class VatReportService:
             self.work_item_repo, self.user_repo, **kwargs
         )
 
-    def get_audit_trail_enriched(self, item_id: int, limit: int, offset: int) -> dict:
+    def get_audit_trail_enriched(self, item_id: int, page: int, page_size: int) -> dict:
         return vat_report_enrichment.get_audit_trail_enriched(
-            self.work_item_repo, self.user_repo, item_id, limit, offset
+            self.work_item_repo, self.user_repo, item_id, page, page_size
         )

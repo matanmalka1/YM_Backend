@@ -4,10 +4,11 @@ from app.audit.constants import ENTITY_CLIENT
 from app.audit.services.entity_audit_writer import EntityAuditWriter
 
 
-def test_audit_endpoint_paginates_and_sorts_newest_first(
-    client, test_db, advisor_headers, test_user, create_client_with_business
-):
-    client_record, _business = create_client_with_business(id_number="AUDIT-001")
+def _seed_three_audit_entries(test_db, test_user, client_record):
+    """Create three audit entries with deterministic ascending timestamps.
+
+    Returns (first, second, third) ordered oldest → newest.
+    """
     writer = EntityAuditWriter(test_db)
     first = writer.record_update(
         ENTITY_CLIENT, client_record.id, test_user.id, new_value={"step": 1}
@@ -21,23 +22,52 @@ def test_audit_endpoint_paginates_and_sorts_newest_first(
     first.performed_at = third.performed_at - timedelta(minutes=2)
     second.performed_at = third.performed_at - timedelta(minutes=1)
     test_db.commit()
+    return first, second, third
+
+
+def test_audit_endpoint_page_one_returns_newest_records(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    client_record, _business = create_client_with_business(id_number="AUDIT-001")
+    _first, second, third = _seed_three_audit_entries(test_db, test_user, client_record)
 
     response = client.get(
-        f"/api/v1/audit/client/{client_record.id}?limit=2&offset=1",
+        f"/api/v1/audit/client/{client_record.id}?page=1&page_size=2",
         headers=advisor_headers,
     )
 
     assert response.status_code == 200
     payload = response.json()
     assert payload["total"] == 3
-    assert payload["limit"] == 2
-    assert payload["offset"] == 1
-    assert [item["id"] for item in payload["items"]] == [second.id, first.id]
+    assert payload["page"] == 1
+    assert payload["page_size"] == 2
+    # Newest first: page 1 holds the two most recent entries.
+    assert [item["id"] for item in payload["items"]] == [third.id, second.id]
     assert all(item["performed_by_name"] == test_user.full_name for item in payload["items"])
 
 
-def test_audit_endpoint_limit_validation(client, advisor_headers):
-    response = client.get("/api/v1/audit/client/55?limit=201", headers=advisor_headers)
+def test_audit_endpoint_page_two_returns_remaining_records(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    client_record, _business = create_client_with_business(id_number="AUDIT-002")
+    first, _second, _third = _seed_three_audit_entries(test_db, test_user, client_record)
+
+    response = client.get(
+        f"/api/v1/audit/client/{client_record.id}?page=2&page_size=2",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["total"] == 3
+    assert payload["page"] == 2
+    assert payload["page_size"] == 2
+    # Page 2 holds the single remaining (oldest) entry.
+    assert [item["id"] for item in payload["items"]] == [first.id]
+
+
+def test_audit_endpoint_page_size_validation(client, advisor_headers):
+    response = client.get("/api/v1/audit/client/55?page_size=101", headers=advisor_headers)
 
     assert response.status_code == 422
 

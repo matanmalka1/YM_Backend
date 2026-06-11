@@ -132,10 +132,12 @@ def get_audit_trail_enriched(
     work_item_repo: VatWorkItemRepository,
     user_repo: UserRepository,
     item_id: int,
-    limit: int,
-    offset: int,
+    page: int,
+    page_size: int,
 ) -> dict:
-    entries = get_audit_trail(work_item_repo, item_id, limit, offset)
+    get_work_item(work_item_repo, item_id)  # raises VAT.NOT_FOUND (404) if missing
+    offset = (page - 1) * page_size
+    entries = get_audit_trail(work_item_repo, item_id, page_size, offset)
     user_ids = list({e.performed_by for e in entries})
     users = user_repo.list_by_ids(user_ids) if user_ids else []
     return {

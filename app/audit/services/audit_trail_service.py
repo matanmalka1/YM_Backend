@@ -56,11 +56,12 @@ class AuditTrailService:
         self,
         entity_type: str,
         entity_id: int,
-        limit: int = 50,
-        offset: int = 0,
+        page: int = 1,
+        page_size: int = 20,
     ) -> EntityAuditTrailResponse:
         self._assert_entity_readable(entity_type, entity_id)
-        entries = self.audit_repo.get_audit_trail(entity_type, entity_id, limit, offset)
+        offset = (page - 1) * page_size
+        entries = self.audit_repo.get_audit_trail(entity_type, entity_id, page_size, offset)
         total = self.audit_repo.count_audit_trail(entity_type, entity_id)
         user_ids = list({entry.performed_by for entry in entries})
         users = self.user_repo.list_by_ids(user_ids) if user_ids else []
@@ -71,4 +72,4 @@ class AuditTrailService:
             row = EntityAuditLogResponse.model_validate(entry)
             row.performed_by_name = user_map.get(entry.performed_by)
             items.append(row)
-        return EntityAuditTrailResponse(items=items, total=total, limit=limit, offset=offset)
+        return EntityAuditTrailResponse(items=items, total=total, page=page, page_size=page_size)

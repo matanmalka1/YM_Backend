@@ -22,3 +22,5 @@ class VatAuditLogResponse(BaseModel):
 class VatAuditTrailResponse(BaseModel):
     items: list[VatAuditLogResponse]
     total: int
+    page: int
+    page_size: int

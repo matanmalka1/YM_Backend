@@ -11,10 +11,34 @@ from typing import Any
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
 from app.core.logging_config import get_request_id
 
 REQUEST_LOC_PREFIXES = {"body", "query", "path", "header", "cookie"}
+
+
+class ErrorBody(BaseModel):
+    """Body of the standard application error envelope."""
+
+    code: str
+    message: str
+    details: Any = None
+    request_id: str | None = None
+
+
+class ErrorEnvelope(BaseModel):
+    """Standard application error envelope: ``{"error": {...}}``.
+
+    Used as the ``response_model`` for documented error responses such as 404.
+    """
+
+    error: ErrorBody
+
+
+def not_found_response(*, description: str = "המשאב לא נמצא") -> dict[int, dict[str, Any]]:
+    """OpenAPI ``responses=`` entry documenting a 404 with the error envelope."""
+    return {404: {"model": ErrorEnvelope, "description": description}}
 
 _HTTP_CODE_MAP: dict[int, str] = {
     400: "bad_request",

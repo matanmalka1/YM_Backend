@@ -5,6 +5,7 @@ from typing import Optional
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import VatType
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.serializers import (
@@ -156,18 +157,21 @@ def list_work_items(
     "/work-items/{item_id}/audit",
     response_model=VatAuditTrailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def get_audit_trail(
     item_id: int,
     db: DBSession,
-    limit: int = Query(25, ge=1, le=100),
-    offset: int = Query(0, ge=0),
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=100),
 ):
     service = VatReportService(db)
-    enriched = service.get_audit_trail_enriched(item_id, limit, offset)
+    enriched = service.get_audit_trail_enriched(item_id, page, page_size)
     items = []
     for e in enriched["entries"]:
         row = VatAuditLogResponse.model_validate(e)
         row.performed_by_name = enriched["user_map"].get(e.performed_by)
         items.append(row)
-    return VatAuditTrailResponse(items=items, total=enriched["total"])
+    return VatAuditTrailResponse(
+        items=items, total=enriched["total"], page=page, page_size=page_size
+    )
