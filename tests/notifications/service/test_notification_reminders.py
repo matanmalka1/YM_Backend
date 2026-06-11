@@ -1,6 +1,5 @@
 """Tests for NotificationSendService — skipped, policy, and preview behavior."""
 
-
 import pytest
 from sqlalchemy.orm import Session
 

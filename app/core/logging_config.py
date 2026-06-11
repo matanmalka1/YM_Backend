@@ -382,9 +382,7 @@ class StructuredFormatter(logging.Formatter):
         self.log_format = log_format
 
     def _timestamp(self, record: logging.LogRecord) -> str:
-        return datetime.fromtimestamp(record.created, tz=UTC).isoformat(
-            timespec="milliseconds"
-        )
+        return datetime.fromtimestamp(record.created, tz=UTC).isoformat(timespec="milliseconds")
 
     def _format_json(self, record: logging.LogRecord) -> str:
         request_id = request_id_ctx.get()
