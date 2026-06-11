@@ -190,3 +190,34 @@ def test_create_client_missing_required_field_returns_friendly_hebrew_message(
     assert response.status_code == 422
     errors = response.json()["error"]["details"]
     assert any("יש להזין רחוב" in error["message"] for error in errors)
+
+
+# ── #44: sort param standardized on `order` (see docs/architecture/api-contracts.md) ──
+
+
+def test_list_clients_accepts_order_param(client, advisor_headers):
+    for value in ("asc", "desc"):
+        response = client.get(
+            "/api/v1/clients",
+            headers=advisor_headers,
+            params={"sort_by": "full_name", "order": value},
+        )
+        assert response.status_code == 200
+
+
+def test_list_clients_rejects_invalid_order(client, advisor_headers):
+    response = client.get(
+        "/api/v1/clients",
+        headers=advisor_headers,
+        params={"order": "sideways"},
+    )
+    assert response.status_code == 422
+
+
+def test_list_sidebar_clients_accepts_order_param(client, advisor_headers):
+    response = client.get(
+        "/api/v1/clients/sidebar",
+        headers=advisor_headers,
+        params={"order": "desc"},
+    )
+    assert response.status_code == 200

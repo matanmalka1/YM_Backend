@@ -4567,14 +4567,17 @@
             }
           },
           {
-            "name": "sort_order",
+            "name": "order",
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "type": "string",
-              "pattern": "^(asc|desc)$",
               "default": "asc",
-              "title": "Sort Order"
+              "title": "Order"
             }
           },
           {
@@ -4661,14 +4664,17 @@
             }
           },
           {
-            "name": "sort_order",
+            "name": "order",
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "type": "string",
-              "pattern": "^(asc|desc)$",
               "default": "asc",
-              "title": "Sort Order"
+              "title": "Order"
             }
           },
           {
@@ -6119,6 +6125,10 @@
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "type": "string",
               "default": "desc",
               "title": "Order"
