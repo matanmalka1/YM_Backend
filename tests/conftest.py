@@ -7,7 +7,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
-os.environ.setdefault("APP_ENV", "test")
+os.environ["APP_ENV"] = "test"
+os.environ.pop("ENV_FILE", None)
+os.environ.pop("DATABASE_URL", None)
 if len(os.environ.get("JWT_SECRET", "")) < 32:
     os.environ["JWT_SECRET"] = "test-secret-minimum-32-bytes-value"
 

@@ -36,9 +36,36 @@ class ErrorEnvelope(BaseModel):
     error: ErrorBody
 
 
+def error_response_doc(status_code: int, *, description: str) -> dict[int, dict[str, Any]]:
+    """OpenAPI ``responses=`` entry documenting an error with the standard envelope."""
+    return {status_code: {"model": ErrorEnvelope, "description": description}}
+
+
+def bad_request_response(*, description: str = "הבקשה אינה תקינה") -> dict[int, dict[str, Any]]:
+    return error_response_doc(400, description=description)
+
+
+def unauthorized_response(*, description: str = "נדרש אימות") -> dict[int, dict[str, Any]]:
+    return error_response_doc(401, description=description)
+
+
+def forbidden_response(*, description: str = "אין הרשאה לביצוע הפעולה") -> dict[int, dict[str, Any]]:
+    return error_response_doc(403, description=description)
+
+
 def not_found_response(*, description: str = "המשאב לא נמצא") -> dict[int, dict[str, Any]]:
     """OpenAPI ``responses=`` entry documenting a 404 with the error envelope."""
-    return {404: {"model": ErrorEnvelope, "description": description}}
+    return error_response_doc(404, description=description)
+
+
+def conflict_response(*, description: str = "הבקשה מתנגשת עם מצב קיים") -> dict[int, dict[str, Any]]:
+    return error_response_doc(409, description=description)
+
+
+def internal_server_error_response(
+    *, description: str = "אירעה שגיאה לא צפויה"
+) -> dict[int, dict[str, Any]]:
+    return error_response_doc(500, description=description)
 
 
 _HTTP_CODE_MAP: dict[int, str] = {
@@ -83,7 +110,7 @@ def http_error_message_for_status(status_code: int) -> str:
 
 
 def contains_hebrew(s: str) -> bool:
-    return any("֐" <= ch <= "׿" for ch in s)
+    return any("\u0590" <= ch <= "\u05FF" for ch in s)
 
 
 def _field_path(loc: tuple) -> str:

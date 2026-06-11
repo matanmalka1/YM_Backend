@@ -25,6 +25,21 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         f"HTTP exception: {exc.status_code} - {exc.detail}",
         extra={"path": request.url.path},
     )
+    if isinstance(exc.detail, dict) and {"code", "message", "details"}.intersection(exc.detail):
+        raw_code = exc.detail.get("code")
+        raw_message = exc.detail.get("message")
+        return error_response(
+            code=raw_code if isinstance(raw_code, str) else http_error_code_for_status(exc.status_code),
+            message=(
+                raw_message
+                if isinstance(raw_message, str)
+                else http_error_message_for_status(exc.status_code)
+            ),
+            details=exc.detail.get("details"),
+            request_id=_request_id(request),
+            status_code=exc.status_code,
+        )
+
     code = http_error_code_for_status(exc.status_code)
     if isinstance(exc.detail, str) and contains_hebrew(exc.detail):
         message = exc.detail

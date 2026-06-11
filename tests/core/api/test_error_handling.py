@@ -1,5 +1,13 @@
 """Tests for centralized error handling — canonical contract assertions."""
 
+import asyncio
+import json
+
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from starlette.requests import Request
+
+from app.core.exception_handlers import http_exception_handler
+
 
 def test_http_error_has_canonical_envelope(client):
     response = client.get("/api/v1/clients/99999", headers={"Authorization": "Bearer invalid"})
@@ -101,10 +109,9 @@ def test_error_response_does_not_leak_stack_trace(client):
 
 def test_404_returns_not_found_code(client, advisor_headers):
     response = client.get("/api/v1/clients/99999999", headers=advisor_headers)
-    # May be 404 or AppError depending on client lookup
-    assert response.status_code in (404,)
+    assert response.status_code == 404
     err = response.json()["error"]
-    assert err["code"] in ("not_found", "CLIENT.NOT_FOUND", "CLIENT_RECORD.NOT_FOUND")
+    assert err["code"] == "CLIENT.NOT_FOUND"
     assert err["details"] is None or err["details"] is not None  # details key must exist
     assert "details" in err
 
@@ -122,3 +129,94 @@ def test_no_legacy_fields_in_any_error(client, advisor_headers):
     assert "detail" not in r2.json()
     assert "error_meta" not in r2.json()
     assert isinstance(r2.json()["error"], dict)
+
+
+def test_http_exception_detail_dict_preserves_structured_error():
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/test",
+            "headers": [],
+            "query_string": b"",
+            "server": ("testserver", 80),
+            "client": ("testclient", 50000),
+            "scheme": "http",
+        }
+    )
+    request.state.request_id = "req-structured"
+    exc = StarletteHTTPException(
+        status_code=409,
+        detail={
+            "code": "client_has_open_binder",
+            "message": "ללקוח כבר קיים קלסר פתוח",
+            "details": {"client_id": 123},
+        },
+    )
+
+    response = asyncio.run(http_exception_handler(request, exc))
+
+    assert response.status_code == 409
+    assert response.body
+    assert response.media_type == "application/json"
+    assert json.loads(response.body) == {
+        "error": {
+            "code": "client_has_open_binder",
+            "message": "ללקוח כבר קיים קלסר פתוח",
+            "details": {"client_id": 123},
+            "request_id": "req-structured",
+        }
+    }
+
+
+def test_http_exception_detail_dict_ignores_non_string_code_and_message():
+    request = Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/test",
+            "headers": [],
+            "query_string": b"",
+            "server": ("testserver", 80),
+            "client": ("testclient", 50000),
+            "scheme": "http",
+        }
+    )
+    exc = StarletteHTTPException(
+        status_code=400,
+        detail={
+            "code": {"invalid": True},
+            "message": {"invalid": True},
+            "details": {"field": "amount"},
+        },
+    )
+
+    response = asyncio.run(http_exception_handler(request, exc))
+
+    assert response.status_code == 400
+    assert json.loads(response.body) == {
+        "error": {
+            "code": "bad_request",
+            "message": "הבקשה אינה תקינה",
+            "details": {"field": "amount"},
+        }
+    }
+
+
+def test_existing_route_runtime_404_returns_standard_error_envelope(client, advisor_headers):
+    response = client.get(
+        "/api/v1/clients/99999999",
+        headers={**advisor_headers, "X-Request-ID": "req-404"},
+    )
+
+    assert response.status_code == 404
+    data = response.json()
+    assert "error" in data
+    assert "detail" not in data
+    assert "error_meta" not in data
+
+    err = data["error"]
+    assert err["code"] == "CLIENT.NOT_FOUND"
+    assert isinstance(err["message"], str)
+    assert "details" in err
+    assert err["request_id"] == "req-404"
