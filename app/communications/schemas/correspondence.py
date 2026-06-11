@@ -1,4 +1,3 @@
-import math
 from datetime import UTC, datetime
 
 from pydantic import BaseModel, field_validator, model_validator
@@ -69,11 +68,12 @@ class CorrespondenceResponse(BaseModel):
 
 
 class CorrespondenceListResponse(BaseModel):
+    # #42: total_pages removed — it's derived (ceil(total/page_size)) and computed
+    # client-side; envelope matches the standard PaginatedResponse shape.
     items: list[CorrespondenceResponse]
     page: int
     page_size: int
     total: int
-    total_pages: int
 
     @classmethod
     def build(
@@ -88,5 +88,4 @@ class CorrespondenceListResponse(BaseModel):
             page=page,
             page_size=page_size,
             total=total,
-            total_pages=math.ceil(total / page_size) if page_size else 0,
         )

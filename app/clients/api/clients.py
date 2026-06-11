@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.clients.create_policy import preview_vat_reporting_frequency
@@ -92,7 +94,7 @@ def list_clients(
         "full_name",
         pattern="^(full_name|created_at|status|entity_type)$",
     ),
-    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+    order: Literal["asc", "desc"] = Query("asc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
 ):
@@ -104,7 +106,7 @@ def list_clients(
         entity_type=entity_type,
         accountant_id=accountant_id,
         sort_by=sort_by,
-        sort_order=sort_order,
+        order=order,
         page=page,
         page_size=page_size,
     )
@@ -116,7 +118,7 @@ def list_sidebar_clients(
     db: DBSession,
     search: str | None = Query(None),
     sort_by: str = Query("full_name", pattern="^(full_name|office_client_number)$"),
-    sort_order: str = Query("asc", pattern="^(asc|desc)$"),
+    order: Literal["asc", "desc"] = Query("asc"),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=100),
 ):
@@ -124,7 +126,7 @@ def list_sidebar_clients(
     return service.list_sidebar_clients(
         search=search,
         sort_by=sort_by,
-        sort_order=sort_order,
+        order=order,
         page=page,
         page_size=page_size,
     )

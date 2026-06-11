@@ -4567,14 +4567,17 @@
             }
           },
           {
-            "name": "sort_order",
+            "name": "order",
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "type": "string",
-              "pattern": "^(asc|desc)$",
               "default": "asc",
-              "title": "Sort Order"
+              "title": "Order"
             }
           },
           {
@@ -4661,14 +4664,17 @@
             }
           },
           {
-            "name": "sort_order",
+            "name": "order",
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "type": "string",
-              "pattern": "^(asc|desc)$",
               "default": "asc",
-              "title": "Sort Order"
+              "title": "Order"
             }
           },
           {
@@ -6119,6 +6125,10 @@
             "in": "query",
             "required": false,
             "schema": {
+              "enum": [
+                "asc",
+                "desc"
+              ],
               "type": "string",
               "default": "desc",
               "title": "Order"
@@ -6368,7 +6378,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/BinderIntakeListResponse"
+                  "$ref": "#/components/schemas/PaginatedResponse_BinderIntakeResponse_"
                 }
               }
             }
@@ -17090,42 +17100,6 @@
         "type": "object",
         "title": "BinderHandoverToClientRequest"
       },
-      "BinderIntakeListResponse": {
-        "properties": {
-          "binder_id": {
-            "type": "integer",
-            "title": "Binder Id"
-          },
-          "intakes": {
-            "items": {
-              "$ref": "#/components/schemas/BinderIntakeResponse"
-            },
-            "type": "array",
-            "title": "Intakes"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          }
-        },
-        "type": "object",
-        "required": [
-          "binder_id",
-          "intakes",
-          "total",
-          "page",
-          "page_size"
-        ],
-        "title": "BinderIntakeListResponse"
-      },
       "BinderIntakeMaterialRequest": {
         "properties": {
           "material_type": {
@@ -18173,6 +18147,21 @@
               }
             ],
             "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
           },
           "available_actions": {
             "items": {
@@ -20232,10 +20221,6 @@
           "total": {
             "type": "integer",
             "title": "Total"
-          },
-          "total_pages": {
-            "type": "integer",
-            "title": "Total Pages"
           }
         },
         "type": "object",
@@ -20243,8 +20228,7 @@
           "items",
           "page",
           "page_size",
-          "total",
-          "total_pages"
+          "total"
         ],
         "title": "CorrespondenceListResponse"
       },
@@ -23117,6 +23101,37 @@
           "total"
         ],
         "title": "PaginatedResponse[BinderDetailResponse]"
+      },
+      "PaginatedResponse_BinderIntakeResponse_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BinderIntakeResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "PaginatedResponse[BinderIntakeResponse]"
       },
       "PaginatedResponse_ChargeResponse_": {
         "properties": {
@@ -28216,11 +28231,26 @@
             },
             "type": "array",
             "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
-          "items"
+          "items",
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "VatInvoiceListResponse"
       },
@@ -29122,12 +29152,22 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total"
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "VatWorkItemListResponse"
       },

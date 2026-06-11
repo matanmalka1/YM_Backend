@@ -67,7 +67,10 @@ def list_invoices(
     """List invoices for a work item, optionally filtered by type."""
     service = VatReportService(db)
     items = service.list_invoices(item_id=item_id, invoice_type=invoice_type)
-    return VatInvoiceListResponse(items=items)
+    # Non-paginated: return all invoices for the work item in one envelope.
+    return VatInvoiceListResponse(
+        items=items, total=len(items), page=1, page_size=len(items)
+    )
 
 
 @router.patch(

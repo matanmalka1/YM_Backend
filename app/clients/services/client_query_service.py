@@ -87,7 +87,7 @@ class ClientQueryService:
         accountant_id: int | None = None,
         entity_type: EntityType | None = None,
         sort_by: str = "full_name",
-        sort_order: str = "asc",
+        order: str = "asc",
         page: int = 1,
         page_size: int = 20,
     ) -> ClientRecordListResponse:
@@ -97,7 +97,7 @@ class ClientQueryService:
             accountant_id=accountant_id,
             entity_type=entity_type,
             sort_by="official_name" if sort_by == "full_name" else sort_by,
-            sort_order=sort_order,
+            sort_order=order,
             page=page,
             page_size=page_size,
         )
@@ -136,14 +136,14 @@ class ClientQueryService:
         self,
         search: str | None = None,
         sort_by: str = "full_name",
-        sort_order: str = "asc",
+        order: str = "asc",
         page: int = 1,
         page_size: int = 100,
     ) -> ClientSidebarListResponse:
         rows = self.record_repo.list_sidebar(
             search=search,
             sort_by=sort_by,
-            sort_order=sort_order,
+            sort_order=order,
             page=page,
             page_size=page_size,
         )

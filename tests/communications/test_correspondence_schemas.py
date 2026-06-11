@@ -40,7 +40,7 @@ def test_update_schema_rejects_future_occurred_at():
         )
 
 
-def test_list_response_build_calculates_total_pages():
+def test_list_response_build_uses_standard_envelope_without_total_pages():
     item = CorrespondenceResponse(
         id=1,
         client_record_id=1,
@@ -55,7 +55,9 @@ def test_list_response_build_calculates_total_pages():
     )
 
     resp = CorrespondenceListResponse.build(items=[item], page=1, page_size=20, total=41)
-    assert resp.total_pages == 3
-
-    empty = CorrespondenceListResponse.build(items=[], page=1, page_size=0, total=0)
-    assert empty.total_pages == 0
+    assert resp.page == 1
+    assert resp.page_size == 20
+    assert resp.total == 41
+    # #42: total_pages removed — derived client-side, not part of the contract.
+    assert not hasattr(resp, "total_pages")
+    assert "total_pages" not in resp.model_dump()

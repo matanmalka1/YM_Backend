@@ -43,12 +43,14 @@ def test_binder_intakes_endpoint_success_and_not_found(client, test_db, advisor_
     ok = client.get(f"/api/v1/binders/{binder.id}/intakes", headers=advisor_headers)
     assert ok.status_code == 200
     payload = ok.json()
-    assert payload["binder_id"] == binder.id
+    # #42: envelope converged to PaginatedResponse — no binder_id, items not intakes.
+    assert "binder_id" not in payload
+    assert "intakes" not in payload
     assert payload["total"] == 1
     assert payload["page"] == 1
     assert payload["page_size"] == 20
-    assert len(payload["intakes"]) == 1
-    assert payload["intakes"][0]["received_by_name"] == test_user.full_name
+    assert len(payload["items"]) == 1
+    assert payload["items"][0]["received_by_name"] == test_user.full_name
 
     missing = client.get("/api/v1/binders/999999/intakes", headers=advisor_headers)
     assert missing.status_code == 404
@@ -67,7 +69,7 @@ def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user):
     assert payload["total"] == 3
     assert payload["page"] == 1
     assert payload["page_size"] == 2
-    assert len(payload["intakes"]) == 2
+    assert len(payload["items"]) == 2
 
     resp2 = client.get(
         f"/api/v1/binders/{binder.id}/intakes",
@@ -75,7 +77,7 @@ def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user):
         headers=advisor_headers,
     )
     assert resp2.status_code == 200
-    assert len(resp2.json()["intakes"]) == 1
+    assert len(resp2.json()["items"]) == 1
 
 
 def test_binder_intakes_page_size_cap(client, test_db, advisor_headers, test_user):

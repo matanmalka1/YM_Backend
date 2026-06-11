@@ -72,3 +72,22 @@ def test_list_business_binders_business_not_found(client, advisor_headers):
 
     assert response.status_code == 404
     assert response.json()["error"]["code"] == "CLIENT.NOT_FOUND"
+
+
+# ── #46: BusinessResponse exposes updated_at (model has the column) ──
+
+
+def test_business_response_includes_updated_at(client, advisor_headers):
+    from tests.clients.helpers import create_client_via_api
+
+    res = create_client_via_api(
+        client,
+        advisor_headers,
+        full_name="Updated At Client",
+        id_number="039337423",
+        opened_at="2026-01-01",
+    )
+    assert res.status_code == 201
+    business = res.json()["business"]
+    # Field must be present in the contract (value may be null until first update).
+    assert "updated_at" in business

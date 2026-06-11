@@ -2,13 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.binders.schemas.binder import (
     BinderAuditResponse,
-    BinderIntakeListResponse,
     BinderIntakeResponse,
     BinderIntakeUpdateRequest,
 )
 from app.binders.services.binder_audit_service import BinderAuditService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.binders.services.messages import BINDER_NOT_FOUND
+from app.core.api_types import PaginatedResponse
 from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -52,7 +52,7 @@ def get_binder_audit(
 
 @router.get(
     "/{binder_id}/intakes",
-    response_model=BinderIntakeListResponse,
+    response_model=PaginatedResponse[BinderIntakeResponse],
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
 def get_binder_intakes(
@@ -64,9 +64,8 @@ def get_binder_intakes(
 ):
     service = BinderAuditService(db)
     intakes, total = service.get_binder_intakes(binder_id, page=page, page_size=page_size)
-    return BinderIntakeListResponse(
-        binder_id=binder_id,
-        intakes=intakes,
+    return PaginatedResponse[BinderIntakeResponse](
+        items=intakes,
         total=total,
         page=page,
         page_size=page_size,

@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.binders.schemas.binder import BinderListResponse, BinderResponse
@@ -29,7 +31,7 @@ def list_binders(
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=100),
     sort_by: str | None = Query(None),
-    order: str = Query("desc"),
+    order: Literal["asc", "desc"] = Query("desc"),
 ):
     """List active binders with optional filters, sorting, and pagination."""
     service = BinderListService(db)

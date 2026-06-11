@@ -87,3 +87,25 @@ def test_receive_does_not_reuse_number_after_soft_delete(
     second_id = binder_payload["id"]
     assert second_id != first_id
     assert binder_payload["binder_number"] == "100402/2"
+
+
+# ── #44: binders `order` param validated (Literal["asc","desc"]) ──
+
+
+def test_list_binders_accepts_valid_order(client, advisor_headers):
+    for value in ("asc", "desc"):
+        res = client.get(
+            "/api/v1/binders",
+            headers=advisor_headers,
+            params={"order": value},
+        )
+        assert res.status_code == 200
+
+
+def test_list_binders_rejects_invalid_order(client, advisor_headers):
+    res = client.get(
+        "/api/v1/binders",
+        headers=advisor_headers,
+        params={"order": "random"},
+    )
+    assert res.status_code == 422
