@@ -13,8 +13,10 @@ Design decisions:
 - occurred_at is DateTime(timezone=True) — stored as UTC, frontend converts to Asia/Jerusalem.
 - contact_id links to AuthorityContact (רשות המסים, ביטוח לאומי, etc.) —
   nullable because not all correspondence involves an authority contact.
-- No updated_at — correspondence entries are immutable once created;
-  corrections are soft-deleted and re-entered.
+- Entries are mutable: the PATCH endpoint + update_entry service allow
+  in-place corrections. updated_at (nullable) is set on real updates via
+  onupdate; it is NULL for entries never updated and is never faked from
+  created_at. See docs/api-todo.md #46.
 - Soft delete included — business entity.
 """
 
@@ -74,6 +76,11 @@ class Correspondence(Base):
     # ── Metadata ──────────────────────────────────────────────────────────────
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     created_at: Mapped[datetime.datetime] = mapped_column(default=utcnow_aware, nullable=False)
+    # Set only on real update (PATCH). NULL until first update — never faked from
+    # created_at. tz-aware to match created_at/occurred_at. See docs/api-todo.md #46.
+    updated_at: Mapped[datetime.datetime | None] = mapped_column(
+        nullable=True, onupdate=utcnow_aware
+    )
 
     # ── Soft delete ───────────────────────────────────────────────────────────
     deleted_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)

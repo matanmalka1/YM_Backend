@@ -63,6 +63,7 @@ class CorrespondenceResponse(BaseModel):
     occurred_at: ApiDateTime
     created_by: int
     created_at: ApiDateTime
+    updated_at: ApiDateTime | None = None
 
     model_config = {"from_attributes": True}
 
