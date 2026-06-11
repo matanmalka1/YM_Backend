@@ -29,7 +29,9 @@ async def http_exception_handler(request: Request, exc: StarletteHTTPException) 
         raw_code = exc.detail.get("code")
         raw_message = exc.detail.get("message")
         return error_response(
-            code=raw_code if isinstance(raw_code, str) else http_error_code_for_status(exc.status_code),
+            code=raw_code
+            if isinstance(raw_code, str)
+            else http_error_code_for_status(exc.status_code),
             message=(
                 raw_message
                 if isinstance(raw_message, str)

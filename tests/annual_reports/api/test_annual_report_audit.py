@@ -3,9 +3,7 @@ from tests.helpers.identity import seed_client_identity
 
 
 def _create_report(db, user_id: int) -> int:
-    crm_client = seed_client_identity(
-        db, full_name="AR Audit Client", id_number="ARAUD001"
-    )
+    crm_client = seed_client_identity(db, full_name="AR Audit Client", id_number="ARAUD001")
 
     report = AnnualReportService(db).create_report(
         client_record_id=crm_client.id,

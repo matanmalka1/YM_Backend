@@ -16,7 +16,9 @@ def test_openapi_contains_error_envelope_schema():
 
     assert "ErrorEnvelope" in schemas
     assert "ErrorBody" in schemas
-    assert schemas["ErrorEnvelope"]["properties"]["error"]["$ref"] == "#/components/schemas/ErrorBody"
+    assert (
+        schemas["ErrorEnvelope"]["properties"]["error"]["$ref"] == "#/components/schemas/ErrorBody"
+    )
 
 
 def test_error_response_helpers_document_error_envelope_model():
@@ -46,11 +48,7 @@ def test_documented_error_responses_use_error_envelope_schema():
                 response = (operation.get("responses") or {}).get(status_code)
                 if not response:
                     continue
-                schema = (
-                    response.get("content", {})
-                    .get("application/json", {})
-                    .get("schema", {})
-                )
+                schema = response.get("content", {}).get("application/json", {}).get("schema", {})
                 if schema.get("$ref") != "#/components/schemas/ErrorEnvelope":
                     mismatches.append((method.upper(), path, status_code))
 
@@ -81,4 +79,6 @@ def test_annual_report_charges_openapi_response_schema_is_typed():
 
     assert response_schema
     assert response_schema != {}
-    assert response_schema["$ref"].startswith("#/components/schemas/PaginatedResponse_ChargeResponse_")
+    assert response_schema["$ref"].startswith(
+        "#/components/schemas/PaginatedResponse_ChargeResponse_"
+    )

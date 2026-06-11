@@ -32,9 +32,7 @@ class AnnualReportStatusAuditRepository:
         self.db.flush()
         return entry
 
-    def list_status_audit_entries(
-        self, annual_report_id: int
-    ) -> list[AnnualReportStatusHistory]:
+    def list_status_audit_entries(self, annual_report_id: int) -> list[AnnualReportStatusHistory]:
         return self.db.scalars(
             select(AnnualReportStatusHistory)
             .where(AnnualReportStatusHistory.annual_report_id == annual_report_id)

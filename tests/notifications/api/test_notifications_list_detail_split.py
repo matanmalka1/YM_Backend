@@ -70,9 +70,7 @@ def test_list_rows_omit_detail_only_fields(client, test_db, advisor_headers):
 def test_detail_endpoint_returns_full_response(client, test_db, advisor_headers):
     notification = _seed_notification(test_db, "detail")
 
-    response = client.get(
-        f"/api/v1/notifications/{notification.id}", headers=advisor_headers
-    )
+    response = client.get(f"/api/v1/notifications/{notification.id}", headers=advisor_headers)
 
     assert response.status_code == 200
     body = response.json()

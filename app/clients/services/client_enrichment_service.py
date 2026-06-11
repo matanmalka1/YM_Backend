@@ -34,9 +34,7 @@ class ClientEnrichmentService:
         response.annual_turnover = self._compute_annual_turnover(response, year)
         return response
 
-    def enrich_list_binders(
-        self, items: list[ClientRecordResponse]
-    ) -> list[ClientRecordResponse]:
+    def enrich_list_binders(self, items: list[ClientRecordResponse]) -> list[ClientRecordResponse]:
         """Set ``active_binder_number`` for a page of clients.
 
         The clients list uses a thin DTO and intentionally does not expose annual

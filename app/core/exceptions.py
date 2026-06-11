@@ -49,7 +49,9 @@ def unauthorized_response(*, description: str = "נדרש אימות") -> dict[i
     return error_response_doc(401, description=description)
 
 
-def forbidden_response(*, description: str = "אין הרשאה לביצוע הפעולה") -> dict[int, dict[str, Any]]:
+def forbidden_response(
+    *, description: str = "אין הרשאה לביצוע הפעולה"
+) -> dict[int, dict[str, Any]]:
     return error_response_doc(403, description=description)
 
 
@@ -58,7 +60,9 @@ def not_found_response(*, description: str = "המשאב לא נמצא") -> dict
     return error_response_doc(404, description=description)
 
 
-def conflict_response(*, description: str = "הבקשה מתנגשת עם מצב קיים") -> dict[int, dict[str, Any]]:
+def conflict_response(
+    *, description: str = "הבקשה מתנגשת עם מצב קיים"
+) -> dict[int, dict[str, Any]]:
     return error_response_doc(409, description=description)
 
 
@@ -110,7 +114,7 @@ def http_error_message_for_status(status_code: int) -> str:
 
 
 def contains_hebrew(s: str) -> bool:
-    return any("\u0590" <= ch <= "\u05FF" for ch in s)
+    return any("\u0590" <= ch <= "\u05ff" for ch in s)
 
 
 def _field_path(loc: tuple) -> str:
