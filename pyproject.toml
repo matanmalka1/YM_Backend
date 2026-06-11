@@ -34,9 +34,10 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
 [tool.vulture]
 paths = ["app", "tests", "alembic"]
 exclude = [".venv", "venv", "migrations", "seed"]
 ignore_decorators = ["@app.*", "@router.*"]
-min_confidence = 80
+min_confidence = 90
 sort_by_size = true
