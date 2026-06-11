@@ -57,7 +57,7 @@ def _db(report, last_notification=None):
     _nr_module.NotificationRepository = FakeRepo  # type: ignore[assignment]
 
     class DB:
-        def get(self, model, pk):
+        def get(self, model, _pk):
             return report
 
     try:
@@ -95,7 +95,7 @@ class _FakeDB:
 
         _nr_module.NotificationRepository = self._original  # type: ignore[assignment]
 
-    def get(self, model, pk):
+    def get(self, model, _pk):
         return self._report
 
 
@@ -212,7 +212,7 @@ def test_annual_report_client_reminder_blocked_when_wrong_client():
 )
 def test_annual_report_documents_request_allowed_for_valid_statuses(status):
     report = _make_report(status)
-    db = SimpleNamespace(get=lambda model, pk: report)
+    db = SimpleNamespace(get=lambda model, _pk: report)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),
@@ -234,7 +234,7 @@ def test_annual_report_documents_request_allowed_for_valid_statuses(status):
 )
 def test_annual_report_documents_request_blocked_for_invalid_statuses(status):
     report = _make_report(status)
-    db = SimpleNamespace(get=lambda model, pk: report)
+    db = SimpleNamespace(get=lambda model, _pk: report)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),
@@ -246,7 +246,7 @@ def test_annual_report_documents_request_blocked_for_invalid_statuses(status):
 
 
 def test_annual_report_documents_request_blocked_when_report_not_found():
-    db = SimpleNamespace(get=lambda model, pk: None)
+    db = SimpleNamespace(get=lambda model, _pk: None)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),
@@ -259,7 +259,7 @@ def test_annual_report_documents_request_blocked_when_report_not_found():
 
 def test_annual_report_documents_request_blocked_when_no_annual_report_id():
     """Missing annual_report_id must block even when db is present."""
-    db = SimpleNamespace(get=lambda model, pk: None)
+    db = SimpleNamespace(get=lambda model, _pk: None)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),

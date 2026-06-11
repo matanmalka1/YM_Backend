@@ -28,12 +28,12 @@ engine = create_engine(
 
 
 @event.listens_for(engine, "before_cursor_execute")
-def _record_query_start(conn, cursor, statement, parameters, context, executemany):
+def _record_query_start(conn, _cursor, statement, parameters, context, _executemany):
     context._query_start_time = perf_counter()
 
 
 @event.listens_for(engine, "after_cursor_execute")
-def _record_query_end(conn, cursor, statement, parameters, context, executemany):
+def _record_query_end(conn, _cursor, statement, parameters, context, _executemany):
     start_time = getattr(context, "_query_start_time", None)
     if start_time is None:
         return
