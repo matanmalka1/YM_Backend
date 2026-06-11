@@ -81,6 +81,7 @@ class BusinessResponse(BaseModel):
     closed_at: date | None = None
     notes: str | None = None
     created_at: ApiDateTime | None = None
+    updated_at: ApiDateTime | None = None
     available_actions: list[ActionDescriptor] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
