@@ -1,7 +1,7 @@
 import hashlib
 from datetime import timedelta
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 
 from app.users.models.password_reset_token import PasswordResetToken
 from app.users.models.user import User, UserRole

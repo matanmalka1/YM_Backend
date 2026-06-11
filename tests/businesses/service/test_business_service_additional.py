@@ -2,9 +2,9 @@ from datetime import date
 from types import SimpleNamespace
 from unittest.mock import patch
 
+import pytest
 from sqlalchemy import select
 
-import pytest
 from app.audit.constants import ACTION_RESTORED, ENTITY_BUSINESS
 from app.audit.models.entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business, BusinessStatus

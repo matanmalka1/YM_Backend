@@ -4,9 +4,9 @@ import pytest
 
 from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
 from app.businesses.models.business import Business
-from app.core.exceptions import ForbiddenError, NotFoundError
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.services.correspondence_service import CorrespondenceService
+from app.core.exceptions import ForbiddenError, NotFoundError
 from tests.helpers.identity import seed_client_with_business
 
 

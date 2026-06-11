@@ -13,9 +13,10 @@ os.environ.pop("DATABASE_URL", None)
 if len(os.environ.get("JWT_SECRET", "")) < 32:
     os.environ["JWT_SECRET"] = "test-secret-minimum-32-bytes-value"
 
+from sqlalchemy import select
+
 import app.core.background_jobs as background_jobs_module
 import app.main as main_module
-
 import app.notes.models.entity_note  # noqa: F401
 import app.tasks.models.task  # noqa: F401
 import app.tax_calendar.models.deadline_rule  # noqa: F401
@@ -23,13 +24,11 @@ import app.tax_calendar.models.tax_calendar_entry  # noqa: F401
 from app.businesses.models.business import BusinessStatus
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord  # noqa: F401
+from app.common.enums import IdNumberType
+from app.database import Base, get_db
 from app.legal_entities.models.legal_entity import LegalEntity  # noqa: F401
 from app.legal_entities.models.person import Person  # noqa: F401
 from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityLink  # noqa: F401
-from app.common.enums import IdNumberType
-from sqlalchemy import select
-
-from app.database import Base, get_db
 from app.tax_calendar.models.deadline_rule import DeadlineRule
 from app.tax_calendar.services.bootstrap import seed_default_deadline_rules
 from app.users.models.user import User, UserRole

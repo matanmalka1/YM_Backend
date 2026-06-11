@@ -1,6 +1,7 @@
 import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any, Callable
+from typing import Any
 
 from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -8,8 +9,8 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.logging_config import set_idempotency_context
+from app.database import get_db
 from app.infrastructure.idempotency.model import IdempotencyStatus
 from app.infrastructure.idempotency.repository import IdempotencyKeyRepository
 from app.users.api.deps import get_current_user
@@ -43,24 +44,24 @@ class IdempotencyGuard:
                     user_id=self.user_id,
                     request_hash=request_hash,
                 )
-        except IntegrityError:
+        except IntegrityError as exc:
             existing = repo.get(self.key, self.route, self.user_id)
             if existing is None:
                 # Shouldn't happen — PK conflict but no row found. Surface as 409.
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="מפתח אידמפוטנטיות בשימוש",
-                )
+                ) from exc
             if existing.request_hash != request_hash:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="מפתח אידמפוטנטיות כבר נוצל עם בקשה אחרת",
-                )
+                ) from exc
             if existing.status == IdempotencyStatus.IN_PROGRESS:
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
                     detail="בקשה זהה כבר בעיבוד",
-                )
+                ) from exc
             set_idempotency_context(self.key, replayed=True)
             return JSONResponse(
                 content=existing.response_body,

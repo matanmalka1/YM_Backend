@@ -7,9 +7,9 @@ from app.businesses.services.business_service import BusinessService
 from app.businesses.services.client_business_service import ClientBusinessService
 from app.businesses.services.status_card_service import StatusCardService
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType
 from app.core.exceptions import NotFoundError
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import UserRole
 
 

@@ -1,6 +1,6 @@
 """INV-05 regression: timing_status and paid_late must use due_date_effective, not due_date."""
 
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
@@ -18,7 +18,7 @@ def _row(**kwargs) -> AdvancePaymentRow:
         paid_amount=Decimal("0"),
         status=AdvancePaymentStatus.PENDING,
         calculated_amount=Decimal("100"),
-        created_at=datetime(2026, 1, 1, tzinfo=timezone.utc),
+        created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
     defaults.update(kwargs)
     return AdvancePaymentRow(**defaults)
@@ -57,7 +57,7 @@ class TestPaidLate:
             due_date_effective=date(2026, 2, 15),
             status=AdvancePaymentStatus.PAID,
             paid_amount=Decimal("100"),
-            paid_at=datetime(2026, 3, 1, tzinfo=timezone.utc),
+            paid_at=datetime(2026, 3, 1, tzinfo=UTC),
         )
         assert row.paid_late is True
 
@@ -68,7 +68,7 @@ class TestPaidLate:
             due_date_effective=date(2026, 3, 1),
             status=AdvancePaymentStatus.PAID,
             paid_amount=Decimal("100"),
-            paid_at=datetime(2026, 2, 1, tzinfo=timezone.utc),
+            paid_at=datetime(2026, 2, 1, tzinfo=UTC),
         )
         assert row.paid_late is False
 
@@ -79,6 +79,6 @@ class TestPaidLate:
             due_date_effective=date(2026, 3, 15),
             status=AdvancePaymentStatus.PAID,
             paid_amount=Decimal("100"),
-            paid_at=datetime(2026, 3, 1, tzinfo=timezone.utc),
+            paid_at=datetime(2026, 3, 1, tzinfo=UTC),
         )
         assert row.paid_late is False

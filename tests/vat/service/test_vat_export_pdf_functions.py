@@ -6,8 +6,8 @@ import pytest
 
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType, VatType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
 from app.vat.services.vat_export_pdf import export_vat_to_pdf

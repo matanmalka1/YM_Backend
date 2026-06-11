@@ -4,16 +4,16 @@ from itertools import count
 
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType, VatType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
+from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from app.utils.time_utils import utcnow
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 _seq = count(1)

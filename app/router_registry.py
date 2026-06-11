@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 
-import app.model_registry  # noqa: F401 — ensures all ORM models are loaded before mappers configure  # pylint: disable=unused-import
+import app.model_registry  # noqa: F401 — ensures all ORM models are loaded before mappers configure
 from app.advance_payments.api.routers import router as advance_payments_router
 from app.annual_reports.api.routers import router as annual_reports_router
 from app.audit.api.routes import router as audit_router
@@ -11,11 +11,11 @@ from app.charges.api.routers import router as charge_router
 from app.clients.api.routers import router as clients_router
 from app.communications.api.routers import router as correspondence_router
 from app.dashboard.api.routers import router as dashboard_router
+from app.documents.permanent_documents.api.routers import router as permanent_documents_router
 from app.health.api.routers import router as health_router
 from app.invoices.api.routers import router as invoice_router
 from app.notes.api.routers import router as notes_router
 from app.notifications.api.routers import router as notification_router
-from app.documents.permanent_documents.api.routers import router as permanent_documents_router
 from app.reminders.api import routers as reminders
 from app.reports.api.routers import router as reports_router
 from app.search.api.routers import router as search_router

@@ -5,8 +5,8 @@ import pytest
 
 from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.utils.time_utils import utcnow
 
 _entity_seq = count(1)

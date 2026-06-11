@@ -9,8 +9,8 @@ from app.businesses.models.business import Business, BusinessStatus
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType, VatType
+from app.legal_entities.models.legal_entity import LegalEntity
 
 _seq = count(1)
 

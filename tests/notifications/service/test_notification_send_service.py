@@ -5,7 +5,7 @@ import pytest
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.exceptions import AppError
-from app.notifications.models.notification import NotificationStatus, NotificationTrigger
+from app.notifications.models.notification import NotificationTrigger
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import NotificationSendRequest
 from app.notifications.services.notification_send_service import NotificationSendService

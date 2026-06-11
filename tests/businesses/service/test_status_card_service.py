@@ -8,6 +8,7 @@ from datetime import date, datetime
 from decimal import Decimal
 
 import pytest
+
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     ClientAnnualFilingType,
@@ -21,8 +22,8 @@ from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import NotFoundError
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
-    PermanentDocumentType,
     PermanentDocument,
+    PermanentDocumentType,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
 from tests.helpers.identity import seed_client_identity

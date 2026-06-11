@@ -4,9 +4,9 @@ from itertools import count
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import IdNumberType, VatType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
 from app.utils.time_utils import utcnow

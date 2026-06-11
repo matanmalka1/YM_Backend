@@ -5,14 +5,14 @@ from sqlalchemy.orm import Session
 
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import EntityType
+from app.core.exceptions import NotFoundError
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person
 from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )
-from app.common.enums import EntityType
-from app.core.exceptions import NotFoundError
 from app.utils.time_utils import utcnow
 
 OFFICE_CLIENT_NUMBER_START = 100001
@@ -280,7 +280,10 @@ class ClientRecordRepository:
         return self.db.scalar(count_stmt)
 
     def count_sidebar(self, search: str | None = None) -> int:
-        full_name = func.coalesce(Person.full_name, LegalEntity.official_name)
+        full_name_expr = func.coalesce(
+            Person.full_name,
+            LegalEntity.official_name,
+        )
         stmt = (
             select(func.count(ClientRecord.id))
             .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
@@ -295,7 +298,7 @@ class ClientRecordRepository:
         if search:
             term = f"%{search.strip()}%"
             stmt = stmt.where(
-                full_name.ilike(term)
+                full_name_expr.ilike(term)
                 | LegalEntity.official_name.ilike(term)
                 | LegalEntity.id_number.ilike(term)
             )

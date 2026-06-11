@@ -1,6 +1,6 @@
 """Integration tests for vat_work_item_grouped_repository."""
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from app.common.enums import VatType
 from app.users.models.user import User, UserRole
@@ -65,7 +65,7 @@ def test_paginated_due_date_count_excludes_soft_deleted_items(test_db):
         created_by=user.id,
     )
     due_date = item.due_date_effective
-    item.deleted_at = datetime.now(timezone.utc)
+    item.deleted_at = datetime.now(UTC)
     test_db.commit()
 
     items, total = list_by_due_date_paginated(test_db, due_date)
@@ -141,7 +141,7 @@ def test_groups_excludes_soft_deleted_items(test_db):
         period="2026-07",
         created_by=user.id,
     )
-    item.deleted_at = datetime.now(timezone.utc)
+    item.deleted_at = datetime.now(UTC)
     test_db.commit()
 
     groups = list_due_date_groups(test_db, client_record_ids=[client.id])
@@ -150,8 +150,9 @@ def test_groups_excludes_soft_deleted_items(test_db):
 
 def test_groups_excludes_soft_deleted_client_records(test_db):
     """VAT items whose ClientRecord is soft-deleted must not appear."""
-    from app.clients.models.client_record import ClientRecord
     from sqlalchemy import select
+
+    from app.clients.models.client_record import ClientRecord
 
     user = _user(test_db)
     client = seed_client_identity(test_db, full_name="Deleted Client", id_number="GC005")
@@ -163,7 +164,7 @@ def test_groups_excludes_soft_deleted_client_records(test_db):
         created_by=user.id,
     )
     cr = test_db.scalars(select(ClientRecord).where(ClientRecord.id == client.id)).first()
-    cr.deleted_at = datetime.now(timezone.utc)
+    cr.deleted_at = datetime.now(UTC)
     test_db.commit()
 
     groups = list_due_date_groups(test_db, client_record_ids=[client.id])

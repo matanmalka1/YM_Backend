@@ -1,6 +1,7 @@
 """Regression tests: due-date source-of-truth is TaxCalendarEntry, not hardcoded day constants."""
 
 from datetime import date
+
 from app.common.enums import DeadlineRuleType, ObligationType, VatType
 from app.vat.api.serializers import serialize_enriched_work_item
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository

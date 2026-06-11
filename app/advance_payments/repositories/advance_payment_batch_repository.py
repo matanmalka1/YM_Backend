@@ -23,8 +23,9 @@ class AdvancePaymentBatchRepository(BaseRepository):
         period_year = cast(func.substr(AdvancePayment.period, 1, 4), Integer)
         not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
         pending_expr = AdvancePayment.status == AdvancePaymentStatus.PENDING
-        effective_due_date = func.coalesce(
-            AdvancePayment.due_date_effective, AdvancePayment.due_date
+        effective_due_date_expr = func.coalesce(
+            AdvancePayment.due_date_effective,
+            AdvancePayment.due_date,
         )
         stmt = (
             scope_to_active_clients_stmt(
@@ -42,7 +43,7 @@ class AdvancePaymentBatchRepository(BaseRepository):
                         func.sum(
                             case(
                                 (
-                                    (effective_due_date < today_expr) & not_paid_expr,
+                                    (effective_due_date_expr < today_expr) & not_paid_expr,
                                     1,
                                 ),
                                 else_=0,

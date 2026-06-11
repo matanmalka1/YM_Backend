@@ -1,7 +1,6 @@
 # Eagerly import all ORM models so SQLAlchemy can resolve string-based
 # relationship() references (e.g. "PermanentDocument", "BinderIntake") before
 # configure_mappers() fires. Import order: depended-on models first.
-# pylint: disable=unused-import
 import app.advance_payments.models.advance_payment  # noqa: F401
 import app.annual_reports.models.annual_report_annex_data  # noqa: F401
 import app.annual_reports.models.annual_report_credit_point_reason  # noqa: F401
@@ -22,15 +21,15 @@ import app.binders.models.binder_lifecycle_log  # noqa: F401
 import app.businesses.models.business  # noqa: F401
 import app.charges.models.charge  # noqa: F401
 import app.clients.models.client_record  # noqa: F401
+import app.communications.models.correspondence  # noqa: F401
+import app.documents.permanent_documents.models.permanent_document  # noqa: F401
+import app.infrastructure.idempotency.model  # noqa: F401
+import app.invoices.models.invoice  # noqa: F401
 import app.legal_entities.models.legal_entity  # noqa: F401
 import app.legal_entities.models.person  # noqa: F401
 import app.legal_entities.models.person_legal_entity_link  # noqa: F401
-import app.communications.models.correspondence  # noqa: F401
-import app.infrastructure.idempotency.model  # noqa: F401
-import app.invoices.models.invoice  # noqa: F401
 import app.notes.models.entity_note  # noqa: F401
 import app.notifications.models.notification  # noqa: F401
-import app.documents.permanent_documents.models.permanent_document  # noqa: F401
 import app.reminders.models.reminder  # noqa: F401
 import app.signature_requests.models.signature_request  # noqa: F401
 import app.tasks.models.task  # noqa: F401

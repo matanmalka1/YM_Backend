@@ -4,13 +4,13 @@ from datetime import UTC, datetime
 from types import SimpleNamespace
 
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import IdNumberType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person
 from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )
-from app.common.enums import IdNumberType
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,

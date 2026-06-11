@@ -1,7 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-import pytest
 from app.businesses.models.business import BusinessStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository

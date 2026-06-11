@@ -1,6 +1,6 @@
 from datetime import date
 
-from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder import BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService

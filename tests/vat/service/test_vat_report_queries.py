@@ -1,5 +1,6 @@
 from datetime import date
 from types import SimpleNamespace
+
 import pytest
 
 from app.common.enums import SubmissionMethod

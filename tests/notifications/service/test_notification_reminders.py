@@ -1,20 +1,18 @@
 """Tests for NotificationSendService — skipped, policy, and preview behavior."""
 
-from datetime import date
 
 import pytest
 from sqlalchemy.orm import Session
 
-from app.businesses.models.business import Business
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import IdNumberType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person
 from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )
-from app.common.enums import IdNumberType
 from app.notifications.models.notification import NotificationStatus, NotificationTrigger
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import (

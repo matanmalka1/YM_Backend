@@ -5,8 +5,8 @@ from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
-    PermanentDocumentType,
     PermanentDocument,
+    PermanentDocumentType,
 )
 from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,

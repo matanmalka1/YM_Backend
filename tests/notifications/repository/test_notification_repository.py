@@ -4,8 +4,8 @@ from sqlalchemy import select
 
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import IdNumberType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,

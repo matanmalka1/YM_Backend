@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from tax_rules import get_financial
 
 from app.advance_payments.models.advance_payment import AdvancePayment

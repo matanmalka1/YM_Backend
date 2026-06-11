@@ -3,13 +3,14 @@ from typing import Any
 
 from sqlalchemy import String, case, cast, func, select
 from sqlalchemy.orm import Session
+from sqlalchemy.sql import Select
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import ObligationType
 from app.common.repositories.base_repository import BaseRepository
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.vat.models.vat_work_item import VatWorkItem
 
@@ -29,7 +30,7 @@ class GroupedItemRow:
 def _entry_sort_clauses():
     # periodic rows sort by their period; annual_report (period=NULL) sorts after
     # all months of the same tax_year using a synthetic '9999-99' sentinel.
-    period_key = func.coalesce(
+    period_key_expr = func.coalesce(
         TaxCalendarEntry.period,
         func.cast(TaxCalendarEntry.tax_year, String) + "-99",
     )
@@ -46,7 +47,7 @@ def _entry_sort_clauses():
     )
     return (
         TaxCalendarEntry.tax_year.asc(),
-        period_key.asc(),
+        period_key_expr.asc(),
         obligation_priority.asc(),
         frequency_priority.asc(),
         TaxCalendarEntry.due_date.asc(),
@@ -174,7 +175,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         return stmt
 
     @staticmethod
-    def _scope_to_active_clients(stmt, model):
+    def _scope_to_active_clients(stmt: Select, model: type) -> Select:
         # Joins ClientRecord + LegalEntity so client_search can add WHERE
         # predicates against either without re-joining.
         return (

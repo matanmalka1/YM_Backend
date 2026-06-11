@@ -1,5 +1,4 @@
 """SQLAlchemy events for advance payment due-date snapshots."""
-# pylint: disable=duplicate-code  # parallel logic in vat_reports.models.due_date_snapshot_events
 
 from sqlalchemy import event, inspect
 

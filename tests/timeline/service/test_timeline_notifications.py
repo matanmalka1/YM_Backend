@@ -101,16 +101,11 @@ def test_timeline_notification_events_only_sent_and_failed(test_db, test_user):
     SKIPPED and PENDING are excluded.
     """
     from app.notifications.models.notification import (
-        Notification,
         NotificationChannel,
         NotificationStatus,
         NotificationTrigger,
     )
     from app.notifications.repositories.notification_repository import NotificationRepository
-    from app.timeline.services.timeline_notification_event_builders import (
-        notification_failed_event,
-        notification_sent_event,
-    )
     from tests.helpers.identity import seed_client_identity
 
     client = seed_client_identity(test_db, full_name="Timeline Notif Client", id_number="TL-N-01")

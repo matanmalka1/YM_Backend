@@ -96,8 +96,8 @@ def test_onboarding_does_not_create_empty_setup_placeholders(test_db):
     _create_vat_client(test_db, "123456782")
 
     from app.authority_contacts.models.authority_contact import AuthorityContact
-    from app.notes.models.entity_note import EntityNote
     from app.documents.permanent_documents.models.permanent_document import PermanentDocument
+    from app.notes.models.entity_note import EntityNote
 
     assert test_db.scalar(select(func.count(AuthorityContact.id))) == 0
     assert test_db.scalar(select(func.count(PermanentDocument.id))) == 0

@@ -3,7 +3,6 @@
 from datetime import date
 
 from app.binders.models.binder import Binder, BinderLocationStatus
-from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.binders.services.binder_service import BinderService
 from app.notifications.models.notification import NotificationStatus
@@ -121,7 +120,6 @@ def test_mark_ready_for_handover_bulk_collects_results(test_db, test_user):
 
 def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, monkeypatch):
     """Two auto_send calls with identical key produce one DB record, same notification_id."""
-    from types import SimpleNamespace
 
     from app.notifications.models.notification import NotificationTrigger
     from app.notifications.services.notification_auto_send_service import (

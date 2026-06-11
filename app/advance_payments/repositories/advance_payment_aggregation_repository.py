@@ -11,9 +11,9 @@ from app.advance_payments.models.advance_payment import (
     AdvancePaymentStatus,
 )
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
+from app.legal_entities.models.legal_entity import LegalEntity
 
 
 @dataclass(slots=True, frozen=True)
@@ -159,8 +159,9 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         """Per-client aggregates for the collections report."""
         today_expr = func.current_date()
         not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
-        effective_due_date = func.coalesce(
-            AdvancePayment.due_date_effective, AdvancePayment.due_date
+        effective_due_date_expr = func.coalesce(
+            AdvancePayment.due_date_effective,
+            AdvancePayment.due_date,
         )
         stmt = scope_to_active_clients_stmt(
             select(
@@ -171,7 +172,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
                     func.sum(
                         case(
                             (
-                                (effective_due_date < today_expr) & not_paid_expr,
+                                (effective_due_date_expr < today_expr) & not_paid_expr,
                                 1,
                             ),
                             else_=0,
@@ -193,8 +194,9 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         today_expr = func.current_date()
         paid_expr = AdvancePayment.status == AdvancePaymentStatus.PAID
         not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
-        effective_due_date = func.coalesce(
-            AdvancePayment.due_date_effective, AdvancePayment.due_date
+        effective_due_date_expr = func.coalesce(
+            AdvancePayment.due_date_effective,
+            AdvancePayment.due_date,
         )
         rows = self.db.execute(
             select(
@@ -204,7 +206,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
                 func.sum(
                     case(
                         (
-                            (effective_due_date < today_expr) & not_paid_expr,
+                            (effective_due_date_expr < today_expr) & not_paid_expr,
                             1,
                         ),
                         else_=0,

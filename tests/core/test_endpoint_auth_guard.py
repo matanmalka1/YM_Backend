@@ -7,7 +7,7 @@ that the generated spec stays consistent with the allowlist.
 
 from __future__ import annotations
 
-from typing import Iterator
+from collections.abc import Iterator
 
 from fastapi.dependencies.models import Dependant
 

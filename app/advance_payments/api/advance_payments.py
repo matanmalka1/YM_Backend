@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import APIRouter, Depends, Query, status
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
@@ -26,6 +28,7 @@ router = APIRouter(
     tags=["advance-payments"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
+logger = logging.getLogger(__name__)
 
 
 @router.get(
@@ -165,6 +168,7 @@ def update_advance_payment(
     # When a payment is marked PAID, invalidate any open annual report tax calculation
     # for the same client+year so the advisor is prompted to re-save after recalculation.
     if payment.status == AdvancePaymentStatus.PAID and payment.period:
+        tax_year: int | None = None
         try:
             tax_year = parse_period_year(payment.period)
             from app.annual_reports.services.tax_service import (
@@ -173,7 +177,14 @@ def update_advance_payment(
 
             AnnualReportTaxService(db).invalidate_tax_if_open(client_record_id, tax_year)
         except Exception:
-            pass  # Non-critical: do not fail the payment update if hook errors
+            logger.exception(
+                "Failed to invalidate annual report tax after advance payment update. "
+                "client_record_id=%s tax_year=%s payment_id=%s period=%s",
+                client_record_id,
+                tax_year,
+                payment_id,
+                payment.period,
+            )
     return AdvancePaymentRow.model_validate(payment)
 
 

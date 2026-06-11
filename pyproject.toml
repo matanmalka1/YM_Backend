@@ -31,49 +31,6 @@ quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 
-
-[tool.pylint.main]
-ignore = [
-  ".venv",
-  "venv",
-  "migrations",
-  "__pycache__",
-  "alembic",
-  "seed",
-]
-
-[tool.pylint.messages_control]
-disable = ["all"]
-enable = [
-  # bugs / risky flow
-  "used-before-assignment",
-  "unreachable",
-  "assignment-from-no-return",
-
-  # exception handling
-  "bare-except",
-  "broad-exception-caught",
-  "raise-missing-from",
-
-  # architecture smells
-  "duplicate-code",
-  "cyclic-import",
-]
-
-[tool.pylint.similarities]
-min-similarity-lines = 16
-ignore-comments = true
-ignore-docstrings = true
-ignore-imports = true
-
-[tool.pylint.design]
-max-branches = 15
-max-statements = 60
-max-locals = 25
-
-[tool.pylint.format]
-max-line-length = 100
-
 [tool.pytest.ini_options]
 pythonpath = ["."]
 [tool.vulture]

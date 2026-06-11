@@ -13,10 +13,10 @@ from app.audit.constants import (
 from app.audit.models.entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.services.client_update_service import ClientUpdateService
 from app.common.enums import EntityType, IdNumberType, VatType
 from app.core.exceptions import ForbiddenError
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
 from tests.helpers.identity import seed_client_identity

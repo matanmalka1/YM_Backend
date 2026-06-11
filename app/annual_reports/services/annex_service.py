@@ -17,7 +17,7 @@ from .base import AnnualReportBaseService
 from .messages import ANNEX_LINE_NOT_FOUND, ANNEX_VALIDATION_ERROR
 
 
-class AnnualReportAnnexService(AnnualReportBaseService):  # pylint: disable=no-member
+class AnnualReportAnnexService(AnnualReportBaseService):
     """Mixin — requires self.annex_repo (AnnexDataRepository) wired in facade __init__."""
 
     def _validate_annex_data(self, schedule: AnnualReportSchedule, data: dict) -> dict:
