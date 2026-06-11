@@ -57,7 +57,7 @@ class AnnualReportExpenseLine(Base):
     supporting_document_id: Mapped[int | None] = mapped_column(
         ForeignKey("permanent_documents.id"), nullable=True, index=True
     )
-    supporting_document: Mapped["PermanentDocument | None"] = relationship(
+    supporting_document: Mapped[PermanentDocument | None] = relationship(
         "PermanentDocument", lazy="select"
     )
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)

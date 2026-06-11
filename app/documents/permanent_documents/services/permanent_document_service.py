@@ -13,13 +13,12 @@ from app.businesses.services.signals_service import SignalsService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import AppError, NotFoundError
-from app.infrastructure.storage import StorageProvider, get_storage_provider
 from app.documents.permanent_documents.models.permanent_document import (
     CLIENT_SCOPE_TYPES,
     DocumentScope,
     DocumentStatus,
-    PermanentDocumentType,
     PermanentDocument,
+    PermanentDocumentType,
 )
 from app.documents.permanent_documents.repositories.permanent_document_query_repository import (
     PermanentDocumentQueryRepository,
@@ -40,6 +39,7 @@ from app.documents.permanent_documents.services.messages import (
     UPLOAD_FAILED_ERROR,
     VERSION_CONFLICT_ERROR,
 )
+from app.infrastructure.storage import StorageProvider, get_storage_provider
 from app.utils.time_utils import utcnow
 
 _DEFAULT_REQUIRED_TYPES = [

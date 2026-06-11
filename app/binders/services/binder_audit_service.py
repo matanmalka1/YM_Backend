@@ -6,8 +6,8 @@ from app.binders.repositories.binder_intake_material_repository import (
     BinderIntakeMaterialRepository,
 )
 from app.binders.repositories.binder_intake_repository import BinderIntakeRepository
-from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
+from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.schemas.binder import (
     BinderAuditEntry,
     BinderIntakeMaterialResponse,

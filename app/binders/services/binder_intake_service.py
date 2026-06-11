@@ -3,7 +3,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder import Binder, BinderLocationStatus
 from app.binders.models.binder_intake import BinderIntake
 from app.binders.repositories.binder_intake_material_repository import (
     BinderIntakeMaterialRepository,

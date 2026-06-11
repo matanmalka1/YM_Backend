@@ -21,10 +21,10 @@ from app.advance_payments.services.constants import (
 )
 from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationType
 from app.common.period_utils import parse_period_month
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )

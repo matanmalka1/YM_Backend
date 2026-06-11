@@ -144,7 +144,7 @@ class TaxCalendarEntry(Base):
         )
 
 
-def _validate_consistency(entry: "TaxCalendarEntry", db_session=None) -> None:
+def _validate_consistency(entry: TaxCalendarEntry, db_session=None) -> None:
     """Full cross-field validation. Called by ORM events; safe to call ad-hoc.
 
     Covers all rules that cannot be expressed cleanly as single-column

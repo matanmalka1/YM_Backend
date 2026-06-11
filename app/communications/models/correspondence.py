@@ -80,7 +80,7 @@ class Correspondence(Base):
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    contact: Mapped["AuthorityContact | None"] = relationship(
+    contact: Mapped[AuthorityContact | None] = relationship(
         "AuthorityContact", foreign_keys="[Correspondence.contact_id]", viewonly=True
     )
 

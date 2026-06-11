@@ -20,8 +20,6 @@ from app.clients.create_policy import (
 )
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
-from app.legal_entities.repositories.person_repository import PersonRepository
 from app.clients.schemas.client import (
     CreateClientRequest,
 )
@@ -37,6 +35,8 @@ from app.clients.services.messages import (
 )
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.core.exceptions import AppError, ConflictError
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
+from app.legal_entities.repositories.person_repository import PersonRepository
 from app.users.models.user import UserRole
 
 

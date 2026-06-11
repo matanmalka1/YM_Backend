@@ -4,10 +4,10 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.enums import VatType
 from app.common.repositories.base_repository import BaseRepository
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_filters import (

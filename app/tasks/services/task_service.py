@@ -8,10 +8,10 @@ from app.common.services.base_service import BaseService
 from app.common.source_types import WorkQueueSourceType, normalize_source_domain
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
-from app.users.models.user import UserRole
 from app.tasks.repositories.task_repository import TaskRepository
 from app.tasks.schemas.task import TaskCreateRequest, TaskUpdateRequest
 from app.tasks.services.source_validator import source_exists
+from app.users.models.user import UserRole
 from app.utils.time_utils import utcnow
 
 _TERMINAL = {TaskStatus.DONE, TaskStatus.CANCELED}

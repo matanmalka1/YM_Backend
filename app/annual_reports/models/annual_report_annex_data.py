@@ -45,7 +45,7 @@ class AnnualReportAnnexData(Base):
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
     updated_at: Mapped[datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
-    schedule_entry: Mapped["AnnualReportScheduleEntry"] = relationship(
+    schedule_entry: Mapped[AnnualReportScheduleEntry] = relationship(
         "AnnualReportScheduleEntry", back_populates="annex_lines"
     )
 

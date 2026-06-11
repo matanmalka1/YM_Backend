@@ -4,8 +4,8 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from app.database import get_db
 from app.core.logging_config import set_actor_context
+from app.database import get_db
 from app.users.models.user import UserRole
 from app.users.repositories.user_repository import AuthSubject, UserRepository
 from app.users.services.token_service import decode_access_token

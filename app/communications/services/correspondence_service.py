@@ -10,11 +10,11 @@ from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import ForbiddenError, NotFoundError
 from app.communications.models.correspondence import Correspondence, CorrespondenceType
 from app.communications.repositories.correspondence_repository import (
     CorrespondenceRepository,
 )
+from app.core.exceptions import ForbiddenError, NotFoundError
 
 _NOT_FOUND = "CORRESPONDENCE.NOT_FOUND"
 _FORBIDDEN_CONTACT = "CORRESPONDENCE.FORBIDDEN_CONTACT"

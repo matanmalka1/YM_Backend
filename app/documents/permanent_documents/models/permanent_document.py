@@ -108,7 +108,7 @@ class PermanentDocument(Base):
     superseded_by: Mapped[int | None] = mapped_column(
         ForeignKey("permanent_documents.id"), nullable=True
     )
-    superseded_by_doc: Mapped["PermanentDocument | None"] = relationship(
+    superseded_by_doc: Mapped[PermanentDocument | None] = relationship(
         "PermanentDocument",
         foreign_keys="[PermanentDocument.superseded_by]",
         remote_side="PermanentDocument.id",

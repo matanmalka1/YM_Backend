@@ -15,11 +15,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 if TYPE_CHECKING:
+    from app.annual_reports.models.annual_report_credit_point_reason import AnnualReportCreditPoint
     from app.annual_reports.models.annual_report_detail import AnnualReportDetail
     from app.annual_reports.models.annual_report_expense_line import AnnualReportExpenseLine
     from app.annual_reports.models.annual_report_income_line import AnnualReportIncomeLine
     from app.annual_reports.models.annual_report_schedule_entry import AnnualReportScheduleEntry
-    from app.annual_reports.models.annual_report_credit_point_reason import AnnualReportCreditPoint
 
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
@@ -98,26 +98,26 @@ class AnnualReport(Base):
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     # ── Relationships ─────────────────────────────────────────────────────────
-    detail: Mapped["AnnualReportDetail | None"] = relationship(
+    detail: Mapped[AnnualReportDetail | None] = relationship(
         "AnnualReportDetail",
         back_populates="report",
         uselist=False,
         cascade="all, delete-orphan",
     )
-    schedule_entries: Mapped[list["AnnualReportScheduleEntry"]] = relationship(
+    schedule_entries: Mapped[list[AnnualReportScheduleEntry]] = relationship(
         "AnnualReportScheduleEntry",
         back_populates="annual_report",
         cascade="all, delete-orphan",
     )
-    income_lines: Mapped[list["AnnualReportIncomeLine"]] = relationship(
+    income_lines: Mapped[list[AnnualReportIncomeLine]] = relationship(
         "AnnualReportIncomeLine",
         cascade="all, delete-orphan",
     )
-    expense_lines: Mapped[list["AnnualReportExpenseLine"]] = relationship(
+    expense_lines: Mapped[list[AnnualReportExpenseLine]] = relationship(
         "AnnualReportExpenseLine",
         cascade="all, delete-orphan",
     )
-    credit_points: Mapped[list["AnnualReportCreditPoint"]] = relationship(
+    credit_points: Mapped[list[AnnualReportCreditPoint]] = relationship(
         "AnnualReportCreditPoint",
         cascade="all, delete-orphan",
     )

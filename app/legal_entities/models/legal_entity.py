@@ -47,7 +47,7 @@ class LegalEntity(Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
     updated_at: Mapped[datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
 
-    person_links: Mapped[list["PersonLegalEntityLink"]] = relationship(
+    person_links: Mapped[list[PersonLegalEntityLink]] = relationship(
         "PersonLegalEntityLink",
         primaryjoin="LegalEntity.id == foreign(PersonLegalEntityLink.legal_entity_id)",
         lazy="select",

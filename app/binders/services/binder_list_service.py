@@ -7,8 +7,8 @@ from app.actions.services.action_registry import get_binder_actions, get_binder_
 from app.binders.models.binder import Binder
 from app.binders.repositories.binder_repository import BinderListRow, BinderRepository
 from app.binders.schemas.binder import BinderResponse
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.legal_entities.models.legal_entity import LegalEntity
 
 _ALLOWED_SORT_COLS = {
     "period_start",

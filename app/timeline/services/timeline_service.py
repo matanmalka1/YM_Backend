@@ -5,8 +5,8 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.models.annual_report_status_history import (
     AnnualReportStatusHistory,
 )
-from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
+from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.messages import BINDER_RECEIVED
 from app.businesses.models.business import Business
 from app.charges.repositories.charge_repository import ChargeRepository
@@ -16,9 +16,9 @@ from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.notifications.models.notification import NotificationStatus
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.timeline.services.timeline_binder_event_builders import (
-    binder_received_event,
     binder_handed_over_event,
     binder_lifecycle_change_event,
+    binder_received_event,
 )
 from app.timeline.services.timeline_charge_event_builders import (
     charge_created_event,

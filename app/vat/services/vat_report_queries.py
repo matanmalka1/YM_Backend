@@ -7,8 +7,8 @@ from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.services.messages import VAT_ITEM_NOT_FOUND
 from app.vat.schemas.vat_report import VatWorkItemStatusSummaryResponse
+from app.vat.services.messages import VAT_ITEM_NOT_FOUND
 
 
 def deadline_fields_from_snapshot(item, submission_method: SubmissionMethod | None = None) -> dict:

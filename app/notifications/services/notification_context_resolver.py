@@ -11,15 +11,15 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
+from app.config import settings
+from app.core.exceptions import NotFoundError
+from app.core.logging_config import get_logger
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person
 from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )
-from app.config import settings
-from app.core.exceptions import NotFoundError
-from app.core.logging_config import get_logger
 from app.notifications.models.notification import NotificationTrigger
 from app.users.models.user import User
 

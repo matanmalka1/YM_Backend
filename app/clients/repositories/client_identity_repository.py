@@ -7,8 +7,8 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.repositories.base_repository import BaseRepository
+from app.legal_entities.models.legal_entity import LegalEntity
 
 
 @dataclass(frozen=True, slots=True)

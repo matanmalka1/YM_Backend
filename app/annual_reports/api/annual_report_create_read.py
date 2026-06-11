@@ -7,7 +7,6 @@ from app.annual_reports.schemas.annual_report_requests import (
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportDetailResponse,
     AnnualReportListResponse,
-    AnnualReportResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.exceptions import NotFoundError, not_found_response

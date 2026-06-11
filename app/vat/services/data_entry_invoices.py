@@ -7,8 +7,8 @@ from uuid import uuid4
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.core.exceptions import AppError, ConflictError, NotFoundError
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.vat.models.vat_enums import (
     CounterpartyIdType,
     DocumentType,

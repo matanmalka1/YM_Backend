@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, Index, Sequence, Text, column, text
-from sqlalchemy import event, func, select
+from sqlalchemy import ForeignKey, Index, Sequence, Text, column, event, func, select, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.clients.enums import ClientStatus

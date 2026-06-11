@@ -3,9 +3,9 @@
 from datetime import date
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.common.enums import VatType
 from app.core.exceptions import AppError, NotFoundError
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )

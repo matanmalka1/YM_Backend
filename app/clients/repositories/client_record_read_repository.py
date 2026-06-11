@@ -9,13 +9,13 @@ from sqlalchemy.orm import Session
 
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person
 from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )
-from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 
 
 class ClientRecordData(TypedDict):

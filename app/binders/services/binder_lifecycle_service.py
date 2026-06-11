@@ -13,8 +13,8 @@ from app.binders.repositories.binder_lifecycle_log_repository import BinderLifec
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.messages import (
     BINDER_CAPACITY_REOPENED,
-    BINDER_HANDOVER_REVERTED,
     BINDER_HANDED_OVER,
+    BINDER_HANDOVER_REVERTED,
     BINDER_MARKED_FULL,
     BINDER_MARKED_READY_FOR_HANDOVER,
     BINDER_NOT_FOUND,
@@ -25,7 +25,6 @@ from app.notifications.models.notification import NotificationTrigger
 from app.notifications.schemas.notification_schemas import NotificationResult
 from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
 from app.utils.time_utils import utcnow
-
 
 ACTION_RECEIVE_MATERIAL = "receive_material"
 ACTION_MARK_FULL = "mark_full"

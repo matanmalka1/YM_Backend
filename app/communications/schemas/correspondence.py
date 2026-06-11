@@ -3,8 +3,8 @@ from datetime import UTC, datetime
 
 from pydantic import BaseModel, field_validator
 
-from app.core.api_types import ApiDateTime
 from app.communications.models.correspondence import CorrespondenceType
+from app.core.api_types import ApiDateTime
 
 
 def _validate_occurred_at(v: datetime | None) -> datetime | None:

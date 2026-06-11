@@ -6,9 +6,9 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.core.env_validator import EnvValidator
-from app.core.openapi import build_openapi
 from app.core.exception_handlers import setup_exception_handlers
 from app.core.logging_config import get_logger, setup_logging
+from app.core.openapi import build_openapi
 from app.core.sentry import configure_sentry
 from app.lifespan import lifespan
 from app.middleware.rate_limiting import setup_rate_limiting

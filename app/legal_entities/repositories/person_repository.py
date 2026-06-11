@@ -1,13 +1,13 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.common.enums import IdNumberType
+from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.person import Person
 from app.legal_entities.models.person_legal_entity_link import (
     PersonLegalEntityLink,
     PersonLegalEntityRole,
 )
-from app.common.enums import IdNumberType
-from app.common.repositories.base_repository import BaseRepository
 
 
 class PersonRepository(BaseRepository[Person]):

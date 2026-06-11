@@ -14,7 +14,7 @@ import logging
 import sys
 from contextvars import ContextVar, Token
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 # Context variable for request tracking
@@ -382,7 +382,7 @@ class StructuredFormatter(logging.Formatter):
         self.log_format = log_format
 
     def _timestamp(self, record: logging.LogRecord) -> str:
-        return datetime.fromtimestamp(record.created, tz=timezone.utc).isoformat(
+        return datetime.fromtimestamp(record.created, tz=UTC).isoformat(
             timespec="milliseconds"
         )
 
