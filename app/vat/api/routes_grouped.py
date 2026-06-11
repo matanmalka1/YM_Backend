@@ -5,7 +5,6 @@ from fastapi import APIRouter, Depends, Query
 from app.common.enums import VatType
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
-from app.users.repositories.user_repository import UserRepository
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.schemas.vat_report import (
     VatWorkItemGroupItemsResponse,
@@ -56,7 +55,6 @@ def list_work_item_group_items(
 ):
     result = vat_grouped_enrichment.get_group_items_enriched(
         db,
-        UserRepository(db),
         group_key=group_key,
         page=page,
         page_size=page_size,

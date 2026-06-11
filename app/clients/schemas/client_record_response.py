@@ -54,6 +54,30 @@ class ClientRecordResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ClientRecordListItem(BaseModel):
+    """Thin DTO for the clients list/table rows.
+
+    Contains only fields rendered by the clients table (``ClientColumns``).
+    Detail/profile fields (tax reporting config, address, contact extras,
+    metadata, turnover) stay on ``ClientRecordResponse`` and are served by
+    ``GET /clients/{id}``.
+    """
+
+    id: int
+    full_name: str
+    id_number: str
+    entity_type: EntityType | None = None
+    status: ClientStatus = ClientStatus.ACTIVE
+    office_client_number: int | None = None
+    phone: str | None = None
+    email: str | None = None
+    created_at: ApiDateTime | None = None
+    # Enriched (set by API layer)
+    active_binder_number: str | None = None
+
+    model_config = {"from_attributes": True}
+
+
 class ClientRecordListStats(BaseModel):
     active: int = 0
     frozen: int = 0
@@ -61,7 +85,7 @@ class ClientRecordListStats(BaseModel):
 
 
 class ClientRecordListResponse(BaseModel):
-    items: list[ClientRecordResponse]
+    items: list[ClientRecordListItem]
     page: int
     page_size: int
     total: int

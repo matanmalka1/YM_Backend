@@ -11,7 +11,6 @@ from app.notifications.models.notification import (
     NotificationTrigger,
 )
 
-
 # ── Request schemas ───────────────────────────────────────────────────────────
 
 
@@ -96,6 +95,34 @@ class NotificationResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class NotificationListItem(BaseModel):
+    """Thin DTO for notification list/table rows.
+
+    Contains the fields rendered by notification list rows across the
+    notifications table, the bell drawer, and the per-client tab — including
+    the ``content_snapshot`` preview and ``business_name`` shown inline in the
+    compact lists. Routing references and delivery/debug fields
+    (entity_*, channel, sent_at/failed_at, error_message, retry_count,
+    triggered_by) stay on ``NotificationResponse`` and are served by
+    ``GET /notifications/{notification_id}``.
+    """
+
+    id: int
+    client_record_id: int
+    client_name: str | None = None
+    business_name: str | None = None
+    trigger: NotificationTrigger
+    trigger_label: str = ""
+    domain_label: str = ""
+    status: NotificationStatus
+    recipient: str | None = None
+    content_snapshot: str
+    subject_snapshot: str | None = None
+    created_at: ApiDateTime
+
+    model_config = {"from_attributes": True}
+
+
 class NotificationSummaryResponse(BaseModel):
     pending: int = 0
     sent: int = 0
@@ -105,7 +132,7 @@ class NotificationSummaryResponse(BaseModel):
 
 
 class NotificationListResponse(BaseModel):
-    items: list[NotificationResponse]
+    items: list[NotificationListItem]
     total: int
     page: int
     page_size: int

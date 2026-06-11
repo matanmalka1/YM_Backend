@@ -70,8 +70,40 @@ class VatWorkItemResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class VatWorkItemListItem(BaseModel):
+    """Thin DTO for VAT work-item list/table rows.
+
+    Contains only the fields rendered by the VAT list, grouped table, and
+    grouped cards. Detail-only fields (raw totals, override justification,
+    filing references, statutory deadline, assignee, etc.) live on
+    ``VatWorkItemResponse`` and are served by ``GET /vat/work-items/{id}``.
+    """
+
+    id: int
+    client_record_id: int
+    office_client_number: int | None = None  # enriched by service
+    client_name: str | None = None  # enriched by service
+    client_id_number: str | None = None  # enriched by service
+    period: str
+    period_type: VatType
+    status: VatWorkItemStatus
+    net_vat: ApiDecimal
+    final_vat_amount: ApiDecimal | None = None
+    is_overridden: bool
+    filed_at: ApiDateTime | None = None
+    updated_at: ApiDateTime
+    # Derived deadline fields shown in the "מועד הגשה" column
+    submission_deadline: date | None = None
+    extended_deadline: date | None = None
+    days_until_deadline: int | None = None
+    is_overdue: bool | None = None
+    available_actions: list[ActionDescriptor] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True}
+
+
 class VatWorkItemListResponse(BaseModel):
-    items: list[VatWorkItemResponse]
+    items: list[VatWorkItemListItem]
     total: int
 
 
@@ -107,7 +139,7 @@ class VatWorkItemGroupsResponse(BaseModel):
 
 
 class VatWorkItemGroupItemsResponse(BaseModel):
-    items: list[VatWorkItemResponse]
+    items: list[VatWorkItemListItem]
     total: int
     period: str
 

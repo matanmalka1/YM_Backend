@@ -34,29 +34,19 @@ class ClientEnrichmentService:
         response.annual_turnover = self._compute_annual_turnover(response, year)
         return response
 
-    def enrich_list(
-        self, items: list[ClientRecordResponse], tax_year: int | None = None
+    def enrich_list_binders(
+        self, items: list[ClientRecordResponse]
     ) -> list[ClientRecordResponse]:
+        """Set ``active_binder_number`` for a page of clients.
+
+        The clients list uses a thin DTO and intentionally does not expose annual
+        turnover, so this path skips VAT turnover lookups.
+        """
         if not items:
             return items
         client_ids = [c.id for c in items]
         active_binders = self._binder_service.map_active_binders_for_clients(client_ids)
-        year = tax_year or utcnow().year
-        reported_turnover = self._vat_repo.get_annual_turnover_by_client_ids(client_ids, year)
         for client in items:
             if client.id in active_binders:
                 client.active_binder_number = active_binders[client.id].binder_number
-            reported = reported_turnover.get(client.id)
-            if reported is not None:
-                client.annual_turnover = AnnualTurnover(
-                    amount=reported, source="reported", year=year
-                )
-            elif client.annual_revenue is not None:
-                client.annual_turnover = AnnualTurnover(
-                    amount=client.annual_revenue,
-                    source="manual",
-                    year=year,
-                )
-            else:
-                client.annual_turnover = AnnualTurnover(amount=None, source="none", year=year)
         return items

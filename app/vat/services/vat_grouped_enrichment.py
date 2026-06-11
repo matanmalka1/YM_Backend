@@ -5,8 +5,7 @@ from datetime import date
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType
 from app.users.models.user import UserRole
-from app.users.repositories.user_repository import UserRepository
-from app.vat.api.serializers import serialize_enriched_work_item
+from app.vat.api.serializers import serialize_enriched_work_item_list
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories import (
     vat_work_item_grouped_repository as grouped_repo,
@@ -36,7 +35,6 @@ def get_groups(
 
 def get_group_items_enriched(
     db,
-    user_repo: UserRepository,
     *,
     group_key: str,
     page: int,
@@ -62,19 +60,14 @@ def get_group_items_enriched(
         status=status,
     )
     client_record_id_list = list({item.client_record_id for item in items})
-    user_ids = list({uid for item in items for uid in [item.assigned_to, item.filed_by] if uid})
-    users = user_repo.list_by_ids(user_ids) if user_ids else []
     client_maps = _build_client_maps(db, client_record_id_list)
-    user_map = {u.id: u.full_name for u in users}
 
     serialized = [
-        serialize_enriched_work_item(
+        serialize_enriched_work_item_list(
             item,
             office_client_number_map=client_maps["office_client_number_map"],
             name_map=client_maps["name_map"],
             id_number_map=client_maps["id_number_map"],
-            status_map=client_maps["status_map"],
-            user_map=user_map,
             user_role=user_role,
         )
         for item in items

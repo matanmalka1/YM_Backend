@@ -88,7 +88,6 @@ def list_clients(
     status_filter: ClientStatus | None = Query(None, alias="status"),
     entity_type: EntityType | None = Query(None),
     accountant_id: int | None = Query(None, ge=1),
-    tax_year: int | None = Query(None, ge=2000, le=2100),
     sort_by: str = Query(
         "full_name",
         pattern="^(full_name|created_at|status|entity_type)$",
@@ -104,7 +103,6 @@ def list_clients(
         status=status_filter,
         entity_type=entity_type,
         accountant_id=accountant_id,
-        tax_year=tax_year,
         sort_by=sort_by,
         sort_order=sort_order,
         page=page,

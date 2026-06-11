@@ -1,11 +1,8 @@
-from decimal import Decimal
-
 import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.binders.repositories.binder_repository import BinderRepository
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_lifecycle_service import ClientLifecycleService
 from app.clients.services.client_query_service import ClientQueryService
@@ -238,7 +235,12 @@ def test_list_clients_and_conflict_info(test_db):
     assert len(info_deleted.deleted_clients) == 1
 
 
-def test_list_clients_enriches_annual_turnover_with_batch_lookup(test_db, monkeypatch):
+def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch):
+    """The clients list returns the thin ClientRecordListItem.
+
+    The thin row does not expose annual turnover, so the list must not perform
+    the per-page turnover lookup (that data is detail-only, on GET /clients/{id}).
+    """
     creation_service = CreateClientService(test_db)
     reported = _svc_create(
         creation_service,
@@ -250,36 +252,26 @@ def test_list_clients_enriches_annual_turnover_with_batch_lookup(test_db, monkey
         full_name="Manual Turnover",
         id_number="670000050",
     )
-    manual_entity = test_db.get(LegalEntity, manual.legal_entity_id)
-    manual_entity.annual_revenue = Decimal("900.00")
-    test_db.flush()
 
-    calls = []
-
-    def fake_batch(self, client_record_ids, year):
-        calls.append((client_record_ids, year))
-        return {reported.id: Decimal("1200.00")}
+    def fail_batch(self, client_record_ids, year):
+        raise AssertionError("clients list must not load annual turnover")
 
     def fail_scalar(self, client_record_id, year):
-        raise AssertionError("list enrichment must use batch turnover lookup")
+        raise AssertionError("clients list must not load annual turnover")
 
     monkeypatch.setattr(
         VatClientSummaryRepository,
         "get_annual_turnover_by_client_ids",
-        fake_batch,
+        fail_batch,
     )
     monkeypatch.setattr(VatClientSummaryRepository, "get_annual_turnover", fail_scalar)
 
-    result = ClientQueryService(test_db).list_full_clients(page=1, page_size=10, tax_year=2026)
+    result = ClientQueryService(test_db).list_full_clients(page=1, page_size=10)
     by_id = {item.id: item for item in result.items}
 
-    assert len(calls) == 1
-    assert set(calls[0][0]) == {reported.id, manual.id}
-    assert calls[0][1] == 2026
-    assert by_id[reported.id].annual_turnover.amount == Decimal("1200.00")
-    assert by_id[reported.id].annual_turnover.source == "reported"
-    assert by_id[manual.id].annual_turnover.amount == Decimal("900.00")
-    assert by_id[manual.id].annual_turnover.source == "manual"
+    assert {reported.id, manual.id} <= set(by_id)
+    # Thin DTO carries no turnover field at all.
+    assert not hasattr(by_id[reported.id], "annual_turnover")
 
 
 def test_create_client_does_not_reuse_deleted_office_client_number(test_db):

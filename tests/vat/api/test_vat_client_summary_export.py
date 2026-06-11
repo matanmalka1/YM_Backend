@@ -97,7 +97,10 @@ def test_vat_client_work_items_endpoint(client, test_db, advisor_headers, vat_cl
     assert payload["items"][0]["period"] == "2026-02"
     assert payload["items"][1]["period"] == "2026-01"
     assert payload["items"][0]["client_name"] == vat_client.full_name
-    assert payload["items"][1]["filed_by_name"] == test_user.full_name
+    # Thin list DTO: detail-only fields are not part of list rows.
+    assert "filed_by_name" not in payload["items"][1]
+    assert "statutory_deadline" not in payload["items"][1]
+    assert "override_justification" not in payload["items"][1]
 
 
 def test_vat_client_export_excel(client, test_db, advisor_headers, vat_client, test_user):

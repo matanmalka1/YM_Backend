@@ -13,6 +13,7 @@ from app.clients.schemas.client_conflicts import (
     DeletedClientSummary,
 )
 from app.clients.schemas.client_record_response import (
+    ClientRecordListItem,
     ClientRecordListResponse,
     ClientRecordListStats,
     ClientRecordResponse,
@@ -85,7 +86,6 @@ class ClientQueryService:
         status: ClientStatus | None = None,
         accountant_id: int | None = None,
         entity_type: EntityType | None = None,
-        tax_year: int | None = None,
         sort_by: str = "full_name",
         sort_order: str = "asc",
         page: int = 1,
@@ -109,8 +109,11 @@ class ClientQueryService:
         )
         record_ids = [r.id for r in records]
         full_map = get_full_records_bulk(self.db, record_ids)
-        items = [ClientRecordResponse(**full_map[rid]) for rid in record_ids if rid in full_map]
-        items = ClientEnrichmentService(self.db).enrich_list(items, tax_year=tax_year)
+        full_items = [
+            ClientRecordResponse(**full_map[rid]) for rid in record_ids if rid in full_map
+        ]
+        full_items = ClientEnrichmentService(self.db).enrich_list_binders(full_items)
+        items = [ClientRecordListItem.model_validate(item) for item in full_items]
         counts = self.record_repo.count_by_status(
             search=search,
             accountant_id=accountant_id,

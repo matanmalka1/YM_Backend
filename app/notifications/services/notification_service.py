@@ -5,8 +5,9 @@ from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
+from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -14,6 +15,7 @@ from app.notifications.models.notification import (
 )
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import (
+    NotificationListItem,
     NotificationPreviewRequest,
     NotificationPreviewResponse,
     NotificationResponse,
@@ -26,21 +28,40 @@ from app.notifications.services.notification_send_service import NotificationSen
 logger = get_logger(__name__)
 
 
+def _trigger_labels(notification: object) -> tuple[str, str]:
+    from app.notifications.models.notification import TRIGGER_DOMAIN, TRIGGER_LABELS
+
+    trigger = notification.trigger  # type: ignore[attr-defined]
+    return (
+        TRIGGER_LABELS.get(trigger, trigger.value),
+        TRIGGER_DOMAIN.get(trigger, ""),
+    )
+
+
 def _enrich(
     notification: object,
     business_name_map: dict[int, str],
     client_name_map: dict[int, str],
 ) -> NotificationResponse:
-    from app.notifications.models.notification import TRIGGER_DOMAIN, TRIGGER_LABELS
-
     resp = NotificationResponse.model_validate(notification)
     resp.client_name = client_name_map.get(notification.client_record_id)  # type: ignore[attr-defined]
     if notification.business_id is not None:  # type: ignore[attr-defined]
         resp.business_name = business_name_map.get(notification.business_id)  # type: ignore[attr-defined]
-    trigger = notification.trigger  # type: ignore[attr-defined]
-    resp.trigger_label = TRIGGER_LABELS.get(trigger, trigger.value)
-    resp.domain_label = TRIGGER_DOMAIN.get(trigger, "")
+    resp.trigger_label, resp.domain_label = _trigger_labels(notification)
     return resp
+
+
+def _enrich_list_item(
+    notification: object,
+    business_name_map: dict[int, str],
+    client_name_map: dict[int, str],
+) -> NotificationListItem:
+    item = NotificationListItem.model_validate(notification)
+    item.client_name = client_name_map.get(notification.client_record_id)  # type: ignore[attr-defined]
+    if notification.business_id is not None:  # type: ignore[attr-defined]
+        item.business_name = business_name_map.get(notification.business_id)  # type: ignore[attr-defined]
+    item.trigger_label, item.domain_label = _trigger_labels(notification)
+    return item
 
 
 class NotificationService:
@@ -85,7 +106,7 @@ class NotificationService:
         triggered_by: int | None = None,
         date_from: object | None = None,
         date_to: object | None = None,
-    ) -> tuple[list[NotificationResponse], int]:
+    ) -> tuple[list[NotificationListItem], int]:
         items, total = self.repo.list_paginated(
             page=page,
             page_size=page_size,
@@ -100,7 +121,19 @@ class NotificationService:
         )
         business_name_map = self._build_business_name_map(items)
         client_name_map = self._build_client_name_map(items)
-        return [_enrich(n, business_name_map, client_name_map) for n in items], total
+        return [_enrich_list_item(n, business_name_map, client_name_map) for n in items], total
+
+    def get_detail(self, notification_id: int) -> NotificationResponse:
+        notification = self.repo.get_by_id(notification_id)
+        if notification is None:
+            raise AppError(
+                "ההודעה המבוקשת לא נמצאה",
+                "NOTIFICATION.NOT_FOUND",
+                status_code=404,
+            )
+        business_name_map = self._build_business_name_map([notification])
+        client_name_map = self._build_client_name_map([notification])
+        return _enrich(notification, business_name_map, client_name_map)
 
     def get_summary(
         self,

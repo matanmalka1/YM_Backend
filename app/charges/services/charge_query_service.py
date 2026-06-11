@@ -7,9 +7,9 @@ from app.businesses.repositories.business_repository import BusinessRepository
 from app.charges.models.charge import Charge
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.charges.schemas.charge import (
+    ChargeListItem,
     ChargeListResponse,
     ChargeListStats,
-    ChargeResponse,
     ChargeStatusStat,
 )
 from app.clients.repositories.client_record_read_repository import (
@@ -160,13 +160,13 @@ class ChargeQueryService:
             )
         )
 
-        def _enrich(charge: Charge) -> ChargeResponse:
-            data = ChargeResponse.model_validate(charge).model_dump()
-            data["client_name"] = client_name_map.get(charge.id)
-            data["business_name"] = business_name_map.get(charge.id)
-            data["office_client_number"] = office_client_number_map.get(charge.id)
-            data["available_actions"] = get_charge_actions(charge, user_role=user_role)
-            return ChargeResponse(**data)
+        def _enrich(charge: Charge) -> ChargeListItem:
+            item = ChargeListItem.model_validate(charge)
+            item.client_name = client_name_map.get(charge.id)
+            item.business_name = business_name_map.get(charge.id)
+            item.office_client_number = office_client_number_map.get(charge.id)
+            item.available_actions = get_charge_actions(charge, user_role=user_role)
+            return item
 
         client_record = (
             ClientRecordRepository(self.db).get_by_id(client_record_id)

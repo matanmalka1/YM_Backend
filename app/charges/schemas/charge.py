@@ -54,6 +54,34 @@ class ChargeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
+class ChargeListItem(BaseModel):
+    """Thin DTO for the charges list/table rows.
+
+    Contains only fields rendered by the charges table (``ChargeColumns``,
+    ``ChargeClientCell``). Detail-only fields (description, audit actors,
+    cancellation reason, annual_report_id) stay on ``ChargeResponse`` and are
+    served by ``GET /charges/{id}``.
+    """
+
+    id: int
+    client_record_id: int
+    client_name: str | None = None
+    office_client_number: int | None = None
+    business_id: int | None = None
+    business_name: str | None = None
+    charge_type: ChargeType
+    status: ChargeStatus
+    amount: ApiDecimal
+    period: str | None = None
+    months_covered: int
+    created_at: ApiDateTime
+    issued_at: ApiDateTime | None = None
+    paid_at: ApiDateTime | None = None
+    available_actions: list[ActionDescriptor] = Field(default_factory=list)
+
+    model_config = {"from_attributes": True}
+
+
 class ChargeCancelRequest(BaseModel):
     reason: str | None = None
 
@@ -71,7 +99,7 @@ class ChargeListStats(BaseModel):
 
 
 class ChargeListResponse(BaseModel):
-    items: list[ChargeResponse]
+    items: list[ChargeListItem]
     page: int
     page_size: int
     total: int

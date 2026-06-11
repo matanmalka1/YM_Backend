@@ -6,7 +6,7 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
-from app.core.exceptions import AppError
+from app.core.exceptions import AppError, not_found_response
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -16,6 +16,7 @@ from app.notifications.schemas.notification_schemas import (
     NotificationListResponse,
     NotificationPreviewRequest,
     NotificationPreviewResponse,
+    NotificationResponse,
     NotificationResult,
     NotificationSendRequest,
     NotificationSummaryResponse,
@@ -81,6 +82,15 @@ def get_notification_summary(
 ):
     svc = NotificationService(db)
     return svc.get_summary(client_record_id=client_record_id, business_id=business_id)
+
+
+@router.get(
+    "/{notification_id}",
+    response_model=NotificationResponse,
+    responses=not_found_response(description="ההודעה המבוקשת לא נמצאה"),
+)
+def get_notification(notification_id: int, db: DBSession):
+    return NotificationService(db).get_detail(notification_id)
 
 
 @router.post("/preview", response_model=NotificationPreviewResponse)

@@ -4556,24 +4556,6 @@
             }
           },
           {
-            "name": "tax_year",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer",
-                  "maximum": 2100,
-                  "minimum": 2000
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Tax Year"
-            }
-          },
-          {
             "name": "sort_by",
             "in": "query",
             "required": false,
@@ -8856,6 +8838,58 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/NotificationSummaryResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notifications/{notification_id}": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get Notification",
+        "operationId": "get_notification_api_v1_notifications__notification_id__get",
+        "parameters": [
+          {
+            "name": "notification_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Notification Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "ההודעה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -18155,11 +18189,153 @@
         ],
         "title": "ChargeCreateRequest"
       },
+      "ChargeListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "office_client_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office Client Number"
+          },
+          "business_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Id"
+          },
+          "business_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Name"
+          },
+          "charge_type": {
+            "$ref": "#/components/schemas/ChargeType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ChargeStatus"
+          },
+          "amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Amount",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "period": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Period"
+          },
+          "months_covered": {
+            "type": "integer",
+            "title": "Months Covered"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "issued_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Issued At"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At"
+          },
+          "available_actions": {
+            "items": {
+              "$ref": "#/components/schemas/ActionDescriptor"
+            },
+            "type": "array",
+            "title": "Available Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "client_record_id",
+          "charge_type",
+          "status",
+          "amount",
+          "months_covered",
+          "created_at"
+        ],
+        "title": "ChargeListItem",
+        "description": "Thin DTO for the charges list/table rows.\n\nContains only fields rendered by the charges table (``ChargeColumns``,\n``ChargeClientCell``). Detail-only fields (description, audit actors,\ncancellation reason, annual_report_id) stay on ``ChargeResponse`` and are\nserved by ``GET /charges/{id}``."
+      },
       "ChargeListResponse": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ChargeResponse"
+              "$ref": "#/components/schemas/ChargeListItem"
             },
             "type": "array",
             "title": "Items"
@@ -18971,11 +19147,108 @@
         ],
         "title": "ClientImportResponse"
       },
+      "ClientRecordListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "id_number": {
+            "type": "string",
+            "title": "Id Number"
+          },
+          "entity_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EntityType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/ClientStatus",
+            "default": "active"
+          },
+          "office_client_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office Client Number"
+          },
+          "phone": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phone"
+          },
+          "email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "active_binder_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Binder Number"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "full_name",
+          "id_number"
+        ],
+        "title": "ClientRecordListItem",
+        "description": "Thin DTO for the clients list/table rows.\n\nContains only fields rendered by the clients table (``ClientColumns``).\nDetail/profile fields (tax reporting config, address, contact extras,\nmetadata, turnover) stay on ``ClientRecordResponse`` and are served by\n``GET /clients/{id}``."
+      },
       "ClientRecordListResponse": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/ClientRecordResponse"
+              "$ref": "#/components/schemas/ClientRecordListItem"
             },
             "type": "array",
             "title": "Items"
@@ -21800,11 +22073,106 @@
         ],
         "title": "NotificationChannel"
       },
+      "NotificationListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "business_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Name"
+          },
+          "trigger": {
+            "$ref": "#/components/schemas/NotificationTrigger"
+          },
+          "trigger_label": {
+            "type": "string",
+            "title": "Trigger Label",
+            "default": ""
+          },
+          "domain_label": {
+            "type": "string",
+            "title": "Domain Label",
+            "default": ""
+          },
+          "status": {
+            "$ref": "#/components/schemas/NotificationStatus"
+          },
+          "recipient": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Recipient"
+          },
+          "content_snapshot": {
+            "type": "string",
+            "title": "Content Snapshot"
+          },
+          "subject_snapshot": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Subject Snapshot"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "client_record_id",
+          "trigger",
+          "status",
+          "content_snapshot",
+          "created_at"
+        ],
+        "title": "NotificationListItem",
+        "description": "Thin DTO for notification list/table rows.\n\nContains the fields rendered by notification list rows across the\nnotifications table, the bell drawer, and the per-client tab — including\nthe ``content_snapshot`` preview and ``business_name`` shown inline in the\ncompact lists. Routing references and delivery/debug fields\n(entity_*, channel, sent_at/failed_at, error_message, retry_count,\ntriggered_by) stay on ``NotificationResponse`` and are served by\n``GET /notifications/{notification_id}``."
+      },
       "NotificationListResponse": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/NotificationResponse"
+              "$ref": "#/components/schemas/NotificationListItem"
             },
             "type": "array",
             "title": "Items"
@@ -28353,7 +28721,7 @@
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/VatWorkItemResponse"
+              "$ref": "#/components/schemas/VatWorkItemListItem"
             },
             "type": "array",
             "title": "Items"
@@ -28452,11 +28820,182 @@
         ],
         "title": "VatWorkItemGroupsResponse"
       },
+      "VatWorkItemListItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "office_client_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office Client Number"
+          },
+          "client_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Name"
+          },
+          "client_id_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id Number"
+          },
+          "period": {
+            "type": "string",
+            "title": "Period"
+          },
+          "period_type": {
+            "$ref": "#/components/schemas/VatType"
+          },
+          "status": {
+            "$ref": "#/components/schemas/VatWorkItemStatus"
+          },
+          "net_vat": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Net Vat",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "final_vat_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Vat Amount"
+          },
+          "is_overridden": {
+            "type": "boolean",
+            "title": "Is Overridden"
+          },
+          "filed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filed At"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Updated At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "submission_deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Submission Deadline"
+          },
+          "extended_deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Extended Deadline"
+          },
+          "days_until_deadline": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Deadline"
+          },
+          "is_overdue": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Overdue"
+          },
+          "available_actions": {
+            "items": {
+              "$ref": "#/components/schemas/ActionDescriptor"
+            },
+            "type": "array",
+            "title": "Available Actions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "client_record_id",
+          "period",
+          "period_type",
+          "status",
+          "net_vat",
+          "is_overridden",
+          "updated_at"
+        ],
+        "title": "VatWorkItemListItem",
+        "description": "Thin DTO for VAT work-item list/table rows.\n\nContains only the fields rendered by the VAT list, grouped table, and\ngrouped cards. Detail-only fields (raw totals, override justification,\nfiling references, statutory deadline, assignee, etc.) live on\n``VatWorkItemResponse`` and are served by ``GET /vat/work-items/{id}``."
+      },
       "VatWorkItemListResponse": {
         "properties": {
           "items": {
             "items": {
-              "$ref": "#/components/schemas/VatWorkItemResponse"
+              "$ref": "#/components/schemas/VatWorkItemListItem"
             },
             "type": "array",
             "title": "Items"
