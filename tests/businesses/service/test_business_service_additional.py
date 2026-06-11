@@ -57,8 +57,8 @@ def test_create_business_defaults_opened_at_to_today_when_missing_everywhere(mon
         create=_create,
     )
 
-    with patch("app.businesses.services.business_service.date") as mock_date:
-        mock_date.today.return_value = date(2026, 4, 9)
+    with patch("app.businesses.services.business_service.israel_today") as mock_today:
+        mock_today.return_value = date(2026, 4, 9)
         result = service.create_business(
             client_id=1,
             business_name="Uses Today",

@@ -18,6 +18,7 @@ from app.common.obligation_plan import (
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
+from app.utils.time_utils import israel_today
 
 
 def compute_creation_impact(
@@ -30,7 +31,7 @@ def compute_creation_impact(
     if entity_type == EntityType.EMPLOYEE:
         raise ValueError("פתיחת לקוח מסוג שכיר אינה נתמכת במערכת")
 
-    today = reference_date or date.today()
+    today = reference_date or israel_today()
     years = _years_to_generate(today)
     n = len(years)
     is_exempt = vat_reporting_frequency in (VatType.EXEMPT, None)

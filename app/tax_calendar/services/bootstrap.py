@@ -15,6 +15,7 @@ from app.tax_calendar.models.deadline_rule import DeadlineRule
 from app.tax_calendar.repositories.deadline_rule_repository import DeadlineRuleRepository
 from app.tax_calendar.repositories.entry_repository import TaxCalendarEntryRepository
 from app.tax_calendar.services.tax_calendar_entry_service import generate_for_year_range
+from app.utils.time_utils import israel_today
 
 DEFAULT_EFFECTIVE_FROM = date(2023, 1, 1)
 EXPECTED_ENTRIES_PER_YEAR = 37  # 12 vat_monthly + 6 vat_bimonthly + 12 advance_monthly + 6 advance_bimonthly + 1 annual_report
@@ -72,7 +73,7 @@ def seed_default_deadline_rules(db: Session) -> SeedRulesResult:
 
 
 def default_year_range(today: date | None = None) -> tuple[int, int]:
-    current_year = (today or date.today()).year
+    current_year = (today or israel_today()).year
     next_year = current_year + 1
     if registry_periodic_calendar_available(next_year):
         return current_year, next_year

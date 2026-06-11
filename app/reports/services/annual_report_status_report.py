@@ -8,6 +8,7 @@ from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
+from app.utils.time_utils import israel_today
 
 
 class AnnualReportStatusReportService:
@@ -17,7 +18,7 @@ class AnnualReportStatusReportService:
     def get_report(self, tax_year: int) -> dict:
         rows = self.repo.list_by_tax_year_with_client(tax_year)
 
-        today = date.today()
+        today = israel_today()
         grouped: dict[str, list] = {s.value: [] for s in AnnualReportStatus}
 
         for report, client_record_id, client_name in rows:

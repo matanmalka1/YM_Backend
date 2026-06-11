@@ -1,18 +1,14 @@
-from datetime import date
 from types import SimpleNamespace
 
 from app.dashboard.services.dashboard_tax_service import DashboardTaxService
 
 
-class _FakeDate(date):
-    @classmethod
-    def today(cls):
-        return cls(2035, 5, 17)
-
-
 def test_get_submission_widget_data_defaults_to_current_year(monkeypatch, test_db):
     service = DashboardTaxService(test_db)
-    monkeypatch.setattr("app.dashboard.services.dashboard_tax_service.date", _FakeDate)
+    monkeypatch.setattr(
+        "app.dashboard.services.dashboard_tax_service.israel_today",
+        lambda: SimpleNamespace(year=2035),
+    )
 
     calls = []
 

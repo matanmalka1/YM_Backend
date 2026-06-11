@@ -9,6 +9,7 @@ from app.binders.repositories.binder_repository import BinderListRow, BinderRepo
 from app.binders.schemas.binder import BinderResponse
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.legal_entities.models.legal_entity import LegalEntity
+from app.utils.time_utils import israel_today
 
 _ALLOWED_SORT_COLS = {
     "period_start",
@@ -79,7 +80,7 @@ class BinderListService:
             if client_id_number is _UNSET:
                 client_id_number = client_id_number_map.get(binder.client_record_id)
 
-        ref_date = reference_date or date.today()
+        ref_date = reference_date or israel_today()
         response = BinderResponse.model_validate(binder)
         response.days_in_office = (
             max(0, (ref_date - binder.period_start).days)
@@ -101,7 +102,7 @@ class BinderListService:
         )
         return self.build_binder_response(
             binder,
-            reference_date=date.today(),
+            reference_date=israel_today(),
             office_client_number=office_client_number_map.get(binder.client_record_id),
             client_name=client_name_map.get(binder.client_record_id),
             client_id_number=client_id_number_map.get(binder.client_record_id),
@@ -154,7 +155,7 @@ class BinderListService:
             order = "desc"
         effective_sort_by = sort_by if sort_by in _ALLOWED_SORT_COLS else "period_start"
 
-        ref_date = reference_date or date.today()
+        ref_date = reference_date or israel_today()
         rows, total = self.binder_repo.list_active_paginated_projected(
             client_record_id=client_record_id,
             location_status=location_status,

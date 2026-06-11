@@ -1,14 +1,14 @@
 """Advance payment domain constants."""
 
-import datetime as _dt
 import os
 from decimal import Decimal
 
 from app.common.integrations.tax_rules_financials import get_vat_rate_percent
+from app.utils.time_utils import israel_today
 
 
 def _resolve_vat_rate() -> Decimal:
-    pct = get_vat_rate_percent(_dt.date.today().year)
+    pct = get_vat_rate_percent(israel_today().year)
     if pct is not None:
         return Decimal(str(pct)) / Decimal("100")
     return Decimal(os.getenv("ADVANCE_PAYMENT_VAT_RATE", "0.18"))

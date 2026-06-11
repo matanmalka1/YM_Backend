@@ -25,6 +25,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.services.intake import create_work_item
+from app.utils.time_utils import israel_today
 
 
 @dataclass(slots=True)
@@ -68,7 +69,7 @@ class ClientOnboardingOrchestrator:
             reference_date=reference_date,
             best_effort=False,
         )
-        today = reference_date or date.today()
+        today = reference_date or israel_today()
         le = LegalEntityRepository(self.db).get_by_id(record.legal_entity_id) if record else None
         vat_type = getattr(le, "vat_reporting_frequency", None) if le else None
         ap_frequency = getattr(le, "advance_payment_frequency", None) if le else None

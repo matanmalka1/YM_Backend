@@ -12,6 +12,7 @@ from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_filters import (
     apply_vat_work_item_filters,
 )
+from app.utils.time_utils import israel_today
 
 
 def _active_base():
@@ -34,7 +35,7 @@ def list_due_date_groups(
     1. Aggregated counts per due_date_effective.
     2. Distinct (due_date_effective, period, period_type) pairs to build periods[].
     """
-    today = date.today()
+    today = israel_today()
 
     filed = VatWorkItemStatus.FILED
     canceled = VatWorkItemStatus.CANCELED

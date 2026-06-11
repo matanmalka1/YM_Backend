@@ -4,6 +4,8 @@ import argparse
 from dataclasses import dataclass
 from datetime import date
 
+from app.utils.time_utils import israel_today
+
 
 @dataclass
 class SeedConfig:
@@ -50,7 +52,7 @@ def parse_args() -> SeedConfig:
     parser.add_argument(
         "--reference-date",
         type=date.fromisoformat,
-        default=date.today(),
+        default=israel_today(),
     )
     parser.add_argument("--reset", action="store_true")
     parser.add_argument("--preserve-users", action="store_true")

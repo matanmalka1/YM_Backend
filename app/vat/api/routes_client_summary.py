@@ -1,7 +1,5 @@
 """Routes: client-level VAT summary and export."""
 
-from datetime import date
-
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
@@ -11,6 +9,7 @@ from app.users.models.user import UserRole
 from app.vat.schemas.vat_client_summary_schema import VatClientSummaryResponse
 from app.vat.services.vat_client_summary_service import get_client_summary
 from app.vat.services.vat_export_service import export
+from app.utils.time_utils import israel_today
 
 router = APIRouter(
     prefix="/vat",
@@ -32,7 +31,7 @@ def get_vat_client_summary(
     from_year: int | None = Query(default=None, ge=2000, le=2100),
     to_year: int | None = Query(default=None, ge=2000, le=2100),
 ):
-    current_year = date.today().year
+    current_year = israel_today().year
     resolved_to = to_year if to_year is not None else current_year
     resolved_from = from_year if from_year is not None else current_year - _DEFAULT_YEAR_WINDOW
     return get_client_summary(

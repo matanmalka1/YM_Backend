@@ -2,6 +2,8 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.utils.time_utils import israel_today
+
 
 class SignalsService:
     """
@@ -27,7 +29,7 @@ class SignalsService:
         reference_date: date | None = None,
     ) -> dict:
         if reference_date is None:
-            reference_date = date.today()
+            reference_date = israel_today()
         missing_docs = self.document_service.get_missing_document_types(business_id)
         return {
             "business_id": business_id,

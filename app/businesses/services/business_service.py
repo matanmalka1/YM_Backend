@@ -14,6 +14,7 @@ from app.businesses.services.business_lifecycle_service import BusinessLifecycle
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
+from app.utils.time_utils import israel_today
 
 
 def _serialize(d: dict) -> dict:
@@ -61,7 +62,7 @@ class BusinessService:
         if not record:
             raise NotFoundError(f"לקוח {client_record_id} לא נמצא", "CLIENT.NOT_FOUND")
 
-        effective_opened_at = opened_at or date.today()
+        effective_opened_at = opened_at or israel_today()
 
         if self.business_repo.all_non_deleted_are_closed_for_legal_entity(record.legal_entity_id):
             raise AppError(
@@ -165,7 +166,7 @@ class BusinessService:
             if user_role != UserRole.ADVISOR:
                 raise ForbiddenError("רק יועצים יכולים להקפיא או לסגור עסקים", "BUSINESS.FORBIDDEN")
         if new_status == BusinessStatus.CLOSED:
-            fields.setdefault("closed_at", date.today())
+            fields.setdefault("closed_at", israel_today())
         if new_status == BusinessStatus.ACTIVE:
             fields["closed_at"] = None
 

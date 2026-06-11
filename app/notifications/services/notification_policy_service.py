@@ -16,6 +16,7 @@ from app.notifications.services.constants import (
     PAYMENT_REMINDER_WARNING_DAYS,
     VAT_REMINDER_WINDOW_DAYS,
 )
+from app.utils.time_utils import israel_today
 
 # Triggers allowed even for FROZEN/CLOSED clients
 _FROZEN_CLOSED_ALLOWED = {
@@ -223,7 +224,7 @@ class NotificationPolicyService:
         if item.due_date_effective is None:
             return PolicyResult(blocked=True, reason='חסר מועד הגשה לפריט מע"מ')
 
-        days_until = (item.due_date_effective - _dt.date.today()).days
+        days_until = (item.due_date_effective - israel_today()).days
         if days_until < 0:
             return PolicyResult(blocked=True, reason='מועד הגשת מע"מ כבר חלף')
         if days_until > VAT_REMINDER_WINDOW_DAYS:

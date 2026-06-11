@@ -49,5 +49,5 @@ def test_openapi_uses_string_contract_for_decimal_and_datetime_fields():
     assert invoice_gross["readOnly"] is True
     assert "{source_type}:{source_id}" in work_queue_id["description"]
     assert (
-        overdue_response["$ref"] == "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+        overdue_response["$ref"] == "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
     )

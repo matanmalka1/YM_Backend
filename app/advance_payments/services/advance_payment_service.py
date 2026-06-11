@@ -28,7 +28,7 @@ from app.legal_entities.repositories.legal_entity_repository import LegalEntityR
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.utils.time_utils import utcnow
+from app.utils.time_utils import israel_today, utcnow
 
 
 class AdvancePaymentService:
@@ -253,7 +253,7 @@ class AdvancePaymentService:
         reference_date: date | None = None,
     ) -> tuple[list[AdvancePayment], int]:
         if reference_date is None:
-            reference_date = date.today()
+            reference_date = israel_today()
         self._assert_client_allows_create(client_record_id)
         configured_count = self.default_period_months_count_for_client(client_record_id)
         if period_months_count is None:

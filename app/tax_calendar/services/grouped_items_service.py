@@ -12,6 +12,7 @@ from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupItemsResponse,
 )
 from app.tax_calendar.services.grouped_service import _is_done, _row_due_date
+from app.utils.time_utils import israel_today
 
 
 def get_group_items(
@@ -34,7 +35,7 @@ def get_group_items(
         client_search=client_search,
         client_record_id=client_record_id,
     )
-    today = date.today()
+    today = israel_today()
     items = [
         _to_item(
             source_type=source_type,

@@ -15,6 +15,7 @@ from app.advance_payments.services.constants import (
 from app.common.period_utils import parse_period_month
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
+from app.utils.time_utils import israel_today
 
 
 class AdvancePaymentRow(BaseModel):
@@ -50,7 +51,7 @@ class AdvancePaymentRow(BaseModel):
     @property
     def timing_status(self) -> Literal["overdue", "on_time"]:
         effective = self.due_date_effective or self.due_date
-        if self.status != AdvancePaymentStatus.PAID and date.today() > effective:
+        if self.status != AdvancePaymentStatus.PAID and israel_today() > effective:
             return "overdue"
         return "on_time"
 
@@ -155,7 +156,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     @property
     def timing_status(self) -> Literal["overdue", "on_time"]:
         effective = self.due_date_effective or self.due_date
-        if self.status != AdvancePaymentStatus.PAID and date.today() > effective:
+        if self.status != AdvancePaymentStatus.PAID and israel_today() > effective:
             return "overdue"
         return "on_time"
 

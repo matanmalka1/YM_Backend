@@ -17,10 +17,11 @@ from app.annual_reports.integrations.tax_rules_registry import (
 )
 from app.annual_reports.services.messages import UNSUPPORTED_TAX_YEAR_ERROR
 from app.core.exceptions import AppError
+from app.utils.time_utils import israel_today
 
 try:
     _BASE_RESIDENT_CREDIT_POINTS: float = float(
-        get_default_resident_credit_points(__import__("datetime").date.today().year)
+        get_default_resident_credit_points(israel_today().year)
     )
 except Exception:
     _BASE_RESIDENT_CREDIT_POINTS = 2.25

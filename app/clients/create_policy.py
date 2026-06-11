@@ -1,8 +1,8 @@
-from datetime import date
 from decimal import Decimal
 
 from app.common.enums import EntityType, IdNumberType, VatType
 from app.core.api_types import ApiDecimal
+from app.utils.time_utils import israel_today
 from app.vat.integrations.tax_rules_financials import get_financial_value
 
 
@@ -27,7 +27,7 @@ def normalize_vat_exempt_ceiling(
     entity_type: EntityType | None,
 ) -> ApiDecimal | None:
     if entity_type == EntityType.OSEK_PATUR:
-        year = date.today().year
+        year = israel_today().year
         return Decimal(str(get_financial_value(year, "osek_patur_ceiling_ils").value))
     return None
 

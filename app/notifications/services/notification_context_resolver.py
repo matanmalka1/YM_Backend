@@ -178,15 +178,14 @@ class NotificationContextResolver:
         }
 
     def _resolve_vat_context(self, vat_work_item_id: int, client_record_id: int) -> dict:
-        import datetime as _dt
-
         from app.vat.models.vat_work_item import VatWorkItem
+        from app.utils.time_utils import israel_today
 
         item = self.db.get(VatWorkItem, vat_work_item_id)
         if item is None or item.client_record_id != client_record_id:
             raise NotFoundError('פריט מע"מ לא נמצא', "VAT.NOT_FOUND")
         deadline = item.due_date_effective
-        today = _dt.date.today()
+        today = israel_today()
         days_until = (deadline - today).days if deadline else None
         deadline_note = " — היום הוא המועד האחרון!" if days_until == 0 else ""
         return {

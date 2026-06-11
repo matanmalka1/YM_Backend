@@ -14,6 +14,7 @@ from app.clients.constants import (
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import EntityType
 from app.core.exceptions import ConflictError, NotFoundError
+from app.utils.time_utils import israel_today
 
 _log = logging.getLogger(__name__)
 
@@ -31,7 +32,7 @@ class ObligationResult:
 def _years_to_generate(reference_date: date | None = None) -> list[int]:
     if not 2 <= CLIENT_OBLIGATION_NEXT_YEAR_START_MONTH <= 12:
         raise ValueError("CLIENT_OBLIGATION_NEXT_YEAR_START_MONTH must be between 2 and 12")
-    today = reference_date or date.today()
+    today = reference_date or israel_today()
     years = [today.year]
     if today.month >= CLIENT_OBLIGATION_NEXT_YEAR_START_MONTH:
         years.append(today.year + 1)

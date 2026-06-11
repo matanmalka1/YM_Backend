@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
+from app.utils.time_utils import israel_today
 
 
 class AgingReportService:
@@ -22,7 +23,7 @@ class AgingReportService:
         page_size: int = 50,
     ) -> dict:
         if as_of_date is None:
-            as_of_date = date.today()
+            as_of_date = israel_today()
 
         rows, total = self.charge_repo.get_aging_buckets_paginated(
             as_of_date, page=page, page_size=page_size

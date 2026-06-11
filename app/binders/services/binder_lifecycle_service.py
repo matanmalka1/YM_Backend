@@ -24,7 +24,7 @@ from app.core.exceptions import AppError, NotFoundError
 from app.notifications.models.notification import NotificationTrigger
 from app.notifications.schemas.notification_schemas import NotificationResult
 from app.notifications.services.notification_auto_send_service import NotificationAutoSendService
-from app.utils.time_utils import utcnow
+from app.utils.time_utils import israel_today, utcnow
 
 ACTION_RECEIVE_MATERIAL = "receive_material"
 ACTION_MARK_FULL = "mark_full"
@@ -259,7 +259,7 @@ class BinderLifecycleService:
         if binder.location_status != BinderLocationStatus.READY_FOR_HANDOVER:
             raise AppError("הקלסר אינו מוכן למסירה", "BINDER.NOT_READY_FOR_HANDOVER")
         old_value = binder.location_status.value
-        effective_handover_at = handed_over_at or date.today()
+        effective_handover_at = handed_over_at or israel_today()
         binder.location_status = BinderLocationStatus.HANDED_OVER
         binder.handed_over_at = effective_handover_at
         binder.handover_recipient_name = handover_recipient_name

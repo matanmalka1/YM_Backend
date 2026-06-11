@@ -14,6 +14,7 @@ from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupResponse,
     TaxCalendarGroupsSummary,
 )
+from app.utils.time_utils import israel_today
 from app.vat.models.vat_enums import VatWorkItemStatus
 
 VAT_DONE = {VatWorkItemStatus.FILED}
@@ -105,7 +106,7 @@ def _build_groups(
         client_record_id=client_record_id,
         client_search=client_search,
     )
-    today = date.today()
+    today = israel_today()
 
     groups: list[TaxCalendarGroupResponse] = []
     for entry in entries:

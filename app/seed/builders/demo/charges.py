@@ -6,6 +6,7 @@ from random import Random
 
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.invoices.models.invoice import Invoice
+from app.utils.time_utils import israel_today
 
 from ...data.demo_catalog import INVOICE_BASE_URL
 from ...data.realistic_seed_text import CHARGE_TYPE_DETAILS
@@ -68,17 +69,17 @@ def create_charges(db, rng: Random, cfg, businesses, users=None) -> list[Charge]
             months_covered = 1
             if charge_type == ChargeType.MONTHLY_RETAINER:
                 month = rng.randint(1, 12)
-                year = date.today().year - rng.randint(0, 1)
+                year = israel_today().year - rng.randint(0, 1)
                 period = f"{year}-{month:02d}"
                 months_covered = rng.choice([1, 1, 1, 2])
             elif charge_type == ChargeType.ANNUAL_REPORT_FEE:
-                period = f"{date.today().year - rng.randint(1, 3)}-12"
+                period = f"{israel_today().year - rng.randint(1, 3)}-12"
             elif (
                 charge_type in (ChargeType.VAT_FILING_FEE, ChargeType.OTHER)
                 and rng.random() < 0.4
             ):
                 month = rng.randint(1, 12)
-                year = date.today().year - rng.randint(0, 1)
+                year = israel_today().year - rng.randint(0, 1)
                 period = f"{year}-{month:02d}"
                 months_covered = rng.choice([1, 2])
 

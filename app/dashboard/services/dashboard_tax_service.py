@@ -1,5 +1,3 @@
-from datetime import date
-
 from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
@@ -7,6 +5,7 @@ from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
 from app.businesses.repositories.business_repository import BusinessRepository
+from app.utils.time_utils import israel_today
 
 
 class DashboardTaxService:
@@ -23,7 +22,7 @@ class DashboardTaxService:
     ) -> dict:
         """Get annual report submission statistics."""
         if tax_year is None:
-            tax_year = date.today().year
+            tax_year = israel_today().year
 
         total_clients = self.business_repo.count(status="active")
 

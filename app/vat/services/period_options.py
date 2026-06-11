@@ -11,6 +11,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
 )
 from app.vat.services.messages import VAT_CLIENT_EXEMPT, VAT_CLIENT_NOT_FOUND
 from app.vat.services.vat_type_resolver import resolve_effective_vat_type
+from app.utils.time_utils import israel_today
 
 
 def _period_label(period_type: VatType, year: int, month: int) -> str:
@@ -41,7 +42,7 @@ def get_period_options(
             "VAT.NOT_FOUND",
         )
 
-    selected_year = year or date.today().year
+    selected_year = year or israel_today().year
 
     period_type = period_type_override or resolve_effective_vat_type(legal_entity)
     if period_type == VatType.EXEMPT:

@@ -1,5 +1,3 @@
-from datetime import date
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.tax_calendar.schemas.settings import (
@@ -12,6 +10,7 @@ from app.tax_calendar.schemas.settings import (
 from app.tax_calendar.services import settings_calendar_service
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
+from app.utils.time_utils import israel_today
 
 router = APIRouter(prefix="/settings/tax-calendar", tags=["settings-tax-calendar"])
 
@@ -43,7 +42,7 @@ def list_tax_calendar_entries(
     start_year: int | None = Query(None),
     end_year: int | None = Query(None),
 ) -> list[TaxCalendarEntryResponse]:
-    current_year = date.today().year
+    current_year = israel_today().year
     resolved_start = start_year if start_year is not None else current_year
     resolved_end = end_year if end_year is not None else current_year + 1
     _check_year_range(resolved_start, resolved_end)
