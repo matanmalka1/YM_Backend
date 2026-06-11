@@ -113,7 +113,10 @@ class AnnualReportFinancialLineService:
                     "ANNUAL_REPORT.INVALID_TYPE",
                 )
             fields["source_type"] = IncomeSourceType(fields["source_type"])
-        update_fields = {k: v for k, v in fields.items() if v is not None}
+        # `fields` already contains only client-sent keys (exclude_unset). Pass
+        # them through directly so an explicit null clears a nullable field; the
+        # request schema rejects null for non-nullable fields.
+        update_fields = fields
         line = self.income_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
             raise NotFoundError(
@@ -213,7 +216,10 @@ class AnnualReportFinancialLineService:
                     "ANNUAL_REPORT.INVALID_TYPE",
                 )
             fields["category"] = ExpenseCategoryType(fields["category"])
-        update_fields = {k: v for k, v in fields.items() if v is not None}
+        # `fields` already contains only client-sent keys (exclude_unset). Pass
+        # them through directly so an explicit null clears a nullable field; the
+        # request schema rejects null for non-nullable fields.
+        update_fields = fields
         line = self.expense_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
             raise NotFoundError(

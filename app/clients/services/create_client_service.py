@@ -21,7 +21,7 @@ from app.clients.create_policy import (
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.schemas.client import (
-    CreateClientRequest,
+    ClientOnboardingRequest,
 )
 from app.clients.schemas.client_record_response import CreateClientRecordResponse
 from app.clients.services.client_onboarding_orchestrator import (
@@ -227,7 +227,7 @@ class CreateClientService:
 
     def create_from_request(
         self,
-        request: CreateClientRequest,
+        request: ClientOnboardingRequest,
         *,
         actor_id: int,
         actor_role: UserRole,

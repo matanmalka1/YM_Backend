@@ -150,7 +150,7 @@ def update_income_line(
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.update_income(
-        report_id, line_id, actor_id=user.id, **body.model_dump(exclude_none=True)
+        report_id, line_id, actor_id=user.id, **body.model_dump(exclude_unset=True)
     )
 
 
@@ -205,7 +205,7 @@ def update_expense_line(
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.update_expense(
-        report_id, line_id, actor_id=user.id, **body.model_dump(exclude_none=True)
+        report_id, line_id, actor_id=user.id, **body.model_dump(exclude_unset=True)
     )
 
 

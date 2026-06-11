@@ -80,6 +80,62 @@ def test_update_task_persists_due_date(client, advisor_headers):
     assert resp.json()["due_date"] == "2026-07-20"
 
 
+def test_patch_task_empty_body_returns_422(client, advisor_headers):
+    created = client.post(
+        "/api/v1/tasks", headers=advisor_headers, json={"title": "Empty patch"}
+    ).json()
+
+    resp = client.patch(
+        f"/api/v1/tasks/{created['id']}", headers=advisor_headers, json={}
+    )
+    assert resp.status_code == 422
+
+
+def test_patch_task_unknown_field_returns_422(client, advisor_headers):
+    created = client.post(
+        "/api/v1/tasks", headers=advisor_headers, json={"title": "Unknown patch"}
+    ).json()
+
+    resp = client.patch(
+        f"/api/v1/tasks/{created['id']}",
+        headers=advisor_headers,
+        json={"not_a_real_field": 1},
+    )
+    assert resp.status_code == 422
+
+
+def test_patch_task_single_field_leaves_others_unchanged(client, advisor_headers):
+    created = client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={"title": "Original", "description": "keep me", "priority": "high"},
+    ).json()
+
+    resp = client.patch(
+        f"/api/v1/tasks/{created['id']}",
+        headers=advisor_headers,
+        json={"title": "Renamed"},
+    )
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["title"] == "Renamed"
+    assert body["description"] == "keep me"
+    assert body["priority"] == "high"
+
+
+def test_patch_task_blank_title_returns_422(client, advisor_headers):
+    created = client.post(
+        "/api/v1/tasks", headers=advisor_headers, json={"title": "Has title"}
+    ).json()
+
+    resp = client.patch(
+        f"/api/v1/tasks/{created['id']}",
+        headers=advisor_headers,
+        json={"title": "   "},
+    )
+    assert resp.status_code == 422
+
+
 def test_create_task_with_optional_fields(client, test_db, advisor_headers):
     biz = create_business(test_db)
     charge = create_charge(test_db, biz.client_id, biz.id)

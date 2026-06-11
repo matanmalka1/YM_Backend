@@ -14,6 +14,7 @@ from app.advance_payments.services.constants import (
 )
 from app.common.period_utils import parse_period_month
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
 class AdvancePaymentRow(BaseModel):
@@ -105,7 +106,7 @@ class AdvancePaymentCreateRequest(BaseModel):
     }
 
 
-class AdvancePaymentUpdateRequest(BaseModel):
+class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
     paid_amount: ApiDecimal | None = Field(None, ge=0)
     expected_amount: ApiDecimal | None = Field(None, ge=0)
     status: AdvancePaymentStatus | None = None
@@ -116,9 +117,11 @@ class AdvancePaymentUpdateRequest(BaseModel):
     override_amount: ApiDecimal | None = Field(None, ge=0)
 
     @model_validator(mode="after")
-    def require_at_least_one_field(self) -> "AdvancePaymentUpdateRequest":
-        if not self.model_fields_set:
-            raise ValueError("יש לספק לפחות שדה אחד לעדכון")
+    def _reject_null_for_required(self) -> "AdvancePaymentUpdateRequest":
+        # paid_amount/expected_amount/status are non-nullable columns.
+        for field in ("paid_amount", "expected_amount", "status"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
         return self
 
 

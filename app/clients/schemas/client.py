@@ -9,8 +9,8 @@ from app.clients.schemas.client_requests import (
     ClientCreateRequest,
     ClientImpactPreviewClientRequest,
     ClientImpactPreviewRequest,
+    ClientOnboardingRequest,
     ClientUpdateRequest,
-    CreateClientRequest,
 )
 
 
@@ -33,7 +33,7 @@ __all__ = [
     "ClientImpactPreviewRequest",
     "ClientImportError",
     "ClientImportResponse",
+    "ClientOnboardingRequest",
     "ClientUpdateRequest",
-    "CreateClientRequest",
     "DeletedClientSummary",
 ]

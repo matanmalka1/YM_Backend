@@ -4454,7 +4454,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/CreateClientRequest"
+                "$ref": "#/components/schemas/ClientOnboardingRequest"
               }
             }
           }
@@ -6428,7 +6428,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/BinderIntakePatchRequest"
+                "$ref": "#/components/schemas/BinderIntakeUpdateRequest"
               }
             }
           }
@@ -14396,6 +14396,7 @@
             "title": "Override Amount"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "AdvancePaymentUpdateRequest"
       },
@@ -14777,6 +14778,7 @@
             "title": "Notes"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "data"
@@ -15709,6 +15711,7 @@
             "title": "Amendment Reason"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "AnnualReportDetailUpdateRequest"
       },
@@ -16514,7 +16517,8 @@
           "name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -16568,6 +16572,7 @@
             "title": "Notes"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "AuthorityContactUpdateRequest"
       },
@@ -17152,7 +17157,74 @@
         ],
         "title": "BinderIntakeMaterialResponse"
       },
-      "BinderIntakePatchRequest": {
+      "BinderIntakeResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "binder_id": {
+            "type": "integer",
+            "title": "Binder Id"
+          },
+          "received_at": {
+            "type": "string",
+            "format": "date",
+            "title": "Received At"
+          },
+          "received_by": {
+            "type": "integer",
+            "title": "Received By"
+          },
+          "received_by_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received By Name"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "materials": {
+            "items": {
+              "$ref": "#/components/schemas/BinderIntakeMaterialResponse"
+            },
+            "type": "array",
+            "title": "Materials"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "binder_id",
+          "received_at",
+          "received_by",
+          "created_at"
+        ],
+        "title": "BinderIntakeResponse"
+      },
+      "BinderIntakeUpdateRequest": {
         "properties": {
           "received_at": {
             "anyOf": [
@@ -17253,76 +17325,10 @@
             "title": "Vat Report Ids"
           }
         },
+        "additionalProperties": false,
         "type": "object",
-        "title": "BinderIntakePatchRequest",
+        "title": "BinderIntakeUpdateRequest",
         "description": "עריכת אירוע קבלה קיים."
-      },
-      "BinderIntakeResponse": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "binder_id": {
-            "type": "integer",
-            "title": "Binder Id"
-          },
-          "received_at": {
-            "type": "string",
-            "format": "date",
-            "title": "Received At"
-          },
-          "received_by": {
-            "type": "integer",
-            "title": "Received By"
-          },
-          "received_by_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Received By Name"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          },
-          "created_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Created At",
-            "examples": [
-              "2026-01-02T03:04:05Z"
-            ]
-          },
-          "materials": {
-            "items": {
-              "$ref": "#/components/schemas/BinderIntakeMaterialResponse"
-            },
-            "type": "array",
-            "title": "Materials"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "binder_id",
-          "received_at",
-          "received_by",
-          "created_at"
-        ],
-        "title": "BinderIntakeResponse"
       },
       "BinderListCounters": {
         "properties": {
@@ -18064,7 +18070,9 @@
           "business_name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "maxLength": 100,
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -18095,6 +18103,7 @@
             "title": "Closed At"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "BusinessUpdateRequest",
         "description": "עדכון פרטי עסק."
@@ -19147,6 +19156,22 @@
         ],
         "title": "ClientImportResponse"
       },
+      "ClientOnboardingRequest": {
+        "properties": {
+          "client": {
+            "$ref": "#/components/schemas/ClientCreateRequest"
+          },
+          "business": {
+            "$ref": "#/components/schemas/ClientBusinessCreateRequest"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client",
+          "business"
+        ],
+        "title": "ClientOnboardingRequest"
+      },
       "ClientRecordListItem": {
         "properties": {
           "id": {
@@ -19791,7 +19816,8 @@
           "full_name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -19950,18 +19976,6 @@
             ],
             "title": "Advance Rate"
           },
-          "advance_rate_updated_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Advance Rate Updated At"
-          },
           "annual_revenue": {
             "anyOf": [
               {
@@ -19990,6 +20004,7 @@
             "title": "Accountant Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "ClientUpdateRequest"
       },
@@ -20229,7 +20244,8 @@
           "subject": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -20264,6 +20280,7 @@
             "title": "Occurred At"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "CorrespondenceUpdateRequest"
       },
@@ -20301,22 +20318,6 @@
           "impact"
         ],
         "title": "CreateClientRecordResponse"
-      },
-      "CreateClientRequest": {
-        "properties": {
-          "client": {
-            "$ref": "#/components/schemas/ClientCreateRequest"
-          },
-          "business": {
-            "$ref": "#/components/schemas/ClientBusinessCreateRequest"
-          }
-        },
-        "type": "object",
-        "required": [
-          "client",
-          "business"
-        ],
-        "title": "CreateClientRequest"
       },
       "CreationImpactItem": {
         "properties": {
@@ -20440,7 +20441,14 @@
       "DeadlineUpdateRequest": {
         "properties": {
           "deadline_type": {
-            "$ref": "#/components/schemas/FilingDeadlineType"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FilingDeadlineType"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "custom_deadline_note": {
             "anyOf": [
@@ -20454,10 +20462,8 @@
             "title": "Custom Deadline Note"
           }
         },
+        "additionalProperties": false,
         "type": "object",
-        "required": [
-          "deadline_type"
-        ],
         "title": "DeadlineUpdateRequest"
       },
       "DefaultTaxYearResponse": {
@@ -20893,9 +20899,11 @@
         "properties": {
           "note": {
             "type": "string",
+            "minLength": 1,
             "title": "Note"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "required": [
           "note"
@@ -21274,6 +21282,7 @@
             "title": "Supporting Document Id"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "ExpenseLineUpdateRequest"
       },
@@ -21697,6 +21706,7 @@
             "title": "Description"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "IncomeLineUpdateRequest"
       },
@@ -26197,6 +26207,7 @@
             "title": "Action Payload"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "TaskUpdateRequest"
       },
@@ -27326,7 +27337,8 @@
           "full_name": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "minLength": 1
               },
               {
                 "type": "null"
@@ -27368,6 +27380,7 @@
             "title": "Email"
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "UserUpdateRequest"
       },
@@ -28375,6 +28388,7 @@
             ]
           }
         },
+        "additionalProperties": false,
         "type": "object",
         "title": "VatInvoiceUpdateRequest"
       },

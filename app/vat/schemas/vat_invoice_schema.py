@@ -21,6 +21,41 @@ MAX_COUNTERPARTY_ID_LENGTH = 32
 ANONYMOUS_COUNTERPARTY_ID = "999999999"
 
 
+def validate_counterparty_pair(
+    counterparty_id: str | None,
+    counterparty_id_type: CounterpartyIdType | None,
+) -> None:
+    """Validate a (counterparty_id, counterparty_id_type) pair.
+
+    Raises ValueError if the pair is inconsistent. Used both by the request
+    schema (on a single request) and by the update service (on the merged
+    effective pair, so a partial PATCH cannot leave an invalid persisted state).
+    """
+    cid = counterparty_id
+    cid_type = counterparty_id_type
+
+    if cid is None and cid_type is None:
+        return
+
+    if cid_type in (CounterpartyIdType.IL_BUSINESS, CounterpartyIdType.IL_PERSONAL):
+        if cid is None:
+            raise ValueError("יש להזין מספר מזהה ישראלי כאשר סוג המזהה הוא ישראלי")
+        if not cid.isdigit() or len(cid) != 9:
+            raise ValueError('מספר עוסק / ת"ז ישראלי חייב להיות 9 ספרות')
+        if not validate_israeli_id_checksum(cid):
+            raise ValueError('מספר עוסק / ת"ז ישראלי אינו תקין')
+        return
+
+    if cid_type == CounterpartyIdType.FOREIGN:
+        if cid is None:
+            raise ValueError("כאשר סוג המזהה הוא זר, יש להזין את מספר המזהה של הצד הנגדי")
+        return
+
+    if cid_type == CounterpartyIdType.ANONYMOUS:
+        if cid != ANONYMOUS_COUNTERPARTY_ID:
+            raise ValueError('עבור מזהה אנונימי יש להזין "999999999"')
+
+
 class VatInvoiceValidatorMixin(BaseModel):
     """Shared field validators for VAT invoice create and update schemas."""
 
@@ -37,30 +72,7 @@ class VatInvoiceValidatorMixin(BaseModel):
 
     @model_validator(mode="after")
     def validate_counterparty_id(self) -> "VatInvoiceValidatorMixin":
-        cid = self.counterparty_id
-        cid_type = self.counterparty_id_type
-
-        if cid is None and cid_type is None:
-            return self
-
-        if cid_type in (CounterpartyIdType.IL_BUSINESS, CounterpartyIdType.IL_PERSONAL):
-            if cid is None:
-                raise ValueError("יש להזין מספר מזהה ישראלי כאשר סוג המזהה הוא ישראלי")
-            if not cid.isdigit() or len(cid) != 9:
-                raise ValueError('מספר עוסק / ת"ז ישראלי חייב להיות 9 ספרות')
-            if not validate_israeli_id_checksum(cid):
-                raise ValueError('מספר עוסק / ת"ז ישראלי אינו תקין')
-            return self
-
-        if cid_type == CounterpartyIdType.FOREIGN:
-            if cid is None:
-                raise ValueError("יש להזין מזהה צד נגדי עבור מזהה זר")
-            return self
-
-        if cid_type == CounterpartyIdType.ANONYMOUS:
-            if cid != ANONYMOUS_COUNTERPARTY_ID:
-                raise ValueError('עבור מזהה אנונימי יש להזין "999999999"')
-
+        validate_counterparty_pair(self.counterparty_id, self.counterparty_id_type)
         return self
 
 

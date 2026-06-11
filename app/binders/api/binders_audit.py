@@ -3,8 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.binders.schemas.binder import (
     BinderAuditResponse,
     BinderIntakeListResponse,
-    BinderIntakePatchRequest,
     BinderIntakeResponse,
+    BinderIntakeUpdateRequest,
 )
 from app.binders.services.binder_audit_service import BinderAuditService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
@@ -81,14 +81,14 @@ def get_binder_intakes(
 def patch_binder_intake(
     binder_id: int,
     intake_id: int,
-    request: BinderIntakePatchRequest,
+    request: BinderIntakeUpdateRequest,
     db: DBSession,
     user: CurrentUser,
 ):
     intake = BinderIntakeEditService(db).edit_intake(
         intake_id=intake_id,
         actor_id=user.id,
-        patch=request.model_dump(exclude_none=True),
+        patch=request.model_dump(exclude_unset=True),
         binder_id=binder_id,
     )
     return BinderIntakeResponse.model_validate(intake)

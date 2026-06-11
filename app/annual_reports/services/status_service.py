@@ -191,30 +191,49 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
     def update_deadline(
         self,
         report_id: int,
-        deadline_type: str,
+        deadline_type: str | None,
         changed_by: int,
         changed_by_name: str,
         custom_deadline_note: str | None = None,
+        custom_deadline_note_provided: bool = True,
     ) -> AnnualReportResponse:
-        updated = self._update_deadline(report_id, deadline_type, changed_by, custom_deadline_note)
+        updated = self._update_deadline(
+            report_id,
+            deadline_type,
+            changed_by,
+            custom_deadline_note,
+            custom_deadline_note_provided,
+        )
         return self._to_responses([updated])[0]
 
     def _update_deadline(
         self,
         report_id: int,
-        deadline_type: str,
+        deadline_type: str | None,
         changed_by: int,
         custom_deadline_note=None,
+        custom_deadline_note_provided: bool = True,
     ):
         report = self._get_or_raise_for_update(report_id)
         old_value = _deadline_snapshot(report)
-        valid_deadline_types = {e.value for e in FilingDeadlineType}
-        if deadline_type not in valid_deadline_types:
-            raise AppError(
-                INVALID_DEADLINE_TYPE_ERROR.format(deadline_type=deadline_type),
-                "ANNUAL_REPORT.INVALID_TYPE",
-            )
-        dt = FilingDeadlineType(deadline_type)
+        # Partial update: when deadline_type is omitted, keep the existing type
+        # (only custom_deadline_note is being changed).
+        if deadline_type is None:
+            dt = report.deadline_type
+            if not isinstance(dt, FilingDeadlineType):
+                dt = FilingDeadlineType(dt)
+        else:
+            valid_deadline_types = {e.value for e in FilingDeadlineType}
+            if deadline_type not in valid_deadline_types:
+                raise AppError(
+                    INVALID_DEADLINE_TYPE_ERROR.format(deadline_type=deadline_type),
+                    "ANNUAL_REPORT.INVALID_TYPE",
+                )
+            dt = FilingDeadlineType(deadline_type)
+        # When the client did not send custom_deadline_note, preserve the
+        # current value instead of clearing it.
+        if not custom_deadline_note_provided:
+            custom_deadline_note = report.custom_deadline_note
         if dt == FilingDeadlineType.STANDARD:
             filing_deadline = standard_deadline(
                 report.tax_year,

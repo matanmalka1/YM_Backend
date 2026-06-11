@@ -1,10 +1,13 @@
 from datetime import date
 
-from pydantic import BaseModel, Field, field_validator
+from typing import Annotated
+
+from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
 from app.businesses.models.business import BusinessStatus
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, PaginatedResponse
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 # ─── Requests ────────────────────────────────────────────────────────────────
 
@@ -47,12 +50,21 @@ class ClientBusinessCreateRequest(BaseModel):
         return value
 
 
-class BusinessUpdateRequest(BaseModel):
+class BusinessUpdateRequest(NonEmptyUpdateMixin):
     """עדכון פרטי עסק."""
 
-    business_name: str | None = None
-    status: BusinessStatus | None = None  # enum
+    business_name: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=100)] | None
+    ) = None
+    status: BusinessStatus | None = None  # enum, non-nullable column
     closed_at: date | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "BusinessUpdateRequest":
+        for field in ("business_name", "status"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 # ─── Responses ────────────────────────────────────────────────────────────────

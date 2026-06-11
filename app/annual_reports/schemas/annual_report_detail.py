@@ -1,6 +1,7 @@
 from pydantic import BaseModel, Field
 
 from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 # ── Detail (ניכויים ואישורים) ─────────────────────────────────────────────────
 
@@ -23,7 +24,7 @@ class ReportDetailResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class AnnualReportDetailUpdateRequest(BaseModel):
+class AnnualReportDetailUpdateRequest(NonEmptyUpdateMixin):
     pension_contribution: ApiDecimal | None = Field(None, ge=0)
     donation_amount: ApiDecimal | None = Field(None, ge=0)
     other_credits: ApiDecimal | None = Field(None, ge=0)

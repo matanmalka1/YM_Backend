@@ -5,8 +5,8 @@ from app.clients.enums import ClientStatus
 from app.clients.schemas.client import (
     ClientConflictInfo,
     ClientImpactPreviewRequest,
+    ClientOnboardingRequest,
     ClientUpdateRequest,
-    CreateClientRequest,
 )
 from app.clients.schemas.client_record_response import (
     ClientRecordListResponse,
@@ -65,7 +65,7 @@ def preview_creation_impact(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
 def create_client(
-    request: CreateClientRequest,
+    request: ClientOnboardingRequest,
     db: DBSession,
     user: CurrentUser,
 ):

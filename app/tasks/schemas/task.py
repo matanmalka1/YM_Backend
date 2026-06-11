@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from datetime import date
-from typing import Any
+from typing import Annotated, Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, StringConstraints, model_validator
 
 from app.core.api_types import ApiDateTime, PaginatedResponse
+from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.users.models.user import UserRole
 
@@ -23,10 +24,12 @@ class TaskCreateRequest(BaseModel):
     action_payload: dict[str, Any] | None = None
 
 
-class TaskUpdateRequest(BaseModel):
-    title: str | None = Field(None, min_length=1, max_length=500)
+class TaskUpdateRequest(NonEmptyUpdateMixin):
+    title: (
+        Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=500)] | None
+    ) = None
     description: str | None = None
-    priority: TaskPriority | None = None
+    priority: TaskPriority | None = None  # non-nullable column
     due_date: date | None = None
     assigned_to_user_id: int | None = Field(None, gt=0)
     assigned_role: UserRole | None = None
@@ -34,6 +37,13 @@ class TaskUpdateRequest(BaseModel):
     source_id: int | None = Field(None, gt=0)
     action_key: str | None = Field(None, max_length=100)
     action_payload: dict[str, Any] | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "TaskUpdateRequest":
+        for field in ("title", "priority"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 class TaskResponse(BaseModel):

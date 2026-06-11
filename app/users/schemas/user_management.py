@@ -1,6 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
-from app.core.api_types import ApiDateTime, PaginatedResponse
+from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse
+from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.users.models.user import UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
 from app.users.services.user_management_policies import (
@@ -17,16 +18,19 @@ class UserCreateRequest(BaseModel):
     password: str = Field(min_length=MIN_PASSWORD_LENGTH, max_length=MAX_PASSWORD_LENGTH)
 
 
-class UserUpdateRequest(BaseModel):
-    full_name: str | None = None
+class UserUpdateRequest(NonEmptyUpdateMixin):
+    full_name: NonBlankStr | None = None
     phone: str | None = None
     role: UserRole | None = None
     email: EmailStr | None = None
 
     @model_validator(mode="after")
-    def require_at_least_one(self) -> "UserUpdateRequest":
-        if not any([self.full_name, self.phone, self.role, self.email]):
-            raise ValueError("יש לספק לפחות שדה אחד לעדכון")
+    def _reject_null_for_required(self) -> "UserUpdateRequest":
+        # phone is nullable (explicit null clears it); role/email/full_name map
+        # to non-nullable columns, so explicit null is invalid.
+        for field in ("role", "email", "full_name"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
         return self
 
 

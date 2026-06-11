@@ -1,10 +1,11 @@
 from datetime import date
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.models.binder_intake_material import MaterialType
 from app.core.api_types import ApiDateTime
+from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.notifications.schemas.notification_schemas import NotificationResult
 
 # ── Intake request ────────────────────────────────────────────────────────────
@@ -134,7 +135,7 @@ class BinderReceiveResult(BaseModel):
     is_new_binder: bool
 
 
-class BinderIntakePatchRequest(BaseModel):
+class BinderIntakeUpdateRequest(NonEmptyUpdateMixin):
     """עריכת אירוע קבלה קיים."""
 
     received_at: date | None = None
@@ -145,6 +146,23 @@ class BinderIntakePatchRequest(BaseModel):
     business_ids: list[int] | None = None
     annual_report_ids: list[int] | None = None
     vat_report_ids: list[int] | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "BinderIntakeUpdateRequest":
+        # These map to non-nullable columns / transfer targets, and the FK
+        # association lists use [] to clear, never null. Explicit null is invalid.
+        for field in (
+            "received_at",
+            "received_by",
+            "binder_id",
+            "client_record_id",
+            "business_ids",
+            "annual_report_ids",
+            "vat_report_ids",
+        ):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 class BinderMarkReadyForHandoverBulkRequest(BaseModel):

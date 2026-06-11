@@ -4,9 +4,19 @@ from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Annotated, Any, Generic, TypeVar
 
-from pydantic import BaseModel, BeforeValidator, PlainSerializer, WithJsonSchema
+from pydantic import (
+    BaseModel,
+    BeforeValidator,
+    PlainSerializer,
+    StringConstraints,
+    WithJsonSchema,
+)
 
 T = TypeVar("T")
+
+# Business-required text: strips surrounding whitespace then rejects empty,
+# so "" and whitespace-only ("   ") both fail validation with 422.
+NonBlankStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]
 
 
 def _coerce_decimal(value: Any) -> Any:

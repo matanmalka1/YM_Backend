@@ -165,6 +165,40 @@ def test_update_delete_restore_flow(test_db):
     assert restored["id"] == created.id
 
 
+def test_update_advance_rate_change_stamps_server_owned_timestamp(test_db):
+    from decimal import Decimal
+
+    from app.utils.time_utils import israel_today
+
+    created = _svc_create(
+        CreateClientService(test_db), full_name="Advance Rate", id_number="640000099", actor_id=10
+    )
+    service = ClientUpdateService(test_db)
+
+    updated = service.update_client(created.id, actor_id=10, advance_rate=Decimal("12.50"))
+    assert updated["advance_rate"] == Decimal("12.50")
+    assert updated["advance_rate_updated_at"] == israel_today()
+
+
+def test_update_advance_rate_unchanged_does_not_restamp_timestamp(test_db):
+    from decimal import Decimal
+
+    created = _svc_create(
+        CreateClientService(test_db), full_name="Advance Same", id_number="640000098", actor_id=10
+    )
+    service = ClientUpdateService(test_db)
+    first = service.update_client(created.id, actor_id=10, advance_rate=Decimal("9.00"))
+    sentinel_date = first["advance_rate_updated_at"]
+    assert sentinel_date is not None
+
+    # Re-send the same advance_rate together with another change; the timestamp
+    # must not move because advance_rate did not actually change.
+    again = service.update_client(
+        created.id, actor_id=10, advance_rate=Decimal("9.00"), phone="0500000000"
+    )
+    assert again["advance_rate_updated_at"] == sentinel_date
+
+
 def test_create_client_always_creates_initial_binder(test_db):
     service = CreateClientService(test_db)
     created = _svc_create(

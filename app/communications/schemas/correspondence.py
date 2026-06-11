@@ -1,10 +1,11 @@
 import math
 from datetime import UTC, datetime
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 from app.communications.models.correspondence import CorrespondenceType
-from app.core.api_types import ApiDateTime
+from app.core.api_types import ApiDateTime, NonBlankStr
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
 def _validate_occurred_at(v: datetime | None) -> datetime | None:
@@ -31,11 +32,11 @@ class CorrespondenceCreateRequest(BaseModel):
         return _validate_occurred_at(v)
 
 
-class CorrespondenceUpdateRequest(BaseModel):
+class CorrespondenceUpdateRequest(NonEmptyUpdateMixin):
     business_id: int | None = None
     contact_id: int | None = None
     correspondence_type: CorrespondenceType | None = None
-    subject: str | None = None
+    subject: NonBlankStr | None = None
     notes: str | None = None
     occurred_at: ApiDateTime | None = None
 
@@ -43,6 +44,13 @@ class CorrespondenceUpdateRequest(BaseModel):
     @classmethod
     def occurred_at_not_future(cls, v: datetime | None) -> datetime | None:
         return _validate_occurred_at(v)
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "CorrespondenceUpdateRequest":
+        for field in ("correspondence_type", "subject", "occurred_at"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 class CorrespondenceResponse(BaseModel):

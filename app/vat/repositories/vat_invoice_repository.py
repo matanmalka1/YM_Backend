@@ -96,9 +96,10 @@ class VatInvoiceRepository(BaseRepository[VatInvoice]):
         invoice = self.get_by_id(entity_id)
         if not invoice:
             return None
+        # Callers pass only the fields they intend to write (partial PATCH);
+        # an explicit None here is a deliberate clear of a nullable column.
         for key, value in fields.items():
-            if value is not None:
-                setattr(invoice, key, value)
+            setattr(invoice, key, value)
         self.db.flush()
         return invoice
 

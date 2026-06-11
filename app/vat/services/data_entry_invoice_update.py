@@ -1,6 +1,5 @@
 """Invoice update flow for VAT work items."""
 
-from datetime import datetime
 from decimal import Decimal
 
 from app.businesses.repositories.business_repository import BusinessRepository
@@ -10,13 +9,8 @@ from app.vat.integrations.tax_rules_financials import (
     get_financial_value,
     get_vat_deduction_rate_for_category,
 )
-from app.vat.models.vat_enums import (
-    CounterpartyIdType,
-    DocumentType,
-    ExpenseCategory,
-    VatRateType,
-)
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
+from app.vat.schemas.vat_invoice_schema import validate_counterparty_pair
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -43,18 +37,24 @@ def update_invoice(
     item_id: int,
     invoice_id: int,
     performed_by: int,
-    gross_amount: float | None = None,
-    invoice_number: str | None = None,
-    invoice_date: datetime | None = None,
-    counterparty_name: str | None = None,
-    counterparty_id: str | None = None,
-    counterparty_id_type: CounterpartyIdType | None = None,
-    expense_category: ExpenseCategory | None = None,
-    rate_type: VatRateType | None = None,
-    document_type: DocumentType | None = None,
-    business_activity_id: int | None = None,
+    patch: dict,
 ):
-    """Update an existing invoice. Work item must not be FILED."""
+    """Update an existing invoice (partial PATCH). Work item must not be FILED.
+
+    `patch` contains only the fields the client actually sent (exclude_unset).
+    A key present with value ``None`` clears a clearable nullable field; the
+    request schema already rejects null for non-nullable fields.
+    """
+    # Presence-aware reads: `_sent(key)` => the client included the key.
+    def _sent(key: str) -> bool:
+        return key in patch
+
+    gross_amount = patch.get("gross_amount")
+    invoice_number = patch.get("invoice_number")
+    expense_category = patch.get("expense_category")
+    rate_type = patch.get("rate_type")
+    business_activity_id = patch.get("business_activity_id")
+
     item = work_item_repo.get_by_id(item_id)
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
@@ -76,6 +76,8 @@ def update_invoice(
                 "VAT.CONFLICT",
             )
 
+    # business_activity_id: explicit null clears the FK; a non-null value is
+    # validated against the work item's legal entity.
     if business_activity_id is not None:
         db = getattr(work_item_repo, "db", None)
         record = ClientRecordRepository(db).get_by_id(item.client_record_id) if db else None
@@ -92,26 +94,44 @@ def update_invoice(
             VAT_NET_AMOUNT_POSITIVE_REQUIRED, code="VAT.NET_NOT_POSITIVE", status_code=400
         )
 
+    # Validate the merged effective counterparty pair: a partial PATCH that
+    # clears or changes only one side must not leave the persisted pair
+    # inconsistent (e.g. counterparty_id=null while type stays il_business).
+    effective_counterparty_id = (
+        patch["counterparty_id"] if _sent("counterparty_id") else invoice.counterparty_id
+    )
+    effective_counterparty_id_type = (
+        patch["counterparty_id_type"]
+        if _sent("counterparty_id_type")
+        else invoice.counterparty_id_type
+    )
+    validate_counterparty_pair(effective_counterparty_id, effective_counterparty_id_type)
+
     snapshot_before = audit_invoice_snapshot(invoice)
 
+    # Only fields the client actually sent are applied (true partial PATCH).
     update_fields: dict = {
-        "invoice_number": invoice_number,
-        "invoice_date": invoice_date,
-        "counterparty_name": counterparty_name,
-        "counterparty_id": counterparty_id,
-        "counterparty_id_type": counterparty_id_type,
-        "expense_category": expense_category,
-        "rate_type": rate_type,
-        "document_type": document_type,
-        "business_activity_id": business_activity_id,
+        key: patch[key]
+        for key in (
+            "invoice_number",
+            "invoice_date",
+            "counterparty_name",
+            "counterparty_id",
+            "counterparty_id_type",
+            "expense_category",
+            "rate_type",
+            "document_type",
+            "business_activity_id",
+        )
+        if _sent(key)
     }
-    effective_rate_type = rate_type if rate_type is not None else invoice.rate_type
+
+    # Recompute net/vat only when gross_amount or rate_type was sent.
+    effective_rate_type = rate_type if _sent("rate_type") else invoice.rate_type
     effective_gross = (
-        gross_amount
-        if gross_amount is not None
-        else float(invoice.net_amount) + float(invoice.vat_amount)
+        gross_amount if _sent("gross_amount") else float(invoice.net_amount) + float(invoice.vat_amount)
     )
-    if gross_amount is not None or rate_type is not None:
+    if _sent("gross_amount") or _sent("rate_type"):
         net_amount, vat_amount = split_gross_amount(
             effective_gross,
             effective_rate_type,
@@ -122,7 +142,9 @@ def update_invoice(
         effective_net = float(net_amount)
     else:
         effective_net = float(invoice.net_amount)
-    if expense_category is not None:
+    # Recompute deduction_rate only when expense_category was sent (schema
+    # rejects a null category, so a sent value is always a real category).
+    if _sent("expense_category"):
         update_fields["deduction_rate"] = get_vat_deduction_rate_for_category(
             int(item.period[:4]), expense_category.value
         )
@@ -131,10 +153,7 @@ def update_invoice(
     )
     update_fields["is_exceptional"] = Decimal(str(effective_net)) > _threshold
 
-    updated = invoice_repo.update(
-        invoice_id,
-        **{k: v for k, v in update_fields.items() if v is not None or k == "is_exceptional"},
-    )
+    updated = invoice_repo.update(invoice_id, **update_fields)
 
     recalculate_totals(work_item_repo, invoice_repo, item_id)
 

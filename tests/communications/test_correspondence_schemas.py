@@ -21,10 +21,19 @@ def test_create_schema_rejects_future_occurred_at():
         )
 
 
-def test_update_schema_allows_none_occurred_at_and_rejects_future():
-    req = CorrespondenceUpdateRequest(occurred_at=None)
-    assert req.occurred_at is None
+def test_update_schema_rejects_explicit_null_occurred_at():
+    # occurred_at is a required, non-nullable field; explicit null is invalid.
+    with pytest.raises(ValidationError):
+        CorrespondenceUpdateRequest(occurred_at=None)
 
+
+def test_update_schema_omitting_occurred_at_is_partial():
+    req = CorrespondenceUpdateRequest(subject="updated")
+    assert "occurred_at" not in req.model_fields_set
+    assert req.model_dump(exclude_unset=True) == {"subject": "updated"}
+
+
+def test_update_schema_rejects_future_occurred_at():
     with pytest.raises(ValidationError):
         CorrespondenceUpdateRequest(
             occurred_at=datetime.now(UTC) + timedelta(minutes=1),

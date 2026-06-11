@@ -170,7 +170,7 @@ def test_update_invoice_raises_vat_net_not_positive_code():
             item_id=1,
             invoice_id=1,
             performed_by=1,
-            gross_amount=-100.0,
+            patch={"gross_amount": -100.0},
         )
 
     assert exc_info.value.code == "VAT.NET_NOT_POSITIVE"

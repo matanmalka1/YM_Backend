@@ -93,6 +93,24 @@ def test_update_deadline_invalid_and_custom_paths(test_db):
     assert service.update_deadline(report.id, "standard", 1, "A").deadline_type == "standard"
 
 
+def test_update_deadline_note_only_keeps_existing_type(test_db):
+    _client, report = _create_report(test_db, id_number="ARSTAT004B")
+    service = AnnualReportService(test_db)
+
+    service.update_deadline(report.id, "extended", 1, "A")
+
+    # Partial update: only custom_deadline_note is sent (deadline_type omitted).
+    updated = service.update_deadline(
+        report.id,
+        None,
+        1,
+        "A",
+        custom_deadline_note="late filing agreed",
+    )
+    assert updated.deadline_type == "extended"
+    assert updated.custom_deadline_note == "late filing agreed"
+
+
 def test_transition_closed_sets_financial_fields(test_db):
     _client, report = _create_report(test_db, id_number="ARSTAT005")
     service = AnnualReportService(test_db)

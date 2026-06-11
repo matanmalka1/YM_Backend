@@ -70,7 +70,7 @@ def get_user(user_id: int, db: DBSession, user: CurrentUser):
 )
 def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
-    update_data = request.model_dump(exclude_unset=True, exclude_none=True)
+    update_data = request.model_dump(exclude_unset=True)
     return service.update_user(
         actor_user_id=user.id,
         actor_role=user.role,

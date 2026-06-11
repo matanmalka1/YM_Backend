@@ -85,20 +85,16 @@ def update_invoice(
 ):
     """Update an existing invoice. Not allowed after filing."""
     service = VatReportService(db)
+    # Partial PATCH: only fields the client actually sent are forwarded, so
+    # omitted fields stay unchanged and explicit null can clear nullable fields.
+    patch = request.model_dump(exclude_unset=True)
+    if "gross_amount" in patch and patch["gross_amount"] is not None:
+        patch["gross_amount"] = float(patch["gross_amount"])
     return service.update_invoice(
         item_id=item_id,
         invoice_id=invoice_id,
         performed_by=current_user.id,
-        gross_amount=float(request.gross_amount) if request.gross_amount is not None else None,
-        invoice_number=request.invoice_number,
-        invoice_date=request.invoice_date,
-        counterparty_name=request.counterparty_name,
-        counterparty_id=request.counterparty_id,
-        counterparty_id_type=request.counterparty_id_type,
-        expense_category=request.expense_category,
-        rate_type=request.rate_type,
-        document_type=request.document_type,
-        business_activity_id=request.business_activity_id,
+        patch=patch,
     )
 
 

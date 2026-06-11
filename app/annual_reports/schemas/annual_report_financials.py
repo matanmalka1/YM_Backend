@@ -3,11 +3,12 @@
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import AliasChoices, BaseModel, Field
+from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
 from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 # ── Income ────────────────────────────────────────────────────────────────────
 
@@ -18,10 +19,17 @@ class IncomeLineCreateRequest(BaseModel):
     description: str | None = None
 
 
-class IncomeLineUpdateRequest(BaseModel):
+class IncomeLineUpdateRequest(NonEmptyUpdateMixin):
     source_type: IncomeSourceType | None = None
     amount: ApiDecimal | None = Field(None, ge=0)
     description: str | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "IncomeLineUpdateRequest":
+        for field in ("source_type", "amount"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 class IncomeLineResponse(BaseModel):
@@ -53,13 +61,22 @@ class ExpenseLineCreateRequest(BaseModel):
     model_config = {"populate_by_name": True}
 
 
-class ExpenseLineUpdateRequest(BaseModel):
+class ExpenseLineUpdateRequest(NonEmptyUpdateMixin):
     category: ExpenseCategoryType | None = None
     amount: ApiDecimal | None = Field(None, gt=0)
     description: str | None = None
     recognition_rate: ApiDecimal | None = Field(None, ge=0, le=1)
     external_document_reference: str | None = None
     supporting_document_id: int | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "ExpenseLineUpdateRequest":
+        # category/amount/recognition_rate are non-nullable columns
+        # (recognition_rate has a DB default of 1.00, so null is not "clear").
+        for field in ("category", "amount", "recognition_rate"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 class ExpenseLineResponse(BaseModel):

@@ -174,7 +174,7 @@ def test_expense_add_stores_full_snapshot_payload(test_db, test_user):
     }
 
 
-def test_income_update_audit_excludes_none_fields(test_db, test_user):
+def test_income_update_audit_records_only_sent_fields(test_db, test_user):
     report = _create_report(test_db, test_user)
     service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
@@ -185,19 +185,44 @@ def test_income_update_audit_excludes_none_fields(test_db, test_user):
         actor_id=test_user.id,
     )
 
+    # Only `amount` is sent (exclude_unset); `description` is untouched.
     service.update_income(
         report.id,
         line.id,
         actor_id=test_user.id,
         amount=Decimal("600.00"),
-        description=None,
     )
 
     entry = _audit_entries(test_db, report.id, ACTION_INCOME_UPDATED)[0]
     assert json.loads(entry.new_value) == {"amount": "600.00"}
 
 
-def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(test_db, test_user):
+def test_income_update_explicit_null_clears_nullable_description(test_db, test_user):
+    report = _create_report(test_db, test_user)
+    service = AnnualReportFinancialLineService(test_db)
+    line = service.add_income(
+        report.id,
+        "salary",
+        Decimal("500.00"),
+        description="Payroll",
+        actor_id=test_user.id,
+    )
+
+    # Explicit null on a nullable field clears it (true partial PATCH).
+    service.update_income(
+        report.id,
+        line.id,
+        actor_id=test_user.id,
+        description=None,
+    )
+
+    refreshed = test_db.get(AnnualReportIncomeLine, line.id)
+    assert refreshed.description is None
+    entry = _audit_entries(test_db, report.id, ACTION_INCOME_UPDATED)[0]
+    assert json.loads(entry.new_value) == {"description": None}
+
+
+def test_expense_update_audit_stores_full_old_snapshot_and_sent_fields(test_db, test_user):
     report = _create_report(test_db, test_user)
     service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
@@ -210,6 +235,7 @@ def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(
         actor_id=test_user.id,
     )
 
+    # recognition_rate updated; description explicitly cleared (nullable column).
     service.update_expense(
         report.id,
         line.id,
@@ -228,10 +254,15 @@ def test_expense_update_audit_stores_full_old_snapshot_and_excludes_none_fields(
         "supporting_document_id": None,
         "description": "Rent",
     }
-    assert json.loads(entry.new_value) == {"recognition_rate": "0.75"}
+    assert json.loads(entry.new_value) == {"recognition_rate": "0.75", "description": None}
+    refreshed = test_db.get(AnnualReportExpenseLine, line.id)
+    assert refreshed.description is None
 
 
-def test_empty_financial_line_updates_do_not_write_audit(test_db, test_user):
+def test_financial_line_updates_with_no_sent_fields_do_not_write_audit(test_db, test_user):
+    # A truly empty PATCH ({}) is rejected at the schema layer by
+    # NonEmptyUpdateMixin before reaching the service. At the service boundary,
+    # passing no update fields is a no-op that writes no audit entry.
     report = _create_report(test_db, test_user)
     service = AnnualReportFinancialLineService(test_db)
     income = service.add_income(report.id, "salary", Decimal("500.00"), actor_id=test_user.id)
@@ -242,8 +273,8 @@ def test_empty_financial_line_updates_do_not_write_audit(test_db, test_user):
         actor_id=test_user.id,
     )
 
-    service.update_income(report.id, income.id, actor_id=test_user.id, description=None)
-    service.update_expense(report.id, expense.id, actor_id=test_user.id, description=None)
+    service.update_income(report.id, income.id, actor_id=test_user.id)
+    service.update_expense(report.id, expense.id, actor_id=test_user.id)
 
     assert _audit_entries(test_db, report.id, ACTION_INCOME_UPDATED) == []
     assert _audit_entries(test_db, report.id, ACTION_EXPENSE_UPDATED) == []

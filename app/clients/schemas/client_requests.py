@@ -1,5 +1,3 @@
-from datetime import date
-
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from app.businesses.schemas.business_schemas import ClientBusinessCreateRequest
@@ -10,7 +8,8 @@ from app.clients.schemas.create_validation import (
     validate_update_entity_rules,
 )
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
-from app.core.api_types import ApiDecimal
+from app.core.api_types import ApiDecimal, NonBlankStr
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 CREATE_CLIENT_REQUIRED_LABELS = {
     "full_name": "שם מלא",
@@ -62,8 +61,8 @@ class ClientCreateRequest(BaseModel):
         return self
 
 
-class ClientUpdateRequest(BaseModel):
-    full_name: str | None = None
+class ClientUpdateRequest(NonEmptyUpdateMixin):
+    full_name: NonBlankStr | None = None
     status: ClientStatus | None = None
     entity_type: EntityType | None = None
     phone: str | None = None
@@ -77,24 +76,28 @@ class ClientUpdateRequest(BaseModel):
     advance_payment_frequency: AdvancePaymentFrequency | None = None
     vat_exempt_ceiling: ApiDecimal | None = Field(None, ge=0)
     advance_rate: ApiDecimal | None = Field(None, ge=0, le=100)
-    advance_rate_updated_at: date | None = None
     annual_revenue: ApiDecimal | None = Field(None, ge=0)
     accountant_id: int | None = None
 
     @model_validator(mode="after")
     def validate_update_rules(self) -> "ClientUpdateRequest":
+        # status maps to a non-nullable column on ClientRecord; full_name is a
+        # business identifier. Explicit null for either is invalid.
+        for field in ("status", "full_name"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
         validate_update_entity_rules(
             vat_exempt_ceiling_was_set="vat_exempt_ceiling" in self.model_fields_set,
         )
         return self
 
 
-class CreateClientRequest(BaseModel):
+class ClientOnboardingRequest(BaseModel):
     client: ClientCreateRequest
     business: ClientBusinessCreateRequest
 
     @model_validator(mode="after")
-    def require_full_create_payload(self) -> "CreateClientRequest":
+    def require_full_create_payload(self) -> "ClientOnboardingRequest":
         required_values = (
             ("full_name", self.client.full_name),
             ("phone", self.client.phone),

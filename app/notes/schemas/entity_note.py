@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
-from app.core.api_types import ApiDateTime, PaginatedResponse
+from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
 class EntityNoteResponse(BaseModel):
@@ -23,5 +24,7 @@ class EntityNoteCreateRequest(BaseModel):
     note: str
 
 
-class EntityNoteUpdateRequest(BaseModel):
-    note: str
+class EntityNoteUpdateRequest(NonEmptyUpdateMixin):
+    # `note` is the payload; it stays required (single-payload update exception)
+    # and must be non-blank.
+    note: NonBlankStr

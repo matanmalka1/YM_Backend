@@ -1,7 +1,8 @@
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, model_validator
 
 from app.authority_contacts.models.authority_contact import ContactType
-from app.core.api_types import ApiDateTime, PaginatedResponse
+from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
 class AuthorityContactCreateRequest(BaseModel):
@@ -13,13 +14,20 @@ class AuthorityContactCreateRequest(BaseModel):
     notes: str | None = None
 
 
-class AuthorityContactUpdateRequest(BaseModel):
+class AuthorityContactUpdateRequest(NonEmptyUpdateMixin):
     contact_type: ContactType | None = None
-    name: str | None = None
+    name: NonBlankStr | None = None
     office: str | None = None
     phone: str | None = None
     email: EmailStr | None = None
     notes: str | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_for_required(self) -> "AuthorityContactUpdateRequest":
+        for field in ("contact_type", "name"):
+            if field in self.model_fields_set and getattr(self, field) is None:
+                raise ValueError(f"השדה {field} לא יכול להיות null")
+        return self
 
 
 class AuthorityContactResponse(BaseModel):

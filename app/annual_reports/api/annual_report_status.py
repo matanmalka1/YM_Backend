@@ -104,12 +104,16 @@ def update_deadline(
     after next — used for authorised electronic representatives (מייצגים).
     """
     service = AnnualReportService(db)
+    patch = body.model_dump(exclude_unset=True)
     report = service.update_deadline(
         report_id=report_id,
-        deadline_type=body.deadline_type,
         changed_by=user.id,
         changed_by_name=user.full_name,
-        custom_deadline_note=body.custom_deadline_note,
+        # deadline_type omitted => keep existing; custom_deadline_note only
+        # applied when the client sent it (partial PATCH semantics).
+        deadline_type=patch.get("deadline_type"),
+        custom_deadline_note=patch.get("custom_deadline_note"),
+        custom_deadline_note_provided="custom_deadline_note" in patch,
     )
     return report
 

@@ -20,6 +20,7 @@ from app.clients.repositories.client_record_read_repository import (
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
+from app.utils.time_utils import israel_today
 from app.vat.services.client_status_service import (
     VatWorkItemClientStatusService,
 )
@@ -40,6 +41,10 @@ class ClientUpdateService:
         new_status = fields.get("status")
         new_entity_type = fields.get("entity_type")
         old_entity_type = existing.get("entity_type")
+        # advance_rate_updated_at is server-owned: stamp it only when advance_rate
+        # is actually changing, comparing against the already-loaded record.
+        if "advance_rate" in fields and fields["advance_rate"] != existing.get("advance_rate"):
+            fields["advance_rate_updated_at"] = israel_today()
         if new_entity_type is not None and new_entity_type != old_entity_type:
             if actor_role != UserRole.ADVISOR:
                 raise ForbiddenError(

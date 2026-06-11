@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportSchedule,
@@ -10,6 +10,7 @@ from app.annual_reports.models.annual_report_enums import (
     SubmissionMethod,
 )
 from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
 class AnnualReportCreateRequest(BaseModel):
@@ -40,9 +41,18 @@ class StatusTransitionRequest(BaseModel):
     tax_due: ApiDecimal | None = None
 
 
-class DeadlineUpdateRequest(BaseModel):
-    deadline_type: FilingDeadlineType  # enum
+class DeadlineUpdateRequest(NonEmptyUpdateMixin):
+    # Partial update: deadline_type may be omitted (keeps existing type) when
+    # only custom_deadline_note changes. Explicit null on deadline_type is
+    # invalid (non-nullable column).
+    deadline_type: FilingDeadlineType | None = None
     custom_deadline_note: str | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_deadline_type(self) -> "DeadlineUpdateRequest":
+        if "deadline_type" in self.model_fields_set and self.deadline_type is None:
+            raise ValueError("השדה deadline_type לא יכול להיות null")
+        return self
 
 
 class SubmitRequest(BaseModel):
