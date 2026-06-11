@@ -630,6 +630,16 @@
               }
             }
           },
+          "404": {
+            "description": "המשתמש המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -680,6 +690,16 @@
               }
             }
           },
+          "404": {
+            "description": "המשתמש המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -722,6 +742,16 @@
               }
             }
           },
+          "404": {
+            "description": "המשתמש המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -760,6 +790,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserManagementResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "המשתמש המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -812,6 +852,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/UserManagementResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "המשתמש המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -889,6 +939,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -943,6 +1003,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnexDataLineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1016,6 +1086,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1066,6 +1146,16 @@
           "204": {
             "description": "Successful Response"
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1104,6 +1194,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReportDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1154,6 +1254,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReportDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1243,6 +1353,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1282,6 +1402,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaxCalculationResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1329,6 +1459,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1368,6 +1508,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReadinessCheckResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1420,6 +1570,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/IncomeLineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1485,6 +1645,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1526,6 +1696,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1575,6 +1755,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ExpenseLineResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -1640,6 +1830,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -1681,6 +1881,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -1733,6 +1943,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatAutoPopulateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -2020,6 +2240,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2053,6 +2283,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -2107,6 +2347,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2156,6 +2406,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ScheduleEntryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -2224,6 +2484,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2277,6 +2547,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2325,6 +2605,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnualReportDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -2382,6 +2672,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2430,6 +2730,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnualReportDetailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -2483,6 +2793,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnualReportResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -2552,6 +2872,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2614,6 +2944,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PaginatedResponse_AnnualReportResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -2929,6 +3269,16 @@
               }
             }
           },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -2978,6 +3328,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaxCalculationSaveResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -3043,6 +3403,16 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
               }
             }
           },
@@ -3300,6 +3670,16 @@
               }
             }
           },
+          "404": {
+            "description": "הישות המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3553,6 +3933,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3633,6 +4023,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3681,6 +4081,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AuthorityContactResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "איש הקשר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -3745,6 +4155,16 @@
               }
             }
           },
+          "404": {
+            "description": "איש הקשר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3787,6 +4207,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "איש הקשר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -4353,6 +4783,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -4404,6 +4844,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -4437,6 +4887,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -4524,6 +4984,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -4573,6 +5043,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BusinessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -4640,6 +5120,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -4687,6 +5177,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BusinessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "העסק המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -4750,6 +5250,16 @@
               }
             }
           },
+          "404": {
+            "description": "העסק המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -4791,6 +5301,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "העסק המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -4839,6 +5359,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BusinessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "העסק המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -4900,6 +5430,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ClientStatusCardResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -5130,6 +5670,16 @@
               }
             }
           },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5168,6 +5718,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BinderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -5214,6 +5774,16 @@
               }
             }
           },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5256,6 +5826,16 @@
               }
             }
           },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5294,6 +5874,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BinderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -5353,6 +5943,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BinderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -5595,6 +6195,16 @@
               }
             }
           },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5628,6 +6238,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -5690,6 +6310,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BinderHistoryResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -5759,6 +6389,16 @@
               }
             }
           },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -5816,6 +6456,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/BinderIntakeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הקלסר המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -5882,6 +6532,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PaginatedResponse_BinderDetailResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -6137,6 +6797,16 @@
               }
             }
           },
+          "404": {
+            "description": "החיוב המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -6175,6 +6845,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ChargeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "החיוב המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -6230,6 +6910,16 @@
               }
             }
           },
+          "404": {
+            "description": "החיוב המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -6272,6 +6962,16 @@
               }
             }
           },
+          "404": {
+            "description": "החיוב המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -6304,6 +7004,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "החיוב המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -6436,6 +7146,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/InvoiceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "החיוב המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -6596,6 +7316,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -6635,6 +7365,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/OperationalSignalsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -6691,6 +7431,16 @@
               }
             }
           },
+          "404": {
+            "description": "המסמך המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -6735,6 +7485,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "המסמך המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -6794,6 +7554,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PermanentDocumentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "המסמך המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -6865,6 +7635,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -6903,6 +7683,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DocumentVersionsResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הדוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -7314,6 +8104,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -7668,6 +8468,16 @@
               }
             }
           },
+          "404": {
+            "description": "התזכורת המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -7706,6 +8516,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ReminderResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "התזכורת המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -8214,6 +9034,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -8260,6 +9090,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CorrespondenceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -8311,6 +9151,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/CorrespondenceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "רשומת ההתכתבות המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -8374,6 +9224,16 @@
               }
             }
           },
+          "404": {
+            "description": "רשומת ההתכתבות המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -8415,6 +9275,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "רשומת ההתכתבות המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -8510,6 +9380,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -8556,6 +9436,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AdvancePaymentRow"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -8623,6 +9513,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -8670,6 +9570,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/AnnualKPIResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -8735,6 +9645,16 @@
               }
             }
           },
+          "404": {
+            "description": "תשלום המקדמה המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -8776,6 +9696,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "תשלום המקדמה המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -9035,6 +9965,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -9174,6 +10114,16 @@
               }
             }
           },
+          "404": {
+            "description": "בקשת החתימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -9231,6 +10181,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/SignatureRequestResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "בקשת החתימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -9313,6 +10273,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/PaginatedResponse_SignatureRequestResponse_"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -9659,6 +10629,16 @@
               }
             }
           },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -9708,6 +10688,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatInvoiceResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -9765,6 +10755,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatInvoiceListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -9831,6 +10831,16 @@
               }
             }
           },
+          "404": {
+            "description": "החשבונית המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -9874,6 +10884,16 @@
           "204": {
             "description": "Successful Response"
           },
+          "404": {
+            "description": "החשבונית המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -9913,6 +10933,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatWorkItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -9970,6 +11000,16 @@
               }
             }
           },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10019,6 +11059,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatWorkItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -10336,6 +11386,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10461,6 +11521,16 @@
               }
             }
           },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10526,6 +11596,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10557,26 +11637,26 @@
             }
           },
           {
-            "name": "limit",
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
               "maximum": 100,
               "minimum": 1,
-              "default": 25,
-              "title": "Limit"
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
+              "default": 20,
+              "title": "Page Size"
             }
           }
         ],
@@ -10587,6 +11667,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatAuditTrailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -10669,6 +11759,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10727,6 +11827,16 @@
             "content": {
               "application/json": {
                 "schema": {}
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
               }
             }
           },
@@ -10795,6 +11905,16 @@
               }
             }
           },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10841,6 +11961,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EntityNoteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הלקוח המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -10906,6 +12036,16 @@
               }
             }
           },
+          "404": {
+            "description": "ההערה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -10947,6 +12087,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "ההערה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -11022,6 +12172,16 @@
               }
             }
           },
+          "404": {
+            "description": "העסק המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11077,6 +12237,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EntityNoteResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "העסק המבוקש לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -11151,6 +12321,16 @@
               }
             }
           },
+          "404": {
+            "description": "ההערה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11202,6 +12382,16 @@
           "204": {
             "description": "Successful Response"
           },
+          "404": {
+            "description": "ההערה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11243,26 +12433,26 @@
             }
           },
           {
-            "name": "limit",
+            "name": "page",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 200,
               "minimum": 1,
-              "default": 50,
-              "title": "Limit"
+              "default": 1,
+              "title": "Page"
             }
           },
           {
-            "name": "offset",
+            "name": "page_size",
             "in": "query",
             "required": false,
             "schema": {
               "type": "integer",
-              "minimum": 0,
-              "default": 0,
-              "title": "Offset"
+              "maximum": 100,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
             }
           }
         ],
@@ -11273,6 +12463,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EntityAuditTrailResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "הישות המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -11544,6 +12744,16 @@
               }
             }
           },
+          "404": {
+            "description": "המשימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11594,6 +12804,16 @@
               }
             }
           },
+          "404": {
+            "description": "המשימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11626,6 +12846,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "404": {
+            "description": "המשימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "422": {
             "description": "Validation Error",
@@ -11669,6 +12899,16 @@
               }
             }
           },
+          "404": {
+            "description": "המשימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11707,6 +12947,16 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaskResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "המשימה המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -19122,21 +20372,21 @@
             "type": "integer",
             "title": "Total"
           },
-          "limit": {
+          "page": {
             "type": "integer",
-            "title": "Limit"
+            "title": "Page"
           },
-          "offset": {
+          "page_size": {
             "type": "integer",
-            "title": "Offset"
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
           "items",
           "total",
-          "limit",
-          "offset"
+          "page",
+          "page_size"
         ],
         "title": "EntityAuditTrailResponse"
       },
@@ -19250,6 +20500,52 @@
         ],
         "title": "EntityType",
         "description": "The legal/tax classification of a Client (legal entity).\n\nOSEK_PATUR  — עוסק פטור: exempt from VAT collection; annual reporting only.\nOSEK_MURSHE — עוסק מורשה: collects/deducts VAT; monthly or bi-monthly reporting.\nCOMPANY_LTD — חברה בע\"מ: separate legal entity with its own ח\"פ; monthly/bi-monthly.\nEMPLOYEE    — שכיר: wage earner; no VAT reporting."
+      },
+      "ErrorBody": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "title": "Code"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "details": {
+            "title": "Details"
+          },
+          "request_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code",
+          "message"
+        ],
+        "title": "ErrorBody",
+        "description": "Body of the standard application error envelope."
+      },
+      "ErrorEnvelope": {
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ErrorBody"
+          }
+        },
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "title": "ErrorEnvelope",
+        "description": "Standard application error envelope: ``{\"error\": {...}}``.\n\nUsed as the ``response_model`` for documented error responses such as 404."
       },
       "ExpenseCategory": {
         "type": "string",
@@ -25780,12 +27076,22 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total"
+          "total",
+          "page",
+          "page_size"
         ],
         "title": "VatAuditTrailResponse"
       },
