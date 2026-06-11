@@ -5,6 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
+from app.core.exceptions import not_found_response
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.schemas.vat_client_summary_schema import VatClientSummaryResponse
@@ -23,6 +24,7 @@ _DEFAULT_YEAR_WINDOW = 4
     "/clients/{client_record_id}/summary",
     response_model=VatClientSummaryResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_vat_client_summary(
     client_record_id: int,
@@ -41,6 +43,7 @@ def get_vat_client_summary(
 @router.get(
     "/clients/{client_record_id}/export",
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def export_vat_client(
     client_record_id: int,

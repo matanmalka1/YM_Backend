@@ -10,7 +10,7 @@ from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -91,7 +91,11 @@ def list_overdue(
     return service.get_overdue(tax_year=tax_year, page=page, page_size=page_size)
 
 
-@router.get("/{report_id}", response_model=AnnualReportDetailResponse)
+@router.get(
+    "/{report_id}",
+    response_model=AnnualReportDetailResponse,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     """Get a single report with its schedule entries and status history."""
     service = AnnualReportService(db)
@@ -105,6 +109,7 @@ def get_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     "/{report_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def delete_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete an annual report (ADVISOR only)."""
@@ -119,6 +124,7 @@ def delete_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     "/{report_id}/amend",
     response_model=AnnualReportDetailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def amend_annual_report(report_id: int, body: AmendRequest, db: DBSession, user: CurrentUser):
     """Reopen a SUBMITTED report for amendment and record the reason (ADVISOR only)."""

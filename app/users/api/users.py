@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, status
 
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.users.schemas.user_management import (
@@ -52,13 +53,21 @@ def list_users(
     return UserManagementListResponse(items=items, page=page, page_size=page_size, total=total)
 
 
-@router.get("/{user_id}", response_model=UserManagementResponse)
+@router.get(
+    "/{user_id}",
+    response_model=UserManagementResponse,
+    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+)
 def get_user(user_id: int, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.get_user(actor_role=user.role, user_id=user_id)
 
 
-@router.patch("/{user_id}", response_model=UserManagementResponse)
+@router.patch(
+    "/{user_id}",
+    response_model=UserManagementResponse,
+    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+)
 def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     update_data = request.model_dump(exclude_unset=True, exclude_none=True)
@@ -70,7 +79,11 @@ def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: C
     )
 
 
-@router.post("/{user_id}/activate", response_model=UserManagementResponse)
+@router.post(
+    "/{user_id}/activate",
+    response_model=UserManagementResponse,
+    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+)
 def activate_user(user_id: int, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.activate_user(
@@ -80,7 +93,11 @@ def activate_user(user_id: int, db: DBSession, user: CurrentUser):
     )
 
 
-@router.post("/{user_id}/deactivate", response_model=UserManagementResponse)
+@router.post(
+    "/{user_id}/deactivate",
+    response_model=UserManagementResponse,
+    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+)
 def deactivate_user(user_id: int, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.deactivate_user(
@@ -90,7 +107,11 @@ def deactivate_user(user_id: int, db: DBSession, user: CurrentUser):
     )
 
 
-@router.post("/{user_id}/reset-password", response_model=UserManagementResponse)
+@router.post(
+    "/{user_id}/reset-password",
+    response_model=UserManagementResponse,
+    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+)
 def reset_password(user_id: int, request: PasswordResetRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.reset_password(

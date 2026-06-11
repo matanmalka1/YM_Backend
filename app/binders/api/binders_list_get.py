@@ -4,7 +4,7 @@ from app.binders.schemas.binder import BinderListResponse, BinderResponse
 from app.binders.services.binder_list_service import BinderListService
 from app.binders.services.binder_service import BinderService
 from app.binders.services.messages import BINDER_NOT_FOUND
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -55,7 +55,11 @@ def list_binders(
     )
 
 
-@router.get("/{binder_id}", response_model=BinderResponse)
+@router.get(
+    "/{binder_id}",
+    response_model=BinderResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def get_binder(binder_id: int, db: DBSession, user: CurrentUser):
     """Get binder by ID."""
     service = BinderListService(db)
@@ -69,6 +73,7 @@ def get_binder(binder_id: int, db: DBSession, user: CurrentUser):
     "/{binder_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
 def delete_binder(binder_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete a binder (ADVISOR only)."""

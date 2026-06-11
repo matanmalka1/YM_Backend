@@ -8,6 +8,7 @@ from app.businesses.schemas.business_schemas import (
 )
 from app.businesses.services.business_service import BusinessService
 from app.businesses.services.client_business_service import ClientBusinessService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -23,6 +24,7 @@ client_businesses_router = APIRouter(
     response_model=BusinessResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def create_business(
     client_id: int, request: BusinessCreateRequest, db: DBSession, user: CurrentUser
@@ -38,7 +40,11 @@ def create_business(
     return ClientBusinessService(db).to_response(business, user.role, client_id=client_id)
 
 
-@client_businesses_router.get("", response_model=ClientBusinessesResponse)
+@client_businesses_router.get(
+    "",
+    response_model=ClientBusinessesResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def list_client_businesses(
     client_id: int,
     db: DBSession,
@@ -54,14 +60,22 @@ def list_client_businesses(
     )
 
 
-@client_businesses_router.get("/{business_id}", response_model=BusinessResponse)
+@client_businesses_router.get(
+    "/{business_id}",
+    response_model=BusinessResponse,
+    responses=not_found_response(description="העסק המבוקש לא נמצא"),
+)
 def get_business(client_id: int, business_id: int, db: DBSession, user: CurrentUser):
     service = ClientBusinessService(db)
     business = service.get_for_client(client_id, business_id)
     return service.to_response(business, user.role, client_id=client_id)
 
 
-@client_businesses_router.patch("/{business_id}", response_model=BusinessResponse)
+@client_businesses_router.patch(
+    "/{business_id}",
+    response_model=BusinessResponse,
+    responses=not_found_response(description="העסק המבוקש לא נמצא"),
+)
 def update_business(
     client_id: int,
     business_id: int,
@@ -83,6 +97,7 @@ def update_business(
     "/{business_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="העסק המבוקש לא נמצא"),
 )
 def delete_business(client_id: int, business_id: int, db: DBSession, user: CurrentUser):
     ClientBusinessService(db).delete_for_client(client_id, business_id, actor_id=user.id)
@@ -93,6 +108,7 @@ def delete_business(client_id: int, business_id: int, db: DBSession, user: Curre
     "/{business_id}/restore",
     response_model=BusinessResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="העסק המבוקש לא נמצא"),
 )
 def restore_business(client_id: int, business_id: int, db: DBSession, user: CurrentUser):
     service = ClientBusinessService(db)

@@ -47,6 +47,7 @@ def lookup_work_item(
     "/clients/{client_record_id}/period-options",
     response_model=VatPeriodOptionsResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_period_options(
     client_record_id: int,
@@ -80,6 +81,7 @@ def get_status_summary(
     "/work-items/{item_id}",
     response_model=VatWorkItemResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def get_work_item(item_id: int, db: DBSession, current_user: CurrentUser):
     service = VatReportService(db)
@@ -99,6 +101,7 @@ def get_work_item(item_id: int, db: DBSession, current_user: CurrentUser):
     "/clients/{client_record_id}/work-items",
     response_model=VatWorkItemListResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_work_items(
     client_record_id: int,

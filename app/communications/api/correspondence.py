@@ -11,6 +11,7 @@ from app.communications.schemas.correspondence import (
     CorrespondenceUpdateRequest,
 )
 from app.communications.services.correspondence_service import CorrespondenceService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -27,7 +28,11 @@ client_router = APIRouter(
 )
 
 
-@client_router.get("/{client_record_id}/correspondence", response_model=CorrespondenceListResponse)
+@client_router.get(
+    "/{client_record_id}/correspondence",
+    response_model=CorrespondenceListResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def list_correspondence_by_client(
     client_record_id: int,
     db: DBSession,
@@ -64,6 +69,7 @@ def list_correspondence_by_client(
 @client_router.get(
     "/{client_record_id}/correspondence/{correspondence_id}",
     response_model=CorrespondenceResponse,
+    responses=not_found_response(description="רשומת ההתכתבות המבוקשת לא נמצאה"),
 )
 def get_correspondence(
     client_record_id: int,
@@ -78,6 +84,7 @@ def get_correspondence(
     "/{client_record_id}/correspondence",
     response_model=CorrespondenceResponse,
     status_code=status.HTTP_201_CREATED,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def create_correspondence(
     client_record_id: int,
@@ -101,6 +108,7 @@ def create_correspondence(
 @client_router.patch(
     "/{client_record_id}/correspondence/{correspondence_id}",
     response_model=CorrespondenceResponse,
+    responses=not_found_response(description="רשומת ההתכתבות המבוקשת לא נמצאה"),
 )
 def update_correspondence(
     client_record_id: int,
@@ -121,6 +129,7 @@ def update_correspondence(
     "/{client_record_id}/correspondence/{correspondence_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=_ADVISOR_ONLY,
+    responses=not_found_response(description="רשומת ההתכתבות המבוקשת לא נמצאה"),
 )
 def delete_correspondence(
     client_record_id: int,

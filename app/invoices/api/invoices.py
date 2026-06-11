@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, not_found_response
 from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.invoices.schemas.invoice_schemas import InvoiceAttachRequest, InvoiceResponse
 from app.invoices.services.invoice_service import InvoiceService
@@ -34,6 +34,7 @@ def attach_invoice(request: InvoiceAttachRequest, db: DBSession):
     "/charge/{charge_id}",
     response_model=InvoiceResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
 def get_charge_invoice(charge_id: int, db: DBSession):
     invoice = InvoiceRepository(db).get_by_charge_id(charge_id)

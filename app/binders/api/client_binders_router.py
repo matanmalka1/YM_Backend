@@ -6,6 +6,7 @@ from app.binders.schemas.binder_extended import (
 )
 from app.binders.services.binder_operations_service import BinderOperationsService
 from app.clients.services.client_service import get_client_or_raise
+from app.core.exceptions import not_found_response
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -16,7 +17,11 @@ router = APIRouter(
 )
 
 
-@router.get("/{client_record_id}/binders", response_model=BinderListResponseExtended)
+@router.get(
+    "/{client_record_id}/binders",
+    response_model=BinderListResponseExtended,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def list_client_binders(
     client_record_id: int,
     db: DBSession,

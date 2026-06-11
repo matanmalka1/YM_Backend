@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import User, UserRole
 from app.vat.api.serializers import serialize_work_item
@@ -20,6 +21,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
     "/work-items/{item_id}/ready-for-review",
     response_model=VatWorkItemResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def mark_ready_for_review(
     item_id: int,
@@ -42,6 +44,7 @@ def mark_ready_for_review(
 @router.post(
     "/work-items/{item_id}/send-back",
     response_model=VatWorkItemResponse,
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def send_back_for_correction(
     item_id: int,

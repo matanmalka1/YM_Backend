@@ -21,6 +21,7 @@ from app.clients.services.client_update_service import ClientUpdateService
 from app.clients.services.create_client_service import CreateClientService
 from app.clients.services.impact_preview_service import compute_creation_impact
 from app.common.enums import EntityType
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -131,7 +132,11 @@ def list_sidebar_clients(
     )
 
 
-@router.get("/{client_id}", response_model=ClientRecordResponse)
+@router.get(
+    "/{client_id}",
+    response_model=ClientRecordResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def get_client(
     client_id: int,
     db: DBSession,
@@ -155,7 +160,11 @@ def get_conflict_info(
 # ─── Update ───────────────────────────────────────────────────────────────────
 
 
-@router.patch("/{client_id}", response_model=ClientRecordResponse)
+@router.patch(
+    "/{client_id}",
+    response_model=ClientRecordResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def update_client(
     client_id: int,
     request: ClientUpdateRequest,
@@ -179,6 +188,7 @@ def update_client(
     "/{client_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def delete_client(client_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete a client (ADVISOR only)."""
@@ -190,6 +200,7 @@ def delete_client(client_id: int, db: DBSession, user: CurrentUser):
     "/{client_id}/restore",
     response_model=ClientRecordResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def restore_client(client_id: int, db: DBSession, user: CurrentUser):
     """Restore a soft-deleted client (ADVISOR only)."""

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.core.exceptions import not_found_response
 from app.signature_requests.schemas.signature_request import (
     SignatureRequestCreatedResponse,
     SignatureRequestCreateRequest,
@@ -73,7 +74,11 @@ def list_pending_requests(
     )
 
 
-@advisor_router.get("/{request_id}", response_model=SignatureRequestWithAuditResponse)
+@advisor_router.get(
+    "/{request_id}",
+    response_model=SignatureRequestWithAuditResponse,
+    responses=not_found_response(description="בקשת החתימה המבוקשת לא נמצאה"),
+)
 def get_signature_request(request_id: int, db: DBSession, user: CurrentUser):
     service = SignatureRequestService(db)
     req = service.get_request(request_id)

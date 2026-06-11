@@ -30,6 +30,7 @@ from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
 from app.annual_reports.services.vat_import_service import VatImportService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -63,7 +64,11 @@ def get_tax_preview(body: TaxPreviewRequest, _user: CurrentUser):
 # ── Financial summary ─────────────────────────────────────────────────────────
 
 
-@router.get("/{report_id}/financials", response_model=FinancialSummaryResponse)
+@router.get(
+    "/{report_id}/financials",
+    response_model=FinancialSummaryResponse,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_financial_summary(report_id: int, db: DBSession, user: CurrentUser):
     """Income + expense lines and taxable income calculation."""
     svc = AnnualReportFinancialSummaryService(db)
@@ -73,7 +78,11 @@ def get_financial_summary(report_id: int, db: DBSession, user: CurrentUser):
 # ── Tax calculation ───────────────────────────────────────────────────────────
 
 
-@router.get("/{report_id}/tax-calculation", response_model=TaxCalculationResponse)
+@router.get(
+    "/{report_id}/tax-calculation",
+    response_model=TaxCalculationResponse,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_tax_calculation(report_id: int, db: DBSession, user: CurrentUser):
     """Israeli 2024 income tax calculation for this report."""
     svc = AnnualReportTaxService(db)
@@ -83,7 +92,11 @@ def get_tax_calculation(report_id: int, db: DBSession, user: CurrentUser):
 # ── Advances summary ──────────────────────────────────────────────────────────
 
 
-@router.get("/{report_id}/advances-summary", response_model=AdvancesSummary)
+@router.get(
+    "/{report_id}/advances-summary",
+    response_model=AdvancesSummary,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_advances_summary(report_id: int, db: DBSession, user: CurrentUser):
     """Advance payments summary and final tax balance for this report."""
     svc = AnnualReportAdvancesSummaryService(db)
@@ -93,7 +106,11 @@ def get_advances_summary(report_id: int, db: DBSession, user: CurrentUser):
 # ── Readiness check ───────────────────────────────────────────────────────────
 
 
-@router.get("/{report_id}/readiness", response_model=ReadinessCheckResponse)
+@router.get(
+    "/{report_id}/readiness",
+    response_model=ReadinessCheckResponse,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
     """Return list of issues blocking this report from being filed."""
     svc = AnnualReportReadinessService(db)
@@ -107,6 +124,7 @@ def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
     "/{report_id}/income",
     response_model=IncomeLineResponse,
     status_code=status.HTTP_201_CREATED,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def add_income_line(
     report_id: int, body: IncomeLineCreateRequest, db: DBSession, user: CurrentUser
@@ -121,6 +139,7 @@ def add_income_line(
     "/{report_id}/income/{line_id}",
     response_model=IncomeLineResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def update_income_line(
     report_id: int,
@@ -139,6 +158,7 @@ def update_income_line(
     "/{report_id}/income/{line_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def delete_income_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
@@ -152,6 +172,7 @@ def delete_income_line(report_id: int, line_id: int, db: DBSession, user: Curren
     "/{report_id}/expenses",
     response_model=ExpenseLineResponse,
     status_code=status.HTTP_201_CREATED,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def add_expense_line(
     report_id: int, body: ExpenseLineCreateRequest, db: DBSession, user: CurrentUser
@@ -173,6 +194,7 @@ def add_expense_line(
     "/{report_id}/expenses/{line_id}",
     response_model=ExpenseLineResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def update_expense_line(
     report_id: int,
@@ -191,6 +213,7 @@ def update_expense_line(
     "/{report_id}/expenses/{line_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
@@ -204,6 +227,7 @@ def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: Curre
     "/{report_id}/auto-populate",
     response_model=VatAutoPopulateResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def auto_populate_from_vat(
     report_id: int,

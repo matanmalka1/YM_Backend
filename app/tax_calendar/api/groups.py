@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import ObligationType
+from app.core.exceptions import not_found_response
 from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupItemsResponse,
     TaxCalendarGroupListResponse,
@@ -48,6 +49,7 @@ def list_tax_calendar_groups(
     "/groups/{tax_calendar_entry_id}/items",
     response_model=TaxCalendarGroupItemsResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הישות המבוקשת לא נמצאה"),
 )
 def get_tax_calendar_group_items(
     tax_calendar_entry_id: int,

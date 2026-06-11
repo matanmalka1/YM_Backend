@@ -6,6 +6,7 @@ from app.annual_reports.schemas.annual_report_detail import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.detail_service import AnnualReportDetailService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -30,7 +31,11 @@ def _enrich_detail_response(response: ReportDetailResponse, db) -> ReportDetailR
     return response
 
 
-@router.get("/{report_id}/details", response_model=ReportDetailResponse)
+@router.get(
+    "/{report_id}/details",
+    response_model=ReportDetailResponse,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_annual_report_detail(report_id: int, db: DBSession, user: CurrentUser):
     AnnualReportService(db).assert_report_exists(report_id)
     service = AnnualReportDetailService(db)
@@ -40,7 +45,11 @@ def get_annual_report_detail(report_id: int, db: DBSession, user: CurrentUser):
     return _enrich_detail_response(ReportDetailResponse.model_validate(detail), db)
 
 
-@router.patch("/{report_id}/details", response_model=ReportDetailResponse)
+@router.patch(
+    "/{report_id}/details",
+    response_model=ReportDetailResponse,
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def update_annual_report_detail(
     report_id: int,
     request: AnnualReportDetailUpdateRequest,

@@ -9,6 +9,7 @@ from app.binders.schemas.binder import (
 from app.binders.services.binder_history_service import BinderHistoryService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.binders.services.messages import BINDER_NOT_FOUND
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -19,7 +20,11 @@ router = APIRouter(
 )
 
 
-@router.get("/{binder_id}/history", response_model=BinderHistoryResponse)
+@router.get(
+    "/{binder_id}/history",
+    response_model=BinderHistoryResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def get_binder_history(
     binder_id: int,
     db: DBSession,
@@ -45,7 +50,11 @@ def get_binder_history(
     )
 
 
-@router.get("/{binder_id}/intakes", response_model=BinderIntakeListResponse)
+@router.get(
+    "/{binder_id}/intakes",
+    response_model=BinderIntakeListResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def get_binder_intakes(
     binder_id: int,
     db: DBSession,
@@ -64,7 +73,11 @@ def get_binder_intakes(
     )
 
 
-@router.patch("/{binder_id}/intakes/{intake_id}", response_model=BinderIntakeResponse)
+@router.patch(
+    "/{binder_id}/intakes/{intake_id}",
+    response_model=BinderIntakeResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def patch_binder_intake(
     binder_id: int,
     intake_id: int,

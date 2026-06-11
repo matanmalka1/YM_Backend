@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
+from app.core.exceptions import not_found_response
 from app.timeline.schemas.timeline import ClientTimelineResponse, TimelineEvent
 from app.timeline.services.timeline_service import TimelineService
 from app.users.api.deps import DBSession, require_role
@@ -12,7 +13,11 @@ router = APIRouter(
 )
 
 
-@router.get("/{client_record_id}/timeline", response_model=ClientTimelineResponse)
+@router.get(
+    "/{client_record_id}/timeline",
+    response_model=ClientTimelineResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def get_client_timeline(
     client_record_id: int,
     db: DBSession,

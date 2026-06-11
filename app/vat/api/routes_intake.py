@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, status
 
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.serializers import serialize_work_item
@@ -46,6 +47,7 @@ def create_work_item(
     "/work-items/{item_id}/materials-complete",
     response_model=VatWorkItemResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def mark_materials_complete(
     item_id: int,

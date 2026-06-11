@@ -10,6 +10,7 @@ from app.authority_contacts.schemas.authority_contact import (
 from app.authority_contacts.services.authority_contact_service import (
     AuthorityContactService,
 )
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -29,6 +30,7 @@ def _to_contact_response(contact) -> AuthorityContactResponse:
     "/{client_record_id}/authority-contacts",
     response_model=AuthorityContactResponse,
     status_code=status.HTTP_201_CREATED,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def create_authority_contact(
     client_record_id: int,
@@ -53,6 +55,7 @@ def create_authority_contact(
 @router.get(
     "/{client_record_id}/authority-contacts",
     response_model=AuthorityContactListResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_authority_contacts(
     client_record_id: int,
@@ -81,6 +84,7 @@ def list_authority_contacts(
 @router.get(
     "/{client_record_id}/authority-contacts/{contact_id}",
     response_model=AuthorityContactResponse,
+    responses=not_found_response(description="איש הקשר המבוקש לא נמצא"),
 )
 def get_authority_contact(
     client_record_id: int,
@@ -96,6 +100,7 @@ def get_authority_contact(
 @router.patch(
     "/{client_record_id}/authority-contacts/{contact_id}",
     response_model=AuthorityContactResponse,
+    responses=not_found_response(description="איש הקשר המבוקש לא נמצא"),
 )
 def update_authority_contact(
     client_record_id: int,
@@ -115,6 +120,7 @@ def update_authority_contact(
     "/{client_record_id}/authority-contacts/{contact_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="איש הקשר המבוקש לא נמצא"),
 )
 def delete_authority_contact(
     client_record_id: int, contact_id: int, db: DBSession, user: CurrentUser

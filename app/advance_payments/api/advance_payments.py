@@ -17,6 +17,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.period_utils import parse_period_year
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -27,7 +28,11 @@ router = APIRouter(
 )
 
 
-@router.get("", response_model=AdvancePaymentListResponse)
+@router.get(
+    "",
+    response_model=AdvancePaymentListResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def list_advance_payments(
     client_record_id: int,
     db: DBSession,
@@ -73,6 +78,7 @@ def list_advance_payments(
     response_model=AdvancePaymentRow,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def create_advance_payment(
     client_record_id: int,
@@ -100,6 +106,7 @@ def create_advance_payment(
     "/prefill-turnover",
     response_model=PrefillTurnoverResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_prefill_turnover(
     client_record_id: int,
@@ -120,7 +127,11 @@ def get_prefill_turnover(
     )
 
 
-@router.get("/kpi", response_model=AnnualKPIResponse)
+@router.get(
+    "/kpi",
+    response_model=AnnualKPIResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def get_annual_kpis(
     client_record_id: int,
     db: DBSession,
@@ -136,6 +147,7 @@ def get_annual_kpis(
     "/{payment_id}",
     response_model=AdvancePaymentRow,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
 )
 def update_advance_payment(
     client_record_id: int,
@@ -169,6 +181,7 @@ def update_advance_payment(
     "/{payment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
 )
 def delete_advance_payment(
     client_record_id: int,

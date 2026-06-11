@@ -3,8 +3,8 @@
 from fastapi import APIRouter
 
 from app.annual_reports.api.annual_report_annex import router as annex_router
-from app.annual_reports.api.annual_report_client import clients_router
 from app.annual_reports.api.annual_report_charges import router as charges_router
+from app.annual_reports.api.annual_report_client import clients_router
 from app.annual_reports.api.annual_report_create_read import (
     router as create_read_router,
 )

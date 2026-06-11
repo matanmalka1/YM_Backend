@@ -40,6 +40,7 @@ def not_found_response(*, description: str = "המשאב לא נמצא") -> dict
     """OpenAPI ``responses=`` entry documenting a 404 with the error envelope."""
     return {404: {"model": ErrorEnvelope, "description": description}}
 
+
 _HTTP_CODE_MAP: dict[int, str] = {
     400: "bad_request",
     401: "unauthorized",

@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.models.vat_enums import InvoiceType
@@ -21,6 +22,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
     response_model=VatInvoiceResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def add_invoice(
     item_id: int,
@@ -54,6 +56,7 @@ def add_invoice(
     "/work-items/{item_id}/invoices",
     response_model=VatInvoiceListResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def list_invoices(
     item_id: int,
@@ -71,6 +74,7 @@ def list_invoices(
     "/work-items/{item_id}/invoices/{invoice_id}",
     response_model=VatInvoiceResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="החשבונית המבוקשת לא נמצאה"),
 )
 def update_invoice(
     item_id: int,
@@ -102,6 +106,7 @@ def update_invoice(
     "/work-items/{item_id}/invoices/{invoice_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="החשבונית המבוקשת לא נמצאה"),
 )
 def delete_invoice(
     item_id: int,

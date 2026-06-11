@@ -7,6 +7,7 @@ from app.annual_reports.schemas.annual_report_requests import (
 from app.annual_reports.schemas.annual_report_responses import ScheduleEntryResponse
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -22,6 +23,7 @@ router = APIRouter(
     response_model=ScheduleEntryResponse,
     status_code=201,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def add_schedule(report_id: int, body: ScheduleAddRequest, db: DBSession, user: CurrentUser):
     """Manually add a schedule to a report (auto-generated ones are created at report creation)."""
@@ -30,7 +32,11 @@ def add_schedule(report_id: int, body: ScheduleAddRequest, db: DBSession, user: 
     return ScheduleEntryResponse.model_validate(entry)
 
 
-@router.get("/{report_id}/schedules", response_model=PaginatedResponse[ScheduleEntryResponse])
+@router.get(
+    "/{report_id}/schedules",
+    response_model=PaginatedResponse[ScheduleEntryResponse],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def list_schedules(
     report_id: int,
     db: DBSession,
@@ -53,6 +59,7 @@ def list_schedules(
     "/{report_id}/schedules/complete",
     response_model=ScheduleEntryResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def complete_schedule(
     report_id: int, body: ScheduleCompleteRequest, db: DBSession, user: CurrentUser

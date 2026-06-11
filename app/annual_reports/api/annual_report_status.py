@@ -12,7 +12,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
-from app.core.exceptions import NotFoundError
+from app.core.exceptions import NotFoundError, not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -27,6 +27,7 @@ router = APIRouter(
     "/{report_id}/status",
     response_model=AnnualReportResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def transition_status(
     report_id: int,
@@ -59,6 +60,7 @@ def transition_status(
     "/{report_id}/submit",
     response_model=AnnualReportDetailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def submit_report(
     report_id: int,
@@ -87,6 +89,7 @@ def submit_report(
     "/{report_id}/deadline",
     response_model=AnnualReportResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def update_deadline(
     report_id: int,
@@ -111,7 +114,11 @@ def update_deadline(
     return report
 
 
-@router.get("/{report_id}/history", response_model=PaginatedResponse[StatusHistoryResponse])
+@router.get(
+    "/{report_id}/history",
+    response_model=PaginatedResponse[StatusHistoryResponse],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+)
 def get_status_history(
     report_id: int,
     db: DBSession,

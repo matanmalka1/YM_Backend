@@ -5,6 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.common.source_types import WorkQueueSourceType
+from app.core.exceptions import not_found_response
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.tasks.schemas.task import (
     TaskCreateRequest,
@@ -62,12 +63,20 @@ def create_task(
     return TaskService(db).create(data, created_by_user_id=user.id)
 
 
-@router.get("/{task_id}", response_model=TaskResponse)
+@router.get(
+    "/{task_id}",
+    response_model=TaskResponse,
+    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+)
 def get_task(db: DBSession, task_id: int):
     return TaskService(db).get(task_id)
 
 
-@router.patch("/{task_id}", response_model=TaskResponse)
+@router.patch(
+    "/{task_id}",
+    response_model=TaskResponse,
+    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+)
 def update_task(
     db: DBSession,
     task_id: int,
@@ -76,17 +85,29 @@ def update_task(
     return TaskService(db).update(task_id, data)
 
 
-@router.post("/{task_id}/complete", response_model=TaskResponse)
+@router.post(
+    "/{task_id}/complete",
+    response_model=TaskResponse,
+    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+)
 def complete_task(db: DBSession, user: CurrentUser, task_id: int):
     return TaskService(db).complete(task_id, completed_by_user_id=user.id)
 
 
-@router.post("/{task_id}/cancel", response_model=TaskResponse)
+@router.post(
+    "/{task_id}/cancel",
+    response_model=TaskResponse,
+    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+)
 def cancel_task(db: DBSession, user: CurrentUser, task_id: int):
     return TaskService(db).cancel(task_id, canceled_by_user_id=user.id)
 
 
-@router.delete("/{task_id}", status_code=204)
+@router.delete(
+    "/{task_id}",
+    status_code=204,
+    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+)
 def delete_task(db: DBSession, _user: CurrentUser, task_id: int):
     TaskService(db).delete(task_id)
     return Response(status_code=204)

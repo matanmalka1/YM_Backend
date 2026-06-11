@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 
 from app.annual_reports.services.annual_report_pdf_service import AnnualReportPdfService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -16,7 +17,9 @@ router = APIRouter(
 )
 
 
-@router.get("/{report_id}/export/pdf")
+@router.get(
+    "/{report_id}/export/pdf", responses=not_found_response(description="הדוח המבוקש לא נמצא")
+)
 def export_annual_report_pdf(report_id: int, db: DBSession, user: CurrentUser) -> StreamingResponse:
     """Download a working-draft PDF (טיוטה לעיון) for the annual report."""
     svc = AnnualReportPdfService(db)

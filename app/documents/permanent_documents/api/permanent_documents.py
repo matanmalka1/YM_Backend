@@ -2,6 +2,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
+from app.core.exceptions import not_found_response
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentStatus,
     PermanentDocumentType,
@@ -63,6 +64,7 @@ def upload_permanent_document(
     "/client/{client_record_id}",
     response_model=PermanentDocumentListResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_documents(
     client_record_id: int,
@@ -97,6 +99,7 @@ def list_client_documents(
     "/client/{client_record_id}/signals",
     response_model=OperationalSignalsResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_operational_signals(
     client_record_id: int,
@@ -112,6 +115,7 @@ def get_operational_signals(
     "/client/{client_record_id}/{document_id}/download-url",
     response_model=DocumentDownloadUrlResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="המסמך המבוקש לא נמצא"),
 )
 def get_download_url(client_record_id: int, document_id: int, db: DBSession, user: CurrentUser):
     """Get a presigned download URL for a document (expires in 1 hour)."""
@@ -123,6 +127,7 @@ def get_download_url(client_record_id: int, document_id: int, db: DBSession, use
     "/client/{client_record_id}/{document_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="המסמך המבוקש לא נמצא"),
 )
 def delete_document(client_record_id: int, document_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete a permanent document (ADVISOR only)."""
@@ -133,6 +138,7 @@ def delete_document(client_record_id: int, document_id: int, db: DBSession, user
     "/client/{client_record_id}/{document_id}/replace",
     response_model=PermanentDocumentResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="המסמך המבוקש לא נמצא"),
 )
 def replace_document(
     client_record_id: int,

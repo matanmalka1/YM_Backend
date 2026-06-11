@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
+from app.binders.repositories.binder_handover_repository import BinderHandoverRepository
 from app.binders.schemas.binder import (
     BinderHandoverRequest,
     BinderHandoverResponse,
@@ -11,11 +12,11 @@ from app.binders.schemas.binder import (
     BinderReceiveResult,
     BinderResponse,
 )
-from app.binders.repositories.binder_handover_repository import BinderHandoverRepository
 from app.binders.services.binder_handover_service import BinderHandoverService
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.binders.services.binder_list_service import BinderListService
 from app.binders.services.binder_service import BinderService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -106,7 +107,11 @@ def handover_to_client_bulk(request: BinderHandoverRequest, db: DBSession, user:
     )
 
 
-@router.post("/{binder_id}/receive-material", response_model=BinderResponse)
+@router.post(
+    "/{binder_id}/receive-material",
+    response_model=BinderResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def receive_material(binder_id: int, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).receive_material_by_id(
         binder_id=binder_id,
@@ -115,7 +120,11 @@ def receive_material(binder_id: int, db: DBSession, user: CurrentUser):
     return fetch_client_and_build_response(binder, db)
 
 
-@router.post("/{binder_id}/mark-full", response_model=BinderResponse)
+@router.post(
+    "/{binder_id}/mark-full",
+    response_model=BinderResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def mark_full(binder_id: int, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).mark_full(
         binder_id=binder_id,
@@ -124,7 +133,11 @@ def mark_full(binder_id: int, db: DBSession, user: CurrentUser):
     return fetch_client_and_build_response(binder, db)
 
 
-@router.post("/{binder_id}/reopen-capacity", response_model=BinderResponse)
+@router.post(
+    "/{binder_id}/reopen-capacity",
+    response_model=BinderResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def reopen_capacity(binder_id: int, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).reopen_capacity(
         binder_id=binder_id,
@@ -136,6 +149,7 @@ def reopen_capacity(binder_id: int, db: DBSession, user: CurrentUser):
 @router.post(
     "/{binder_id}/mark-ready-for-handover",
     response_model=BinderReadyForHandoverResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
 def mark_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
     binder, notification = BinderLifecycleService(db).mark_ready_for_handover(
@@ -148,7 +162,11 @@ def mark_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
     )
 
 
-@router.post("/{binder_id}/revert-ready-for-handover", response_model=BinderResponse)
+@router.post(
+    "/{binder_id}/revert-ready-for-handover",
+    response_model=BinderResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def revert_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).revert_ready_for_handover(
         binder_id=binder_id,
@@ -157,7 +175,11 @@ def revert_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
     return fetch_client_and_build_response(binder, db)
 
 
-@router.post("/{binder_id}/handover-to-client", response_model=BinderResponse)
+@router.post(
+    "/{binder_id}/handover-to-client",
+    response_model=BinderResponse,
+    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+)
 def handover_to_client(
     binder_id: int,
     db: DBSession,

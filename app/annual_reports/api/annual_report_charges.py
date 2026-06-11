@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from app.annual_reports.services.annual_report_charge_service import (
     AnnualReportChargeService,
 )
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -15,7 +16,7 @@ router = APIRouter(
 )
 
 
-@router.get("/{report_id}/charges")
+@router.get("/{report_id}/charges", responses=not_found_response(description="הדוח המבוקש לא נמצא"))
 def list_report_charges(
     report_id: int,
     db: DBSession,

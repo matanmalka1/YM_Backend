@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 
+from app.core.exceptions import not_found_response
 from app.notes.schemas.entity_note import (
     EntityNoteCreateRequest,
     EntityNoteListResponse,
@@ -19,7 +20,11 @@ router = APIRouter(
 _ENTITY_TYPE = "client"
 
 
-@router.get("", response_model=EntityNoteListResponse)
+@router.get(
+    "",
+    response_model=EntityNoteListResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def list_notes(
     client_id: int,
     db: DBSession,
@@ -41,7 +46,12 @@ def list_notes(
     )
 
 
-@router.post("", response_model=EntityNoteResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=EntityNoteResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def add_note(
     client_id: int,
     request: EntityNoteCreateRequest,
@@ -58,7 +68,11 @@ def add_note(
     return EntityNoteResponse.model_validate(note)
 
 
-@router.patch("/{note_id}", response_model=EntityNoteResponse)
+@router.patch(
+    "/{note_id}",
+    response_model=EntityNoteResponse,
+    responses=not_found_response(description="ההערה המבוקשת לא נמצאה"),
+)
 def update_note(
     client_id: int,
     note_id: int,
@@ -77,7 +91,11 @@ def update_note(
     return EntityNoteResponse.model_validate(note)
 
 
-@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{note_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=not_found_response(description="ההערה המבוקשת לא נמצאה"),
+)
 def delete_note(
     client_id: int,
     note_id: int,

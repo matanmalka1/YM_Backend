@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
+from app.core.exceptions import not_found_response
 from app.documents.permanent_documents.schemas.permanent_document import (
     DocumentVersionsResponse,
 )
@@ -23,6 +24,7 @@ router = APIRouter(
     "/client/{client_record_id}/versions",
     response_model=DocumentVersionsResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_document_versions(
     client_record_id: int,
@@ -45,6 +47,7 @@ def get_document_versions(
     "/annual-report/{report_id}",
     response_model=DocumentVersionsResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def list_by_annual_report(
     report_id: int,

@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.annual_reports.schemas.annual_report_responses import AnnualReportListResponse
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -12,7 +13,11 @@ clients_router = APIRouter(
 )
 
 
-@clients_router.get("/{client_record_id}/annual-reports", response_model=AnnualReportListResponse)
+@clients_router.get(
+    "/{client_record_id}/annual-reports",
+    response_model=AnnualReportListResponse,
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
 def list_client_reports(
     client_record_id: int,
     db: DBSession,
