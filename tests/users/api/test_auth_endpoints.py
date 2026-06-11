@@ -57,7 +57,10 @@ def test_logout_invalidates_old_token_and_clears_cookie(client, test_user):
     )
     assert protected_before.status_code == 200
 
-    logout_response = client.post("/api/v1/auth/logout")
+    logout_response = client.post(
+        "/api/v1/auth/logout",
+        headers={"Authorization": f"Bearer {token}"},
+    )
     assert logout_response.status_code == 204
     assert "refresh_token=" in logout_response.headers["set-cookie"]
 

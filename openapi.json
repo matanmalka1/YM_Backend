@@ -20,7 +20,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/info": {
@@ -38,7 +39,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/health": {
@@ -70,7 +72,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/ready": {
@@ -102,7 +105,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/login": {
@@ -143,7 +147,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/refresh": {
@@ -192,7 +197,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/me": {
@@ -213,12 +219,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/auth/logout": {
@@ -228,37 +229,9 @@
         ],
         "summary": "Logout",
         "operationId": "logout_api_v1_auth_logout_post",
-        "parameters": [
-          {
-            "name": "refresh_token",
-            "in": "cookie",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Refresh Token"
-            }
-          }
-        ],
         "responses": {
           "204": {
             "description": "Successful Response"
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
           }
         }
       }
@@ -301,7 +274,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/auth/reset-password": {
@@ -342,7 +316,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/users/audit-logs": {
@@ -352,11 +327,6 @@
         ],
         "summary": "List Audit Logs",
         "operationId": "list_audit_logs_api_v1_users_audit_logs_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -511,11 +481,6 @@
         ],
         "summary": "Create User",
         "operationId": "create_user_api_v1_users_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -555,11 +520,6 @@
         ],
         "summary": "List Users",
         "operationId": "list_users_api_v1_users_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -648,11 +608,6 @@
         ],
         "summary": "Get User",
         "operationId": "get_user_api_v1_users__user_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -693,11 +648,6 @@
         ],
         "summary": "Update User",
         "operationId": "update_user_api_v1_users__user_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -750,11 +700,6 @@
         ],
         "summary": "Activate User",
         "operationId": "activate_user_api_v1_users__user_id__activate_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -797,11 +742,6 @@
         ],
         "summary": "Deactivate User",
         "operationId": "deactivate_user_api_v1_users__user_id__deactivate_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -844,11 +784,6 @@
         ],
         "summary": "Reset Password",
         "operationId": "reset_password_api_v1_users__user_id__reset_password_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "user_id",
@@ -901,11 +836,6 @@
         ],
         "summary": "List Annex Lines",
         "operationId": "list_annex_lines_api_v1_annual_reports__report_id__annex__schedule__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -977,11 +907,6 @@
         ],
         "summary": "Add Annex Line",
         "operationId": "add_annex_line_api_v1_annual_reports__report_id__annex__schedule__post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1042,11 +967,6 @@
         ],
         "summary": "Update Annex Line",
         "operationId": "update_annex_line_api_v1_annual_reports__report_id__annex__schedule___line_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1114,11 +1034,6 @@
         ],
         "summary": "Delete Annex Line",
         "operationId": "delete_annex_line_api_v1_annual_reports__report_id__annex__schedule___line_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1171,11 +1086,6 @@
         ],
         "summary": "Get Annual Report Detail",
         "operationId": "get_annual_report_detail_api_v1_annual_reports__report_id__details_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1216,11 +1126,6 @@
         ],
         "summary": "Update Annual Report Detail",
         "operationId": "update_annual_report_detail_api_v1_annual_reports__report_id__details_patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1305,12 +1210,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/annual-reports/{report_id}/financials": {
@@ -1321,11 +1221,6 @@
         "summary": "Get Financial Summary",
         "description": "Income + expense lines and taxable income calculation.",
         "operationId": "get_financial_summary_api_v1_annual_reports__report_id__financials_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1369,11 +1264,6 @@
         "summary": "Get Tax Calculation",
         "description": "Israeli 2024 income tax calculation for this report.",
         "operationId": "get_tax_calculation_api_v1_annual_reports__report_id__tax_calculation_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1417,11 +1307,6 @@
         "summary": "Get Advances Summary",
         "description": "Advance payments summary and final tax balance for this report.",
         "operationId": "get_advances_summary_api_v1_annual_reports__report_id__advances_summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1465,11 +1350,6 @@
         "summary": "Get Readiness Check",
         "description": "Return list of issues blocking this report from being filed.",
         "operationId": "get_readiness_check_api_v1_annual_reports__report_id__readiness_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1512,11 +1392,6 @@
         ],
         "summary": "Add Income Line",
         "operationId": "add_income_line_api_v1_annual_reports__report_id__income_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1569,11 +1444,6 @@
         ],
         "summary": "Update Income Line",
         "operationId": "update_income_line_api_v1_annual_reports__report_id__income__line_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1633,11 +1503,6 @@
         ],
         "summary": "Delete Income Line",
         "operationId": "delete_income_line_api_v1_annual_reports__report_id__income__line_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1682,11 +1547,6 @@
         ],
         "summary": "Add Expense Line",
         "operationId": "add_expense_line_api_v1_annual_reports__report_id__expenses_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1739,11 +1599,6 @@
         ],
         "summary": "Update Expense Line",
         "operationId": "update_expense_line_api_v1_annual_reports__report_id__expenses__line_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1803,11 +1658,6 @@
         ],
         "summary": "Delete Expense Line",
         "operationId": "delete_expense_line_api_v1_annual_reports__report_id__expenses__line_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1853,11 +1703,6 @@
         "summary": "Auto Populate From Vat",
         "description": "מילוי אוטומטי של שורות הכנסה/הוצאה מנתוני מע\"מ של העסק לשנת המס.",
         "operationId": "auto_populate_from_vat_api_v1_annual_reports__report_id__auto_populate_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -1913,11 +1758,6 @@
         "summary": "Create Annual Report",
         "description": "Create a new annual income tax report for a client legal entity.",
         "operationId": "create_annual_report_api_v1_annual_reports_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1958,11 +1798,6 @@
         "summary": "List Annual Reports",
         "description": "List annual reports (optionally filter by tax_year, client_record_id, status).",
         "operationId": "list_annual_reports_api_v1_annual_reports_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_year",
@@ -2090,11 +1925,6 @@
         "summary": "List Overdue",
         "description": "Reports past their filing deadline that have not been submitted.",
         "operationId": "list_overdue_api_v1_annual_reports_overdue_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_year",
@@ -2168,11 +1998,6 @@
         "summary": "Get Annual Report",
         "description": "Get a single report with its schedule entries and status history.",
         "operationId": "get_annual_report_api_v1_annual_reports__report_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2214,11 +2039,6 @@
         "summary": "Delete Annual Report",
         "description": "Soft-delete an annual report (ADVISOR only).",
         "operationId": "delete_annual_report_api_v1_annual_reports__report_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2255,11 +2075,6 @@
         "summary": "Amend Annual Report",
         "description": "Reopen a SUBMITTED report for amendment and record the reason (ADVISOR only).",
         "operationId": "amend_annual_report_api_v1_annual_reports__report_id__amend_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2313,11 +2128,6 @@
         "summary": "Add Schedule",
         "description": "Manually add a schedule to a report (auto-generated ones are created at report creation).",
         "operationId": "add_schedule_api_v1_annual_reports__report_id__schedules_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2369,11 +2179,6 @@
         "summary": "List Schedules",
         "description": "List all schedules for a specific annual report.",
         "operationId": "list_schedules_api_v1_annual_reports__report_id__schedules_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2440,11 +2245,6 @@
         "summary": "Complete Schedule",
         "description": "Mark a specific schedule as complete.",
         "operationId": "complete_schedule_api_v1_annual_reports__report_id__schedules_complete_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2497,11 +2297,6 @@
         ],
         "summary": "Transition Stage",
         "operationId": "transition_stage_api_v1_annual_reports__report_id__transition_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2555,11 +2350,6 @@
         "summary": "Transition Status",
         "description": "Move the report to a new status.\n\nOnly valid transitions are accepted (e.g. COLLECTING_DOCS → IN_PREPARATION).\nAttempting an invalid jump returns 400.",
         "operationId": "transition_status_api_v1_annual_reports__report_id__status_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2612,11 +2402,6 @@
         ],
         "summary": "Submit Report",
         "operationId": "submit_report_api_v1_annual_reports__report_id__submit_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2670,11 +2455,6 @@
         "summary": "Update Deadline",
         "description": "Update the deadline type for a report.\n\nSwitching to 'extended' moves the deadline to January 31 of the year\nafter next — used for authorised electronic representatives (מייצגים).",
         "operationId": "update_deadline_api_v1_annual_reports__report_id__deadline_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2727,11 +2507,6 @@
         ],
         "summary": "Get Status History",
         "operationId": "get_status_history_api_v1_annual_reports__report_id__history_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -2798,11 +2573,6 @@
         "summary": "List Client Reports",
         "description": "All annual reports for a client, sorted newest year first.",
         "operationId": "list_client_reports_api_v1_clients__client_record_id__annual_reports_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -2868,11 +2638,6 @@
         ],
         "summary": "List Active Season Reports",
         "operationId": "list_active_season_reports_api_v1_tax_year_active_reports_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -2972,12 +2737,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/tax-year/default": {
@@ -2998,12 +2758,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/tax-year/{tax_year}/reports": {
@@ -3014,11 +2769,6 @@
         "summary": "List Season Reports",
         "description": "All reports for a given tax year — the advisor's season dashboard.",
         "operationId": "list_season_reports_api_v1_tax_year__tax_year__reports_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_year",
@@ -3116,11 +2866,6 @@
         ],
         "summary": "Get Season Summary",
         "operationId": "get_season_summary_api_v1_tax_year__tax_year__summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_year",
@@ -3164,11 +2909,6 @@
         "summary": "Export Annual Report Pdf",
         "description": "Download a working-draft PDF (טיוטה לעיון) for the annual report.",
         "operationId": "export_annual_report_pdf_api_v1_annual_reports__report_id__export_pdf_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -3210,11 +2950,6 @@
         "summary": "Save Tax Calculation",
         "description": "שמירת חוב מס / החזר מס מחושב על הדוח השנתי.\n\nיש לקרוא ל-GET /tax-calculation תחילה, ולאחר מכן לשמור את התוצאה.\nלא ניתן לשמור גם tax_due וגם refund_due בו-זמנית.",
         "operationId": "save_tax_calculation_api_v1_annual_reports__report_id__tax_calculation_save_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -3268,11 +3003,6 @@
         "summary": "List Report Charges",
         "description": "רשימת חיובים המקושרים לדוח שנתי זה (מידע בלבד).",
         "operationId": "list_report_charges_api_v1_annual_reports__report_id__charges_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -3336,11 +3066,6 @@
         ],
         "summary": "List Tax Calendar Groups",
         "operationId": "list_tax_calendar_groups_api_v1_tax_calendar_groups_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "start_year",
@@ -3498,11 +3223,6 @@
         ],
         "summary": "Get Tax Calendar Group Items",
         "operationId": "get_tax_calendar_group_items_api_v1_tax_calendar_groups__tax_calendar_entry_id__items_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_calendar_entry_id",
@@ -3615,12 +3335,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/settings/tax-calendar/entries": {
@@ -3630,11 +3345,6 @@
         ],
         "summary": "List Tax Calendar Entries",
         "operationId": "list_tax_calendar_entries_api_v1_settings_tax_calendar_entries_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "start_year",
@@ -3704,11 +3414,6 @@
         ],
         "summary": "Get Tax Calendar Summary",
         "operationId": "get_tax_calendar_summary_api_v1_settings_tax_calendar_summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "start_year",
@@ -3805,12 +3510,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/clients/{client_record_id}/authority-contacts": {
@@ -3821,11 +3521,6 @@
         "summary": "Create Authority Contact",
         "description": "Create new authority contact for client.",
         "operationId": "create_authority_contact_api_v1_clients__client_record_id__authority_contacts_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -3877,11 +3572,6 @@
         "summary": "List Authority Contacts",
         "description": "List authority contacts for client with pagination.",
         "operationId": "list_authority_contacts_api_v1_clients__client_record_id__authority_contacts_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -3964,11 +3654,6 @@
         "summary": "Get Authority Contact",
         "description": "Get a single authority contact by ID, scoped to client.",
         "operationId": "get_authority_contact_api_v1_clients__client_record_id__authority_contacts__contact_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -4019,11 +3704,6 @@
         "summary": "Update Authority Contact",
         "description": "Update authority contact, scoped to client.",
         "operationId": "update_authority_contact_api_v1_clients__client_record_id__authority_contacts__contact_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -4084,11 +3764,6 @@
         "summary": "Delete Authority Contact",
         "description": "Delete authority contact (ADVISOR only), scoped to client.",
         "operationId": "delete_authority_contact_api_v1_clients__client_record_id__authority_contacts__contact_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -4134,11 +3809,6 @@
         "summary": "Get Tax Submission Widget",
         "description": "Return tax submission statistics for the dashboard.",
         "operationId": "get_tax_submission_widget_api_v1_dashboard_tax_submissions_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_year",
@@ -4201,12 +3871,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/clients/export": {
@@ -4226,12 +3891,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/clients/template": {
@@ -4251,12 +3911,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/clients/import": {
@@ -4267,11 +3922,6 @@
         "summary": "Import Clients From Excel",
         "description": "Create clients in bulk from an Excel file (advisor-only).",
         "operationId": "import_clients_from_excel_api_v1_clients_import_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "X-Idempotency-Key",
@@ -4356,12 +4006,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/clients": {
@@ -4372,11 +4017,6 @@
         "summary": "Create Client",
         "description": "Create a reporting entity and its first business in one request.",
         "operationId": "create_client_api_v1_clients_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -4417,11 +4057,6 @@
         "summary": "List Clients",
         "description": "List clients with optional search, status filter, and sorting.",
         "operationId": "list_clients_api_v1_clients_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "search",
@@ -4583,11 +4218,6 @@
         ],
         "summary": "List Sidebar Clients",
         "operationId": "list_sidebar_clients_api_v1_clients_sidebar_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "search",
@@ -4683,11 +4313,6 @@
         "summary": "Get Client",
         "description": "Get client by ID (client_id = ClientRecord.id).",
         "operationId": "get_client_api_v1_clients__client_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -4747,11 +4372,6 @@
         "summary": "Update Client",
         "description": "Update client identity fields by ClientRecord.id.",
         "operationId": "update_client_api_v1_clients__client_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -4803,11 +4423,6 @@
         "summary": "Delete Client",
         "description": "Soft-delete a client (ADVISOR only).",
         "operationId": "delete_client_api_v1_clients__client_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -4844,11 +4459,6 @@
         "summary": "Get Conflict Info",
         "description": "מחזיר מידע על קונפליקטים לת.ז. נתונה.",
         "operationId": "get_conflict_info_api_v1_clients_conflict__id_number__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "id_number",
@@ -4892,11 +4502,6 @@
         "summary": "Restore Client",
         "description": "Restore a soft-deleted client (ADVISOR only).",
         "operationId": "restore_client_api_v1_clients__client_id__restore_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -4940,11 +4545,6 @@
         "summary": "Create Business",
         "description": "יצירת עסק חדש תחת לקוח קיים (ADVISOR only).",
         "operationId": "create_business_api_v1_clients__client_id__businesses_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -4995,11 +4595,6 @@
         ],
         "summary": "List Client Businesses",
         "operationId": "list_client_businesses_api_v1_clients__client_id__businesses_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -5065,11 +4660,6 @@
         ],
         "summary": "Get Business",
         "operationId": "get_business_api_v1_clients__client_id__businesses__business_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -5119,11 +4709,6 @@
         ],
         "summary": "Update Business",
         "operationId": "update_business_api_v1_clients__client_id__businesses__business_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -5183,11 +4768,6 @@
         ],
         "summary": "Delete Business",
         "operationId": "delete_business_api_v1_clients__client_id__businesses__business_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -5232,11 +4812,6 @@
         ],
         "summary": "Restore Business",
         "operationId": "restore_business_api_v1_clients__client_id__businesses__business_id__restore_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -5289,11 +4864,6 @@
         "summary": "Get Client Status Card",
         "description": "Comprehensive status card for a client — VAT, annual report, charges, advances, binders, documents.",
         "operationId": "get_client_status_card_api_v1_clients__client_id__status_card_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -5355,11 +4925,6 @@
         "summary": "List Open Binders",
         "description": "List binders that have not been handed over.",
         "operationId": "list_open_binders_api_v1_binders_open_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -5447,12 +5012,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/binders/mark-ready-for-handover-bulk": {
@@ -5497,12 +5057,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/binders/handover-to-client-bulk": {
@@ -5543,12 +5098,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/binders/{binder_id}/receive-material": {
@@ -5558,11 +5108,6 @@
         ],
         "summary": "Receive Material",
         "operationId": "receive_material_api_v1_binders__binder_id__receive_material_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -5605,11 +5150,6 @@
         ],
         "summary": "Mark Full",
         "operationId": "mark_full_api_v1_binders__binder_id__mark_full_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -5652,11 +5192,6 @@
         ],
         "summary": "Reopen Capacity",
         "operationId": "reopen_capacity_api_v1_binders__binder_id__reopen_capacity_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -5699,11 +5234,6 @@
         ],
         "summary": "Mark Ready For Handover",
         "operationId": "mark_ready_for_handover_api_v1_binders__binder_id__mark_ready_for_handover_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -5746,11 +5276,6 @@
         ],
         "summary": "Revert Ready For Handover",
         "operationId": "revert_ready_for_handover_api_v1_binders__binder_id__revert_ready_for_handover_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -5793,11 +5318,6 @@
         ],
         "summary": "Handover To Client",
         "operationId": "handover_to_client_api_v1_binders__binder_id__handover_to_client_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -5858,11 +5378,6 @@
         "summary": "List Binders",
         "description": "List active binders with optional filters, sorting, and pagination.",
         "operationId": "list_binders_api_v1_binders_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "location_status",
@@ -6058,11 +5573,6 @@
         "summary": "Get Binder",
         "description": "Get binder by ID.",
         "operationId": "get_binder_api_v1_binders__binder_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -6104,11 +5614,6 @@
         "summary": "Delete Binder",
         "description": "Soft-delete a binder (ADVISOR only).",
         "operationId": "delete_binder_api_v1_binders__binder_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -6144,11 +5649,6 @@
         ],
         "summary": "Get Binder History",
         "operationId": "get_binder_history_api_v1_binders__binder_id__history_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -6214,11 +5714,6 @@
         ],
         "summary": "Get Binder Intakes",
         "operationId": "get_binder_intakes_api_v1_binders__binder_id__intakes_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -6284,11 +5779,6 @@
         ],
         "summary": "Patch Binder Intake",
         "operationId": "patch_binder_intake_api_v1_binders__binder_id__intakes__intake_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "binder_id",
@@ -6351,11 +5841,6 @@
         "summary": "List Client Binders",
         "description": "List all binders for a specific client.",
         "operationId": "list_client_binders_api_v1_clients__client_record_id__binders_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -6421,11 +5906,6 @@
         ],
         "summary": "Create Charge",
         "operationId": "create_charge_api_v1_charges_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -6465,11 +5945,6 @@
         ],
         "summary": "List Charges",
         "operationId": "list_charges_api_v1_charges_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "business_id",
@@ -6640,11 +6115,6 @@
         ],
         "summary": "Issue Charge",
         "operationId": "issue_charge_api_v1_charges__charge_id__issue_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "charge_id",
@@ -6687,11 +6157,6 @@
         ],
         "summary": "Mark Charge Paid",
         "operationId": "mark_charge_paid_api_v1_charges__charge_id__mark_paid_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "charge_id",
@@ -6734,11 +6199,6 @@
         ],
         "summary": "Cancel Charge",
         "operationId": "cancel_charge_api_v1_charges__charge_id__cancel_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "charge_id",
@@ -6790,11 +6250,6 @@
         ],
         "summary": "Get Charge",
         "operationId": "get_charge_api_v1_charges__charge_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "charge_id",
@@ -6835,11 +6290,6 @@
         ],
         "summary": "Delete Charge",
         "operationId": "delete_charge_api_v1_charges__charge_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "charge_id",
@@ -6875,11 +6325,6 @@
         ],
         "summary": "Bulk Charge Action",
         "operationId": "bulk_charge_action_api_v1_charges_bulk_action_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "X-Idempotency-Key",
@@ -6963,12 +6408,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/invoices/charge/{charge_id}": {
@@ -6978,11 +6418,6 @@
         ],
         "summary": "Get Charge Invoice",
         "operationId": "get_charge_invoice_api_v1_invoices_charge__charge_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "charge_id",
@@ -7057,12 +6492,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/documents/client/{client_record_id}": {
@@ -7073,11 +6503,6 @@
         "summary": "List Client Documents",
         "description": "List permanent documents for a client.",
         "operationId": "list_client_documents_api_v1_documents_client__client_record_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7192,11 +6617,6 @@
         "summary": "Get Operational Signals",
         "description": "Get operational signals for a client (advisory indicators).",
         "operationId": "get_operational_signals_api_v1_documents_client__client_record_id__signals_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7240,11 +6660,6 @@
         "summary": "Get Download Url",
         "description": "Get a presigned download URL for a document (expires in 1 hour).",
         "operationId": "get_download_url_api_v1_documents_client__client_record_id___document_id__download_url_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7297,11 +6712,6 @@
         "summary": "Delete Document",
         "description": "Soft-delete a permanent document (ADVISOR only).",
         "operationId": "delete_document_api_v1_documents_client__client_record_id___document_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7347,11 +6757,6 @@
         "summary": "Replace Document",
         "description": "Replace the file for an existing document (ADVISOR only).",
         "operationId": "replace_document_api_v1_documents_client__client_record_id___document_id__replace_put",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7413,11 +6818,6 @@
         ],
         "summary": "Get Document Versions",
         "operationId": "get_document_versions_api_v1_documents_client__client_record_id__versions_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7485,11 +6885,6 @@
         ],
         "summary": "List By Annual Report",
         "operationId": "list_by_annual_report_api_v1_documents_annual_report__report_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "report_id",
@@ -7532,11 +6927,6 @@
         ],
         "summary": "Get Vat Compliance Report",
         "operationId": "get_vat_compliance_report_api_v1_reports_vat_compliance_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "year",
@@ -7602,11 +6992,6 @@
         ],
         "summary": "Get Advance Payment Report",
         "operationId": "get_advance_payment_report_api_v1_reports_advance_payments_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "year",
@@ -7665,11 +7050,6 @@
         ],
         "summary": "Get Annual Report Status Report",
         "operationId": "get_annual_report_status_report_api_v1_reports_annual_reports_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "tax_year",
@@ -7712,11 +7092,6 @@
         ],
         "summary": "Get Aging Report",
         "operationId": "get_aging_report_api_v1_reports_aging_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "as_of_date",
@@ -7790,11 +7165,6 @@
         ],
         "summary": "Export Aging Report",
         "operationId": "export_aging_report_api_v1_reports_aging_export_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "format",
@@ -7854,11 +7224,6 @@
         "summary": "Get Client Timeline",
         "description": "Get unified client timeline.",
         "operationId": "get_client_timeline_api_v1_clients__client_record_id__timeline_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -7970,11 +7335,6 @@
         "summary": "Search",
         "description": "Unified search for clients and binders.",
         "operationId": "search_api_v1_search_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "query",
@@ -8175,11 +7535,6 @@
         ],
         "summary": "List Reminders",
         "operationId": "list_reminders_api_v1_reminders__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -8250,11 +7605,6 @@
         ],
         "summary": "Create Reminder",
         "operationId": "create_reminder_api_v1_reminders__post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -8296,11 +7646,6 @@
         ],
         "summary": "Get Reminder",
         "operationId": "get_reminder_api_v1_reminders__reminder_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "reminder_id",
@@ -8343,11 +7688,6 @@
         ],
         "summary": "Cancel Reminder",
         "operationId": "cancel_reminder_api_v1_reminders__reminder_id__cancel_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "reminder_id",
@@ -8390,11 +7730,6 @@
         ],
         "summary": "List Notifications",
         "operationId": "list_notifications_api_v1_notifications_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -8578,11 +7913,6 @@
         ],
         "summary": "Get Notification Summary",
         "operationId": "get_notification_summary_api_v1_notifications_summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -8679,12 +8009,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/notifications/send": {
@@ -8694,11 +8019,6 @@
         ],
         "summary": "Send Notification",
         "operationId": "send_notification_api_v1_notifications_send_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -8753,11 +8073,6 @@
         "summary": "List Correspondence By Client",
         "description": "All correspondence for a client, optionally filtered by business.",
         "operationId": "list_correspondence_by_client_api_v1_clients__client_record_id__correspondence_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -8917,11 +8232,6 @@
         ],
         "summary": "Create Correspondence",
         "operationId": "create_correspondence_api_v1_clients__client_record_id__correspondence_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -8974,11 +8284,6 @@
         ],
         "summary": "Get Correspondence",
         "operationId": "get_correspondence_api_v1_clients__client_record_id__correspondence__correspondence_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9028,11 +8333,6 @@
         ],
         "summary": "Update Correspondence",
         "operationId": "update_correspondence_api_v1_clients__client_record_id__correspondence__correspondence_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9092,11 +8392,6 @@
         ],
         "summary": "Delete Correspondence",
         "operationId": "delete_correspondence_api_v1_clients__client_record_id__correspondence__correspondence_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9141,11 +8436,6 @@
         ],
         "summary": "List Advance Payments",
         "operationId": "list_advance_payments_api_v1_clients__client_record_id__advance_payments_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9238,11 +8528,6 @@
         ],
         "summary": "Create Advance Payment",
         "operationId": "create_advance_payment_api_v1_clients__client_record_id__advance_payments_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9295,11 +8580,6 @@
         ],
         "summary": "Get Prefill Turnover",
         "operationId": "get_prefill_turnover_api_v1_clients__client_record_id__advance_payments_prefill_turnover_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9363,11 +8643,6 @@
         ],
         "summary": "Get Annual Kpis",
         "operationId": "get_annual_kpis_api_v1_clients__client_record_id__advance_payments_kpi_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9419,11 +8694,6 @@
         ],
         "summary": "Update Advance Payment",
         "operationId": "update_advance_payment_api_v1_clients__client_record_id__advance_payments__payment_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9483,11 +8753,6 @@
         ],
         "summary": "Delete Advance Payment",
         "operationId": "delete_advance_payment_api_v1_clients__client_record_id__advance_payments__payment_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9532,11 +8797,6 @@
         ],
         "summary": "List Advance Payments Overview",
         "operationId": "list_advance_payments_overview_api_v1_advance_payments_overview_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "year",
@@ -9690,11 +8950,6 @@
         ],
         "summary": "List Advance Payment Batches",
         "operationId": "list_advance_payment_batches_api_v1_advance_payments_overview_batches_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "year",
@@ -9748,11 +9003,6 @@
         ],
         "summary": "Generate Advance Payment Schedule",
         "operationId": "generate_advance_payment_schedule_api_v1_clients__client_record_id__advance_payments_generate_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -9836,12 +9086,7 @@
               }
             }
           }
-        },
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ]
+        }
       }
     },
     "/api/v1/signature-requests/pending": {
@@ -9851,11 +9096,6 @@
         ],
         "summary": "List Pending Requests",
         "operationId": "list_pending_requests_api_v1_signature_requests_pending_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -9912,11 +9152,6 @@
         ],
         "summary": "Get Signature Request",
         "operationId": "get_signature_request_api_v1_signature_requests__request_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "request_id",
@@ -9959,11 +9194,6 @@
         ],
         "summary": "Cancel Client Signature Request",
         "operationId": "cancel_client_signature_request_api_v1_clients__client_record_id__signature_requests__request_id__cancel_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -10026,11 +9256,6 @@
         "summary": "List Client Signature Requests",
         "description": "All signature requests for a legal entity, across all businesses.",
         "operationId": "list_client_signature_requests_api_v1_clients__client_record_id__signature_requests_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -10144,7 +9369,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/sign/{token}/approve": {
@@ -10186,7 +9412,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/sign/{token}/decline": {
@@ -10238,7 +9465,8 @@
               }
             }
           }
-        }
+        },
+        "security": []
       }
     },
     "/api/v1/vat/work-items": {
@@ -10249,11 +9477,6 @@
         "summary": "Create Work Item",
         "description": "Create a VAT work item for a business / period.\n\nAccessible by: receptionist, secretary, advisor.",
         "operationId": "create_work_item_api_v1_vat_work_items_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -10293,11 +9516,6 @@
         ],
         "summary": "List Work Items",
         "operationId": "list_work_items_api_v1_vat_work_items_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -10419,11 +9637,6 @@
         "summary": "Mark Materials Complete",
         "description": "Mark materials as complete: PENDING_MATERIALS → MATERIAL_RECEIVED.\n\nAccessible by: receptionist, secretary, advisor.",
         "operationId": "mark_materials_complete_api_v1_vat_work_items__item_id__materials_complete_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10467,11 +9680,6 @@
         "summary": "Add Invoice",
         "description": "Add an income or expense invoice to a work item.",
         "operationId": "add_invoice_api_v1_vat_work_items__item_id__invoices_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10523,11 +9731,6 @@
         "summary": "List Invoices",
         "description": "List invoices for a work item, optionally filtered by type.",
         "operationId": "list_invoices_api_v1_vat_work_items__item_id__invoices_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10587,11 +9790,6 @@
         "summary": "Update Invoice",
         "description": "Update an existing invoice. Not allowed after filing.",
         "operationId": "update_invoice_api_v1_vat_work_items__item_id__invoices__invoice_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10652,11 +9850,6 @@
         "summary": "Delete Invoice",
         "description": "Delete an invoice from a work item. Not allowed after filing.",
         "operationId": "delete_invoice_api_v1_vat_work_items__item_id__invoices__invoice_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10702,11 +9895,6 @@
         "summary": "Mark Ready For Review",
         "description": "Mark data entry complete: DATA_ENTRY_IN_PROGRESS → READY_FOR_REVIEW.\n\nAccessible by: secretary, advisor.",
         "operationId": "mark_ready_for_review_api_v1_vat_work_items__item_id__ready_for_review_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10750,11 +9938,6 @@
         "summary": "Send Back For Correction",
         "description": "Advisor sends work item back for correction.\nREADY_FOR_REVIEW → DATA_ENTRY_IN_PROGRESS.",
         "operationId": "send_back_for_correction_api_v1_vat_work_items__item_id__send_back_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10808,11 +9991,6 @@
         "summary": "File Vat Return",
         "description": "Confirm and file the VAT return.  Locks the period.\n\nAdvisor only.\nOverride amount requires written justification.",
         "operationId": "file_vat_return_api_v1_vat_work_items__item_id__file_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -10865,11 +10043,6 @@
         ],
         "summary": "List Work Item Groups",
         "operationId": "list_work_item_groups_api_v1_vat_work_items_groups_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "period_type",
@@ -10967,11 +10140,6 @@
         ],
         "summary": "List Work Item Group Items",
         "operationId": "list_work_item_group_items_api_v1_vat_work_items_groups__group_key__items_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "group_key",
@@ -11069,11 +10237,6 @@
         ],
         "summary": "Lookup Work Item",
         "operationId": "lookup_work_item_api_v1_vat_work_items_lookup_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -11133,11 +10296,6 @@
         ],
         "summary": "Get Period Options",
         "operationId": "get_period_options_api_v1_vat_clients__client_record_id__period_options_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -11198,11 +10356,6 @@
         ],
         "summary": "Get Status Summary",
         "operationId": "get_status_summary_api_v1_vat_work_items_status_summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "year",
@@ -11286,11 +10439,6 @@
         ],
         "summary": "Get Work Item",
         "operationId": "get_work_item_api_v1_vat_work_items__item_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -11333,11 +10481,6 @@
         ],
         "summary": "List Client Work Items",
         "operationId": "list_client_work_items_api_v1_vat_clients__client_record_id__work_items_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -11403,11 +10546,6 @@
         ],
         "summary": "Get Audit Trail",
         "operationId": "get_audit_trail_api_v1_vat_work_items__item_id__audit_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "item_id",
@@ -11473,11 +10611,6 @@
         ],
         "summary": "Get Vat Client Summary",
         "operationId": "get_vat_client_summary_api_v1_vat_clients__client_record_id__summary_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -11556,11 +10689,6 @@
         ],
         "summary": "Export Vat Client",
         "operationId": "export_vat_client_api_v1_vat_clients__client_record_id__export_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_record_id",
@@ -11622,11 +10750,6 @@
         ],
         "summary": "List Notes",
         "operationId": "list_notes_api_v1_clients__client_id__notes_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -11690,11 +10813,6 @@
         ],
         "summary": "Add Note",
         "operationId": "add_note_api_v1_clients__client_id__notes_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -11747,11 +10865,6 @@
         ],
         "summary": "Update Note",
         "operationId": "update_note_api_v1_clients__client_id__notes__note_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -11811,11 +10924,6 @@
         ],
         "summary": "Delete Note",
         "operationId": "delete_note_api_v1_clients__client_id__notes__note_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -11860,11 +10968,6 @@
         ],
         "summary": "List Notes",
         "operationId": "list_notes_api_v1_clients__client_id__businesses__business_id__notes_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -11937,11 +11040,6 @@
         ],
         "summary": "Add Note",
         "operationId": "add_note_api_v1_clients__client_id__businesses__business_id__notes_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -12003,11 +11101,6 @@
         ],
         "summary": "Update Note",
         "operationId": "update_note_api_v1_clients__client_id__businesses__business_id__notes__note_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -12076,11 +11169,6 @@
         ],
         "summary": "Delete Note",
         "operationId": "delete_note_api_v1_clients__client_id__businesses__business_id__notes__note_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "client_id",
@@ -12135,11 +11223,6 @@
         "summary": "Get Entity Audit Trail",
         "description": "Get the full audit trail for any audited entity.",
         "operationId": "get_entity_audit_trail_api_v1_audit__entity_type___entity_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "entity_type",
@@ -12214,11 +11297,6 @@
         ],
         "summary": "List Tasks",
         "operationId": "list_tasks_api_v1_tasks_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "status",
@@ -12403,11 +11481,6 @@
         ],
         "summary": "Create Task",
         "operationId": "create_task_api_v1_tasks_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -12449,11 +11522,6 @@
         ],
         "summary": "Get Task",
         "operationId": "get_task_api_v1_tasks__task_id__get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "task_id",
@@ -12494,11 +11562,6 @@
         ],
         "summary": "Update Task",
         "operationId": "update_task_api_v1_tasks__task_id__patch",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "task_id",
@@ -12549,11 +11612,6 @@
         ],
         "summary": "Delete Task",
         "operationId": "delete_task_api_v1_tasks__task_id__delete",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "task_id",
@@ -12589,11 +11647,6 @@
         ],
         "summary": "Complete Task",
         "operationId": "complete_task_api_v1_tasks__task_id__complete_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "task_id",
@@ -12636,11 +11689,6 @@
         ],
         "summary": "Cancel Task",
         "operationId": "cancel_task_api_v1_tasks__task_id__cancel_post",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "task_id",
@@ -12683,11 +11731,6 @@
         ],
         "summary": "List Work Queue",
         "operationId": "list_work_queue_api_v1_work_queue_get",
-        "security": [
-          {
-            "HTTPBearer": []
-          }
-        ],
         "parameters": [
           {
             "name": "page",
@@ -28806,5 +27849,10 @@
         "scheme": "bearer"
       }
     }
-  }
+  },
+  "security": [
+    {
+      "HTTPBearer": []
+    }
+  ]
 }

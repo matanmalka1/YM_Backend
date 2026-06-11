@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from app.config import settings
 from app.core.env_validator import EnvValidator
+from app.core.openapi import build_openapi
 from app.core.exception_handlers import setup_exception_handlers
 from app.core.logging_config import get_logger, setup_logging
 from app.core.sentry import configure_sentry
@@ -66,6 +67,13 @@ app.add_middleware(
 app.add_middleware(RequestIDMiddleware)
 
 register_routers(app)
+
+
+def custom_openapi():
+    return build_openapi(app)
+
+
+app.openapi = custom_openapi
 
 if settings.APP_ENV in ("development", "test"):
     import os

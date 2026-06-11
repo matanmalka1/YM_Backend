@@ -68,8 +68,8 @@ def me(current_user: CurrentUser) -> UserResponse:
 def logout(
     db: DBSession,
     response: Response,
-    refresh_token: Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)] = None,
+    current_user: CurrentUser,
 ):
     auth_service = AuthService(db)
-    auth_service.logout_by_refresh_token(refresh_token)
+    auth_service.logout_user(user_id=current_user.id, email=current_user.email)
     clear_refresh_cookie(response)
