@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Income line items for an annual tax report."""
+
+from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal

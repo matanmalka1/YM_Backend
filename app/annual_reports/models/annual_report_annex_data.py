@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Annex (schedule) data lines for an annual report."""
+
+from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING, Any

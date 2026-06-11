@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Annual report schedule entries (annex tracking)."""
+
+from __future__ import annotations
 
 from datetime import datetime
 from typing import TYPE_CHECKING

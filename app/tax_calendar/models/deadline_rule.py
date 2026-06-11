@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """DeadlineRule — versioned regulatory rule for TaxCalendar due dates.
 
 Lookup engine only — versioned via effective_from/effective_to so that historic
@@ -14,6 +12,8 @@ calculations remain stable when the law changes. Maps to an ObligationType:
 INV-11: Only one open-ended rule (effective_to IS NULL) per rule_type is allowed.
 Enforced at DB level via uq_deadline_rule_open_ended partial unique index.
 """
+
+from __future__ import annotations
 
 from datetime import date, datetime
 

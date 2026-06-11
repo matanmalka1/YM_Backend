@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Permanent Document — a file stored permanently for a client or business.
 
@@ -20,6 +18,8 @@ Design decisions:
 - rejected_by mirrors approved_by for symmetry and audit completeness.
 - annual_report_id links supporting documents to a specific report.
 """
+
+from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum as PyEnum

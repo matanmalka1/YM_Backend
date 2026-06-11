@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 Authority Contact — a named contact at a government authority (רשות מסים, ביטוח לאומי, etc.)
 
@@ -13,6 +11,8 @@ Current design:
   Authority contacts are scoped directly to client_record_id.
   Each contact belongs to one client record and is soft-deleted via deleted_at/deleted_by.
 """
+
+from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum as PyEnum

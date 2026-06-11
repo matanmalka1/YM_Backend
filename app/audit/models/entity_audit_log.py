@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 EntityAuditLog — generic, append-only audit trail for domain mutations.
 
@@ -11,6 +9,8 @@ Design decisions:
 - NO soft delete — audit logs are immutable by design.
   Corrections are made by appending new entries, never deleting old ones.
 """
+
+from __future__ import annotations
 
 from datetime import datetime
 

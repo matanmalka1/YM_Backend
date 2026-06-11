@@ -1,6 +1,6 @@
-from __future__ import annotations
-
 """Append-only status history for annual reports."""
+
+from __future__ import annotations
 
 from datetime import datetime
 

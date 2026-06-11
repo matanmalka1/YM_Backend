@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """TaxCalendarEntry — regulatory deadline fact for a period.
 
 Generic per-period regulatory fact, not per-client. One entry per
@@ -20,6 +18,8 @@ Compatibility matrix (obligation_type → allowed rule_type):
     ANNUAL_REPORT   : annual_report
     NATIONAL_INSURANCE: <unsupported in PR 1 — no matching DeadlineRuleType>
 """
+
+from __future__ import annotations
 
 import re
 from datetime import date, datetime

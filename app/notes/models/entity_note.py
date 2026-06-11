@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 """
 EntityNote — centralized notes attached to any domain entity.
 
@@ -9,6 +7,8 @@ Design decisions:
 - note stores the note body.
 - records are mutable and soft-deletable, matching the rest of the codebase.
 """
+
+from __future__ import annotations
 
 from datetime import datetime
 
