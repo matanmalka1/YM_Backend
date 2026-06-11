@@ -119,7 +119,9 @@ def list_client_work_items(
         enriched=enriched,
         user_role=current_user.role,
     )
-    return VatWorkItemListResponse(items=items, total=enriched["total"])
+    return VatWorkItemListResponse(
+        items=items, total=enriched["total"], page=page, page_size=page_size
+    )
 
 
 @router.get(
@@ -151,7 +153,9 @@ def list_work_items(
         enriched=enriched,
         user_role=current_user.role,
     )
-    return VatWorkItemListResponse(items=items, total=enriched["total"])
+    return VatWorkItemListResponse(
+        items=items, total=enriched["total"], page=page, page_size=page_size
+    )
 
 
 @router.get(

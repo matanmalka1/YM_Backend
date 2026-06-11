@@ -105,6 +105,8 @@ class VatWorkItemListItem(BaseModel):
 class VatWorkItemListResponse(BaseModel):
     items: list[VatWorkItemListItem]
     total: int
+    page: int
+    page_size: int
 
 
 class VatWorkItemStatusSummaryResponse(BaseModel):

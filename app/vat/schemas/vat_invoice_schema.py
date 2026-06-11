@@ -128,4 +128,10 @@ class VatInvoiceResponse(BaseModel):
 
 
 class VatInvoiceListResponse(BaseModel):
+    # Non-paginated bounded child collection (all invoices for one work item).
+    # Envelope fields are populated for shape consistency, not real pagination:
+    # total == len(items), page == 1, page_size == len(items).
     items: list[VatInvoiceResponse]
+    total: int
+    page: int
+    page_size: int

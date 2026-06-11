@@ -119,14 +119,6 @@ class BinderIntakeResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class BinderIntakeListResponse(BaseModel):
-    binder_id: int
-    intakes: list[BinderIntakeResponse]
-    total: int
-    page: int
-    page_size: int
-
-
 class BinderReceiveResult(BaseModel):
     """תוצאת קבלת חומרים — binder + intake."""
 
