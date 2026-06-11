@@ -15,8 +15,6 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
-
-_AUTO_SEND_ALLOWED_TRIGGERS = {NotificationTrigger.BINDER_READY_FOR_HANDOVER}
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import NotificationResult
 from app.notifications.services.constants import NOTIFICATION_IDEMPOTENCY_TTL_HOURS
@@ -33,6 +31,7 @@ from app.notifications.services.notification_template_renderer import (
     NotificationTemplateRenderer,
 )
 
+_AUTO_SEND_ALLOWED_TRIGGERS = {NotificationTrigger.BINDER_READY_FOR_HANDOVER}
 logger = get_logger(__name__)
 
 

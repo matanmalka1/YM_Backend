@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.annual_reports.models.annual_report_enums import AnnualReportStatus as _ARS
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
@@ -21,8 +22,6 @@ _FROZEN_CLOSED_ALLOWED = {
     NotificationTrigger.CLIENT_MISSING_INFORMATION,
     NotificationTrigger.CLIENT_DOCUMENTS_REQUEST,
 }
-
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus as _ARS
 
 _ANNUAL_REPORT_DOCUMENTS_REQUEST_ALLOWED_STATUSES = frozenset(
     {

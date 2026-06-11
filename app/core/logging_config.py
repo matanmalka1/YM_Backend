@@ -459,7 +459,8 @@ class StructuredFormatter(logging.Formatter):
         prefix = self._format_prefix(record)
         record_message = record.getMessage()
         if record_message.startswith("SUMMARY\n"):
-            message = f"{prefix} SUMMARY\n{record_message.removeprefix('SUMMARY\n')}"
+            summary_body = record_message.removeprefix("SUMMARY\n")
+            message = f"{prefix} SUMMARY\n{summary_body}"
         else:
             message = f"{prefix} {record.name} | {record_message}"
 

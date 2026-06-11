@@ -16,29 +16,6 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
-
-# Triggers that are auto-only and must never reach the manual send path.
-_AUTO_ONLY_TRIGGERS = {NotificationTrigger.BINDER_READY_FOR_HANDOVER}
-
-# Manual triggers that require entity_id (annual_report.id).
-_ANNUAL_TRIGGERS = {
-    NotificationTrigger.ANNUAL_REPORT_CLIENT_REMINDER,
-    NotificationTrigger.ANNUAL_REPORT_DOCUMENTS_REQUEST,
-}
-
-_CHARGE_TRIGGERS = {
-    NotificationTrigger.INVOICE_ISSUED,
-    NotificationTrigger.PAYMENT_REMINDER,
-}
-
-_SIGNATURE_TRIGGERS = {
-    NotificationTrigger.SIGNATURE_REQUEST_SENT,
-    NotificationTrigger.SIGNATURE_REQUEST_REMINDER,
-}
-
-_GENERIC_ENTITY_TRIGGERS = (
-    _CHARGE_TRIGGERS | {NotificationTrigger.VAT_DOCUMENTS_REMINDER} | _SIGNATURE_TRIGGERS
-)
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import (
     NotificationPreviewRequest,
@@ -64,6 +41,28 @@ from app.notifications.services.notification_template_renderer import (
     NotificationTemplateRenderer,
 )
 
+# Triggers that are auto-only and must never reach the manual send path.
+_AUTO_ONLY_TRIGGERS = {NotificationTrigger.BINDER_READY_FOR_HANDOVER}
+
+# Manual triggers that require entity_id (annual_report.id).
+_ANNUAL_TRIGGERS = {
+    NotificationTrigger.ANNUAL_REPORT_CLIENT_REMINDER,
+    NotificationTrigger.ANNUAL_REPORT_DOCUMENTS_REQUEST,
+}
+
+_CHARGE_TRIGGERS = {
+    NotificationTrigger.INVOICE_ISSUED,
+    NotificationTrigger.PAYMENT_REMINDER,
+}
+
+_SIGNATURE_TRIGGERS = {
+    NotificationTrigger.SIGNATURE_REQUEST_SENT,
+    NotificationTrigger.SIGNATURE_REQUEST_REMINDER,
+}
+
+_GENERIC_ENTITY_TRIGGERS = (
+    _CHARGE_TRIGGERS | {NotificationTrigger.VAT_DOCUMENTS_REMINDER} | _SIGNATURE_TRIGGERS
+)
 logger = get_logger(__name__)
 
 

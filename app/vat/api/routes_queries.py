@@ -1,7 +1,5 @@
 """Routes: read-only queries — work items, audit trail."""
 
-from typing import Optional
-
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import VatType
@@ -28,7 +26,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
 
 @router.get(
     "/work-items/lookup",
-    response_model=Optional[VatWorkItemLookupResponse],
+    response_model=VatWorkItemLookupResponse | None,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 def lookup_work_item(

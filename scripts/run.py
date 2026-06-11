@@ -299,7 +299,7 @@ def _banner() -> None:
 
 def _print_help(exit_code: int = 0) -> None:
     print(
-        f"""Usage:
+        """Usage:
   scripts/run.py                         Open interactive menu
   scripts/run.py list                    List all registered scripts
   scripts/run.py <category> <script>     Open that script's option menu
