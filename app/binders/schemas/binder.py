@@ -63,6 +63,7 @@ class BinderResponse(BaseModel):
     handover_recipient_name: str | None = None
     notes: str | None = None
     created_at: ApiDateTime
+    updated_at: ApiDateTime | None = None
     # ── Derived (computed by service, not stored) ─────────────────────────────
     days_in_office: int | None = None  # today - period_start
     available_actions: list[str] = Field(default_factory=list)

@@ -17768,6 +17768,21 @@
               "2026-01-02T03:04:05Z"
             ]
           },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
           "days_in_office": {
             "anyOf": [
               {

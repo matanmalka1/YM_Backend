@@ -86,6 +86,9 @@ class Binder(Base):
 
     # Metadata.
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
+    # Set only on real mutation (status/handover/capacity/soft-delete). NULL until first
+    # update — never faked from created_at. See docs/api-todo.md #46.
+    updated_at: Mapped[datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     # Soft delete
