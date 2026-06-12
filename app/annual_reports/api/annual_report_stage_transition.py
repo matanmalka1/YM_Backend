@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends
 
+from app.annual_reports.api.responses import REPORT_TRANSITION_RESPONSES
 from app.annual_reports.schemas.annual_report_requests import StageTransitionRequest
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportDetailResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -20,7 +20,7 @@ router = APIRouter(
     "/{report_id}/transition",
     response_model=AnnualReportDetailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_TRANSITION_RESPONSES,
 )
 def transition_stage(
     report_id: int, body: StageTransitionRequest, db: DBSession, user: CurrentUser

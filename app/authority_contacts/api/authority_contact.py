@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Depends, Query, status
 
+from app.authority_contacts.api.responses import (
+    AUTHORITY_CONTACT_CREATE_RESPONSES,
+    AUTHORITY_CONTACT_UPDATE_RESPONSES,
+)
 from app.authority_contacts.models.authority_contact import ContactType
 from app.authority_contacts.schemas.authority_contact import (
     AuthorityContactCreateRequest,
@@ -10,7 +14,7 @@ from app.authority_contacts.schemas.authority_contact import (
 from app.authority_contacts.services.authority_contact_service import (
     AuthorityContactService,
 )
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -30,7 +34,7 @@ def _to_contact_response(contact) -> AuthorityContactResponse:
     "/{client_record_id}/authority-contacts",
     response_model=AuthorityContactResponse,
     status_code=status.HTTP_201_CREATED,
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=AUTHORITY_CONTACT_CREATE_RESPONSES,
 )
 def create_authority_contact(
     client_record_id: int,
@@ -100,7 +104,7 @@ def get_authority_contact(
 @router.patch(
     "/{client_record_id}/authority-contacts/{contact_id}",
     response_model=AuthorityContactResponse,
-    responses=not_found_response(description="איש הקשר המבוקש לא נמצא"),
+    responses=AUTHORITY_CONTACT_UPDATE_RESPONSES,
 )
 def update_authority_contact(
     client_record_id: int,

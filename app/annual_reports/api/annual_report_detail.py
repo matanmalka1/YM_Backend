@@ -1,12 +1,13 @@
 from fastapi import APIRouter, Depends
 
+from app.annual_reports.api.responses import REPORT_UPDATE_RESPONSES
 from app.annual_reports.schemas.annual_report_detail import (
     AnnualReportDetailUpdateRequest,
     ReportDetailResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.detail_service import AnnualReportDetailService
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -34,7 +35,7 @@ def get_annual_report_detail(report_id: int, db: DBSession, user: CurrentUser):
 @router.patch(
     "/{report_id}/details",
     response_model=ReportDetailResponse,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_UPDATE_RESPONSES,
 )
 def update_annual_report_detail(
     report_id: int,

@@ -2,9 +2,12 @@
 
 from fastapi import APIRouter, Depends, status
 
-from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
+from app.vat.api.responses import (
+    VAT_WORK_ITEM_CREATE_RESPONSES,
+    VAT_WORK_ITEM_TRANSITION_RESPONSES,
+)
 from app.vat.api.serializers import serialize_work_item
 from app.vat.schemas.vat_report import (
     VatWorkItemCreateRequest,
@@ -20,6 +23,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
     response_model=VatWorkItemResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=VAT_WORK_ITEM_CREATE_RESPONSES,
 )
 def create_work_item(
     request: VatWorkItemCreateRequest,
@@ -47,7 +51,7 @@ def create_work_item(
     "/work-items/{item_id}/materials-complete",
     response_model=VatWorkItemResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
+    responses=VAT_WORK_ITEM_TRANSITION_RESPONSES,
 )
 def mark_materials_complete(
     item_id: int,

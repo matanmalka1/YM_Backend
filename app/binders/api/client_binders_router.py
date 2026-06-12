@@ -6,7 +6,7 @@ from app.binders.schemas.binder_extended import (
 )
 from app.binders.services.binder_operations_service import BinderOperationsService
 from app.clients.services.client_service import get_client_or_raise
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 

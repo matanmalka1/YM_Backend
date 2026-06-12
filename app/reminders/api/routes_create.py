@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, status
 
+from app.reminders.api.responses import REMINDER_CREATE_RESPONSES
 from app.reminders.schemas.reminders import ReminderCreateRequest, ReminderResponse
 from app.reminders.services.reminder_service import ReminderService
 from app.users.api.deps import CurrentUser, DBSession, require_role
@@ -15,6 +16,7 @@ create_router = APIRouter()
     response_model=ReminderResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=REMINDER_CREATE_RESPONSES,
 )
 def create_reminder(
     request: ReminderCreateRequest,

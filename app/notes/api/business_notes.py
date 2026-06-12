@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
+from app.notes.api.responses import BUSINESS_NOTE_CREATE_RESPONSES, NOTE_UPDATE_RESPONSES
 from app.notes.schemas.entity_note import (
     EntityNoteCreateRequest,
     EntityNoteListResponse,
@@ -48,7 +49,7 @@ def list_notes(
     "",
     response_model=EntityNoteResponse,
     status_code=status.HTTP_201_CREATED,
-    responses=not_found_response(description="העסק המבוקש לא נמצא"),
+    responses=BUSINESS_NOTE_CREATE_RESPONSES,
 )
 def add_note(
     client_id: int,
@@ -69,7 +70,7 @@ def add_note(
 @router.patch(
     "/{note_id}",
     response_model=EntityNoteResponse,
-    responses=not_found_response(description="ההערה המבוקשת לא נמצאה"),
+    responses=NOTE_UPDATE_RESPONSES,
 )
 def update_note(
     client_id: int,

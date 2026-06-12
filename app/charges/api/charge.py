@@ -2,6 +2,10 @@ import datetime
 
 from fastapi import APIRouter, Body, Depends, Query, Response, status
 
+from app.charges.api.responses import (
+    CHARGE_CANCEL_RESPONSES,
+    CHARGE_CREATE_RESPONSES,
+)
 from app.charges.schemas.charge import (
     BulkChargeActionRequest,
     BulkChargeActionResponse,
@@ -14,14 +18,7 @@ from app.charges.services.billing_service import BillingService
 from app.charges.services.bulk_billing_service import BulkBillingService
 from app.charges.services.charge_query_service import ChargeQueryService
 from app.charges.services.charge_response_builder import ChargeResponseBuilder
-from app.core.exceptions import (
-    bad_request_response,
-    conflict_response,
-    forbidden_response,
-    internal_server_error_response,
-    not_found_response,
-    unauthorized_response,
-)
+from app.core.openapi_responses import not_found_response
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -41,12 +38,7 @@ def _response_builder(db: DBSession) -> ChargeResponseBuilder:
     response_model=ChargeResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses={
-        **bad_request_response(description="נתוני החיוב אינם תקינים"),
-        **unauthorized_response(),
-        **forbidden_response(),
-        **internal_server_error_response(),
-    },
+    responses=CHARGE_CREATE_RESPONSES,
 )
 def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser):
     charge = BillingService(db).create_charge(
@@ -87,13 +79,7 @@ def mark_charge_paid(charge_id: int, db: DBSession, user: CurrentUser):
     "/{charge_id}/cancel",
     response_model=ChargeResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses={
-        **bad_request_response(description="לא ניתן לבטל חיוב במצב הנוכחי"),
-        **unauthorized_response(),
-        **forbidden_response(),
-        **not_found_response(description="החיוב המבוקש לא נמצא"),
-        **conflict_response(description="החיוב כבר בוטל"),
-    },
+    responses=CHARGE_CANCEL_RESPONSES,
 )
 def cancel_charge(
     charge_id: int,

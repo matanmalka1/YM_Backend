@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.binders.api.responses import BINDER_INTAKE_UPDATE_RESPONSES
 from app.binders.schemas.binder import (
     BinderAuditResponse,
     BinderIntakeResponse,
@@ -9,7 +10,7 @@ from app.binders.services.binder_audit_service import BinderAuditService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.binders.services.messages import BINDER_NOT_FOUND
 from app.core.api_types import PaginatedResponse
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -75,7 +76,7 @@ def get_binder_intakes(
 @router.patch(
     "/{binder_id}/intakes/{intake_id}",
     response_model=BinderIntakeResponse,
-    responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
+    responses=BINDER_INTAKE_UPDATE_RESPONSES,
 )
 def patch_binder_intake(
     binder_id: int,

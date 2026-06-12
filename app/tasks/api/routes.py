@@ -5,7 +5,13 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.common.source_types import WorkQueueSourceType
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
+from app.tasks.api.responses import (
+    TASK_CANCEL_RESPONSES,
+    TASK_COMPLETE_RESPONSES,
+    TASK_CREATE_RESPONSES,
+    TASK_UPDATE_RESPONSES,
+)
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.tasks.schemas.task import (
     TaskCreateRequest,
@@ -54,7 +60,12 @@ def list_tasks(
     return TaskListResponse(items=items, page=page, page_size=page_size, total=total)
 
 
-@router.post("", response_model=TaskResponse, status_code=201)
+@router.post(
+    "",
+    response_model=TaskResponse,
+    status_code=201,
+    responses=TASK_CREATE_RESPONSES,
+)
 def create_task(
     db: DBSession,
     user: CurrentUser,
@@ -75,7 +86,7 @@ def get_task(db: DBSession, task_id: int):
 @router.patch(
     "/{task_id}",
     response_model=TaskResponse,
-    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+    responses=TASK_UPDATE_RESPONSES,
 )
 def update_task(
     db: DBSession,
@@ -88,7 +99,7 @@ def update_task(
 @router.post(
     "/{task_id}/complete",
     response_model=TaskResponse,
-    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+    responses=TASK_COMPLETE_RESPONSES,
 )
 def complete_task(db: DBSession, user: CurrentUser, task_id: int):
     return TaskService(db).complete(task_id, completed_by_user_id=user.id)
@@ -97,7 +108,7 @@ def complete_task(db: DBSession, user: CurrentUser, task_id: int):
 @router.post(
     "/{task_id}/cancel",
     response_model=TaskResponse,
-    responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
+    responses=TASK_CANCEL_RESPONSES,
 )
 def cancel_task(db: DBSession, user: CurrentUser, task_id: int):
     return TaskService(db).cancel(task_id, canceled_by_user_id=user.id)

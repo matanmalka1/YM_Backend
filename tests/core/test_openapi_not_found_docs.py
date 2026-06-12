@@ -3,7 +3,7 @@
 API TODO #25. Endpoints that take an entity identifier in the path can return
 404 at runtime; the OpenAPI spec must document it (model: ``ErrorEnvelope``) so
 the generated frontend client and API docs cover the not-found case. Add the
-404 via ``app.core.exceptions.not_found_response(description=...)`` on the route
+404 via ``app.core.openapi_responses.not_found_response(description=...)`` on the route
 decorator.
 
 The check drives off ``app.openapi()`` path templates, NOT ``route.path``:
@@ -51,5 +51,5 @@ def test_id_endpoints_document_404():
     assert not offenders, (
         "Endpoints with an ID-like path param are missing a documented 404. "
         "Add responses=not_found_response(description=...) from "
-        f"app.core.exceptions to each route decorator: {sorted(offenders)}"
+        f"app.core.openapi_responses to each route decorator: {sorted(offenders)}"
     )

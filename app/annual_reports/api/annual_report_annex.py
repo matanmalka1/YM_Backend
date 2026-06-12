@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.annual_reports.api.responses import REPORT_LINE_WRITE_RESPONSES
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
 from app.annual_reports.schemas.annual_report_annex import (
     AnnexDataAddRequest,
@@ -10,7 +11,7 @@ from app.annual_reports.schemas.annual_report_annex import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -46,7 +47,7 @@ def list_annex_lines(
     "/{report_id}/annex/{schedule}",
     response_model=AnnexDataLineResponse,
     status_code=status.HTTP_201_CREATED,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def add_annex_line(
     report_id: int,
@@ -62,7 +63,7 @@ def add_annex_line(
 @router.patch(
     "/{report_id}/annex/{schedule}/{line_id}",
     response_model=AnnexDataLineResponse,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def update_annex_line(
     report_id: int,
@@ -80,7 +81,7 @@ def update_annex_line(
     "/{report_id}/annex/{schedule}/{line_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def delete_annex_line(
     report_id: int,

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.annual_reports.schemas.annual_report_responses import AnnualReportListResponse
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 

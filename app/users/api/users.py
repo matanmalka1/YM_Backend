@@ -1,7 +1,14 @@
 from fastapi import APIRouter, Depends, Query, status
 
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
+from app.users.api.responses import (
+    USER_ACTIVATE_RESPONSES,
+    USER_CREATE_RESPONSES,
+    USER_DEACTIVATE_RESPONSES,
+    USER_RESET_PASSWORD_RESPONSES,
+    USER_UPDATE_RESPONSES,
+)
 from app.users.models.user import UserRole
 from app.users.schemas.user_management import (
     PasswordResetRequest,
@@ -19,7 +26,12 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=UserManagementResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=UserManagementResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses=USER_CREATE_RESPONSES,
+)
 def create_user(request: UserCreateRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.create_user(
@@ -66,7 +78,7 @@ def get_user(user_id: int, db: DBSession, user: CurrentUser):
 @router.patch(
     "/{user_id}",
     response_model=UserManagementResponse,
-    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+    responses=USER_UPDATE_RESPONSES,
 )
 def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
@@ -82,7 +94,7 @@ def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: C
 @router.post(
     "/{user_id}/activate",
     response_model=UserManagementResponse,
-    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+    responses=USER_ACTIVATE_RESPONSES,
 )
 def activate_user(user_id: int, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
@@ -96,7 +108,7 @@ def activate_user(user_id: int, db: DBSession, user: CurrentUser):
 @router.post(
     "/{user_id}/deactivate",
     response_model=UserManagementResponse,
-    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+    responses=USER_DEACTIVATE_RESPONSES,
 )
 def deactivate_user(user_id: int, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
@@ -110,7 +122,7 @@ def deactivate_user(user_id: int, db: DBSession, user: CurrentUser):
 @router.post(
     "/{user_id}/reset-password",
     response_model=UserManagementResponse,
-    responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
+    responses=USER_RESET_PASSWORD_RESPONSES,
 )
 def reset_password(user_id: int, request: PasswordResetRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)

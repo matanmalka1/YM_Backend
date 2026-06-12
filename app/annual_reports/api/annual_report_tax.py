@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends
 
+from app.annual_reports.api.responses import REPORT_TAX_CALCULATION_RESPONSES
 from app.annual_reports.schemas.annual_report_financials import (
     TaxCalculationSaveRequest,
     TaxCalculationSaveResponse,
@@ -9,7 +10,6 @@ from app.annual_reports.schemas.annual_report_financials import (
 from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
-from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -23,7 +23,7 @@ router = APIRouter(
 @router.post(
     "/{report_id}/tax-calculation/save",
     response_model=TaxCalculationSaveResponse,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_TAX_CALCULATION_RESPONSES,
 )
 def save_tax_calculation(
     report_id: int,

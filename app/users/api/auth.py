@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Cookie, HTTPException, Request, Response, status
 
 from app.config import settings
+from app.core.openapi_responses import bad_request_response, error_responses, unauthorized_response
 from app.middleware.rate_limiting import get_email_key, limiter
 from app.users.api.auth_cookies import clear_refresh_cookie, set_refresh_cookie
 from app.users.api.constants import REFRESH_COOKIE_NAME
@@ -18,7 +19,14 @@ from app.users.services.auth_service import AuthService
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 
-@router.post("/login", response_model=AuthTokenResponse)
+@router.post(
+    "/login",
+    response_model=AuthTokenResponse,
+    responses=error_responses(
+        bad_request_response(description="פרטי ההתחברות אינם תקינים"),
+        unauthorized_response(description="שם משתמש או סיסמה שגויים"),
+    ),
+)
 @limiter.limit(settings.AUTH_LOGIN_RATE_LIMIT, key_func=get_email_key("auth_login"))
 def login(request: Request, payload: LoginRequest, db: DBSession, response: Response):
     auth_service = AuthService(db)
@@ -44,7 +52,13 @@ def login(request: Request, payload: LoginRequest, db: DBSession, response: Resp
     )
 
 
-@router.post("/refresh", response_model=RefreshResponse)
+@router.post(
+    "/refresh",
+    response_model=RefreshResponse,
+    responses=error_responses(
+        unauthorized_response(description="אסימון הרענון אינו תקין או שפג תוקפו")
+    ),
+)
 def refresh(
     db: DBSession,
     refresh_token: Annotated[str | None, Cookie(alias=REFRESH_COOKIE_NAME)] = None,

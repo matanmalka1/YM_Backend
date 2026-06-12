@@ -3,6 +3,10 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.communications.api.responses import (
+    CORRESPONDENCE_CREATE_RESPONSES,
+    CORRESPONDENCE_UPDATE_RESPONSES,
+)
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.schemas.correspondence import (
     CorrespondenceCreateRequest,
@@ -11,7 +15,7 @@ from app.communications.schemas.correspondence import (
     CorrespondenceUpdateRequest,
 )
 from app.communications.services.correspondence_service import CorrespondenceService
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -84,7 +88,7 @@ def get_correspondence(
     "/{client_record_id}/correspondence",
     response_model=CorrespondenceResponse,
     status_code=status.HTTP_201_CREATED,
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=CORRESPONDENCE_CREATE_RESPONSES,
 )
 def create_correspondence(
     client_record_id: int,
@@ -108,7 +112,7 @@ def create_correspondence(
 @client_router.patch(
     "/{client_record_id}/correspondence/{correspondence_id}",
     response_model=CorrespondenceResponse,
-    responses=not_found_response(description="רשומת ההתכתבות המבוקשת לא נמצאה"),
+    responses=CORRESPONDENCE_UPDATE_RESPONSES,
 )
 def update_correspondence(
     client_record_id: int,

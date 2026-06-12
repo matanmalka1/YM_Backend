@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query, status
 
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
+from app.signature_requests.api.responses import SIGNATURE_CREATE_RESPONSES
 from app.signature_requests.schemas.signature_request import (
     SignatureRequestCreatedResponse,
     SignatureRequestCreateRequest,
@@ -29,6 +30,7 @@ advisor_router = APIRouter(
     "",
     response_model=SignatureRequestCreatedResponse,
     status_code=status.HTTP_201_CREATED,
+    responses=SIGNATURE_CREATE_RESPONSES,
 )
 def create_signature_request(
     request: SignatureRequestCreateRequest,

@@ -2,6 +2,10 @@ import logging
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.advance_payments.api.responses import (
+    ADVANCE_PAYMENT_CREATE_RESPONSES,
+    ADVANCE_PAYMENT_UPDATE_RESPONSES,
+)
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.turnover_lookup_repository import (
     TurnoverLookupRepository,
@@ -19,7 +23,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.period_utils import parse_period_year
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -81,7 +85,7 @@ def list_advance_payments(
     response_model=AdvancePaymentRow,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=ADVANCE_PAYMENT_CREATE_RESPONSES,
 )
 def create_advance_payment(
     client_record_id: int,
@@ -150,7 +154,7 @@ def get_annual_kpis(
     "/{payment_id}",
     response_model=AdvancePaymentRow,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+    responses=ADVANCE_PAYMENT_UPDATE_RESPONSES,
 )
 def update_advance_payment(
     client_record_id: int,

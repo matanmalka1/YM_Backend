@@ -6,7 +6,8 @@ from app.binders.schemas.binder import BinderListResponse, BinderResponse
 from app.binders.services.binder_list_service import BinderListService
 from app.binders.services.binder_service import BinderService
 from app.binders.services.messages import BINDER_NOT_FOUND
-from app.core.exceptions import NotFoundError, not_found_response
+from app.core.exceptions import NotFoundError
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 

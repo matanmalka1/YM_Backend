@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.businesses.schemas.business_status_card import ClientStatusCardResponse
 from app.businesses.services.status_card_service import StatusCardService
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 

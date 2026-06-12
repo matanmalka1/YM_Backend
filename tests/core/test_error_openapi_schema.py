@@ -1,5 +1,5 @@
-from app.core.exceptions import (
-    ErrorEnvelope,
+from app.core.exceptions import ErrorEnvelope
+from app.core.openapi_responses import (
     bad_request_response,
     conflict_response,
     forbidden_response,

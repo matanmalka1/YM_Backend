@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.documents.permanent_documents.schemas.permanent_document import (
     DocumentVersionsResponse,
 )

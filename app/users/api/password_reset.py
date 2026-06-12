@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Request
 
+from app.core.openapi_responses import bad_request_response, error_responses
 from app.middleware.rate_limiting import get_email_key, limiter
 from app.users.api.deps import DBSession
 from app.users.schemas.auth import (
@@ -30,7 +31,13 @@ def forgot_password(
     return ForgotPasswordResponse(message=message)
 
 
-@router.post("/reset-password", response_model=ResetPasswordResponse)
+@router.post(
+    "/reset-password",
+    response_model=ResetPasswordResponse,
+    responses=error_responses(
+        bad_request_response(description="אסימון האיפוס אינו תקין או שהסיסמה החדשה חלשה")
+    ),
+)
 @limiter.limit("10/minute")
 def reset_password(
     request: Request,

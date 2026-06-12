@@ -1,11 +1,11 @@
 from fastapi import APIRouter, Depends, status
 
+from app.advance_payments.api.responses import ADVANCE_PAYMENT_GENERATE_RESPONSES
 from app.advance_payments.schemas.advance_payment import (
     GenerateScheduleRequest,
     GenerateScheduleResponse,
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.core.exceptions import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -20,7 +20,7 @@ router = APIRouter(
     response_model=GenerateScheduleResponse,
     status_code=status.HTTP_200_OK,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=ADVANCE_PAYMENT_GENERATE_RESPONSES,
 )
 def generate_advance_payment_schedule(
     client_record_id: int,

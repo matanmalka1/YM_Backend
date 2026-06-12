@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
+from app.core.openapi_responses import bad_request_response, conflict_response, error_responses
 from app.tax_calendar.schemas.settings import (
     DeadlineRuleResponse,
     TaxCalendarBootstrapRequest,
@@ -69,6 +70,10 @@ def get_tax_calendar_summary(
     "/bootstrap",
     response_model=TaxCalendarBootstrapResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=error_responses(
+        bad_request_response(description="טווח השנים אינו תקין"),
+        conflict_response(description="רשומת יומן המס מתנגשת עם חובה קיימת"),
+    ),
 )
 def bootstrap_tax_calendar_settings(
     request: TaxCalendarBootstrapRequest,

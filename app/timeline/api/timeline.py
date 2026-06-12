@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.timeline.schemas.timeline import ClientTimelineResponse, TimelineEvent
 from app.timeline.services.timeline_service import TimelineService
 from app.users.api.deps import DBSession, require_role

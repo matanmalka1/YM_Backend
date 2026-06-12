@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, Query
 
+from app.annual_reports.api.responses import REPORT_SCHEDULE_WRITE_RESPONSES
 from app.annual_reports.schemas.annual_report_requests import (
     ScheduleAddRequest,
     ScheduleCompleteRequest,
@@ -7,7 +8,7 @@ from app.annual_reports.schemas.annual_report_requests import (
 from app.annual_reports.schemas.annual_report_responses import ScheduleEntryResponse
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -23,7 +24,7 @@ router = APIRouter(
     response_model=ScheduleEntryResponse,
     status_code=201,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_SCHEDULE_WRITE_RESPONSES,
 )
 def add_schedule(report_id: int, body: ScheduleAddRequest, db: DBSession, user: CurrentUser):
     """Manually add a schedule to a report (auto-generated ones are created at report creation)."""
@@ -59,7 +60,7 @@ def list_schedules(
     "/{report_id}/schedules/complete",
     response_model=ScheduleEntryResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_SCHEDULE_WRITE_RESPONSES,
 )
 def complete_schedule(
     report_id: int, body: ScheduleCompleteRequest, db: DBSession, user: CurrentUser

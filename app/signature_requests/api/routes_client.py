@@ -3,7 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
+from app.signature_requests.api.responses import SIGNATURE_CANCEL_RESPONSES
 from app.signature_requests.schemas.signature_request import (
     CancelRequest,
     SignatureRequestListResponse,
@@ -25,7 +26,7 @@ client_router = APIRouter(
 @client_router.post(
     "/clients/{client_record_id}/signature-requests/{request_id}/cancel",
     response_model=SignatureRequestResponse,
-    responses=not_found_response(description="בקשת החתימה המבוקשת לא נמצאה"),
+    responses=SIGNATURE_CANCEL_RESPONSES,
 )
 def cancel_client_signature_request(
     client_record_id: int,

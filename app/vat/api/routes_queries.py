@@ -3,7 +3,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import VatType
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.serializers import (

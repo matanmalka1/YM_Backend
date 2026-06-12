@@ -2,6 +2,12 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
+from app.clients.api.responses import (
+    CLIENT_ACTION_RESPONSES,
+    CLIENT_CREATE_RESPONSES,
+    CLIENT_PREVIEW_RESPONSES,
+    CLIENT_UPDATE_RESPONSES,
+)
 from app.clients.create_policy import preview_vat_reporting_frequency
 from app.clients.enums import ClientStatus
 from app.clients.schemas.client import (
@@ -23,7 +29,7 @@ from app.clients.services.client_update_service import ClientUpdateService
 from app.clients.services.create_client_service import CreateClientService
 from app.clients.services.impact_preview_service import compute_creation_impact
 from app.common.enums import EntityType
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -43,6 +49,7 @@ router = APIRouter(
     summary="Preview creation impact",
     response_model=ClientCreationImpactResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=CLIENT_PREVIEW_RESPONSES,
 )
 def preview_creation_impact(
     request: ClientImpactPreviewRequest,
@@ -65,6 +72,7 @@ def preview_creation_impact(
     response_model=CreateClientRecordResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=CLIENT_CREATE_RESPONSES,
 )
 def create_client(
     request: ClientOnboardingRequest,
@@ -163,7 +171,7 @@ def get_conflict_info(
 @router.patch(
     "/{client_id}",
     response_model=ClientRecordResponse,
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=CLIENT_UPDATE_RESPONSES,
 )
 def update_client(
     client_id: int,
@@ -188,7 +196,7 @@ def update_client(
     "/{client_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=CLIENT_ACTION_RESPONSES,
 )
 def delete_client(client_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete a client (ADVISOR only)."""
@@ -200,7 +208,7 @@ def delete_client(client_id: int, db: DBSession, user: CurrentUser):
     "/{client_id}/restore",
     response_model=ClientRecordResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=CLIENT_ACTION_RESPONSES,
 )
 def restore_client(client_id: int, db: DBSession, user: CurrentUser):
     """Restore a soft-deleted client (ADVISOR only)."""

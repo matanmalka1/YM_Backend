@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.reminders.schemas.reminders import ReminderResponse
 from app.reminders.services.reminder_service import ReminderService
 from app.users.api.deps import CurrentUser, DBSession

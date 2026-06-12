@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.audit.schemas.entity_audit_log import EntityAuditTrailResponse
 from app.audit.services.audit_trail_service import AuditTrailService
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import bad_request_response, error_responses, not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -15,7 +15,10 @@ router = APIRouter(prefix="/audit", tags=["audit"])
     "/{entity_type}/{entity_id}",
     response_model=EntityAuditTrailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses=not_found_response(description="הישות המבוקשת לא נמצאה"),
+    responses=error_responses(
+        bad_request_response(description="סוג הישות המבוקש אינו נתמך"),
+        not_found_response(description="הישות המבוקשת לא נמצאה"),
+    ),
 )
 def get_entity_audit_trail(
     entity_type: str,

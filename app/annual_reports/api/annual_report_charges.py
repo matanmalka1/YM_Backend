@@ -7,7 +7,7 @@ from app.annual_reports.services.annual_report_charge_service import (
 )
 from app.charges.schemas.charge import ChargeResponse
 from app.core.api_types import PaginatedResponse
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 

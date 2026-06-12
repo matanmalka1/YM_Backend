@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Depends, Query
 
+from app.annual_reports.api.responses import (
+    REPORT_TRANSITION_RESPONSES,
+    REPORT_UPDATE_RESPONSES,
+)
 from app.annual_reports.schemas.annual_report_requests import (
     DeadlineUpdateRequest,
     StatusTransitionRequest,
@@ -12,7 +16,8 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
-from app.core.exceptions import NotFoundError, not_found_response
+from app.core.exceptions import NotFoundError
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -27,7 +32,7 @@ router = APIRouter(
     "/{report_id}/status",
     response_model=AnnualReportResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_TRANSITION_RESPONSES,
 )
 def transition_status(
     report_id: int,
@@ -60,7 +65,7 @@ def transition_status(
     "/{report_id}/submit",
     response_model=AnnualReportDetailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_TRANSITION_RESPONSES,
 )
 def submit_report(
     report_id: int,
@@ -89,7 +94,7 @@ def submit_report(
     "/{report_id}/deadline",
     response_model=AnnualReportResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_UPDATE_RESPONSES,
 )
 def update_deadline(
     report_id: int,

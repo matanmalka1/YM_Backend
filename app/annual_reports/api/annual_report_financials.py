@@ -2,6 +2,10 @@
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.annual_reports.api.responses import (
+    REPORT_LINE_WRITE_RESPONSES,
+    REPORT_UPDATE_RESPONSES,
+)
 from app.annual_reports.schemas.annual_report_financials import (
     AdvancesSummary,
     ExpenseLineCreateRequest,
@@ -30,7 +34,7 @@ from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
 from app.annual_reports.services.vat_import_service import VatImportService
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -124,7 +128,7 @@ def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
     "/{report_id}/income",
     response_model=IncomeLineResponse,
     status_code=status.HTTP_201_CREATED,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def add_income_line(
     report_id: int, body: IncomeLineCreateRequest, db: DBSession, user: CurrentUser
@@ -139,7 +143,7 @@ def add_income_line(
     "/{report_id}/income/{line_id}",
     response_model=IncomeLineResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def update_income_line(
     report_id: int,
@@ -158,7 +162,7 @@ def update_income_line(
     "/{report_id}/income/{line_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def delete_income_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
@@ -172,7 +176,7 @@ def delete_income_line(report_id: int, line_id: int, db: DBSession, user: Curren
     "/{report_id}/expenses",
     response_model=ExpenseLineResponse,
     status_code=status.HTTP_201_CREATED,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def add_expense_line(
     report_id: int, body: ExpenseLineCreateRequest, db: DBSession, user: CurrentUser
@@ -194,7 +198,7 @@ def add_expense_line(
     "/{report_id}/expenses/{line_id}",
     response_model=ExpenseLineResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def update_expense_line(
     report_id: int,
@@ -213,7 +217,7 @@ def update_expense_line(
     "/{report_id}/expenses/{line_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
@@ -227,7 +231,7 @@ def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: Curre
     "/{report_id}/auto-populate",
     response_model=VatAutoPopulateResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_UPDATE_RESPONSES,
 )
 def auto_populate_from_vat(
     report_id: int,

@@ -4,9 +4,9 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
-from app.core.exceptions import not_found_response
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import User, UserRole
+from app.vat.api.responses import VAT_WORK_ITEM_TRANSITION_RESPONSES
 from app.vat.api.serializers import serialize_work_item
 from app.vat.schemas.vat_report import FileVatReturnRequest, VatWorkItemResponse
 from app.vat.services.vat_report_service import VatReportService
@@ -17,7 +17,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
 @router.post(
     "/work-items/{item_id}/file",
     response_model=VatWorkItemResponse,
-    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
+    responses=VAT_WORK_ITEM_TRANSITION_RESPONSES,
 )
 def file_vat_return(
     item_id: int,

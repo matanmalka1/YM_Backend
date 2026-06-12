@@ -6,7 +6,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Depends, Query, Request
 
-from app.core.exceptions import AppError, not_found_response
+from app.core.exceptions import AppError
+from app.core.openapi_responses import (
+    bad_request_response,
+    error_responses,
+    not_found_response,
+)
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -93,7 +98,11 @@ def get_notification(notification_id: int, db: DBSession):
     return NotificationService(db).get_detail(notification_id)
 
 
-@router.post("/preview", response_model=NotificationPreviewResponse)
+@router.post(
+    "/preview",
+    response_model=NotificationPreviewResponse,
+    responses=error_responses(bad_request_response(description="נתוני ההודעה אינם תקינים")),
+)
 def preview_notification(
     body: NotificationPreviewRequest,
     db: DBSession,
@@ -106,6 +115,9 @@ def preview_notification(
 @router.post(
     "/send",
     response_model=NotificationResult,
+    responses=error_responses(
+        bad_request_response(description="נדרש מפתח אידמפוטנטיות תקין לשליחת ההודעה")
+    ),
     openapi_extra={
         "parameters": [
             {

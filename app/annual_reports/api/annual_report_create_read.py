@@ -1,5 +1,9 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 
+from app.annual_reports.api.responses import (
+    REPORT_AMEND_RESPONSES,
+    REPORT_CREATE_RESPONSES,
+)
 from app.annual_reports.schemas.annual_report_requests import (
     AmendRequest,
     AnnualReportCreateRequest,
@@ -9,7 +13,8 @@ from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportListResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.core.exceptions import NotFoundError, not_found_response
+from app.core.exceptions import NotFoundError
+from app.core.openapi_responses import not_found_response
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -20,7 +25,12 @@ router = APIRouter(
 )
 
 
-@router.post("", response_model=AnnualReportDetailResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "",
+    response_model=AnnualReportDetailResponse,
+    status_code=status.HTTP_201_CREATED,
+    responses=REPORT_CREATE_RESPONSES,
+)
 def create_annual_report(body: AnnualReportCreateRequest, db: DBSession, user: CurrentUser):
     """Create a new annual income tax report for a client legal entity."""
     service = AnnualReportService(db)
@@ -123,7 +133,7 @@ def delete_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     "/{report_id}/amend",
     response_model=AnnualReportDetailResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_AMEND_RESPONSES,
 )
 def amend_annual_report(report_id: int, body: AmendRequest, db: DBSession, user: CurrentUser):
     """Reopen a SUBMITTED report for amendment and record the reason (ADVISOR only)."""

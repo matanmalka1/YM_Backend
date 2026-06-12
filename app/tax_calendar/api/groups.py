@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import ObligationType
-from app.core.exceptions import not_found_response
+from app.core.openapi_responses import not_found_response
 from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupItemsResponse,
     TaxCalendarGroupListResponse,

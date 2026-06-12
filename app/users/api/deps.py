@@ -75,6 +75,7 @@ def require_role(*allowed_roles: UserRole):
             )
         return current_user
 
+    setattr(role_checker, "__requires_role__", True)
     return role_checker
 
 

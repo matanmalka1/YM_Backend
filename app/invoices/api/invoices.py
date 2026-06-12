@@ -1,6 +1,12 @@
 from fastapi import APIRouter, Depends, status
 
-from app.core.exceptions import NotFoundError, not_found_response
+from app.core.exceptions import NotFoundError
+from app.core.openapi_responses import (
+    bad_request_response,
+    conflict_response,
+    error_responses,
+    not_found_response,
+)
 from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.invoices.schemas.invoice_schemas import InvoiceAttachRequest, InvoiceResponse
 from app.invoices.services.invoice_service import InvoiceService
@@ -18,6 +24,11 @@ router = APIRouter(
     response_model=InvoiceResponse,
     status_code=status.HTTP_201_CREATED,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=error_responses(
+        bad_request_response(description="נתוני החשבונית אינם תקינים"),
+        not_found_response(description="החיוב המבוקש לא נמצא"),
+        conflict_response(description="כבר קיימת חשבונית מצורפת לחיוב זה"),
+    ),
 )
 def attach_invoice(request: InvoiceAttachRequest, db: DBSession):
     invoice = InvoiceService(db).attach_invoice_to_charge(
