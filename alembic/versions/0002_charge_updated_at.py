@@ -1,7 +1,7 @@
 """add updated_at to charges
 
 Revision ID: 0002
-Revises: 0001
+Revises: bfaed5b29bd3
 Create Date: 2026-06-11
 
 Adds a nullable updated_at column to charges. Existing rows stay NULL
@@ -16,7 +16,7 @@ from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = "0002"
-down_revision: Union[str, Sequence[str], None] = "0001"
+down_revision: Union[str, Sequence[str], None] = "bfaed5b29bd3"
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
 
