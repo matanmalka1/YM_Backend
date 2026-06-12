@@ -176,16 +176,16 @@ class ClientRecordRepository:
         status=None,
         accountant_id=None,
         entity_type=None,
-        client_name=None,
+        client_id=None,
         id_number=None,
     ):
+        if client_id is not None:
+            stmt = stmt.where(ClientRecord.id == client_id)
         if search:
             term = f"%{search.strip()}%"
             stmt = stmt.where(
                 LegalEntity.official_name.ilike(term) | LegalEntity.id_number.ilike(term)
             )
-        if client_name:
-            stmt = stmt.where(LegalEntity.official_name.ilike(f"%{client_name.strip()}%"))
         if id_number:
             stmt = stmt.where(LegalEntity.id_number.ilike(f"%{id_number.strip()}%"))
         if status:
@@ -306,8 +306,8 @@ class ClientRecordRepository:
 
     def search(
         self,
-        query: str | None = None,
-        client_name: str | None = None,
+        search: str | None = None,
+        client_id: int | None = None,
         id_number: str | None = None,
         status: ClientStatus | None = None,
         entity_type: EntityType | None = None,
@@ -317,10 +317,10 @@ class ClientRecordRepository:
         """Cross-domain search by name / id_number / status / entity_type."""
         stmt = self._apply_list_filters(
             self._active_query(),
-            search=query,
+            search=search,
             status=status,
             entity_type=entity_type,
-            client_name=client_name,
+            client_id=client_id,
             id_number=id_number,
         )
         total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))

@@ -11341,7 +11341,7 @@
         "operationId": "search_api_v1_search_get",
         "parameters": [
           {
-            "name": "query",
+            "name": "search",
             "in": "query",
             "required": false,
             "schema": {
@@ -11353,23 +11353,23 @@
                   "type": "null"
                 }
               ],
-              "title": "Query"
+              "title": "Search"
             }
           },
           {
-            "name": "client_name",
+            "name": "client_id",
             "in": "query",
             "required": false,
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "type": "integer"
                 },
                 {
                   "type": "null"
                 }
               ],
-              "title": "Client Name"
+              "title": "Client Id"
             }
           },
           {

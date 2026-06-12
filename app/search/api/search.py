@@ -19,8 +19,8 @@ router = APIRouter(
 def search(
     db: DBSession,
     user: CurrentUser,
-    query: str | None = None,
-    client_name: str | None = None,
+    search: str | None = None,
+    client_id: int | None = None,
     id_number: str | None = None,
     binder_number: str | None = None,
     client_status: ClientStatus | None = None,
@@ -34,8 +34,8 @@ def search(
     """Unified search for clients and binders."""
     service = SearchService(db)
     results, total, documents = service.search(
-        query=query,
-        client_name=client_name,
+        search=search,
+        client_id=client_id,
         id_number=id_number,
         binder_number=binder_number,
         client_status=client_status,

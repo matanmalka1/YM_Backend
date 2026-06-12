@@ -35,8 +35,8 @@ class SearchService:
 
     def search(
         self,
-        query: str | None = None,
-        client_name: str | None = None,
+        search: str | None = None,
+        client_id: int | None = None,
         id_number: str | None = None,
         binder_number: str | None = None,
         client_status: ClientStatus | None = None,
@@ -48,20 +48,24 @@ class SearchService:
         page_size: int = 20,
     ) -> tuple[list[dict], int, list[DocumentSearchResult]]:
         doc_service = DocumentSearchService(self.db)
-        documents: list[DocumentSearchResult] = (
-            doc_service.search_documents(query, filename=filename) if (query or filename) else []
-        )
+        document_query = search or filename
+        if client_id is not None and document_query:
+            documents = doc_service.list_client_documents(client_id, document_query)
+        elif search or filename:
+            documents = doc_service.search_documents(search or "", filename=filename)
+        else:
+            documents = []
 
-        has_client_filter = bool(query or client_name or id_number or client_status or entity_type)
+        has_client_filter = bool(search or client_id or id_number or client_status or entity_type)
         has_binder_filter = bool(
-            query or binder_number or binder_location_status or binder_capacity_status
+            search or client_id or binder_number or binder_location_status or binder_capacity_status
         )
 
         # --- Pure client-only search: DB-level pagination ---
         if has_client_filter and not has_binder_filter:
             records, total = self.client_record_repo.search(
-                query=query,
-                client_name=client_name,
+                search=search,
+                client_id=client_id,
                 id_number=id_number,
                 status=client_status,
                 entity_type=entity_type,
@@ -100,8 +104,8 @@ class SearchService:
 
         if has_client_filter:
             all_records, _ = self.client_record_repo.search(
-                query=query,
-                client_name=client_name,
+                search=search,
+                client_id=client_id,
                 id_number=id_number,
                 status=client_status,
                 entity_type=entity_type,
@@ -129,7 +133,7 @@ class SearchService:
                 )
 
         if has_binder_filter:
-            db_binder_number = binder_number or (query if not (client_name or id_number) else None)
+            db_binder_number = binder_number or (search if not (client_id or id_number) else None)
             include_handed_over = binder_location_status == BinderLocationStatus.HANDED_OVER
             binders = self.binder_repo.list_active(
                 binder_number=db_binder_number,
@@ -139,6 +143,8 @@ class SearchService:
                 page_size=_MIXED_SEARCH_BINDER_LIMIT,
                 include_handed_over=include_handed_over,
             )
+            if client_id is not None:
+                binders = [binder for binder in binders if binder.client_record_id == client_id]
             binder_cr_ids = [b.client_record_id for b in binders]
             records = {
                 record.id: record for record in self.client_record_repo.list_by_ids(binder_cr_ids)
