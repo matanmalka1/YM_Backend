@@ -28,14 +28,19 @@ _DEFAULT_YEAR_WINDOW = 4
 def get_vat_client_summary(
     client_record_id: int,
     db: DBSession,
-    from_year: int | None = Query(default=None, ge=2000, le=2100),
-    to_year: int | None = Query(default=None, ge=2000, le=2100),
+    period_year_after: int | None = Query(default=None, ge=2000, le=2100),
+    period_year_before: int | None = Query(default=None, ge=2000, le=2100),
 ):
     current_year = israel_today().year
-    resolved_to = to_year if to_year is not None else current_year
-    resolved_from = from_year if from_year is not None else current_year - _DEFAULT_YEAR_WINDOW
+    resolved_to = period_year_before if period_year_before is not None else current_year
+    resolved_from = (
+        period_year_after if period_year_after is not None else current_year - _DEFAULT_YEAR_WINDOW
+    )
     return get_client_summary(
-        db, client_record_id=client_record_id, from_year=resolved_from, to_year=resolved_to
+        db,
+        client_record_id=client_record_id,
+        period_year_after=resolved_from,
+        period_year_before=resolved_to,
     )
 
 

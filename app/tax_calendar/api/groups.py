@@ -21,8 +21,8 @@ router = APIRouter(prefix="/tax-calendar", tags=["tax-calendar"])
 )
 def list_tax_calendar_groups(
     db: DBSession,
-    start_year: int | None = Query(None),
-    end_year: int | None = Query(None),
+    tax_year_after: int | None = Query(None),
+    tax_year_before: int | None = Query(None),
     obligation_type: ObligationType | None = Query(None),
     include_empty: bool = Query(False),
     client_record_id: int | None = Query(None),
@@ -33,8 +33,8 @@ def list_tax_calendar_groups(
 ):
     return list_groups_paginated(
         db,
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
         include_empty=include_empty,
         client_record_id=client_record_id,

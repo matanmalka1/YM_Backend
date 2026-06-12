@@ -131,8 +131,8 @@ class CorrespondenceService:
         business_id: int | None = None,
         correspondence_type: CorrespondenceType | None = None,
         contact_id: int | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
+        occurred_after: datetime | None = None,
+        occurred_before: datetime | None = None,
         order: str = "desc",
     ) -> tuple[list[Correspondence], int]:
         """All correspondence for a client, optionally filtered by business context."""
@@ -146,7 +146,7 @@ class CorrespondenceService:
             page_size=page_size,
             correspondence_type=correspondence_type,
             contact_id=contact_id,
-            from_date=from_date,
-            to_date=to_date,
+            occurred_after=occurred_after,
+            occurred_before=occurred_before,
             order=order,
         )

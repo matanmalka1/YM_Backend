@@ -32,8 +32,8 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
     def get_periods_for_client(
         self,
         client_record_id: int,
-        from_year: int | None = None,
-        to_year: int | None = None,
+        period_year_after: int | None = None,
+        period_year_before: int | None = None,
     ) -> list[tuple]:
         net_sq = (
             select(
@@ -73,10 +73,10 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.deleted_at.is_(None),
             )
         )
-        if from_year is not None:
-            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(from_year))
-        if to_year is not None:
-            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) <= str(to_year))
+        if period_year_after is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(period_year_after))
+        if period_year_before is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) <= str(period_year_before))
         return self.db.execute(stmt.order_by(VatWorkItem.period.desc())).all()
 
     def get_annual_turnover(self, client_record_id: int, year: int):
@@ -120,8 +120,8 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
     def get_annual_aggregates(
         self,
         client_record_id: int,
-        from_year: int | None = None,
-        to_year: int | None = None,
+        period_year_after: int | None = None,
+        period_year_before: int | None = None,
     ) -> list[dict[str, object]]:
         year_expr = cast(func.substr(VatWorkItem.period, 1, 4), Integer).label("year")
         stmt = select(
@@ -137,10 +137,10 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             VatWorkItem.client_record_id == client_record_id,
             VatWorkItem.deleted_at.is_(None),
         )
-        if from_year is not None:
-            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(from_year))
-        if to_year is not None:
-            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) <= str(to_year))
+        if period_year_after is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(period_year_after))
+        if period_year_before is not None:
+            stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) <= str(period_year_before))
         rows = self.db.execute(stmt.group_by(year_expr).order_by(year_expr.desc())).all()
 
         return [

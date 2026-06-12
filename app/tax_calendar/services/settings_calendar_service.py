@@ -29,20 +29,24 @@ def list_rules(db: Session) -> list[DeadlineRule]:
 def list_entries(
     db: Session,
     *,
-    start_year: int | None,
-    end_year: int | None,
+    tax_year_after: int | None,
+    tax_year_before: int | None,
 ) -> list[TaxCalendarEntry]:
-    return TaxCalendarSettingsRepository(db).list_entries(start_year=start_year, end_year=end_year)
+    return TaxCalendarSettingsRepository(db).list_entries(
+        tax_year_after=tax_year_after, tax_year_before=tax_year_before
+    )
 
 
 def get_summary(
     db: Session,
     *,
-    start_year: int | None,
-    end_year: int | None,
+    tax_year_after: int | None,
+    tax_year_before: int | None,
 ) -> dict:
     repo = TaxCalendarSettingsRepository(db)
-    rows = repo.count_by_year_obligation_months(start_year=start_year, end_year=end_year)
+    rows = repo.count_by_year_obligation_months(
+        tax_year_after=tax_year_after, tax_year_before=tax_year_before
+    )
 
     # Build per-year breakdown keyed by "{obligation_type}_{months_count or 'annual'}"
     per_year: dict[int, dict[str, int]] = {}
@@ -55,8 +59,8 @@ def get_summary(
 
     warnings: list[str] = []
     # Check all years in range, not just those with entries
-    if start_year is not None and end_year is not None:
-        years_to_check = range(start_year, end_year + 1)
+    if tax_year_after is not None and tax_year_before is not None:
+        years_to_check = range(tax_year_after, tax_year_before + 1)
     else:
         years_to_check = sorted(per_year.keys())
     for year in years_to_check:
@@ -67,8 +71,8 @@ def get_summary(
                 warnings.append(f"Year {year}: {label} — expected {expected_count}, found {found}.")
 
     # Warn for years using DeadlineRule fallback (no official registry calendar)
-    if start_year is not None and end_year is not None:
-        for year in missing_registry_years(start_year, end_year):
+    if tax_year_after is not None and tax_year_before is not None:
+        for year in missing_registry_years(tax_year_after, tax_year_before):
             warnings.append(
                 f"Year {year} uses fallback DeadlineRule dates because official "
                 f"tax calendar registry data is missing."
@@ -85,8 +89,8 @@ def get_summary(
     total_entries = sum(c for year_data in per_year.values() for c in year_data.values())
 
     return {
-        "start_year": start_year,
-        "end_year": end_year,
+        "start_year": tax_year_after,
+        "end_year": tax_year_before,
         "total_entries": total_entries,
         "per_year": per_year,
         "warnings": warnings,

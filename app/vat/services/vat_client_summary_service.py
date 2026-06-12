@@ -22,8 +22,8 @@ def get_client_summary(
     db: Session,
     *,
     client_record_id: int,
-    from_year: int | None = None,
-    to_year: int | None = None,
+    period_year_after: int | None = None,
+    period_year_before: int | None = None,
 ) -> VatClientSummaryResponse:
     summary_repo = VatClientSummaryRepository(db)
     if not ClientRecordRepository(db).get_by_id(client_record_id):
@@ -33,7 +33,7 @@ def get_client_summary(
         )
 
     raw_periods = summary_repo.get_periods_for_client(
-        client_record_id, from_year=from_year, to_year=to_year
+        client_record_id, period_year_after=period_year_after, period_year_before=period_year_before
     )
     periods = [
         VatPeriodRow(
@@ -54,7 +54,7 @@ def get_client_summary(
     ]
 
     raw_annual = summary_repo.get_annual_aggregates(
-        client_record_id, from_year=from_year, to_year=to_year
+        client_record_id, period_year_after=period_year_after, period_year_before=period_year_before
     )
     annual = [VatAnnualSummary.model_validate(row) for row in raw_annual]
 

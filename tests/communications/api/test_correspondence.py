@@ -139,3 +139,72 @@ def test_list_correspondence_ordered_desc_and_get_by_id(
     )
     assert get_response.status_code == 200
     assert get_response.json()["id"] == later.id
+
+
+def test_list_correspondence_occurred_range_filter(
+    client, test_db, advisor_headers, test_user
+):
+    business = _create_business(test_db)
+    service = CorrespondenceService(test_db)
+
+    earlier = service.add_entry(
+        client_record_id=business.client_id,
+        business_id=business.id,
+        correspondence_type=CorrespondenceType.EMAIL,
+        subject="Earlier entry",
+        occurred_at=datetime(2026, 2, 1, 9, 0, 0),
+        created_by=test_user.id,
+    )
+    later = service.add_entry(
+        client_record_id=business.client_id,
+        business_id=business.id,
+        correspondence_type=CorrespondenceType.MEETING,
+        subject="Later entry",
+        occurred_at=datetime(2026, 2, 5, 9, 0, 0),
+        created_by=test_user.id,
+    )
+
+    # Inclusive boundaries (>= / <=): both endpoints included.
+    full = client.get(
+        f"/api/v1/clients/{business.client_id}/correspondence"
+        "?occurred_after=2026-02-01T09:00:00&occurred_before=2026-02-05T09:00:00",
+        headers=advisor_headers,
+    )
+    assert full.status_code == 200
+    assert {i["id"] for i in full.json()["items"]} == {earlier.id, later.id}
+
+    # Narrowed range drops the earlier entry.
+    narrowed = client.get(
+        f"/api/v1/clients/{business.client_id}/correspondence"
+        "?occurred_after=2026-02-02T00:00:00",
+        headers=advisor_headers,
+    )
+    assert narrowed.status_code == 200
+    assert {i["id"] for i in narrowed.json()["items"]} == {later.id}
+
+
+def test_list_correspondence_old_date_params_are_ignored(
+    client, test_db, advisor_headers, test_user
+):
+    """Old from_date/to_date are not part of the contract and must not filter."""
+    business = _create_business(test_db)
+    service = CorrespondenceService(test_db)
+    for day in (1, 5):
+        service.add_entry(
+            client_record_id=business.client_id,
+            business_id=business.id,
+            correspondence_type=CorrespondenceType.EMAIL,
+            subject=f"Entry {day}",
+            occurred_at=datetime(2026, 2, day, 9, 0, 0),
+            created_by=test_user.id,
+        )
+
+    response = client.get(
+        f"/api/v1/clients/{business.client_id}/correspondence"
+        "?from_date=2026-02-10T00:00:00&to_date=2026-02-20T00:00:00",
+        headers=advisor_headers,
+    )
+
+    # Unknown params are ignored by FastAPI: no filtering applied, both rows returned.
+    assert response.status_code == 200
+    assert response.json()["total"] == 2

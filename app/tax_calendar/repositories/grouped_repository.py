@@ -62,15 +62,15 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
     def list_entries(
         self,
         *,
-        start_year: int | None,
-        end_year: int | None,
+        tax_year_after: int | None,
+        tax_year_before: int | None,
         obligation_type: ObligationType | None,
     ) -> list[TaxCalendarEntry]:
         stmt = select(TaxCalendarEntry)
-        if start_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year >= start_year)
-        if end_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year <= end_year)
+        if tax_year_after is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year >= tax_year_after)
+        if tax_year_before is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year <= tax_year_before)
         if obligation_type is not None:
             stmt = stmt.where(TaxCalendarEntry.obligation_type == obligation_type)
         else:
@@ -88,8 +88,8 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
     def list_vat_for_entries(
         self,
         *,
-        start_year: int | None,
-        end_year: int | None,
+        tax_year_after: int | None,
+        tax_year_before: int | None,
         obligation_type: ObligationType | None,
         client_record_id: int | None = None,
         client_search: str | None = None,
@@ -105,7 +105,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             .where(TaxCalendarEntry.obligation_type == ObligationType.VAT)
             .where(VatWorkItem.deleted_at.is_(None))
         )
-        stmt = self._apply_calendar_filters(stmt, start_year, end_year)
+        stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
         stmt = self._scope_to_active_clients(stmt, VatWorkItem)
         if client_record_id is not None:
             stmt = stmt.where(VatWorkItem.client_record_id == client_record_id)
@@ -115,8 +115,8 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
     def list_advance_for_entries(
         self,
         *,
-        start_year: int | None,
-        end_year: int | None,
+        tax_year_after: int | None,
+        tax_year_before: int | None,
         obligation_type: ObligationType | None,
         client_record_id: int | None = None,
         client_search: str | None = None,
@@ -132,7 +132,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             .where(TaxCalendarEntry.obligation_type == ObligationType.ADVANCE_PAYMENT)
             .where(AdvancePayment.deleted_at.is_(None))
         )
-        stmt = self._apply_calendar_filters(stmt, start_year, end_year)
+        stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
         stmt = self._scope_to_active_clients(stmt, AdvancePayment)
         if client_record_id is not None:
             stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
@@ -142,8 +142,8 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
     def list_annual_for_entries(
         self,
         *,
-        start_year: int | None,
-        end_year: int | None,
+        tax_year_after: int | None,
+        tax_year_before: int | None,
         obligation_type: ObligationType | None,
         client_record_id: int | None = None,
         client_search: str | None = None,
@@ -159,7 +159,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             .where(TaxCalendarEntry.obligation_type == ObligationType.ANNUAL_REPORT)
             .where(AnnualReport.deleted_at.is_(None))
         )
-        stmt = self._apply_calendar_filters(stmt, start_year, end_year)
+        stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
         stmt = self._scope_to_active_clients(stmt, AnnualReport)
         if client_record_id is not None:
             stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
@@ -167,11 +167,11 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         return self.db.scalars(stmt).all()
 
     @staticmethod
-    def _apply_calendar_filters(stmt, start_year: int | None, end_year: int | None):
-        if start_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year >= start_year)
-        if end_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year <= end_year)
+    def _apply_calendar_filters(stmt, tax_year_after: int | None, tax_year_before: int | None):
+        if tax_year_after is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year >= tax_year_after)
+        if tax_year_before is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year <= tax_year_before)
         return stmt
 
     @staticmethod

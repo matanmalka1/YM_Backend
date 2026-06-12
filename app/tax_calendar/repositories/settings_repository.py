@@ -20,14 +20,14 @@ class TaxCalendarSettingsRepository:
     def list_entries(
         self,
         *,
-        start_year: int | None,
-        end_year: int | None,
+        tax_year_after: int | None,
+        tax_year_before: int | None,
     ) -> list[TaxCalendarEntry]:
         stmt = select(TaxCalendarEntry)
-        if start_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year >= start_year)
-        if end_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year <= end_year)
+        if tax_year_after is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year >= tax_year_after)
+        if tax_year_before is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year <= tax_year_before)
         stmt = stmt.order_by(
             TaxCalendarEntry.tax_year.asc(),
             TaxCalendarEntry.obligation_type.asc(),
@@ -38,8 +38,8 @@ class TaxCalendarSettingsRepository:
     def count_by_year_obligation_months(
         self,
         *,
-        start_year: int | None,
-        end_year: int | None,
+        tax_year_after: int | None,
+        tax_year_before: int | None,
     ) -> list[tuple[int, str, int | None, int]]:
         """Returns list of (tax_year, obligation_type, period_months_count, count)."""
         stmt = select(
@@ -48,10 +48,10 @@ class TaxCalendarSettingsRepository:
             TaxCalendarEntry.period_months_count,
             func.count(TaxCalendarEntry.id).label("entry_count"),
         )
-        if start_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year >= start_year)
-        if end_year is not None:
-            stmt = stmt.where(TaxCalendarEntry.tax_year <= end_year)
+        if tax_year_after is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year >= tax_year_after)
+        if tax_year_before is not None:
+            stmt = stmt.where(TaxCalendarEntry.tax_year <= tax_year_before)
         stmt = stmt.group_by(
             TaxCalendarEntry.tax_year,
             TaxCalendarEntry.obligation_type,

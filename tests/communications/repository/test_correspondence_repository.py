@@ -145,8 +145,8 @@ def test_list_by_client_filters_business_and_sort(test_db):
         business_id=business.id,
         correspondence_type=CorrespondenceType.EMAIL,
         contact_id=10,
-        from_date=base + timedelta(hours=1),
-        to_date=base + timedelta(days=2),
+        occurred_after=base + timedelta(hours=1),
+        occurred_before=base + timedelta(days=2),
         order="asc",
     )
 

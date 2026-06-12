@@ -104,8 +104,8 @@ class NotificationService:
         trigger: NotificationTrigger | None = None,
         channel: NotificationChannel | None = None,
         triggered_by: int | None = None,
-        date_from: object | None = None,
-        date_to: object | None = None,
+        created_after: object | None = None,
+        created_before: object | None = None,
     ) -> tuple[list[NotificationListItem], int]:
         items, total = self.repo.list_paginated(
             page=page,
@@ -116,8 +116,8 @@ class NotificationService:
             trigger=trigger,
             channel=channel,
             triggered_by=triggered_by,
-            date_from=date_from,
-            date_to=date_to,
+            created_after=created_after,
+            created_before=created_before,
         )
         business_name_map = self._build_business_name_map(items)
         client_name_map = self._build_client_name_map(items)

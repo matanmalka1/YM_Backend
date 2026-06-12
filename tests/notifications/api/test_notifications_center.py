@@ -124,7 +124,7 @@ def test_status_filter_returns_only_matching_records(client, test_db, advisor_he
     assert data["items"][0]["id"] == wanted.id
 
 
-def test_date_from_date_to_boundaries(client, test_db, advisor_headers):
+def test_created_after_created_before_boundaries(client, test_db, advisor_headers):
     seeded = _client(test_db, "dates")
     start = dt.datetime(2026, 1, 10, 9, 0, 0)
     end = dt.datetime(2026, 1, 20, 17, 0, 0)
@@ -135,7 +135,7 @@ def test_date_from_date_to_boundaries(client, test_db, advisor_headers):
     test_db.commit()
 
     resp = client.get(
-        "/api/v1/notifications?date_from=2026-01-10T09:00:00&date_to=2026-01-20T17:00:00",
+        "/api/v1/notifications?created_after=2026-01-10T09:00:00&created_before=2026-01-20T17:00:00",
         headers=advisor_headers,
     )
 
@@ -143,6 +143,23 @@ def test_date_from_date_to_boundaries(client, test_db, advisor_headers):
     data = resp.json()
     assert data["total"] == 2
     assert {item["id"] for item in data["items"]} == {first.id, second.id}
+
+
+def test_old_date_params_are_ignored(client, test_db, advisor_headers):
+    """Old date_from/date_to are not part of the contract and must not filter."""
+    seeded = _client(test_db, "olddates")
+    _notification(test_db, seeded.id, created_at=dt.datetime(2026, 1, 10, 9, 0, 0))
+    _notification(test_db, seeded.id, created_at=dt.datetime(2026, 1, 20, 17, 0, 0))
+    test_db.commit()
+
+    resp = client.get(
+        "/api/v1/notifications?date_from=2026-06-01T00:00:00&date_to=2026-06-30T00:00:00",
+        headers=advisor_headers,
+    )
+
+    # Unknown params are ignored by FastAPI: no filtering applied.
+    assert resp.status_code == 200
+    assert resp.json()["total"] == 2
 
 
 def test_triggered_by_filter(client, test_db, advisor_headers):

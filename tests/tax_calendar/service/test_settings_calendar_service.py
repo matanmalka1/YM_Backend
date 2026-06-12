@@ -36,7 +36,7 @@ def test_list_entries_year_filter(test_db):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
     test_db.commit()
 
-    entries = list_entries(test_db, start_year=2026, end_year=2026)
+    entries = list_entries(test_db, tax_year_after=2026, tax_year_before=2026)
     assert len(entries) == 37
     assert all(e.tax_year == 2026 for e in entries)
 
@@ -45,7 +45,7 @@ def test_list_entries_no_filter(test_db):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
     test_db.commit()
 
-    entries = list_entries(test_db, start_year=None, end_year=None)
+    entries = list_entries(test_db, tax_year_after=None, tax_year_before=None)
     assert len(entries) == 74
 
 
@@ -53,7 +53,7 @@ def test_get_summary_correct_counts(test_db):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
     test_db.commit()
 
-    summary = get_summary(test_db, start_year=2026, end_year=2027)
+    summary = get_summary(test_db, tax_year_after=2026, tax_year_before=2027)
 
     assert summary["total_entries"] == 74
     assert set(summary["per_year"].keys()) == {2026, 2027}
@@ -68,7 +68,7 @@ def test_get_summary_2026_no_fallback_warning(test_db):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2026)
     test_db.commit()
 
-    summary = get_summary(test_db, start_year=2026, end_year=2026)
+    summary = get_summary(test_db, tax_year_after=2026, tax_year_before=2026)
     assert not any("fallback" in w for w in summary["warnings"])
 
 
@@ -80,7 +80,7 @@ def test_get_summary_reports_registry_fallback_warning(test_db, monkeypatch):
     bootstrap_tax_calendar(test_db, start_year=2027, end_year=2027)
     test_db.commit()
 
-    summary = get_summary(test_db, start_year=2027, end_year=2027)
+    summary = get_summary(test_db, tax_year_after=2027, tax_year_before=2027)
     assert summary["total_entries"] == 37
     assert any("2027" in w and "fallback" in w for w in summary["warnings"])
 
@@ -102,12 +102,12 @@ def test_get_summary_detects_missing_entry(test_db):
     test_db.delete(entry)
     test_db.commit()
 
-    summary = get_summary(test_db, start_year=2026, end_year=2026)
+    summary = get_summary(test_db, tax_year_after=2026, tax_year_before=2026)
     assert len(summary["warnings"]) >= 1
     assert "2026" in summary["warnings"][0]
 
 
 def test_get_summary_empty_db_has_warnings(test_db):
-    summary = get_summary(test_db, start_year=2026, end_year=2026)
+    summary = get_summary(test_db, tax_year_after=2026, tax_year_before=2026)
     assert summary["total_entries"] == 0
     assert len(summary["warnings"]) > 0

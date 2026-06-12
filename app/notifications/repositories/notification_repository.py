@@ -111,8 +111,8 @@ class NotificationRepository(BaseRepository[Notification]):
         trigger: NotificationTrigger | None = None,
         channel: NotificationChannel | None = None,
         triggered_by: int | None = None,
-        date_from: datetime.datetime | None = None,
-        date_to: datetime.datetime | None = None,
+        created_after: datetime.datetime | None = None,
+        created_before: datetime.datetime | None = None,
     ) -> tuple[list[Notification], int]:
         count_stmt = select(func.count(Notification.id))
         list_stmt = select(Notification)
@@ -132,10 +132,10 @@ class NotificationRepository(BaseRepository[Notification]):
             filters.append(Notification.channel == channel)
         if triggered_by is not None:
             filters.append(Notification.triggered_by == triggered_by)
-        if date_from is not None:
-            filters.append(Notification.created_at >= date_from)
-        if date_to is not None:
-            filters.append(Notification.created_at <= date_to)
+        if created_after is not None:
+            filters.append(Notification.created_at >= created_after)
+        if created_before is not None:
+            filters.append(Notification.created_at <= created_before)
 
         if filters:
             count_stmt = count_stmt.where(*filters)

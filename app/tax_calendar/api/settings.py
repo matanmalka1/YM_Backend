@@ -40,15 +40,15 @@ def list_deadline_rules(db: DBSession) -> list[DeadlineRuleResponse]:
 )
 def list_tax_calendar_entries(
     db: DBSession,
-    start_year: int | None = Query(None),
-    end_year: int | None = Query(None),
+    tax_year_after: int | None = Query(None),
+    tax_year_before: int | None = Query(None),
 ) -> list[TaxCalendarEntryResponse]:
     current_year = israel_today().year
-    resolved_start = start_year if start_year is not None else current_year
-    resolved_end = end_year if end_year is not None else current_year + 1
+    resolved_start = tax_year_after if tax_year_after is not None else current_year
+    resolved_end = tax_year_before if tax_year_before is not None else current_year + 1
     _check_year_range(resolved_start, resolved_end)
     return settings_calendar_service.list_entries(
-        db, start_year=resolved_start, end_year=resolved_end
+        db, tax_year_after=resolved_start, tax_year_before=resolved_end
     )
 
 
@@ -59,11 +59,13 @@ def list_tax_calendar_entries(
 )
 def get_tax_calendar_summary(
     db: DBSession,
-    start_year: int | None = Query(None),
-    end_year: int | None = Query(None),
+    tax_year_after: int | None = Query(None),
+    tax_year_before: int | None = Query(None),
 ) -> TaxCalendarSummaryResponse:
-    _check_year_range(start_year, end_year)
-    return settings_calendar_service.get_summary(db, start_year=start_year, end_year=end_year)
+    _check_year_range(tax_year_after, tax_year_before)
+    return settings_calendar_service.get_summary(
+        db, tax_year_after=tax_year_after, tax_year_before=tax_year_before
+    )
 
 
 @router.post(

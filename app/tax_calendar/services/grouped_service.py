@@ -44,8 +44,8 @@ def _entry_id(row) -> int:
 def list_groups_paginated(
     db: Session,
     *,
-    start_year: int | None,
-    end_year: int | None,
+    tax_year_after: int | None,
+    tax_year_before: int | None,
     obligation_type: ObligationType | None,
     include_empty: bool,
     client_record_id: int | None = None,
@@ -56,8 +56,8 @@ def list_groups_paginated(
 ) -> TaxCalendarGroupListResponse:
     groups = _build_groups(
         db,
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
         include_empty=include_empty,
         client_record_id=client_record_id,
@@ -85,8 +85,8 @@ def list_groups_paginated(
 def _build_groups(
     db: Session,
     *,
-    start_year: int | None,
-    end_year: int | None,
+    tax_year_after: int | None,
+    tax_year_before: int | None,
     obligation_type: ObligationType | None,
     include_empty: bool,
     client_record_id: int | None = None,
@@ -94,14 +94,14 @@ def _build_groups(
 ) -> list[TaxCalendarGroupResponse]:
     repo = TaxCalendarGroupedRepository(db)
     entries = repo.list_entries(
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
     )
     rows_by_entry = _linked_rows_by_entry(
         repo,
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
         client_record_id=client_record_id,
         client_search=client_search,
@@ -161,32 +161,32 @@ def _filter_groups_by_status(
 def _linked_rows_by_entry(
     repo: TaxCalendarGroupedRepository,
     *,
-    start_year: int | None,
-    end_year: int | None,
+    tax_year_after: int | None,
+    tax_year_before: int | None,
     obligation_type: ObligationType | None,
     client_record_id: int | None,
     client_search: str | None = None,
 ):
     rows = defaultdict(list)
     for row in repo.list_vat_for_entries(
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
         client_record_id=client_record_id,
         client_search=client_search,
     ):
         rows[_entry_id(row)].append(row)
     for row in repo.list_advance_for_entries(
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
         client_record_id=client_record_id,
         client_search=client_search,
     ):
         rows[_entry_id(row)].append(row)
     for row in repo.list_annual_for_entries(
-        start_year=start_year,
-        end_year=end_year,
+        tax_year_after=tax_year_after,
+        tax_year_before=tax_year_before,
         obligation_type=obligation_type,
         client_record_id=client_record_id,
         client_search=client_search,

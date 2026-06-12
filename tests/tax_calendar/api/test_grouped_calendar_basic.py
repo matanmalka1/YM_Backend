@@ -66,7 +66,7 @@ def test_year_range_filter_works(client, auth_token, test_db):
     test_db.commit()
 
     response = client.get(
-        f"{PATH}?include_empty=true&start_year=2026&end_year=2026",
+        f"{PATH}?include_empty=true&tax_year_after=2026&tax_year_before=2026",
         headers=headers(auth_token),
     )
 

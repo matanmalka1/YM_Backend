@@ -52,8 +52,8 @@ def list_notifications(
     trigger: NotificationTrigger | None = None,
     channel: NotificationChannel | None = None,
     triggered_by: int | None = None,
-    date_from: datetime.datetime | None = None,
-    date_to: datetime.datetime | None = None,
+    created_after: datetime.datetime | None = None,
+    created_before: datetime.datetime | None = None,
     page: int = Query(1, ge=1),
     page_size: NotificationPageSize = Query(NotificationPageSize.small),
 ):
@@ -68,8 +68,8 @@ def list_notifications(
         trigger=trigger,
         channel=channel,
         triggered_by=triggered_by,
-        date_from=date_from,
-        date_to=date_to,
+        created_after=created_after,
+        created_before=created_before,
     )
     return NotificationListResponse(
         items=items,

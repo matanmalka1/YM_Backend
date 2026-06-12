@@ -45,8 +45,8 @@ def list_correspondence_by_client(
     business_id: int | None = Query(None),
     correspondence_type: CorrespondenceType | None = Query(None),
     contact_id: int | None = Query(None),
-    from_date: datetime | None = Query(None),
-    to_date: datetime | None = Query(None),
+    occurred_after: datetime | None = Query(None),
+    occurred_before: datetime | None = Query(None),
     order: Literal["asc", "desc"] = Query("desc"),
 ):
     """All correspondence for a client, optionally filtered by business."""
@@ -58,8 +58,8 @@ def list_correspondence_by_client(
         business_id=business_id,
         correspondence_type=correspondence_type,
         contact_id=contact_id,
-        from_date=from_date,
-        to_date=to_date,
+        occurred_after=occurred_after,
+        occurred_before=occurred_before,
         order=order,
     )
     return CorrespondenceListResponse.build(

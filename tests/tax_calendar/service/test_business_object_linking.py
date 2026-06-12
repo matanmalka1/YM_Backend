@@ -319,8 +319,8 @@ def test_grouped_tax_calendar_sees_newly_materialized_rows(test_db):
 
     result = list_groups_paginated(
         test_db,
-        start_year=2026,
-        end_year=2026,
+        tax_year_after=2026,
+        tax_year_before=2026,
         obligation_type=ObligationType.VAT,
         include_empty=False,
     )

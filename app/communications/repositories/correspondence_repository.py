@@ -47,8 +47,8 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         business_id: int | None = None,
         correspondence_type: CorrespondenceType | None = None,
         contact_id: int | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
+        occurred_after: datetime | None = None,
+        occurred_before: datetime | None = None,
         order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         filters = [Correspondence.deleted_at.is_(None)]
@@ -60,10 +60,10 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             filters.append(Correspondence.correspondence_type == correspondence_type)
         if contact_id is not None:
             filters.append(Correspondence.contact_id == contact_id)
-        if from_date is not None:
-            filters.append(Correspondence.occurred_at >= from_date)
-        if to_date is not None:
-            filters.append(Correspondence.occurred_at <= to_date)
+        if occurred_after is not None:
+            filters.append(Correspondence.occurred_at >= occurred_after)
+        if occurred_before is not None:
+            filters.append(Correspondence.occurred_at <= occurred_before)
 
         total = self.db.scalar(select(func.count(Correspondence.id)).where(*filters)) or 0
         order_expr = (
@@ -90,8 +90,8 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         business_id: int | None = None,
         correspondence_type: CorrespondenceType | None = None,
         contact_id: int | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
+        occurred_after: datetime | None = None,
+        occurred_before: datetime | None = None,
         order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         return self.list_paginated(
@@ -101,8 +101,8 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             page_size=page_size,
             correspondence_type=correspondence_type,
             contact_id=contact_id,
-            from_date=from_date,
-            to_date=to_date,
+            occurred_after=occurred_after,
+            occurred_before=occurred_before,
             order=order,
         )
 
@@ -115,8 +115,8 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
         business_id: int | None = None,
         correspondence_type: CorrespondenceType | None = None,
         contact_id: int | None = None,
-        from_date: datetime | None = None,
-        to_date: datetime | None = None,
+        occurred_after: datetime | None = None,
+        occurred_before: datetime | None = None,
         order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         filters = [
@@ -129,10 +129,10 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             filters.append(Correspondence.correspondence_type == correspondence_type)
         if contact_id is not None:
             filters.append(Correspondence.contact_id == contact_id)
-        if from_date is not None:
-            filters.append(Correspondence.occurred_at >= from_date)
-        if to_date is not None:
-            filters.append(Correspondence.occurred_at <= to_date)
+        if occurred_after is not None:
+            filters.append(Correspondence.occurred_at >= occurred_after)
+        if occurred_before is not None:
+            filters.append(Correspondence.occurred_at <= occurred_before)
         total = self.db.scalar(select(func.count(Correspondence.id)).where(*filters)) or 0
         order_expr = (
             Correspondence.occurred_at.desc()

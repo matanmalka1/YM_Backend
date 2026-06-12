@@ -48,7 +48,9 @@ def test_list_entries_year_filter(client, advisor_headers, test_db):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
     test_db.commit()
 
-    response = client.get(f"{ENTRIES_PATH}?start_year=2026&end_year=2026", headers=advisor_headers)
+    response = client.get(
+        f"{ENTRIES_PATH}?tax_year_after=2026&tax_year_before=2026", headers=advisor_headers
+    )
     assert response.status_code == 200
     data = response.json()
     assert len(data) == 37
@@ -66,7 +68,9 @@ def test_list_entries_secretary_returns_403(client, secretary_headers, test_db):
 
 
 def test_list_entries_invalid_year_range_returns_400(client, advisor_headers, test_db):
-    response = client.get(f"{ENTRIES_PATH}?start_year=2027&end_year=2026", headers=advisor_headers)
+    response = client.get(
+        f"{ENTRIES_PATH}?tax_year_after=2027&tax_year_before=2026", headers=advisor_headers
+    )
     assert response.status_code == 400
 
 
@@ -79,7 +83,9 @@ def test_summary_secretary_returns_403(client, secretary_headers, test_db):
 
 
 def test_summary_invalid_year_range_returns_400(client, advisor_headers, test_db):
-    response = client.get(f"{SUMMARY_PATH}?start_year=2027&end_year=2026", headers=advisor_headers)
+    response = client.get(
+        f"{SUMMARY_PATH}?tax_year_after=2027&tax_year_before=2026", headers=advisor_headers
+    )
     assert response.status_code == 400
 
 
