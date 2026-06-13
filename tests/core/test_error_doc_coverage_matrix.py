@@ -74,14 +74,14 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     # clients
     ("POST", "/api/v1/clients"): {"400", "409"},
     ("POST", "/api/v1/clients/preview-impact"): {"400"},
-    ("PATCH", "/api/v1/clients/{client_id}"): {"400", "409"},
-    ("DELETE", "/api/v1/clients/{client_id}"): {"409"},
-    ("POST", "/api/v1/clients/{client_id}/restore"): {"409"},
+    ("PATCH", "/api/v1/clients/{client_record_id}"): {"400", "409"},
+    ("DELETE", "/api/v1/clients/{client_record_id}"): {"409"},
+    ("POST", "/api/v1/clients/{client_record_id}/restore"): {"409"},
     # businesses
-    ("POST", "/api/v1/clients/{client_id}/businesses"): {"400", "409"},
-    ("PATCH", "/api/v1/clients/{client_id}/businesses/{business_id}"): {"400", "409"},
-    ("DELETE", "/api/v1/clients/{client_id}/businesses/{business_id}"): {"409"},
-    ("POST", "/api/v1/clients/{client_id}/businesses/{business_id}/restore"): {"409"},
+    ("POST", "/api/v1/clients/{client_record_id}/businesses"): {"400", "409"},
+    ("PATCH", "/api/v1/clients/{client_record_id}/businesses/{business_id}"): {"400", "409"},
+    ("DELETE", "/api/v1/clients/{client_record_id}/businesses/{business_id}"): {"409"},
+    ("POST", "/api/v1/clients/{client_record_id}/businesses/{business_id}/restore"): {"409"},
     # tasks
     ("POST", "/api/v1/tasks"): {"400"},
     ("PATCH", "/api/v1/tasks/{task_id}"): {"400", "409"},
@@ -99,10 +99,10 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("POST", "/api/v1/clients/{client_record_id}/correspondence"): {"400"},
     ("PATCH", "/api/v1/clients/{client_record_id}/correspondence/{correspondence_id}"): {"400"},
     # notes
-    ("POST", "/api/v1/clients/{client_id}/notes"): {"400"},
-    ("PATCH", "/api/v1/clients/{client_id}/notes/{note_id}"): {"400"},
-    ("POST", "/api/v1/clients/{client_id}/businesses/{business_id}/notes"): {"400"},
-    ("PATCH", "/api/v1/clients/{client_id}/businesses/{business_id}/notes/{note_id}"): {"400"},
+    ("POST", "/api/v1/clients/{client_record_id}/notes"): {"400"},
+    ("PATCH", "/api/v1/clients/{client_record_id}/notes/{note_id}"): {"400"},
+    ("POST", "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes"): {"400"},
+    ("PATCH", "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes/{note_id}"): {"400"},
     # authority_contacts
     ("POST", "/api/v1/clients/{client_record_id}/authority-contacts"): {"400"},
     ("PATCH", "/api/v1/clients/{client_record_id}/authority-contacts/{contact_id}"): {"400"},

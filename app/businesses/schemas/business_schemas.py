@@ -14,7 +14,7 @@ from app.core.schemas.validation import NonEmptyUpdateMixin
 class BusinessCreateRequest(BaseModel):
     """
     יצירת עסק חדש תחת לקוח קיים.
-    client_id מועבר ב-URL: POST /clients/{client_id}/businesses
+    client_record_id מועבר ב-URL: POST /clients/{client_record_id}/businesses
     """
 
     opened_at: date | None = None

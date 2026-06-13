@@ -77,7 +77,7 @@ def test_clients_list_endpoint_uses_thin_dto():
 
 def test_clients_detail_endpoint_uses_full_dto():
     spec = app.openapi()
-    names = _referenced_schema_names(spec, "/api/v1/clients/{client_id}", "get")
+    names = _referenced_schema_names(spec, "/api/v1/clients/{client_record_id}", "get")
     assert "ClientRecordResponse" in names
 
 
