@@ -9,7 +9,6 @@ from sqlalchemy import ForeignKey, Index, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
-
 from app.invoices.models.invoice import Invoice
 
 if TYPE_CHECKING:
