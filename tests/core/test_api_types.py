@@ -1,10 +1,57 @@
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 
-from pydantic import BaseModel
+import pytest
+from pydantic import BaseModel, ValidationError
 
-from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal, PeriodStr
 from app.main import app
+
+
+class _PeriodModel(BaseModel):
+    period: PeriodStr
+
+
+class _OptionalPeriodModel(BaseModel):
+    period: PeriodStr | None = None
+
+
+@pytest.mark.parametrize("value", ["2026-01", "2026-06", "2026-12", "2000-09", "1999-11"])
+def test_period_str_accepts_valid_yyyymm(value):
+    assert _PeriodModel(period=value).period == value
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "garbage",
+        "01-2026",
+        "2026-00",
+        "2026-13",
+        "2026-1",
+        "26-01",
+        "2026-01-01",
+        "",
+    ],
+)
+def test_period_str_rejects_invalid_format(value):
+    with pytest.raises(ValidationError):
+        _PeriodModel(period=value)
+
+
+def test_period_str_optional_none_allowed():
+    assert _OptionalPeriodModel(period=None).period is None
+
+
+def test_period_str_openapi_schema_has_pattern():
+    openapi = app.openapi()
+    schemas = openapi["components"]["schemas"]
+    # VatWorkItemCreateRequest.period must expose the PeriodStr pattern
+    vat_period = schemas["VatWorkItemCreateRequest"]["properties"]["period"]
+    assert vat_period.get("pattern") == r"^\d{4}-(0[1-9]|1[0-2])$"
+    # AdvancePaymentCreateRequest.period
+    adv_period = schemas["AdvancePaymentCreateRequest"]["properties"]["period"]
+    assert adv_period.get("pattern") == r"^\d{4}-(0[1-9]|1[0-2])$"
 
 
 class ExampleSchema(BaseModel):

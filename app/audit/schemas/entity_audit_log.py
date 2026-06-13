@@ -12,9 +12,9 @@ class EntityAuditLogResponse(BaseModel):
     performed_by: int
     performed_by_name: str | None = None
     action: str
-    old_value: str | None
-    new_value: str | None
-    note: str | None
+    old_value: str | None = None
+    new_value: str | None = None
+    note: str | None = None
     performed_at: ApiDateTime
 
     model_config = {"from_attributes": True}

@@ -12,20 +12,20 @@ from app.vat.models.vat_enums import VatWorkItemStatus
 class VatPeriodRow(BaseModel):
     work_item_id: int = 0
     period: str
-    period_type: str | None
+    period_type: str | None = None
     status: VatWorkItemStatus
     total_output_vat: ApiDecimal
     total_input_vat: ApiDecimal
     net_vat: ApiDecimal
     total_output_net: ApiDecimal = Decimal("0")
     total_input_net: ApiDecimal = Decimal("0")
-    final_vat_amount: ApiDecimal | None
-    filed_at: ApiDateTime | None
-    submission_deadline: date | None
-    statutory_deadline: date | None
-    extended_deadline: date | None
-    days_until_deadline: int | None
-    is_overdue: bool | None
+    final_vat_amount: ApiDecimal | None = None
+    filed_at: ApiDateTime | None = None
+    submission_deadline: date | None = None
+    statutory_deadline: date | None = None
+    extended_deadline: date | None = None
+    days_until_deadline: int | None = None
+    is_overdue: bool | None = None
 
     model_config = {"from_attributes": True}
 

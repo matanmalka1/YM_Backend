@@ -13,7 +13,7 @@ from app.advance_payments.services.constants import (
     SUPPORTED_PERIOD_MONTH_COUNTS,
 )
 from app.common.period_utils import parse_period_month
-from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
+from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.utils.time_utils import israel_today
 
@@ -71,7 +71,7 @@ AdvancePaymentListResponse = PaginatedResponse[AdvancePaymentRow]
 
 
 class AdvancePaymentCreateRequest(BaseModel):
-    period: str = Field(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$")
+    period: PeriodStr
     period_months_count: int | None = Field(None, ge=1, le=2)
     turnover_amount: ApiDecimal | None = Field(None, ge=0)
     advance_rate: ApiDecimal | None = Field(None, ge=0)

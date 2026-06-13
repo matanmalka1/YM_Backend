@@ -18743,7 +18743,10 @@
           "period": {
             "type": "string",
             "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
-            "title": "Period"
+            "title": "Period",
+            "examples": [
+              "2026-06"
+            ]
           },
           "period_months_count": {
             "anyOf": [
@@ -23531,7 +23534,11 @@
           "period": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+                "examples": [
+                  "2026-06"
+                ]
               },
               {
                 "type": "null"
@@ -26152,9 +26159,6 @@
           "entity_id",
           "performed_by",
           "action",
-          "old_value",
-          "new_value",
-          "note",
           "performed_at"
         ],
         "title": "EntityAuditLogResponse"
@@ -26377,7 +26381,8 @@
           "bank_fees",
           "mixed_expense"
         ],
-        "title": "ExpenseCategory"
+        "title": "ExpenseCategory",
+        "description": "VAT invoice source categories used for VAT deduction and data-entry classification.\n\nThese are granular operational categories captured at invoice-entry time.\nDo not reuse for annual report expense lines — those use ExpenseCategoryType.\nEach value is mapped to an ExpenseCategoryType via _VAT_TO_ANNUAL in\nbackend/app/annual_reports/services/vat_import_service.py. Any new value\nadded here must also be added to that mapping."
       },
       "ExpenseCategoryType": {
         "type": "string",
@@ -26395,7 +26400,8 @@
           "bank_fees",
           "other"
         ],
-        "title": "ExpenseCategoryType"
+        "title": "ExpenseCategoryType",
+        "description": "Annual report expense-line categories used for income-tax / reporting classification.\n\nThese are higher-level recognition categories for the annual report, not\nthe same as VAT's ExpenseCategory. VAT's 24 granular categories are\nconsolidated into these 12 via _VAT_TO_ANNUAL in\nbackend/app/annual_reports/services/vat_import_service.py."
       },
       "ExpenseLineCreateRequest": {
         "properties": {
@@ -31851,8 +31857,6 @@
         "type": "object",
         "required": [
           "annual_report_id",
-          "tax_due",
-          "refund_due",
           "saved_at"
         ],
         "title": "TaxCalculationSaveResponse"
@@ -32346,8 +32350,6 @@
         },
         "type": "object",
         "required": [
-          "tax_year_after",
-          "tax_year_before",
           "total_entries",
           "per_year",
           "warnings"
@@ -32999,9 +33001,6 @@
           "work_item_id",
           "performed_by",
           "action",
-          "old_value",
-          "new_value",
-          "note",
           "performed_at"
         ],
         "title": "VatAuditLogResponse"
@@ -34086,18 +34085,10 @@
         "type": "object",
         "required": [
           "period",
-          "period_type",
           "status",
           "total_output_vat",
           "total_input_vat",
-          "net_vat",
-          "final_vat_amount",
-          "filed_at",
-          "submission_deadline",
-          "statutory_deadline",
-          "extended_deadline",
-          "days_until_deadline",
-          "is_overdue"
+          "net_vat"
         ],
         "title": "VatPeriodRow"
       },
@@ -34166,7 +34157,11 @@
           },
           "period": {
             "type": "string",
-            "title": "Period"
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "Period",
+            "examples": [
+              "2026-06"
+            ]
           },
           "assigned_to": {
             "anyOf": [

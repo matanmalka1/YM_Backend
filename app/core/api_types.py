@@ -13,6 +13,16 @@ from pydantic import (
     WithJsonSchema,
 )
 
+# Shared period type enforcing YYYY-MM format with valid month range.
+# Use on all Create/Update/input schemas that accept a billing period string.
+PERIOD_PATTERN = r"^\d{4}-(0[1-9]|1[0-2])$"
+
+PeriodStr = Annotated[
+    str,
+    StringConstraints(pattern=PERIOD_PATTERN),
+    WithJsonSchema({"type": "string", "pattern": PERIOD_PATTERN, "examples": ["2026-06"]}),
+]
+
 T = TypeVar("T")
 
 

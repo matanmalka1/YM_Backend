@@ -30,8 +30,8 @@ class TaxCalendarEntryResponse(BaseModel):
 
 
 class TaxCalendarSummaryResponse(BaseModel):
-    tax_year_after: int | None
-    tax_year_before: int | None
+    tax_year_after: int | None = None
+    tax_year_before: int | None = None
     total_entries: int
     per_year: dict[int, dict[str, int]]
     warnings: list[str]

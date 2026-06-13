@@ -187,8 +187,8 @@ class TaxCalculationSaveRequest(BaseModel):
 
 class TaxCalculationSaveResponse(BaseModel):
     annual_report_id: int
-    tax_due: ApiDecimal | None
-    refund_due: ApiDecimal | None
+    tax_due: ApiDecimal | None = None
+    refund_due: ApiDecimal | None = None
     saved_at: ApiDateTime
 
 

@@ -1,13 +1,11 @@
-import re
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field
 
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.charges.services.constants import MONTHS_COVERED_MAX, PERIOD_REGEX
-from app.charges.services.messages import PERIOD_INVALID_FORMAT
+from app.charges.services.constants import MONTHS_COVERED_MAX
 from app.core.action_schemas import ActionDescriptor
-from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal, PeriodStr
 
 
 class ChargeCreateRequest(BaseModel):
@@ -15,15 +13,8 @@ class ChargeCreateRequest(BaseModel):
     business_id: int | None = None
     amount: ApiDecimal = Field(gt=0)
     charge_type: ChargeType  # enum — לא str חופשי
-    period: str | None = None  # "YYYY-MM"
+    period: PeriodStr | None = None  # "YYYY-MM"
     months_covered: int = Field(1, ge=1, le=MONTHS_COVERED_MAX)  # monthly or bimonthly
-
-    @field_validator("period")
-    @classmethod
-    def validate_period(cls, v: str | None) -> str | None:
-        if v is not None and not re.fullmatch(PERIOD_REGEX, v):
-            raise ValueError(PERIOD_INVALID_FORMAT)
-        return v
 
 
 class ChargeResponse(BaseModel):

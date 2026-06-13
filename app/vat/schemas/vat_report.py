@@ -1,13 +1,12 @@
 """Pydantic request / response schemas for the VAT Reports module."""
 
-import re
 from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
 
 from app.common.enums import SubmissionMethod, VatType
 from app.core.action_schemas import ActionDescriptor
-from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal, PeriodStr
 from app.vat.models.vat_enums import VatWorkItemStatus
 
 # ── Work Item ─────────────────────────────────────────────────────────────────
@@ -15,17 +14,10 @@ from app.vat.models.vat_enums import VatWorkItemStatus
 
 class VatWorkItemCreateRequest(BaseModel):
     client_record_id: int
-    period: str  # "YYYY-MM"
+    period: PeriodStr
     assigned_to: int | None = None
     mark_pending: bool = False
     pending_materials_note: str | None = None
-
-    @field_validator("period")
-    @classmethod
-    def validate_period(cls, v: str) -> str:
-        if not re.fullmatch(r"\d{4}-(?:0[1-9]|1[0-2])", v):
-            raise ValueError("התקופה חייבת להיות בפורמט YYYY-MM")
-        return v
 
 
 class VatWorkItemResponse(BaseModel):
