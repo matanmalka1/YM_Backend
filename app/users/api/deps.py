@@ -1,4 +1,4 @@
-from typing import Annotated
+from typing import Annotated, Protocol, cast
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -62,6 +62,15 @@ def get_current_user(
     return user
 
 
+class RoleDependency(Protocol):
+    __requires_role__: bool
+
+    def __call__(
+        self,
+        current_user: Annotated[AuthSubject, Depends(get_current_user)],
+    ) -> AuthSubject: ...
+
+
 def require_role(*allowed_roles: UserRole):
     """Dependency factory for role-based access control."""
 
@@ -75,8 +84,9 @@ def require_role(*allowed_roles: UserRole):
             )
         return current_user
 
-    role_checker.__requires_role__ = True
-    return role_checker
+    role_dependency = cast(RoleDependency, role_checker)
+    role_dependency.__requires_role__ = True
+    return role_dependency
 
 
 # Common dependencies
