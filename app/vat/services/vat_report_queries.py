@@ -52,13 +52,17 @@ def list_client_work_items_paginated(
     client_record_id: int,
     page: int = 1,
     page_size: int = 200,
+    *,
+    filters: dict | None = None,
 ):
+    filters = filters or {}
     items = work_item_repo.list_by_client_record_paginated(
         client_record_id,
         page=page,
         page_size=page_size,
+        **filters,
     )
-    total = work_item_repo.count_by_client_record(client_record_id)
+    total = work_item_repo.count_by_client_record(client_record_id, **filters)
     return items, total
 
 

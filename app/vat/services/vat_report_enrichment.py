@@ -66,6 +66,8 @@ def get_client_items_enriched(
     client_record_id: int,
     page: int,
     page_size: int,
+    *,
+    filters: dict | None = None,
 ) -> dict:
     """Return client work items + enrichment data."""
     items, total = list_client_work_items_paginated(
@@ -73,6 +75,7 @@ def get_client_items_enriched(
         client_record_id,
         page=page,
         page_size=page_size,
+        filters=filters,
     )
     user_ids = list({uid for item in items for uid in [item.assigned_to, item.filed_by] if uid})
     users = user_repo.list_by_ids(user_ids) if user_ids else []

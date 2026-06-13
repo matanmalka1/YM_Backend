@@ -46,7 +46,7 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
                 AnnualReport.client_record_id == client_record_id,
                 AnnualReport.deleted_at.is_(None),
             )
-            .order_by(AnnualReport.tax_year.desc())
+            .order_by(AnnualReport.tax_year.desc(), AnnualReport.id.desc())
         )
         stmt = self.apply_pagination(stmt, page, page_size)
         return list(self.db.scalars(stmt).all())

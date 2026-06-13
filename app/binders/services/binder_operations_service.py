@@ -21,10 +21,25 @@ class BinderOperationsService:
         self,
         page: int = 1,
         page_size: int = 20,
+        *,
+        client_record_id: int | None = None,
+        binder_number: str | None = None,
+        location_status: str | None = None,
+        capacity_status: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
     ) -> tuple[list[Binder], int]:
-        """Get open binders with pagination."""
-        items = self.repo.list_open_binders(page=page, page_size=page_size)
-        total = self.repo.count_open_binders()
+        """Get open binders with optional filters and pagination."""
+        filters = {
+            "client_record_id": client_record_id,
+            "binder_number": binder_number,
+            "location_status": location_status,
+            "capacity_status": capacity_status,
+            "created_after": created_after,
+            "created_before": created_before,
+        }
+        items = self.repo.list_open_binders(page=page, page_size=page_size, **filters)
+        total = self.repo.count_open_binders(**filters)
         return items, total
 
     def get_client_binders(

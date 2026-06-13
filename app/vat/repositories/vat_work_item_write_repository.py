@@ -38,15 +38,46 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         client_record_id: int,
         page: int = 1,
         page_size: int = 200,
+        *,
+        year: int | None = None,
+        period: str | None = None,
+        status: VatWorkItemStatus | None = None,
+        assigned_to: int | None = None,
+        due_after: date | None = None,
+        due_before: date | None = None,
     ) -> list[VatWorkItem]:
         return self._query.list_by_client_record_paginated(
             client_record_id,
             page=page,
             page_size=page_size,
+            year=year,
+            period=period,
+            status=status,
+            assigned_to=assigned_to,
+            due_after=due_after,
+            due_before=due_before,
         )
 
-    def count_by_client_record(self, client_record_id: int) -> int:
-        return self._query.count_by_client_record(client_record_id)
+    def count_by_client_record(
+        self,
+        client_record_id: int,
+        *,
+        year: int | None = None,
+        period: str | None = None,
+        status: VatWorkItemStatus | None = None,
+        assigned_to: int | None = None,
+        due_after: date | None = None,
+        due_before: date | None = None,
+    ) -> int:
+        return self._query.count_by_client_record(
+            client_record_id,
+            year=year,
+            period=period,
+            status=status,
+            assigned_to=assigned_to,
+            due_after=due_after,
+            due_before=due_before,
+        )
 
     def list_by_business_activity(
         self, business_activity_id: int, limit: int = 200

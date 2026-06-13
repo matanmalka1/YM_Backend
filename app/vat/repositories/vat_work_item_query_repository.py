@@ -1,5 +1,7 @@
 """Read-only queries for VatWorkItem entities."""
 
+from datetime import date
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -75,29 +77,91 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             .limit(limit)
         ).all()
 
+    @staticmethod
+    def _client_work_item_filters(
+        client_record_id: int,
+        *,
+        year: int | None = None,
+        period: str | None = None,
+        status: VatWorkItemStatus | None = None,
+        assigned_to: int | None = None,
+        due_after: date | None = None,
+        due_before: date | None = None,
+    ) -> list:
+        """Filter set shared by the client work-item list and count queries.
+
+        ``client_record_id`` path scope and the not-deleted constraint always
+        apply; optional operational filters narrow the result further (they never
+        widen access).
+        """
+        filters = [
+            VatWorkItem.client_record_id == client_record_id,
+            VatWorkItem.deleted_at.is_(None),
+        ]
+        if year is not None:
+            filters.append(VatWorkItem.period.startswith(f"{year}-"))
+        if period:
+            filters.append(VatWorkItem.period == period)
+        if status is not None:
+            filters.append(VatWorkItem.status == status)
+        if assigned_to is not None:
+            filters.append(VatWorkItem.assigned_to == assigned_to)
+        if due_after is not None:
+            filters.append(VatWorkItem.due_date_effective >= due_after)
+        if due_before is not None:
+            filters.append(VatWorkItem.due_date_effective <= due_before)
+        return filters
+
     def list_by_client_record_paginated(
         self,
         client_record_id: int,
         page: int = 1,
         page_size: int = 200,
+        *,
+        year: int | None = None,
+        period: str | None = None,
+        status: VatWorkItemStatus | None = None,
+        assigned_to: int | None = None,
+        due_after: date | None = None,
+        due_before: date | None = None,
     ) -> list[VatWorkItem]:
+        filters = self._client_work_item_filters(
+            client_record_id,
+            year=year,
+            period=period,
+            status=status,
+            assigned_to=assigned_to,
+            due_after=due_after,
+            due_before=due_before,
+        )
         stmt = (
             select(VatWorkItem)
-            .where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.deleted_at.is_(None),
-            )
-            .order_by(VatWorkItem.period.desc())
+            .where(*filters)
+            .order_by(VatWorkItem.period.desc(), VatWorkItem.id.desc())
         )
         return list(self.db.scalars(self.apply_pagination(stmt, page, page_size)).all())
 
-    def count_by_client_record(self, client_record_id: int) -> int:
-        return self.db.scalar(
-            select(func.count(VatWorkItem.id)).where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.deleted_at.is_(None),
-            )
+    def count_by_client_record(
+        self,
+        client_record_id: int,
+        *,
+        year: int | None = None,
+        period: str | None = None,
+        status: VatWorkItemStatus | None = None,
+        assigned_to: int | None = None,
+        due_after: date | None = None,
+        due_before: date | None = None,
+    ) -> int:
+        filters = self._client_work_item_filters(
+            client_record_id,
+            year=year,
+            period=period,
+            status=status,
+            assigned_to=assigned_to,
+            due_after=due_after,
+            due_before=due_before,
         )
+        return self.db.scalar(select(func.count(VatWorkItem.id)).where(*filters))
 
     def list_by_business_activity(
         self, business_activity_id: int, limit: int = 200

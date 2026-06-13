@@ -103,3 +103,22 @@ def test_list_by_legal_entity_ids_matches_multiple_entities_and_empty_input(test
         second.id,
     }
     assert repo.list_by_legal_entity_ids([]) == []
+
+
+def test_list_by_legal_entity_empty_returns_empty_and_zero_count(test_db, repo):
+    entity = _legal_entity(test_db)
+
+    assert repo.list_by_legal_entity(entity.id) == []
+    assert repo.count_by_legal_entity(entity.id) == 0
+
+
+def test_list_by_legal_entity_deterministic_tie_breaker(test_db, repo):
+    entity = _legal_entity(test_db)
+    # All share opened_at=date(2024, 1, 1); id asc tie-breaker fixes the order.
+    first = _business(test_db, entity.id)
+    second = _business(test_db, entity.id)
+    third = _business(test_db, entity.id)
+
+    items = repo.list_by_legal_entity(entity.id)
+
+    assert [b.id for b in items] == [first.id, second.id, third.id]

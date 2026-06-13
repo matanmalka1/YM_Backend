@@ -84,3 +84,27 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     assert len(detail.status_audit) >= 1
     assert hasattr(detail, "available_actions")
     assert hasattr(detail, "available_transitions")
+
+
+def test_get_client_reports_empty_client_returns_empty_with_zero_total(test_db):
+    service = AnnualReportService(test_db)
+    client = _client(test_db)
+
+    reports, total = service.get_client_reports(client.id, page=1, page_size=20)
+
+    assert total == 0
+    assert reports == []
+
+
+def test_get_client_reports_deterministic_order_by_tax_year_desc(test_db, test_user):
+    service = AnnualReportService(test_db)
+    client = _client(test_db)
+    r_2024 = _create_report(service, client.id, 2024, test_user.id)
+    r_2026 = _create_report(service, client.id, 2026, test_user.id)
+    r_2025 = _create_report(service, client.id, 2025, test_user.id)
+
+    reports, total = service.get_client_reports(client.id, page=1, page_size=20)
+
+    assert total == 3
+    # tax_year desc, with id desc as the stable tie-breaker.
+    assert [r.id for r in reports] == [r_2026.id, r_2025.id, r_2024.id]

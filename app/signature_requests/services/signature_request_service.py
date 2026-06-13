@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+from datetime import date
 
 from sqlalchemy.orm import Session
 
@@ -10,6 +11,7 @@ from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
     SignatureRequestStatus,
+    SignatureRequestType,
 )
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
@@ -159,10 +161,27 @@ class SignatureRequestService:
         return items, total
 
     def list_pending_requests(
-        self, *, page: int = 1, page_size: int = 20
+        self,
+        *,
+        page: int = 1,
+        page_size: int = 20,
+        client_record_id: int | None = None,
+        request_type: SignatureRequestType | None = None,
+        signer_email: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
+        expires_before: date | None = None,
     ) -> tuple[list[SignatureRequest], int]:
-        items = self.repo.list_pending(page=page, page_size=page_size)
-        total = self.repo.count_pending()
+        filters = {
+            "client_record_id": client_record_id,
+            "request_type": request_type,
+            "signer_email": signer_email,
+            "created_after": created_after,
+            "created_before": created_before,
+            "expires_before": expires_before,
+        }
+        items = self.repo.list_pending(page=page, page_size=page_size, **filters)
+        total = self.repo.count_pending(**filters)
         return items, total
 
     def get_audit_trail(self, request_id: int) -> list:

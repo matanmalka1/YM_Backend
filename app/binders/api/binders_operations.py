@@ -1,5 +1,8 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 
+from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.schemas.binder_extended import (
     BinderDetailResponse,
     BinderListResponseExtended,
@@ -38,8 +41,23 @@ def list_open_binders(
     user: CurrentUser,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
+    client_record_id: int | None = Query(None),
+    binder_number: str | None = Query(None),
+    location_status: BinderLocationStatus | None = Query(None),
+    capacity_status: BinderCapacityStatus | None = Query(None),
+    created_after: date | None = Query(None),
+    created_before: date | None = Query(None),
 ):
     """List binders that have not been handed over."""
     service = BinderOperationsService(db)
-    items, total = service.get_open_binders(page=page, page_size=page_size)
+    items, total = service.get_open_binders(
+        page=page,
+        page_size=page_size,
+        client_record_id=client_record_id,
+        binder_number=binder_number,
+        location_status=location_status,
+        capacity_status=capacity_status,
+        created_after=created_after,
+        created_before=created_before,
+    )
     return _build_response(items, service, page, page_size, total)

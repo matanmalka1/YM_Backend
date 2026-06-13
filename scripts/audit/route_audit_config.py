@@ -81,8 +81,6 @@ NO_PAGINATION_EXCEPTIONS: set[tuple[str, str]] = {
     ("GET", "/api/v1/annual-reports/{param}/income"),
     ("GET", "/api/v1/annual-reports/{param}/expenses"),
     ("GET", "/api/v1/annual-reports/{param}/status"),
-    ("GET", "/api/v1/signature-requests/pending"),
-    ("GET", "/api/v1/binders/open"),
     ("GET", "/api/v1/work-queue"),
     ("GET", "/api/v1/binders/{param}/intakes"),
     ("GET", "/api/v1/vat/work-items/{param}/invoices"),

@@ -115,7 +115,12 @@ class VatReportService:
         )
 
     def get_client_items_enriched(
-        self, client_record_id: int, page: int = 1, page_size: int = 200
+        self,
+        client_record_id: int,
+        page: int = 1,
+        page_size: int = 200,
+        *,
+        filters: dict | None = None,
     ) -> dict:
         return vat_report_enrichment.get_client_items_enriched(
             self.work_item_repo,
@@ -123,6 +128,7 @@ class VatReportService:
             client_record_id,
             page=page,
             page_size=page_size,
+            filters=filters,
         )
 
     def get_list_enriched(self, **kwargs) -> dict:

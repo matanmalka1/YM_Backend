@@ -1,5 +1,7 @@
 """Service layer for read-only entity audit trail queries."""
 
+from datetime import datetime
+
 from sqlalchemy.orm import Session
 
 from app.annual_reports.repositories.annual_report_repository import (
@@ -58,11 +60,24 @@ class AuditTrailService:
         entity_id: int,
         page: int = 1,
         page_size: int = 20,
+        *,
+        action: str | None = None,
+        user_id: int | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
     ) -> EntityAuditTrailResponse:
         self._assert_entity_readable(entity_type, entity_id)
         offset = (page - 1) * page_size
-        entries = self.audit_repo.get_audit_trail(entity_type, entity_id, page_size, offset)
-        total = self.audit_repo.count_audit_trail(entity_type, entity_id)
+        filters = {
+            "action": action,
+            "user_id": user_id,
+            "created_after": created_after,
+            "created_before": created_before,
+        }
+        entries = self.audit_repo.get_audit_trail(
+            entity_type, entity_id, page_size, offset, **filters
+        )
+        total = self.audit_repo.count_audit_trail(entity_type, entity_id, **filters)
         user_ids = list({entry.performed_by for entry in entries})
         users = self.user_repo.list_by_ids(user_ids) if user_ids else []
         user_map = {user.id: user.full_name for user in users}

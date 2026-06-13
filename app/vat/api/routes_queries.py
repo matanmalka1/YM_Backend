@@ -1,5 +1,7 @@
 """Routes: read-only queries — work items, audit trail."""
 
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import VatType
@@ -108,12 +110,26 @@ def list_client_work_items(
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=200, ge=1, le=MAX_PAGE_SIZE),
+    year: int | None = Query(default=None),
+    period: str | None = Query(default=None),
+    status: VatWorkItemStatus | None = Query(default=None),
+    assigned_to: int | None = Query(default=None),
+    due_after: date | None = Query(default=None),
+    due_before: date | None = Query(default=None),
 ):
     service = VatReportService(db)
     enriched = service.get_client_items_enriched(
         client_record_id,
         page=page,
         page_size=page_size,
+        filters={
+            "year": year,
+            "period": period,
+            "status": status,
+            "assigned_to": assigned_to,
+            "due_after": due_after,
+            "due_before": due_before,
+        },
     )
     items = serialize_enriched_work_items(
         enriched["items"],

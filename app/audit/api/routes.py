@@ -1,5 +1,7 @@
 """Routes: read-only audit trail queries."""
 
+from datetime import datetime
+
 from fastapi import APIRouter, Depends, Query
 
 from app.audit.schemas.entity_audit_log import EntityAuditTrailResponse
@@ -28,6 +30,19 @@ def get_entity_audit_trail(
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
+    action: str | None = Query(default=None),
+    user_id: int | None = Query(default=None),
+    created_after: datetime | None = Query(default=None),
+    created_before: datetime | None = Query(default=None),
 ):
     """Get the full audit trail for any audited entity."""
-    return AuditTrailService(db).get_entity_audit_trail(entity_type, entity_id, page, page_size)
+    return AuditTrailService(db).get_entity_audit_trail(
+        entity_type,
+        entity_id,
+        page,
+        page_size,
+        action=action,
+        user_id=user_id,
+        created_after=created_after,
+        created_before=created_before,
+    )

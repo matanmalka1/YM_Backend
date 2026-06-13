@@ -153,7 +153,7 @@ class BusinessRepository(BaseRepository[Business]):
                 Business.legal_entity_id == legal_entity_id,
                 Business.deleted_at.is_(None),
             )
-            .order_by(Business.opened_at.asc())
+            .order_by(Business.opened_at.asc(), Business.id.asc())
         )
         stmt = self.apply_pagination(stmt, page, page_size)
         return self.db.scalars(stmt).all()

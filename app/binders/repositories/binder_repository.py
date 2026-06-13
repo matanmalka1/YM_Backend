@@ -10,7 +10,7 @@ from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
-from app.utils.time_utils import utcnow
+from app.utils.time_utils import start_of_day, start_of_next_day, utcnow
 
 
 @dataclass(frozen=True)
@@ -62,6 +62,8 @@ class BinderRepository(BaseRepository[Binder]):
         client_name_filter: str | None = None,
         binder_number: str | None = None,
         year: int | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
         include_legal_entity: bool = False,
     ):
         needs_legal_entity = include_legal_entity or bool(query or client_name_filter)
@@ -71,10 +73,10 @@ class BinderRepository(BaseRepository[Binder]):
 
         if client_record_id:
             stmt = stmt.where(Binder.client_record_id == client_record_id)
+        if not include_handed_over:
+            stmt = stmt.where(Binder.location_status != BinderLocationStatus.HANDED_OVER)
         if location_status:
             stmt = stmt.where(Binder.location_status == location_status)
-        elif not include_handed_over:
-            stmt = stmt.where(Binder.location_status != BinderLocationStatus.HANDED_OVER)
         if capacity_status:
             stmt = stmt.where(Binder.capacity_status == capacity_status)
 
@@ -92,6 +94,10 @@ class BinderRepository(BaseRepository[Binder]):
             stmt = stmt.where(Binder.binder_number.ilike(f"%{binder_number.strip()}%"))
         if year:
             stmt = stmt.where(extract("year", Binder.period_start) == year)
+        if created_after is not None:
+            stmt = stmt.where(Binder.created_at >= start_of_day(created_after))
+        if created_before is not None:
+            stmt = stmt.where(Binder.created_at < start_of_next_day(created_before))
 
         return stmt
 
@@ -390,25 +396,79 @@ class BinderRepository(BaseRepository[Binder]):
 
         return self.db.scalar(stmt)
 
+    def _open_binder_stmt(
+        self,
+        stmt,
+        *,
+        client_record_id: int | None = None,
+        binder_number: str | None = None,
+        location_status: str | None = None,
+        capacity_status: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
+    ):
+        """Apply the open-binder filter set to ``stmt``.
+
+        Shared by ``list_open_binders`` and ``count_open_binders`` so the list and
+        count queries always use identical filters. ``include_handed_over=False``
+        enforces the "open only" (not handed over) constraint.
+        """
+        return self._filtered_active_stmt(
+            stmt,
+            client_record_id=client_record_id,
+            binder_number=binder_number,
+            location_status=location_status,
+            capacity_status=capacity_status,
+            created_after=created_after,
+            created_before=created_before,
+            include_handed_over=False,
+        )
+
     def list_open_binders(
         self,
         page: int = 1,
         page_size: int = 20,
+        *,
+        client_record_id: int | None = None,
+        binder_number: str | None = None,
+        location_status: str | None = None,
+        capacity_status: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
     ) -> list[Binder]:
-        """List non-handed-over binders with pagination."""
-        stmt = self._active_client_stmt().where(
-            Binder.location_status != BinderLocationStatus.HANDED_OVER,
-            Binder.deleted_at.is_(None),
+        """List non-handed-over binders with optional filters and pagination."""
+        stmt = self._open_binder_stmt(
+            select(Binder),
+            client_record_id=client_record_id,
+            binder_number=binder_number,
+            location_status=location_status,
+            capacity_status=capacity_status,
+            created_after=created_after,
+            created_before=created_before,
         )
         stmt = self._order_by_period_start(stmt, descending=True)
         stmt = self.apply_pagination(stmt, page, page_size)
         return self.db.scalars(stmt).all()
 
-    def count_open_binders(self) -> int:
-        """Count non-handed-over binders."""
-        stmt = scope_to_active_clients_stmt(select(func.count(Binder.id)), Binder).where(
-            Binder.location_status != BinderLocationStatus.HANDED_OVER,
-            Binder.deleted_at.is_(None),
+    def count_open_binders(
+        self,
+        *,
+        client_record_id: int | None = None,
+        binder_number: str | None = None,
+        location_status: str | None = None,
+        capacity_status: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
+    ) -> int:
+        """Count non-handed-over binders with the same filters as the list query."""
+        stmt = self._open_binder_stmt(
+            select(func.count(Binder.id)),
+            client_record_id=client_record_id,
+            binder_number=binder_number,
+            location_status=location_status,
+            capacity_status=capacity_status,
+            created_after=created_after,
+            created_before=created_before,
         )
         return self.db.scalar(stmt)
 

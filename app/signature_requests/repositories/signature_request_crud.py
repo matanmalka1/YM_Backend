@@ -1,4 +1,5 @@
 import datetime
+from datetime import date
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -8,7 +9,7 @@ from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
 )
-from app.utils.time_utils import utcnow
+from app.utils.time_utils import start_of_day, start_of_next_day, utcnow
 
 
 class SignatureRequestCrudMixin:
@@ -171,25 +172,90 @@ class SignatureRequestCrudMixin:
 
     # ── Pending (global advisor view) ─────────────────────────────────────────
 
-    def list_pending(self, page: int = 1, page_size: int = 20) -> list[SignatureRequest]:
-        offset = (page - 1) * page_size
+    @staticmethod
+    def _pending_filters(
+        *,
+        client_record_id: int | None = None,
+        request_type: SignatureRequestType | None = None,
+        signer_email: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
+        expires_before: date | None = None,
+    ) -> list:
+        """Filter set shared by ``list_pending`` and ``count_pending``.
+
+        Always pins the query to the pending, not-deleted subset; optional
+        operational filters narrow it further.
+        """
+        filters = [
+            SignatureRequest.status == SignatureRequestStatus.PENDING_SIGNATURE,
+            SignatureRequest.deleted_at.is_(None),
+        ]
+        if client_record_id is not None:
+            filters.append(SignatureRequest.client_record_id == client_record_id)
+        if request_type is not None:
+            filters.append(SignatureRequest.request_type == request_type)
+        if signer_email:
+            filters.append(SignatureRequest.signer_email.ilike(f"%{signer_email.strip()}%"))
+        if created_after is not None:
+            filters.append(SignatureRequest.created_at >= start_of_day(created_after))
+        if created_before is not None:
+            filters.append(SignatureRequest.created_at < start_of_next_day(created_before))
+        if expires_before is not None:
+            filters.append(SignatureRequest.expires_at < start_of_next_day(expires_before))
+        return filters
+
+    def list_pending(
+        self,
+        page: int = 1,
+        page_size: int = 20,
+        *,
+        client_record_id: int | None = None,
+        request_type: SignatureRequestType | None = None,
+        signer_email: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
+        expires_before: date | None = None,
+    ) -> list[SignatureRequest]:
+        filters = self._pending_filters(
+            client_record_id=client_record_id,
+            request_type=request_type,
+            signer_email=signer_email,
+            created_after=created_after,
+            created_before=created_before,
+            expires_before=expires_before,
+        )
         stmt = (
             select(SignatureRequest)
-            .where(
-                SignatureRequest.status == SignatureRequestStatus.PENDING_SIGNATURE,
-                SignatureRequest.deleted_at.is_(None),
+            .where(*filters)
+            .order_by(
+                SignatureRequest.sent_at.asc().nulls_last(),
+                SignatureRequest.id.asc(),
             )
-            .order_by(SignatureRequest.sent_at.asc().nulls_last())
-            .offset(offset)
+            .offset((page - 1) * page_size)
             .limit(page_size)
         )
         return self.db.scalars(stmt).all()
 
-    def count_pending(self) -> int:
-        stmt = select(func.count(SignatureRequest.id)).where(
-            SignatureRequest.status == SignatureRequestStatus.PENDING_SIGNATURE,
-            SignatureRequest.deleted_at.is_(None),
+    def count_pending(
+        self,
+        *,
+        client_record_id: int | None = None,
+        request_type: SignatureRequestType | None = None,
+        signer_email: str | None = None,
+        created_after: date | None = None,
+        created_before: date | None = None,
+        expires_before: date | None = None,
+    ) -> int:
+        filters = self._pending_filters(
+            client_record_id=client_record_id,
+            request_type=request_type,
+            signer_email=signer_email,
+            created_after=created_after,
+            created_before=created_before,
+            expires_before=expires_before,
         )
+        stmt = select(func.count(SignatureRequest.id)).where(*filters)
         return self.db.scalar(stmt)
 
     def update(
