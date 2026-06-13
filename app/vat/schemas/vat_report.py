@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field, field_validator
 from app.common.enums import SubmissionMethod, VatType
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal, PeriodStr
+from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.vat.models.vat_enums import VatWorkItemStatus
 
 # ── Work Item ─────────────────────────────────────────────────────────────────
@@ -17,6 +18,11 @@ class VatWorkItemCreateRequest(BaseModel):
     period: PeriodStr
     assigned_to: int | None = None
     mark_pending: bool = False
+    pending_materials_note: str | None = None
+
+
+class VatWorkItemUpdateRequest(NonEmptyUpdateMixin):
+    assigned_to: int | None = None
     pending_materials_note: str | None = None
 
 

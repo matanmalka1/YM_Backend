@@ -20,6 +20,11 @@ VAT_WORK_ITEM_TRANSITION_RESPONSES = error_responses(
     conflict_response(description="מעבר הסטטוס אינו חוקי במצב הנוכחי"),
 )
 
+VAT_WORK_ITEM_MUTATION_RESPONSES = error_responses(
+    bad_request_response(description='לא ניתן לעדכן או למחוק פריט עבודה למע"מ במצב הנוכחי'),
+    not_found_response(description='פריט עבודה למע"מ לא נמצא'),
+)
+
 VAT_INVOICE_CREATE_RESPONSES = error_responses(
     bad_request_response(description="נתוני החשבונית אינם תקינים"),
     not_found_response(description='פריט עבודה למע"מ לא נמצא'),

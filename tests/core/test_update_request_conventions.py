@@ -24,6 +24,7 @@ from app.notes.schemas.entity_note import EntityNoteUpdateRequest
 from app.tasks.schemas.task import TaskUpdateRequest
 from app.users.schemas.user_management import UserUpdateRequest
 from app.vat.schemas.vat_invoice_update import VatInvoiceUpdateRequest
+from app.vat.schemas.vat_report import VatWorkItemUpdateRequest
 
 ALL_UPDATE_SCHEMAS = [
     AdvancePaymentUpdateRequest,
@@ -40,13 +41,14 @@ ALL_UPDATE_SCHEMAS = [
     TaskUpdateRequest,
     UserUpdateRequest,
     VatInvoiceUpdateRequest,
+    VatWorkItemUpdateRequest,
     BinderIntakeUpdateRequest,
 ]
 
 
 def test_all_update_schemas_are_guarded():
-    # 14 existing + renamed BinderIntakeUpdateRequest = 15.
-    assert len(ALL_UPDATE_SCHEMAS) == 15
+    # 14 existing + renamed BinderIntakeUpdateRequest + VAT work item = 16.
+    assert len(ALL_UPDATE_SCHEMAS) == 16
 
 
 @pytest.mark.parametrize("schema", ALL_UPDATE_SCHEMAS, ids=lambda s: s.__name__)
@@ -134,6 +136,8 @@ def test_explicit_null_rejected_for_non_nullable(schema, field):
         (BusinessUpdateRequest, "closed_at"),
         (UserUpdateRequest, "phone"),
         (BinderIntakeUpdateRequest, "notes"),
+        (VatWorkItemUpdateRequest, "assigned_to"),
+        (VatWorkItemUpdateRequest, "pending_materials_note"),
     ],
     ids=lambda v: v if isinstance(v, str) else v.__name__,
 )

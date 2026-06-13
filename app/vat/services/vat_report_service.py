@@ -18,6 +18,7 @@ from app.vat.services import (
     period_options,
     vat_report_enrichment,
     vat_report_queries,
+    work_item_metadata,
 )
 from app.vat.services.data_entry_invoice_delete import delete_invoice
 from app.vat.services.data_entry_invoice_update import update_invoice
@@ -49,6 +50,12 @@ class VatReportService:
 
     def mark_materials_complete(self, **kwargs):
         return intake.mark_materials_complete(self.work_item_repo, **kwargs)
+
+    def update_work_item_metadata(self, **kwargs):
+        return work_item_metadata.update_work_item_metadata(self.work_item_repo, **kwargs)
+
+    def soft_delete_work_item(self, **kwargs):
+        return work_item_metadata.soft_delete_work_item(self.work_item_repo, **kwargs)
 
     def get_period_options(self, **kwargs):
         return period_options.get_period_options(

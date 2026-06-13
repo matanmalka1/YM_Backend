@@ -9,9 +9,11 @@ from app.vat.api.routes_grouped import router as grouped_router
 from app.vat.api.routes_intake import router as intake_router
 from app.vat.api.routes_queries import router as queries_router
 from app.vat.api.routes_status import router as status_router
+from app.vat.api.routes_work_items import router as work_items_router
 
 router = APIRouter()
 router.include_router(intake_router)
+router.include_router(work_items_router)
 router.include_router(data_entry_router)
 router.include_router(status_router)
 router.include_router(filing_router)

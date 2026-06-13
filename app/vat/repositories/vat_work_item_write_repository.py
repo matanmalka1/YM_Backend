@@ -164,6 +164,39 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         self.db.flush()
         return item
 
+    def update_work_item_metadata(
+        self,
+        item_id: int,
+        *,
+        item: VatWorkItem | None = None,
+        **fields,
+    ) -> VatWorkItem | None:
+        item = item or self.get_by_id(item_id)
+        if not item:
+            return None
+        for key, value in fields.items():
+            if hasattr(item, key):
+                setattr(item, key, value)
+        item.updated_at = utcnow()
+        self.db.flush()
+        return item
+
+    def soft_delete_work_item(
+        self,
+        item_id: int,
+        *,
+        deleted_by: int,
+        item: VatWorkItem | None = None,
+    ) -> VatWorkItem | None:
+        item = item or self.get_by_id(item_id)
+        if not item:
+            return None
+        item.deleted_at = utcnow()
+        item.deleted_by = deleted_by
+        item.updated_at = utcnow()
+        self.db.flush()
+        return item
+
     def cancel_open_by_client_record(self, client_record_id: int) -> int:
         rows = self.db.scalars(
             select(VatWorkItem).where(

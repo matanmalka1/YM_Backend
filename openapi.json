@@ -14913,6 +14913,241 @@
         }
       }
     },
+    "/api/v1/vat/work-items/{item_id}": {
+      "patch": {
+        "tags": [
+          "vat-reports"
+        ],
+        "summary": "Update Work Item Metadata",
+        "operationId": "update_work_item_metadata_api_v1_vat_work_items__item_id__patch",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VatWorkItemUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatWorkItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "לא ניתן לעדכן או למחוק פריט עבודה למע\"מ במצב הנוכחי",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "נדרש אימות",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "אין הרשאה לביצוע הפעולה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "vat-reports"
+        ],
+        "summary": "Delete Work Item",
+        "operationId": "delete_work_item_api_v1_vat_work_items__item_id__delete",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "400": {
+            "description": "לא ניתן לעדכן או למחוק פריט עבודה למע\"מ במצב הנוכחי",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "נדרש אימות",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "אין הרשאה לביצוע הפעולה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "vat-reports"
+        ],
+        "summary": "Get Work Item",
+        "operationId": "get_work_item_api_v1_vat_work_items__item_id__get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatWorkItemResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "פריט עבודה למע\"מ לא נמצא",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "נדרש אימות",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "אין הרשאה לביצוע הפעולה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/vat/work-items/{item_id}/invoices": {
       "post": {
         "tags": [
@@ -16066,78 +16301,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/VatWorkItemStatusSummaryResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "נדרש אימות",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "אין הרשאה לביצוע הפעולה",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/vat/work-items/{item_id}": {
-      "get": {
-        "tags": [
-          "vat-reports"
-        ],
-        "summary": "Get Work Item",
-        "operationId": "get_work_item_api_v1_vat_work_items__item_id__get",
-        "parameters": [
-          {
-            "name": "item_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Item Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/VatWorkItemResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "פריט עבודה למע\"מ לא נמצא",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -34918,6 +35081,35 @@
         },
         "type": "object",
         "title": "VatWorkItemStatusSummaryResponse"
+      },
+      "VatWorkItemUpdateRequest": {
+        "properties": {
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
+          "pending_materials_note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pending Materials Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "VatWorkItemUpdateRequest"
       },
       "WorkQueueItem": {
         "properties": {
