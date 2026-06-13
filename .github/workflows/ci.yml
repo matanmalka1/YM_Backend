@@ -50,9 +50,7 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pytest-cov
+        run: pip install -r requirements.txt
 
       - name: Run pytest
         # Tests use in-memory SQLite and set APP_ENV themselves; JWT_SECRET
@@ -178,9 +176,7 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
-          pip install pyright
+        run: pip install -r requirements.txt
 
       - name: pyright
         # pyrightconfig.json pins an absolute local venvPath that does not

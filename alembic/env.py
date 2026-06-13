@@ -31,6 +31,7 @@ def run_migrations_offline() -> None:
         target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
+        compare_type=True,
     )
 
     with context.begin_transaction():
@@ -87,6 +88,13 @@ def run_migrations_online() -> None:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
+            compare_type=True,
+            # compare_server_default deliberately NOT enabled: client_records
+            # .office_client_number has a nextval() server default in the
+            # migration but not on the model (the model omits it so SQLite
+            # test DDL via create_all does not emit CREATE SEQUENCE — see
+            # app/clients/models/client_record.py). Enabling it would flag
+            # that intentional asymmetry on every run.
         )
 
         with context.begin_transaction():
