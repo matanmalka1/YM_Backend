@@ -19,6 +19,14 @@ if TYPE_CHECKING:
 
 
 class ExpenseCategoryType(str, PyEnum):
+    """Annual report expense-line categories used for income-tax / reporting classification.
+
+    These are higher-level recognition categories for the annual report, not
+    the same as VAT's ExpenseCategory. VAT's 24 granular categories are
+    consolidated into these 12 via _VAT_TO_ANNUAL in
+    backend/app/annual_reports/services/vat_import_service.py.
+    """
+
     OFFICE_RENT = "office_rent"  # שכירות משרד
     PROFESSIONAL_SERVICES = "professional_services"  # שירותים מקצועיים
     SALARIES = "salaries"  # שכר עבודה

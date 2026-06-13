@@ -25,6 +25,15 @@ class InvoiceType(str, PyEnum):
 
 
 class ExpenseCategory(str, PyEnum):
+    """VAT invoice source categories used for VAT deduction and data-entry classification.
+
+    These are granular operational categories captured at invoice-entry time.
+    Do not reuse for annual report expense lines — those use ExpenseCategoryType.
+    Each value is mapped to an ExpenseCategoryType via _VAT_TO_ANNUAL in
+    backend/app/annual_reports/services/vat_import_service.py. Any new value
+    added here must also be added to that mapping.
+    """
+
     INVENTORY = "inventory"
     OFFICE = "office"
     TRAVEL = "travel"

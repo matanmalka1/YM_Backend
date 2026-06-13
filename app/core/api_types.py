@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 from decimal import ROUND_HALF_UP, Decimal
+from enum import Enum
 from typing import Annotated, Any, Generic, TypeVar
 
 from pydantic import (
@@ -13,6 +14,13 @@ from pydantic import (
 )
 
 T = TypeVar("T")
+
+
+class SortOrder(str, Enum):
+    """Shared sort-direction enum for list endpoints."""
+
+    asc = "asc"
+    desc = "desc"
 
 # Business-required text: strips surrounding whitespace then rejects empty,
 # so "" and whitespace-only ("   ") both fail validation with 422.

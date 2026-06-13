@@ -13,9 +13,9 @@ from app.utils.time_utils import utcnow
 
 
 class ReminderActionType(str, PyEnum):
-    CREATE_TASK = "CREATE_TASK"
-    SEND_NOTIFICATION = "SEND_NOTIFICATION"
-    CREATE_TASK_AND_NOTIFY = "CREATE_TASK_AND_NOTIFY"
+    CREATE_TASK = "create_task"
+    SEND_NOTIFICATION = "send_notification"
+    CREATE_TASK_AND_NOTIFY = "create_task_and_notify"
 
 
 class ReminderStatus(str, PyEnum):

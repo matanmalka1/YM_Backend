@@ -12590,13 +12590,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "asc",
-                "desc"
-              ],
-              "type": "string",
-              "default": "desc",
-              "title": "Order"
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "desc"
             }
           }
         ],
@@ -18709,8 +18704,12 @@
             ]
           },
           "collection_rate": {
-            "type": "number",
-            "title": "Collection Rate"
+            "type": "string",
+            "format": "decimal",
+            "title": "Collection Rate",
+            "examples": [
+              "123.45"
+            ]
           },
           "total_gap": {
             "type": "string",
@@ -18948,7 +18947,11 @@
           "collection_rate": {
             "anyOf": [
               {
-                "type": "number"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -20016,8 +20019,12 @@
             ]
           },
           "collection_rate": {
-            "type": "number",
-            "title": "Collection Rate"
+            "type": "string",
+            "format": "decimal",
+            "title": "Collection Rate",
+            "examples": [
+              "123.45"
+            ]
           },
           "overdue_count": {
             "type": "integer",
@@ -20124,7 +20131,11 @@
           "filing_deadline": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
               },
               {
                 "type": "null"
@@ -21221,7 +21232,10 @@
             "anyOf": [
               {
                 "type": "string",
-                "format": "date"
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
               },
               {
                 "type": "null"
@@ -21538,7 +21552,9 @@
         "properties": {
           "id": {
             "type": "string",
-            "title": "Id"
+            "pattern": "^\\w+:\\d+$",
+            "title": "Id",
+            "description": "Stable composite attention key in the form '{source_type}:{source_id}', for example 'charge:123'."
           },
           "source_type": {
             "type": "string",
@@ -21594,7 +21610,11 @@
           "amount": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
@@ -23113,8 +23133,12 @@
       "BracketBreakdownItem": {
         "properties": {
           "rate": {
-            "type": "number",
-            "title": "Rate"
+            "type": "string",
+            "format": "decimal",
+            "title": "Rate",
+            "examples": [
+              "123.45"
+            ]
           },
           "from_amount": {
             "type": "string",
@@ -23281,7 +23305,7 @@
           "business_name"
         ],
         "title": "BusinessCreateRequest",
-        "description": "יצירת עסק חדש תחת לקוח קיים.\nclient_id מועבר ב-URL: POST /clients/{client_id}/businesses"
+        "description": "יצירת עסק חדש תחת לקוח קיים.\nclient_record_id מועבר ב-URL: POST /clients/{client_record_id}/businesses"
       },
       "BusinessResponse": {
         "properties": {
@@ -27383,9 +27407,13 @@
             "title": "Total Paid"
           },
           "collection_rate": {
-            "type": "number",
+            "type": "string",
+            "format": "decimal",
             "title": "Collection Rate",
-            "default": 0.0
+            "default": "0.00",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -29050,9 +29078,9 @@
       "ReminderActionType": {
         "type": "string",
         "enum": [
-          "CREATE_TASK",
-          "SEND_NOTIFICATION",
-          "CREATE_TASK_AND_NOTIFY"
+          "create_task",
+          "send_notification",
+          "create_task_and_notify"
         ],
         "title": "ReminderActionType"
       },
@@ -29789,8 +29817,12 @@
             "default": 0
           },
           "completion_rate": {
-            "type": "number",
-            "title": "Completion Rate"
+            "type": "string",
+            "format": "decimal",
+            "title": "Completion Rate",
+            "examples": [
+              "123.45"
+            ]
           },
           "overdue_count": {
             "type": "integer",
@@ -31004,6 +31036,15 @@
         "title": "SignerViewResponse",
         "description": "Minimal — no internal IDs or financial data."
       },
+      "SortOrder": {
+        "type": "string",
+        "enum": [
+          "asc",
+          "desc"
+        ],
+        "title": "SortOrder",
+        "description": "Shared sort-direction enum for list endpoints."
+      },
       "StageTransitionRequest": {
         "properties": {
           "to_stage": {
@@ -31674,8 +31715,12 @@
             ]
           },
           "effective_rate": {
-            "type": "number",
-            "title": "Effective Rate"
+            "type": "string",
+            "format": "decimal",
+            "title": "Effective Rate",
+            "examples": [
+              "123.45"
+            ]
           },
           "national_insurance": {
             "$ref": "#/components/schemas/NationalInsuranceResponse"
@@ -31696,8 +31741,12 @@
             ]
           },
           "total_credit_points": {
-            "type": "number",
-            "title": "Total Credit Points"
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Credit Points",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -32336,9 +32385,12 @@
             ]
           },
           "credit_points": {
-            "type": "number",
-            "minimum": 0.0,
-            "title": "Credit Points"
+            "type": "string",
+            "format": "decimal",
+            "title": "Credit Points",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -33208,8 +33260,12 @@
             "title": "Late Count"
           },
           "compliance_rate": {
-            "type": "number",
-            "title": "Compliance Rate"
+            "type": "string",
+            "format": "decimal",
+            "title": "Compliance Rate",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -33397,7 +33453,8 @@
                 "type": "null"
               }
             ],
-            "title": "Counterparty Id"
+            "title": "Counterparty Id",
+            "description": "External VAT counterparty identifier such as Israeli business ID, personal ID, passport, or foreign ID. Not an internal database FK."
           },
           "counterparty_id_type": {
             "anyOf": [
@@ -33586,7 +33643,8 @@
                 "type": "null"
               }
             ],
-            "title": "Counterparty Id"
+            "title": "Counterparty Id",
+            "description": "External VAT counterparty identifier such as Israeli business ID, personal ID, passport, or foreign ID. Not an internal database FK."
           },
           "counterparty_id_type": {
             "anyOf": [
@@ -33645,8 +33703,11 @@
           },
           "created_at": {
             "type": "string",
-            "format": "date",
-            "title": "Created At"
+            "format": "date-time",
+            "title": "Created At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
           },
           "ceiling_warning": {
             "type": "boolean",

@@ -12,7 +12,7 @@ def test_create_list_and_get_scheduler_reminder(client, advisor_headers):
         headers=advisor_headers,
         json={
             "fire_at": fire_at,
-            "action_type": "SEND_NOTIFICATION",
+            "action_type": "send_notification",
             "source_domain": "charge",
             "source_id": 44,
             "notification_template_key": "charge_due",
@@ -23,7 +23,7 @@ def test_create_list_and_get_scheduler_reminder(client, advisor_headers):
     assert create_resp.status_code == 201
     created = create_resp.json()
     assert created["status"] == "scheduled"
-    assert created["action_type"] == "SEND_NOTIFICATION"
+    assert created["action_type"] == "send_notification"
     assert "message" not in created
 
     list_resp = client.get("/api/v1/reminders?status=scheduled", headers=advisor_headers)

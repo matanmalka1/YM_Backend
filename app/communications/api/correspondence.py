@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, status
 
@@ -15,6 +14,7 @@ from app.communications.schemas.correspondence import (
     CorrespondenceUpdateRequest,
 )
 from app.communications.services.correspondence_service import CorrespondenceService
+from app.core.api_types import SortOrder
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
@@ -47,7 +47,7 @@ def list_correspondence_by_client(
     contact_id: int | None = Query(None),
     occurred_after: datetime | None = Query(None),
     occurred_before: datetime | None = Query(None),
-    order: Literal["asc", "desc"] = Query("desc"),
+    order: SortOrder = Query(SortOrder.desc),
 ):
     """All correspondence for a client, optionally filtered by business."""
     service = CorrespondenceService(db)
