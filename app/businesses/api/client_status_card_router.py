@@ -17,14 +17,14 @@ router = APIRouter(
 
 
 @router.get(
-    "/{client_id}/status-card",
+    "/{client_record_id}/status-card",
     response_model=ClientStatusCardResponse,
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_client_status_card(
-    client_id: int,
+    client_record_id: int,
     db: DBSession,
     year: int | None = Query(None, ge=_YEAR_MIN, le=_YEAR_MAX),
 ):
     """Comprehensive status card for a client — VAT, annual report, charges, advances, binders, documents."""
-    return StatusCardService(db).get_status_card(client_id, year=year)
+    return StatusCardService(db).get_status_card(client_record_id, year=year)

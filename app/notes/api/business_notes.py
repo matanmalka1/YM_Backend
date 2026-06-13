@@ -14,7 +14,7 @@ from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
 router = APIRouter(
-    prefix="/clients/{client_id}/businesses/{business_id}/notes",
+    prefix="/clients/{client_record_id}/businesses/{business_id}/notes",
     tags=["notes"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
@@ -26,14 +26,14 @@ router = APIRouter(
     responses=not_found_response(description="העסק המבוקש לא נמצא"),
 )
 def list_notes(
-    client_id: int,
+    client_record_id: int,
     business_id: int,
     db: DBSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     items, total = BusinessNoteService(db).list_notes(
-        client_id=client_id,
+        client_id=client_record_id,
         business_id=business_id,
         page=page,
         page_size=page_size,
@@ -53,14 +53,14 @@ def list_notes(
     responses=BUSINESS_NOTE_CREATE_RESPONSES,
 )
 def add_note(
-    client_id: int,
+    client_record_id: int,
     business_id: int,
     request: EntityNoteCreateRequest,
     db: DBSession,
     user: CurrentUser,
 ):
     note = BusinessNoteService(db).add_note(
-        client_id=client_id,
+        client_id=client_record_id,
         business_id=business_id,
         note=request.note,
         created_by=user.id,
@@ -74,7 +74,7 @@ def add_note(
     responses=NOTE_UPDATE_RESPONSES,
 )
 def update_note(
-    client_id: int,
+    client_record_id: int,
     business_id: int,
     note_id: int,
     request: EntityNoteUpdateRequest,
@@ -82,7 +82,7 @@ def update_note(
     user: CurrentUser,
 ):
     note = BusinessNoteService(db).update_note(
-        client_id=client_id,
+        client_id=client_record_id,
         business_id=business_id,
         note_id=note_id,
         note=request.note,
@@ -97,14 +97,14 @@ def update_note(
     responses=not_found_response(description="ההערה המבוקשת לא נמצאה"),
 )
 def delete_note(
-    client_id: int,
+    client_record_id: int,
     business_id: int,
     note_id: int,
     db: DBSession,
     user: CurrentUser,
 ):
     BusinessNoteService(db).delete_note(
-        client_id=client_id,
+        client_id=client_record_id,
         business_id=business_id,
         note_id=note_id,
         actor_id=user.id,

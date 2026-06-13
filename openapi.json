@@ -6555,22 +6555,22 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}": {
+    "/api/v1/clients/{client_record_id}": {
       "get": {
         "tags": [
           "clients"
         ],
         "summary": "Get Client",
-        "description": "Get client by ID (client_id = ClientRecord.id).",
-        "operationId": "get_client_api_v1_clients__client_id__get",
+        "description": "Get client by ID (client_record_id = ClientRecord.id).",
+        "operationId": "get_client_api_v1_clients__client_record_id__get",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -6651,15 +6651,15 @@
         ],
         "summary": "Update Client",
         "description": "Update client identity fields by ClientRecord.id.",
-        "operationId": "update_client_api_v1_clients__client_id__patch",
+        "operationId": "update_client_api_v1_clients__client_record_id__patch",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           }
         ],
@@ -6752,15 +6752,15 @@
         ],
         "summary": "Delete Client",
         "description": "Soft-delete a client (ADVISOR only).",
-        "operationId": "delete_client_api_v1_clients__client_id__delete",
+        "operationId": "delete_client_api_v1_clients__client_record_id__delete",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           }
         ],
@@ -6884,22 +6884,22 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/restore": {
+    "/api/v1/clients/{client_record_id}/restore": {
       "post": {
         "tags": [
           "clients"
         ],
         "summary": "Restore Client",
         "description": "Restore a soft-deleted client (ADVISOR only).",
-        "operationId": "restore_client_api_v1_clients__client_id__restore_post",
+        "operationId": "restore_client_api_v1_clients__client_record_id__restore_post",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           }
         ],
@@ -6967,22 +6967,22 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/businesses": {
+    "/api/v1/clients/{client_record_id}/businesses": {
       "post": {
         "tags": [
           "businesses"
         ],
         "summary": "Create Business",
         "description": "יצירת עסק חדש תחת לקוח קיים (ADVISOR only).",
-        "operationId": "create_business_api_v1_clients__client_id__businesses_post",
+        "operationId": "create_business_api_v1_clients__client_record_id__businesses_post",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           }
         ],
@@ -7074,15 +7074,15 @@
           "businesses"
         ],
         "summary": "List Client Businesses",
-        "operationId": "list_client_businesses_api_v1_clients__client_id__businesses_get",
+        "operationId": "list_client_businesses_api_v1_clients__client_record_id__businesses_get",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -7163,21 +7163,21 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/businesses/{business_id}": {
+    "/api/v1/clients/{client_record_id}/businesses/{business_id}": {
       "get": {
         "tags": [
           "businesses"
         ],
         "summary": "Get Business",
-        "operationId": "get_business_api_v1_clients__client_id__businesses__business_id__get",
+        "operationId": "get_business_api_v1_clients__client_record_id__businesses__business_id__get",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -7248,15 +7248,15 @@
           "businesses"
         ],
         "summary": "Update Business",
-        "operationId": "update_business_api_v1_clients__client_id__businesses__business_id__patch",
+        "operationId": "update_business_api_v1_clients__client_record_id__businesses__business_id__patch",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -7357,15 +7357,15 @@
           "businesses"
         ],
         "summary": "Delete Business",
-        "operationId": "delete_business_api_v1_clients__client_id__businesses__business_id__delete",
+        "operationId": "delete_business_api_v1_clients__client_record_id__businesses__business_id__delete",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -7435,21 +7435,21 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/businesses/{business_id}/restore": {
+    "/api/v1/clients/{client_record_id}/businesses/{business_id}/restore": {
       "post": {
         "tags": [
           "businesses"
         ],
         "summary": "Restore Business",
-        "operationId": "restore_business_api_v1_clients__client_id__businesses__business_id__restore_post",
+        "operationId": "restore_business_api_v1_clients__client_record_id__businesses__business_id__restore_post",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -7526,22 +7526,22 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/status-card": {
+    "/api/v1/clients/{client_record_id}/status-card": {
       "get": {
         "tags": [
           "clients"
         ],
         "summary": "Get Client Status Card",
         "description": "Comprehensive status card for a client — VAT, annual report, charges, advances, binders, documents.",
-        "operationId": "get_client_status_card_api_v1_clients__client_id__status_card_get",
+        "operationId": "get_client_status_card_api_v1_clients__client_record_id__status_card_get",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -16667,21 +16667,21 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/notes": {
+    "/api/v1/clients/{client_record_id}/notes": {
       "get": {
         "tags": [
           "notes"
         ],
         "summary": "List Notes",
-        "operationId": "list_notes_api_v1_clients__client_id__notes_get",
+        "operationId": "list_notes_api_v1_clients__client_record_id__notes_get",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -16766,15 +16766,15 @@
           "notes"
         ],
         "summary": "Add Note",
-        "operationId": "add_note_api_v1_clients__client_id__notes_post",
+        "operationId": "add_note_api_v1_clients__client_record_id__notes_post",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           }
         ],
@@ -16852,21 +16852,21 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/notes/{note_id}": {
+    "/api/v1/clients/{client_record_id}/notes/{note_id}": {
       "patch": {
         "tags": [
           "notes"
         ],
         "summary": "Update Note",
-        "operationId": "update_note_api_v1_clients__client_id__notes__note_id__patch",
+        "operationId": "update_note_api_v1_clients__client_record_id__notes__note_id__patch",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -16957,15 +16957,15 @@
           "notes"
         ],
         "summary": "Delete Note",
-        "operationId": "delete_note_api_v1_clients__client_id__notes__note_id__delete",
+        "operationId": "delete_note_api_v1_clients__client_record_id__notes__note_id__delete",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -17025,21 +17025,21 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/businesses/{business_id}/notes": {
+    "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes": {
       "get": {
         "tags": [
           "notes"
         ],
         "summary": "List Notes",
-        "operationId": "list_notes_api_v1_clients__client_id__businesses__business_id__notes_get",
+        "operationId": "list_notes_api_v1_clients__client_record_id__businesses__business_id__notes_get",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -17133,15 +17133,15 @@
           "notes"
         ],
         "summary": "Add Note",
-        "operationId": "add_note_api_v1_clients__client_id__businesses__business_id__notes_post",
+        "operationId": "add_note_api_v1_clients__client_record_id__businesses__business_id__notes_post",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -17228,21 +17228,21 @@
         }
       }
     },
-    "/api/v1/clients/{client_id}/businesses/{business_id}/notes/{note_id}": {
+    "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes/{note_id}": {
       "patch": {
         "tags": [
           "notes"
         ],
         "summary": "Update Note",
-        "operationId": "update_note_api_v1_clients__client_id__businesses__business_id__notes__note_id__patch",
+        "operationId": "update_note_api_v1_clients__client_record_id__businesses__business_id__notes__note_id__patch",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -17342,15 +17342,15 @@
           "notes"
         ],
         "summary": "Delete Note",
-        "operationId": "delete_note_api_v1_clients__client_id__businesses__business_id__notes__note_id__delete",
+        "operationId": "delete_note_api_v1_clients__client_record_id__businesses__business_id__notes__note_id__delete",
         "parameters": [
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "path",
             "required": true,
             "schema": {
               "type": "integer",
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {

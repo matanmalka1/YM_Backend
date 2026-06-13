@@ -142,18 +142,18 @@ def list_sidebar_clients(
 
 
 @router.get(
-    "/{client_id}",
+    "/{client_record_id}",
     response_model=ClientRecordResponse,
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_client(
-    client_id: int,
+    client_record_id: int,
     db: DBSession,
     tax_year: int | None = Query(None, ge=2000, le=2100),
 ):
-    """Get client by ID (client_id = ClientRecord.id)."""
+    """Get client by ID (client_record_id = ClientRecord.id)."""
     service = ClientQueryService(db)
-    return service.get_full_client(client_id, tax_year=tax_year)
+    return service.get_full_client(client_record_id, tax_year=tax_year)
 
 
 @router.get("/conflict/{id_number}", response_model=ClientConflictInfo)
@@ -170,48 +170,48 @@ def get_conflict_info(
 
 
 @router.patch(
-    "/{client_id}",
+    "/{client_record_id}",
     response_model=ClientRecordResponse,
     responses=CLIENT_UPDATE_RESPONSES,
 )
 def update_client(
-    client_id: int,
+    client_record_id: int,
     request: ClientUpdateRequest,
     db: DBSession,
     user: CurrentUser,
 ):
     """Update client identity fields by ClientRecord.id."""
     ClientUpdateService(db).update_client(
-        client_id,
+        client_record_id,
         actor_id=user.id,
         actor_role=user.role,
         **request.model_dump(exclude_unset=True),
     )
-    return ClientQueryService(db).get_full_client(client_id)
+    return ClientQueryService(db).get_full_client(client_record_id)
 
 
 # ─── Delete / Restore ─────────────────────────────────────────────────────────
 
 
 @router.delete(
-    "/{client_id}",
+    "/{client_record_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=CLIENT_ACTION_RESPONSES,
 )
-def delete_client(client_id: int, db: DBSession, user: CurrentUser):
+def delete_client(client_record_id: int, db: DBSession, user: CurrentUser):
     """Soft-delete a client (ADVISOR only)."""
-    ClientLifecycleService(db).delete_client(client_id, actor_id=user.id)
+    ClientLifecycleService(db).delete_client(client_record_id, actor_id=user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.post(
-    "/{client_id}/restore",
+    "/{client_record_id}/restore",
     response_model=ClientRecordResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=CLIENT_ACTION_RESPONSES,
 )
-def restore_client(client_id: int, db: DBSession, user: CurrentUser):
+def restore_client(client_record_id: int, db: DBSession, user: CurrentUser):
     """Restore a soft-deleted client (ADVISOR only)."""
-    ClientLifecycleService(db).restore_client(client_id, actor_id=user.id)
-    return ClientQueryService(db).get_full_client_including_deleted(client_id)
+    ClientLifecycleService(db).restore_client(client_record_id, actor_id=user.id)
+    return ClientQueryService(db).get_full_client_including_deleted(client_record_id)

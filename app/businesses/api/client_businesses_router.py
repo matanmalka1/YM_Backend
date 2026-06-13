@@ -19,7 +19,7 @@ from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
 client_businesses_router = APIRouter(
-    prefix="/clients/{client_id}/businesses",
+    prefix="/clients/{client_record_id}/businesses",
     tags=["businesses"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
@@ -33,17 +33,19 @@ client_businesses_router = APIRouter(
     responses=BUSINESS_CREATE_RESPONSES,
 )
 def create_business(
-    client_id: int, request: BusinessCreateRequest, db: DBSession, user: CurrentUser
+    client_record_id: int, request: BusinessCreateRequest, db: DBSession, user: CurrentUser
 ):
     """יצירת עסק חדש תחת לקוח קיים (ADVISOR only)."""
     business = BusinessService(db).create_business(
-        client_id=client_id,
+        client_id=client_record_id,
         opened_at=request.opened_at,
         business_name=request.business_name,
         notes=request.notes,
         actor_id=user.id,
     )
-    return ClientBusinessService(db).to_response(business, user.role, client_id=client_id)
+    return ClientBusinessService(db).to_response(
+        business, user.role, client_id=client_record_id
+    )
 
 
 @client_businesses_router.get(
@@ -52,14 +54,14 @@ def create_business(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_businesses(
-    client_id: int,
+    client_record_id: int,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     return ClientBusinessService(db).list_for_client(
-        client_id,
+        client_record_id,
         user.role,
         page=page,
         page_size=page_size,
@@ -71,10 +73,10 @@ def list_client_businesses(
     response_model=BusinessResponse,
     responses=not_found_response(description="העסק המבוקש לא נמצא"),
 )
-def get_business(client_id: int, business_id: int, db: DBSession, user: CurrentUser):
+def get_business(client_record_id: int, business_id: int, db: DBSession, user: CurrentUser):
     service = ClientBusinessService(db)
-    business = service.get_for_client(client_id, business_id)
-    return service.to_response(business, user.role, client_id=client_id)
+    business = service.get_for_client(client_record_id, business_id)
+    return service.to_response(business, user.role, client_id=client_record_id)
 
 
 @client_businesses_router.patch(
@@ -83,7 +85,7 @@ def get_business(client_id: int, business_id: int, db: DBSession, user: CurrentU
     responses=BUSINESS_UPDATE_RESPONSES,
 )
 def update_business(
-    client_id: int,
+    client_record_id: int,
     business_id: int,
     request: BusinessUpdateRequest,
     db: DBSession,
@@ -91,12 +93,14 @@ def update_business(
 ):
     business = BusinessService(db).update_business(
         business_id,
-        client_id=client_id,
+        client_id=client_record_id,
         user_role=user.role,
         actor_id=user.id,
         **request.model_dump(exclude_unset=True),
     )
-    return ClientBusinessService(db).to_response(business, user.role, client_id=client_id)
+    return ClientBusinessService(db).to_response(
+        business, user.role, client_id=client_record_id
+    )
 
 
 @client_businesses_router.delete(
@@ -105,8 +109,10 @@ def update_business(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=BUSINESS_ACTION_RESPONSES,
 )
-def delete_business(client_id: int, business_id: int, db: DBSession, user: CurrentUser):
-    ClientBusinessService(db).delete_for_client(client_id, business_id, actor_id=user.id)
+def delete_business(client_record_id: int, business_id: int, db: DBSession, user: CurrentUser):
+    ClientBusinessService(db).delete_for_client(
+        client_record_id, business_id, actor_id=user.id
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -116,12 +122,12 @@ def delete_business(client_id: int, business_id: int, db: DBSession, user: Curre
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=BUSINESS_ACTION_RESPONSES,
 )
-def restore_business(client_id: int, business_id: int, db: DBSession, user: CurrentUser):
+def restore_business(client_record_id: int, business_id: int, db: DBSession, user: CurrentUser):
     service = ClientBusinessService(db)
     business = service.restore_for_client(
-        client_id,
+        client_record_id,
         business_id,
         actor_id=user.id,
         actor_role=user.role,
     )
-    return service.to_response(business, user.role, client_id=client_id)
+    return service.to_response(business, user.role, client_id=client_record_id)
