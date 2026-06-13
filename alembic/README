@@ -5,8 +5,8 @@
 - All schema changes must go through Alembic.
 - Never use `Base.metadata.create_all()` for application schema management.
 - Migration files live in `alembic/versions/`.
-- Current head is `0002_password_reset_tokens` (revision `0002_password_reset_tokens`).
-- The migration history was reset on 2026-05-19 for the development database.
+- Current head is `0007` (`0007_vat_invoice_created_at_datetime.py`).
+- The migration history was reset on 2026-06-03 for the development database.
 - Production startup must run migrations before the server command:
   `alembic upgrade head && ...`
 
@@ -23,7 +23,7 @@ docker compose up -d postgres
 2. Reset the development schema when applying the fresh baseline:
 
 ```bash
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 - <<'PY'
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python - <<'PY'
 from sqlalchemy import create_engine, text
 from app.config import settings
 
@@ -38,7 +38,7 @@ PY
 3. Apply migrations:
 
 ```bash
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic upgrade head
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head
 ```
 
 4. Seed demo data:
@@ -53,23 +53,80 @@ Default local connection:
 postgresql+psycopg2://matanmalka@localhost:5432/binder_crm
 ```
 
-## Current migration
+## Current migrations
 
-### 0002_password_reset_tokens
+### 0007_vat_invoice_created_at_datetime
 
 - Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic upgrade head`
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
 - What it does:
-  Adds `password_reset_tokens` for self-service password reset.
+  Converts `vat_invoices.created_at` from `date` to `timestamp`.
 - Covers:
-  hashed reset tokens, expiry, usage marker, request IP, user agent, and user ownership.
+  Preserves existing date-only values as midnight timestamps; downgrades back to date.
 - Notes:
-  `down_revision = "7d5535c754f7"`.
+  `down_revision = "0006"`.
+
+### 0006_reminder_action_type_snake_case
+
+- Command:
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
+- What it does:
+  Renames `reminderactiontype` enum values from upper-case to snake_case.
+- Covers:
+  `CREATE_TASK` → `create_task`, `SEND_NOTIFICATION` → `send_notification`,
+  `CREATE_TASK_AND_NOTIFY` → `create_task_and_notify`.
+- Notes:
+  PostgreSQL-only enum rename; no-op on non-PostgreSQL dialects.
+  `down_revision = "0005"`.
+
+### 0005_correspondence_updated_at
+
+- Command:
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
+- What it does:
+  Adds nullable `updated_at` to `correspondence_entries`.
+- Covers:
+  Real correspondence updates via model `onupdate`; existing rows stay NULL.
+- Notes:
+  `down_revision = "0004"`.
+
+### 0004_signature_request_updated_at
+
+- Command:
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
+- What it does:
+  Adds nullable `updated_at` to `signature_requests`.
+- Covers:
+  Real send/sign/decline/cancel/expire/soft-delete mutations; existing rows stay NULL.
+- Notes:
+  `down_revision = "0003"`.
+
+### 0003_binder_updated_at
+
+- Command:
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
+- What it does:
+  Adds nullable `updated_at` to `binders`.
+- Covers:
+  Real status/handover/capacity/soft-delete mutations; existing rows stay NULL.
+- Notes:
+  `down_revision = "0002"`.
+
+### 0002_charge_updated_at
+
+- Command:
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
+- What it does:
+  Adds nullable `updated_at` to `charges`.
+- Covers:
+  Real issue/pay/cancel/soft-delete mutations; existing rows stay NULL.
+- Notes:
+  `down_revision = "bfaed5b29bd3"`.
 
 ### 0001_initial
 
 - Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic upgrade head`
+  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
 - What it does:
   Creates the full current PostgreSQL schema from SQLAlchemy models.
 - Covers:
@@ -87,7 +144,7 @@ postgresql+psycopg2://matanmalka@localhost:5432/binder_crm
 ## Required checks after model changes
 
 ```bash
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic revision --autogenerate -m "<description>"
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic revision --autogenerate -m "<description>"
 ```
 
 Review the generated migration before applying it:
@@ -98,20 +155,20 @@ Review the generated migration before applying it:
 Then run:
 
 ```bash
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic upgrade head
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head
 ```
 
-After applying, add a `### <revision>` entry under "Current migration" above with its command, what it does, what it covers, and `down_revision`.
+After applying, add a `### <revision>_<description>` entry under "Current migrations" above with its command, what it does, what it covers, and `down_revision`.
 
 ## Daily commands
 
 ```bash
 # Show current revision
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic current
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic current
 
 # Show full history
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic history --verbose
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic history --verbose
 
 # Upgrade to latest
-APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret python3 -m alembic upgrade head
+APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head
 ```
