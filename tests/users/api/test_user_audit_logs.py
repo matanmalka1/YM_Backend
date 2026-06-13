@@ -70,3 +70,16 @@ def test_user_actions_are_persisted_in_audit_log(client, advisor_headers, test_d
     assert AuditAction.USER_UPDATED.value in actions
     assert AuditAction.USER_DEACTIVATED.value in actions
     assert AuditAction.PASSWORD_RESET.value in actions
+
+
+def test_audit_logs_openapi_uses_created_range_params(client, advisor_headers):
+    schema = client.get("/openapi.json", headers=advisor_headers).json()
+    params = {
+        param["name"]
+        for param in schema["paths"]["/api/v1/users/audit-logs"]["get"]["parameters"]
+        if param["in"] == "query"
+    }
+    assert "created_after" in params
+    assert "created_before" in params
+    assert "from" not in params
+    assert "to" not in params

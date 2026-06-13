@@ -95,13 +95,13 @@ def test_summary_invalid_year_range_returns_400(client, advisor_headers, test_db
 def test_bootstrap_creates_entries(client, advisor_headers, test_db):
     response = client.post(
         BOOTSTRAP_PATH,
-        json={"start_year": 2026, "end_year": 2026},
+        json={"tax_year_after": 2026, "tax_year_before": 2026},
         headers={**advisor_headers, "X-Idempotency-Key": "tax-calendar-bootstrap-1"},
     )
     assert response.status_code == 200
     data = response.json()
-    assert data["start_year"] == 2026
-    assert data["end_year"] == 2026
+    assert data["tax_year_after"] == 2026
+    assert data["tax_year_before"] == 2026
     assert data["entries_created"] == 37
     assert data["total_entries_for_range"] == 37
 
@@ -109,7 +109,7 @@ def test_bootstrap_creates_entries(client, advisor_headers, test_db):
 def test_bootstrap_without_idempotency_key_still_succeeds(client, advisor_headers, test_db):
     response = client.post(
         BOOTSTRAP_PATH,
-        json={"start_year": 2026, "end_year": 2026},
+        json={"tax_year_after": 2026, "tax_year_before": 2026},
         headers=advisor_headers,
     )
     assert response.status_code == 200
@@ -118,7 +118,7 @@ def test_bootstrap_without_idempotency_key_still_succeeds(client, advisor_header
 def test_bootstrap_secretary_returns_403(client, secretary_headers, test_db):
     response = client.post(
         BOOTSTRAP_PATH,
-        json={"start_year": 2026, "end_year": 2026},
+        json={"tax_year_after": 2026, "tax_year_before": 2026},
         headers={
             **secretary_headers,
             "X-Idempotency-Key": "tax-calendar-bootstrap-secretary",
@@ -130,7 +130,7 @@ def test_bootstrap_secretary_returns_403(client, secretary_headers, test_db):
 def test_bootstrap_invalid_year_range_returns_400(client, advisor_headers, test_db):
     response = client.post(
         BOOTSTRAP_PATH,
-        json={"start_year": 2027, "end_year": 2026},
+        json={"tax_year_after": 2027, "tax_year_before": 2026},
         headers={**advisor_headers, "X-Idempotency-Key": "tax-calendar-bootstrap-2"},
     )
     assert response.status_code == 400

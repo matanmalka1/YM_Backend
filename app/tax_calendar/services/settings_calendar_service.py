@@ -89,8 +89,8 @@ def get_summary(
     total_entries = sum(c for year_data in per_year.values() for c in year_data.values())
 
     return {
-        "start_year": tax_year_after,
-        "end_year": tax_year_before,
+        "tax_year_after": tax_year_after,
+        "tax_year_before": tax_year_before,
         "total_entries": total_entries,
         "per_year": per_year,
         "warnings": warnings,
@@ -100,10 +100,21 @@ def get_summary(
 def bootstrap_calendar(
     db: Session,
     *,
-    start_year: int,
-    end_year: int,
+    tax_year_after: int,
+    tax_year_before: int,
 ) -> dict[str, object]:
-    return bootstrap_tax_calendar(db, start_year=start_year, end_year=end_year)
+    result = bootstrap_tax_calendar(db, start_year=tax_year_after, end_year=tax_year_before)
+    return {
+        "tax_year_after": result["start_year"],
+        "tax_year_before": result["end_year"],
+        "rules_created": result["rules_created"],
+        "rules_skipped": result["rules_skipped"],
+        "rules_by_type": result["rules_by_type"],
+        "entries_created": result["entries_created"],
+        "entries_skipped": result["entries_skipped"],
+        "total_entries_for_range": result["total_entries_for_range"],
+        "warnings": result["warnings"],
+    }
 
 
 def _summary_label(obligation: ObligationType, months: int | None) -> str:

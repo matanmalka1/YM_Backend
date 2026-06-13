@@ -30,11 +30,14 @@ def list_audit_logs(
     target_user_id: int | None = None,
     actor_user_id: int | None = None,
     email: str | None = None,
-    from_ts: datetime | None = Query(None, alias="from"),
-    to_ts: datetime | None = Query(None, alias="to"),
+    created_after: datetime | None = None,
+    created_before: datetime | None = None,
 ):
-    if from_ts is not None and to_ts is not None and from_ts > to_ts:
-        raise AppError("טווח תאריכים לא תקין: from חייב להיות לפני to", "USER.INVALID_DATE_RANGE")
+    if created_after is not None and created_before is not None and created_after > created_before:
+        raise AppError(
+            "טווח תאריכים לא תקין: created_after חייב להיות לפני created_before",
+            "USER.INVALID_DATE_RANGE",
+        )
     service = AuditLogService(db)
     items, total = service.list_logs(
         page=page,
@@ -43,8 +46,8 @@ def list_audit_logs(
         target_user_id=target_user_id,
         actor_user_id=actor_user_id,
         email=email,
-        from_ts=from_ts,
-        to_ts=to_ts,
+        created_after=created_after,
+        created_before=created_before,
     )
     return UserAuditLogListResponse(
         items=[UserAuditLogResponse(**item) for item in items],

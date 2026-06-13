@@ -476,7 +476,7 @@
             }
           },
           {
-            "name": "from",
+            "name": "created_after",
             "in": "query",
             "required": false,
             "schema": {
@@ -489,11 +489,11 @@
                   "type": "null"
                 }
               ],
-              "title": "From"
+              "title": "Created After"
             }
           },
           {
-            "name": "to",
+            "name": "created_before",
             "in": "query",
             "required": false,
             "schema": {
@@ -506,7 +506,7 @@
                   "type": "null"
                 }
               ],
-              "title": "To"
+              "title": "Created Before"
             }
           }
         ],
@@ -31449,31 +31449,31 @@
       },
       "TaxCalendarBootstrapRequest": {
         "properties": {
-          "start_year": {
+          "tax_year_after": {
             "type": "integer",
-            "title": "Start Year"
+            "title": "Tax Year After"
           },
-          "end_year": {
+          "tax_year_before": {
             "type": "integer",
-            "title": "End Year"
+            "title": "Tax Year Before"
           }
         },
         "type": "object",
         "required": [
-          "start_year",
-          "end_year"
+          "tax_year_after",
+          "tax_year_before"
         ],
         "title": "TaxCalendarBootstrapRequest"
       },
       "TaxCalendarBootstrapResponse": {
         "properties": {
-          "start_year": {
+          "tax_year_after": {
             "type": "integer",
-            "title": "Start Year"
+            "title": "Tax Year After"
           },
-          "end_year": {
+          "tax_year_before": {
             "type": "integer",
-            "title": "End Year"
+            "title": "Tax Year Before"
           },
           "rules_created": {
             "type": "integer",
@@ -31512,8 +31512,8 @@
         },
         "type": "object",
         "required": [
-          "start_year",
-          "end_year",
+          "tax_year_after",
+          "tax_year_before",
           "rules_created",
           "rules_skipped",
           "rules_by_type",
@@ -31890,7 +31890,7 @@
       },
       "TaxCalendarSummaryResponse": {
         "properties": {
-          "start_year": {
+          "tax_year_after": {
             "anyOf": [
               {
                 "type": "integer"
@@ -31899,9 +31899,9 @@
                 "type": "null"
               }
             ],
-            "title": "Start Year"
+            "title": "Tax Year After"
           },
-          "end_year": {
+          "tax_year_before": {
             "anyOf": [
               {
                 "type": "integer"
@@ -31910,7 +31910,7 @@
                 "type": "null"
               }
             ],
-            "title": "End Year"
+            "title": "Tax Year Before"
           },
           "total_entries": {
             "type": "integer",
@@ -31936,8 +31936,8 @@
         },
         "type": "object",
         "required": [
-          "start_year",
-          "end_year",
+          "tax_year_after",
+          "tax_year_before",
           "total_entries",
           "per_year",
           "warnings"

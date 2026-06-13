@@ -45,16 +45,16 @@ class UserAuditLogRepository(BaseRepository):
         target_user_id: int | None = None,
         actor_user_id: int | None = None,
         email: str | None = None,
-        from_ts: datetime | None = None,
-        to_ts: datetime | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
     ) -> list[UserAuditLog]:
         stmt = self._build_query(
             action=action,
             target_user_id=target_user_id,
             actor_user_id=actor_user_id,
             email=email,
-            from_ts=from_ts,
-            to_ts=to_ts,
+            created_after=created_after,
+            created_before=created_before,
         ).order_by(UserAuditLog.created_at.desc())
         stmt = self.apply_pagination(stmt, page, page_size)
         return list(self.db.scalars(stmt).all())
@@ -65,8 +65,8 @@ class UserAuditLogRepository(BaseRepository):
         target_user_id: int | None = None,
         actor_user_id: int | None = None,
         email: str | None = None,
-        from_ts: datetime | None = None,
-        to_ts: datetime | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
         *,
         include_deleted: bool = False,
     ) -> int:
@@ -75,8 +75,8 @@ class UserAuditLogRepository(BaseRepository):
             target_user_id=target_user_id,
             actor_user_id=actor_user_id,
             email=email,
-            from_ts=from_ts,
-            to_ts=to_ts,
+            created_after=created_after,
+            created_before=created_before,
             count_only=True,
         )
         return self.db.scalar(stmt)
@@ -87,8 +87,8 @@ class UserAuditLogRepository(BaseRepository):
         target_user_id: int | None,
         actor_user_id: int | None,
         email: str | None,
-        from_ts: datetime | None,
-        to_ts: datetime | None,
+        created_after: datetime | None,
+        created_before: datetime | None,
         count_only: bool = False,
     ):
         stmt = select(func.count(UserAuditLog.id)) if count_only else select(UserAuditLog)
@@ -100,8 +100,8 @@ class UserAuditLogRepository(BaseRepository):
             stmt = stmt.where(UserAuditLog.actor_user_id == actor_user_id)
         if email is not None:
             stmt = stmt.where(UserAuditLog.email == email)
-        if from_ts is not None:
-            stmt = stmt.where(UserAuditLog.created_at >= from_ts)
-        if to_ts is not None:
-            stmt = stmt.where(UserAuditLog.created_at <= to_ts)
+        if created_after is not None:
+            stmt = stmt.where(UserAuditLog.created_at >= created_after)
+        if created_before is not None:
+            stmt = stmt.where(UserAuditLog.created_at <= created_before)
         return stmt

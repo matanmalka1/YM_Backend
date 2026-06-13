@@ -52,13 +52,13 @@ def test_list_logs_returns_filtered_items_and_total(test_db):
     assert len(filtered_items) == 1
     assert filtered_items[0]["action"] == AuditAction.LOGIN_FAILURE
 
-    from_ts = datetime.now(UTC) - timedelta(minutes=1)
-    to_ts = datetime.now(UTC) + timedelta(minutes=1)
+    created_after = datetime.now(UTC) - timedelta(minutes=1)
+    created_before = datetime.now(UTC) + timedelta(minutes=1)
     all_items, all_total = service.list_logs(
         page=1,
         page_size=1,
-        from_ts=from_ts,
-        to_ts=to_ts,
+        created_after=created_after,
+        created_before=created_before,
     )
     assert all_total == 2
     assert len(all_items) == 1

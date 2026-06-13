@@ -30,21 +30,21 @@ class TaxCalendarEntryResponse(BaseModel):
 
 
 class TaxCalendarSummaryResponse(BaseModel):
-    start_year: int | None
-    end_year: int | None
+    tax_year_after: int | None
+    tax_year_before: int | None
     total_entries: int
     per_year: dict[int, dict[str, int]]
     warnings: list[str]
 
 
 class TaxCalendarBootstrapRequest(BaseModel):
-    start_year: int
-    end_year: int
+    tax_year_after: int
+    tax_year_before: int
 
 
 class TaxCalendarBootstrapResponse(BaseModel):
-    start_year: int
-    end_year: int
+    tax_year_after: int
+    tax_year_before: int
     rules_created: int
     rules_skipped: int
     rules_by_type: dict[str, str]

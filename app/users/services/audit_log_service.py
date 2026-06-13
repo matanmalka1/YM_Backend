@@ -46,8 +46,8 @@ class AuditLogService:
         target_user_id: int | None = None,
         actor_user_id: int | None = None,
         email: str | None = None,
-        from_ts: datetime | None = None,
-        to_ts: datetime | None = None,
+        created_after: datetime | None = None,
+        created_before: datetime | None = None,
     ):
         items = self.repo.list(
             page=page,
@@ -56,16 +56,16 @@ class AuditLogService:
             target_user_id=target_user_id,
             actor_user_id=actor_user_id,
             email=email,
-            from_ts=from_ts,
-            to_ts=to_ts,
+            created_after=created_after,
+            created_before=created_before,
         )
         total = self.repo.count(
             action=action,
             target_user_id=target_user_id,
             actor_user_id=actor_user_id,
             email=email,
-            from_ts=from_ts,
-            to_ts=to_ts,
+            created_after=created_after,
+            created_before=created_before,
         )
         return [self._to_dict(item) for item in items], total
 

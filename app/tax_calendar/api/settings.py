@@ -16,8 +16,8 @@ from app.utils.time_utils import israel_today
 router = APIRouter(prefix="/settings/tax-calendar", tags=["settings-tax-calendar"])
 
 
-def _check_year_range(start_year: int | None, end_year: int | None) -> None:
-    if start_year is not None and end_year is not None and start_year > end_year:
+def _check_year_range(tax_year_after: int | None, tax_year_before: int | None) -> None:
+    if tax_year_after is not None and tax_year_before is not None and tax_year_after > tax_year_before:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="שנת ההתחלה חייבת להיות קטנה או שווה לשנת הסיום.",
@@ -81,7 +81,7 @@ def bootstrap_tax_calendar_settings(
     request: TaxCalendarBootstrapRequest,
     db: DBSession,
 ) -> TaxCalendarBootstrapResponse:
-    _check_year_range(request.start_year, request.end_year)
+    _check_year_range(request.tax_year_after, request.tax_year_before)
     return settings_calendar_service.bootstrap_calendar(
-        db, start_year=request.start_year, end_year=request.end_year
+        db, tax_year_after=request.tax_year_after, tax_year_before=request.tax_year_before
     )
