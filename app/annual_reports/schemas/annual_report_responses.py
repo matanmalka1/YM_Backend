@@ -156,7 +156,7 @@ class SeasonSummaryResponse(BaseModel):
     submitted: int
     closed: int
     canceled: int = 0
-    completion_rate: float
+    completion_rate: ApiDecimal
     overdue_count: int
 
 

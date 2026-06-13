@@ -60,6 +60,7 @@ def calculate_tax(
 ) -> TaxCalculationResult:
     """Calculate Israeli income tax for the given tax year."""
     taxable_income = float(taxable_income)
+    credit_points = float(credit_points)
     pension_deduction = float(pension_deduction)
     donation_amount = float(donation_amount)
     other_credits = float(other_credits)

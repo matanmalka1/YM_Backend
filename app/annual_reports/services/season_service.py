@@ -32,7 +32,13 @@ class AnnualReportSeasonService(AnnualReportBaseService):
         overdue_count = len(self.repo.list_overdue(tax_year=tax_year))
         total = summary.get("total", 0)
         done = summary.get("submitted", 0) + summary.get("closed", 0)
-        completion_rate = round(done / total * 100, 1) if total > 0 else 0.0
+        completion_rate = (
+            (Decimal(done) / Decimal(total) * Decimal("100")).quantize(
+                Decimal("0.1"), rounding=ROUND_HALF_UP
+            )
+            if total > 0
+            else Decimal("0")
+        )
         return SeasonSummaryResponse(
             tax_year=tax_year,
             filing_season_year=get_filing_season_year(tax_year),
@@ -53,3 +59,4 @@ __all__ = [
     "get_active_annual_report_tax_year",
     "get_filing_season_year",
 ]
+from decimal import Decimal, ROUND_HALF_UP

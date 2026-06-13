@@ -119,7 +119,7 @@ def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db):
         tax_service.advance_repo, "sum_paid_by_client_year", lambda *args, **kwargs: 0.0
     )
     out = tax_service.get_tax_calculation(report.id)
-    assert out.total_credit_points == 3.0
+    assert out.total_credit_points == Decimal("3.0")
 
 
 def test_income_line_allows_zero_amount(test_db):

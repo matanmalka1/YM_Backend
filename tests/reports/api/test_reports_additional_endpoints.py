@@ -168,6 +168,8 @@ def test_reports_annual_reports_endpoint(client, test_db, advisor_headers, test_
     assert payload["statuses"][0]["status"] == "submitted"
     assert payload["statuses"][0]["count"] == 1
     assert payload["statuses"][0]["clients"][0]["client_name"] == crm_client.full_name
+    assert payload["statuses"][0]["clients"][0]["filing_deadline"].endswith("Z")
+    assert "T" in payload["statuses"][0]["clients"][0]["filing_deadline"]
 
 
 def test_reports_aging_export_invalid_format_returns_422(client, advisor_headers):

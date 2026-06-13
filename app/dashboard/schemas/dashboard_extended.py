@@ -2,9 +2,17 @@ from datetime import date
 
 from pydantic import BaseModel, Field
 
+from app.core.api_types import ApiDecimal
+
 
 class AttentionBoardItem(BaseModel):
-    id: str
+    id: str = Field(
+        pattern=r"^\w+:\d+$",
+        description=(
+            "Stable composite attention key in the form '{source_type}:{source_id}', "
+            "for example 'charge:123'."
+        ),
+    )
     source_type: str
     source_id: int
     title: str
@@ -12,7 +20,7 @@ class AttentionBoardItem(BaseModel):
     due_date: date | None = None
     days_delta: int = 0
     reason: str | None = None
-    amount: str | None = None
+    amount: ApiDecimal | None = None
     urgency: str
     href: str
 

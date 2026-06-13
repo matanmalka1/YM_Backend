@@ -4,7 +4,7 @@ Flow-7 gap: dedicated tests for StatusCardService.get_status_card().
 Covers aggregation logic and field computations for each card section.
 """
 
-from datetime import date, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -150,7 +150,8 @@ def test_annual_report_card_reflects_stored_report(test_db):
 
     assert card.annual_report.status == AnnualReportStatus.IN_PREPARATION.value
     assert card.annual_report.form_type == PrimaryAnnualReportForm.FORM_1301.value
-    assert card.annual_report.filing_deadline == "2027-04-30"
+    assert card.annual_report.filing_deadline == datetime(2027, 4, 30, tzinfo=UTC)
+    assert card.annual_report.model_dump(mode="json")["filing_deadline"].endswith("Z")
     assert card.annual_report.refund_due == Decimal("1500.00")
     assert card.annual_report.tax_due is None
 

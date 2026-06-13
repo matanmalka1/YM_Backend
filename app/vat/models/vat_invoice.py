@@ -13,7 +13,7 @@ Design decisions:
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
 
@@ -27,6 +27,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
+from app.utils.time_utils import utcnow
 
 if TYPE_CHECKING:
     from app.vat.models.vat_work_item import VatWorkItem
@@ -99,7 +100,7 @@ class VatInvoice(Base):
     is_exceptional: Mapped[bool] = mapped_column(nullable=False, default=False)
 
     # Timestamp
-    created_at: Mapped[date] = mapped_column(nullable=False, default=date.today)
+    created_at: Mapped[datetime] = mapped_column(nullable=False, default=utcnow)
 
     __table_args__ = (
         UniqueConstraint(

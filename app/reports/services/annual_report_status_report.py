@@ -34,7 +34,7 @@ class AnnualReportStatusReportService:
                     "client_record_id": client_record_id,
                     "client_name": client_name,
                     "form_type": report.form_type.value if report.form_type else None,
-                    "filing_deadline": filing_deadline_date,
+                    "filing_deadline": report.filing_deadline,
                     "days_until_deadline": days_until,
                 }
             )

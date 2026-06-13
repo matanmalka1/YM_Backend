@@ -170,7 +170,7 @@ class AdvancePaymentOverviewResponse(BaseModel):
     total: int
     total_expected: ApiDecimal | None = None
     total_paid: ApiDecimal | None = None
-    collection_rate: float | None = None  # 0.0–100.0
+    collection_rate: ApiDecimal | None = None  # 0.00–100.00
 
 
 class AnnualKPIResponse(BaseModel):
@@ -178,7 +178,7 @@ class AnnualKPIResponse(BaseModel):
     year: int
     total_expected: ApiDecimal
     total_paid: ApiDecimal
-    collection_rate: float  # 0.0–100.0
+    collection_rate: ApiDecimal  # 0.00–100.00
     overdue_count: int
     on_time_count: int
 
@@ -196,7 +196,7 @@ class MonthBatchSummary(BaseModel):
     not_paid_count: int = 0
     total_expected: ApiDecimal | None = None
     total_paid: ApiDecimal | None = None
-    collection_rate: float = 0.0
+    collection_rate: ApiDecimal = Decimal("0")
 
 
 class GenerateScheduleRequest(BaseModel):

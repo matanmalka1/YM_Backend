@@ -32,6 +32,13 @@ def test_openapi_uses_string_contract_for_decimal_and_datetime_fields():
     created_at = schema["ClientRecordResponse"]["properties"]["created_at"]
     vat_total = schema["VatWorkItemResponse"]["properties"]["total_output_vat"]
     invoice_gross = schema["VatInvoiceResponse"]["properties"]["gross_amount"]
+    invoice_created_at = schema["VatInvoiceResponse"]["properties"]["created_at"]
+    attention_id = schema["AttentionBoardItem"]["properties"]["id"]
+    attention_amount = schema["AttentionBoardItem"]["properties"]["amount"]
+    annual_status_deadline = schema["AnnualReportStatusClientResponse"]["properties"][
+        "filing_deadline"
+    ]
+    annual_card_deadline = schema["AnnualReportCard"]["properties"]["filing_deadline"]
     work_queue_id = schema["WorkQueueItem"]["properties"]["id"]
     overdue_response = openapi["paths"]["/api/v1/annual-reports/overdue"]["get"]["responses"][
         "200"
@@ -47,6 +54,13 @@ def test_openapi_uses_string_contract_for_decimal_and_datetime_fields():
     assert invoice_gross["type"] == "string"
     assert invoice_gross["format"] == "decimal"
     assert invoice_gross["readOnly"] is True
+    assert invoice_created_at["type"] == "string"
+    assert invoice_created_at["format"] == "date-time"
+    assert attention_id["pattern"] == "^\\w+:\\d+$"
+    assert attention_amount["anyOf"][0]["type"] == "string"
+    assert attention_amount["anyOf"][0]["format"] == "decimal"
+    assert annual_status_deadline["anyOf"][0]["format"] == "date-time"
+    assert annual_card_deadline["anyOf"][0]["format"] == "date-time"
     assert "{source_type}:{source_id}" in work_queue_id["description"]
     assert (
         overdue_response["$ref"] == "#/components/schemas/PaginatedResponse_AnnualReportListItem_"

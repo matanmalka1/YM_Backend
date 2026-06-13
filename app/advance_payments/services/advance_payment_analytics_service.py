@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 
 from sqlalchemy.orm import Session
 
@@ -40,8 +40,14 @@ class AdvancePaymentAnalyticsService:
         self.repo = AdvancePaymentAggregationRepository(db)
 
     @staticmethod
-    def _collection_rate(total_paid: float, total_expected: float) -> float:
-        return round(total_paid / total_expected * 100, 2) if total_expected > 0 else 0.0
+    def _collection_rate(total_paid: Decimal, total_expected: Decimal) -> Decimal:
+        paid = Decimal(total_paid or 0)
+        expected = Decimal(total_expected or 0)
+        if expected <= 0:
+            return Decimal("0")
+        return (paid / expected * Decimal("100")).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
 
     # ─── Overview ─────────────────────────────────────────────────────────────
 
@@ -154,8 +160,8 @@ class AdvancePaymentAnalyticsService:
         rows = AdvancePaymentBatchRepository(self.db).batch_summary_by_month(year)
         result: list[MonthBatchSummary] = []
         for r in rows:
-            total_expected = float(r.total_expected)
-            total_paid = float(r.total_paid)
+            total_expected = Decimal(r.total_expected or 0)
+            total_paid = Decimal(r.total_paid or 0)
             client_count = int(r.client_count)
             paid_count = int(r.paid_count or 0)
             result.append(

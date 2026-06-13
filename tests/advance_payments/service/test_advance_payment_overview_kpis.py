@@ -137,7 +137,7 @@ def test_get_overview_kpis_collection_rate_rounds(test_db):
 
     assert kpis["total_expected"] == 300.0
     assert kpis["total_paid"] == 250.0
-    assert kpis["collection_rate"] == round(250.0 / 300.0 * 100, 2)
+    assert kpis["collection_rate"] == Decimal("83.33")
 
 
 def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db):

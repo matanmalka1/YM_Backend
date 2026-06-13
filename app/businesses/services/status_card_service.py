@@ -89,13 +89,10 @@ class StatusCardService:
         report = self._annual_repo.get_by_client_record_year(client_record_id, year)
         if not report:
             return AnnualReportCard()
-        deadline_str = (
-            report.filing_deadline.strftime("%Y-%m-%d") if report.filing_deadline else None
-        )
         return AnnualReportCard(
             status=report.status.value if report.status else None,
             form_type=report.form_type.value if report.form_type else None,
-            filing_deadline=deadline_str,
+            filing_deadline=report.filing_deadline,
             refund_due=report.refund_due,
             tax_due=report.tax_due,
         )

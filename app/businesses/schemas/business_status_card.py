@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-from app.core.api_types import ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal
 
 
 class VatSummaryCard(BaseModel):
@@ -13,7 +13,7 @@ class VatSummaryCard(BaseModel):
 class AnnualReportCard(BaseModel):
     status: str | None = None
     form_type: str | None = None
-    filing_deadline: str | None = None
+    filing_deadline: ApiDateTime | None = None
     refund_due: ApiDecimal | None = None
     tax_due: ApiDecimal | None = None
 

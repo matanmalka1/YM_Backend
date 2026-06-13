@@ -34,7 +34,8 @@ def test_unpaid_charge_appears_as_overdue(test_db):
 
     assert len(charge_items) == 1
     assert charge_items[0]["urgency"] == WorkQueueUrgency.OVERDUE
-    assert charge_items[0]["amount"] is not None
+    assert charge_items[0]["amount"] == "500.00"
+    assert "₪" not in charge_items[0]["amount"]
     assert charge_items[0]["href"] == "/charges"
 
 

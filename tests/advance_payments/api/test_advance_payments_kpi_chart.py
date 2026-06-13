@@ -64,5 +64,5 @@ def test_kpi_endpoint_returns_collection_rate(client, test_db, advisor_headers):
     assert data["year"] == 2026
     assert Decimal(str(data["total_expected"])) == Decimal("150")
     assert Decimal(str(data["total_paid"])) == Decimal("80")
-    assert data["collection_rate"] == round(80 / 150 * 100, 2)
+    assert data["collection_rate"] == "53.33"
     assert data["overdue_count"] >= 1

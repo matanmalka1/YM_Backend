@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
-from app.core.api_types import ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal
 from app.utils.id_validation import validate_israeli_id_checksum
 from app.vat.models.vat_enums import (
     CounterpartyIdType,
@@ -83,7 +83,14 @@ class VatInvoiceCreateRequest(VatInvoiceValidatorMixin):
     invoice_date: date | None = None  # Date — לא DateTime
     counterparty_name: str | None = Field(default=None, max_length=MAX_COUNTERPARTY_NAME_LENGTH)
     gross_amount: ApiDecimal
-    counterparty_id: str | None = Field(default=None, max_length=MAX_COUNTERPARTY_ID_LENGTH)
+    counterparty_id: str | None = Field(
+        default=None,
+        max_length=MAX_COUNTERPARTY_ID_LENGTH,
+        description=(
+            "External VAT counterparty identifier such as Israeli business ID, "
+            "personal ID, passport, or foreign ID. Not an internal database FK."
+        ),
+    )
     counterparty_id_type: CounterpartyIdType | None = None
     expense_category: ExpenseCategory | None = None
     rate_type: VatRateType = VatRateType.STANDARD
@@ -106,7 +113,13 @@ class VatInvoiceResponse(BaseModel):
     invoice_number: str
     invoice_date: date  # Date — לא DateTime
     counterparty_name: str
-    counterparty_id: str | None = None
+    counterparty_id: str | None = Field(
+        default=None,
+        description=(
+            "External VAT counterparty identifier such as Israeli business ID, "
+            "personal ID, passport, or foreign ID. Not an internal database FK."
+        ),
+    )
     counterparty_id_type: CounterpartyIdType | None = None  # קיים במודל
     net_amount: ApiDecimal
     vat_amount: ApiDecimal
@@ -115,7 +128,7 @@ class VatInvoiceResponse(BaseModel):
     deduction_rate: ApiDecimal
     is_exceptional: bool
     created_by: int
-    created_at: date  # Date במודל
+    created_at: ApiDateTime
     # Non-null only on create response — True when annual turnover crosses 80% of OSEK PATUR ceiling
     ceiling_warning: bool = False
 

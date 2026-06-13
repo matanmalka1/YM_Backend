@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import date
-from decimal import Decimal, InvalidOperation
 
 from sqlalchemy.orm import Session
 
@@ -76,20 +75,9 @@ def _reason(item: WorkQueueItem) -> str | None:
     return None
 
 
-def _format_ils(value: str) -> str | None:
-    try:
-        d = Decimal(str(value))
-        formatted = f"{d:,.2f}".rstrip("0").rstrip(".")
-        return f"₪{formatted}"
-    except InvalidOperation, ValueError:
-        return None
-
-
 def _amount(item: WorkQueueItem) -> str | None:
     if item.source_type == WorkQueueSourceType.CHARGE:
-        raw = (item.metadata or {}).get("amount")
-        if raw:
-            return _format_ils(raw)
+        return (item.metadata or {}).get("amount")
     return None
 
 

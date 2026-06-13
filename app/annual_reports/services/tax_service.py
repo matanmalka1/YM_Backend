@@ -50,6 +50,10 @@ _PRE_SUBMISSION_STATUSES = {
 }
 
 
+def _decimal(value: float | int | Decimal | None) -> Decimal:
+    return Decimal(str(value or 0))
+
+
 class AnnualReportTaxService:
     """Calculate and persist annual-report tax outcomes."""
 
@@ -122,32 +126,32 @@ class AnnualReportTaxService:
             tax.tax_after_credits + ni.total + (vat_balance or 0) - advances_paid, 2
         )
         return TaxCalculationResponse(
-            taxable_income=tax.taxable_income,
-            pension_deduction=tax.pension_deduction,
-            tax_before_credits=tax.tax_before_credits,
-            credit_points_value=tax.credit_points_value,
-            donation_credit=tax.donation_credit,
-            other_credits=tax.other_credits,
-            tax_after_credits=tax.tax_after_credits,
-            net_profit=round(net_profit, 2),
-            effective_rate=tax.effective_rate,
+            taxable_income=_decimal(tax.taxable_income),
+            pension_deduction=_decimal(tax.pension_deduction),
+            tax_before_credits=_decimal(tax.tax_before_credits),
+            credit_points_value=_decimal(tax.credit_points_value),
+            donation_credit=_decimal(tax.donation_credit),
+            other_credits=_decimal(tax.other_credits),
+            tax_after_credits=_decimal(tax.tax_after_credits),
+            net_profit=_decimal(round(net_profit, 2)),
+            effective_rate=_decimal(tax.effective_rate),
             national_insurance=NationalInsuranceResponse(
-                base_amount=ni.base_amount,
-                high_amount=ni.high_amount,
-                total=ni.total,
+                base_amount=_decimal(ni.base_amount),
+                high_amount=_decimal(ni.high_amount),
+                total=_decimal(ni.total),
             ),
             brackets=[
                 BracketBreakdownItem(
-                    rate=b.rate,
-                    from_amount=b.from_amount,
-                    to_amount=b.to_amount,
-                    taxable_in_bracket=b.taxable_in_bracket,
-                    tax_in_bracket=b.tax_in_bracket,
+                    rate=_decimal(b.rate),
+                    from_amount=_decimal(b.from_amount),
+                    to_amount=_decimal(b.to_amount) if b.to_amount is not None else None,
+                    taxable_in_bracket=_decimal(b.taxable_in_bracket),
+                    tax_in_bracket=_decimal(b.tax_in_bracket),
                 )
                 for b in tax.brackets
             ],
-            total_liability=total_liability,
-            total_credit_points=tax.total_credit_points,
+            total_liability=_decimal(total_liability),
+            total_credit_points=_decimal(tax.total_credit_points),
         )
 
     def save_tax_calculation(

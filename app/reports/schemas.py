@@ -6,7 +6,7 @@ from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     PrimaryAnnualReportForm,
 )
-from app.core.api_types import ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal
 
 
 class VatComplianceReportItemResponse(BaseModel):
@@ -20,7 +20,7 @@ class VatComplianceReportItemResponse(BaseModel):
     periods_open: int
     on_time_count: int
     late_count: int
-    compliance_rate: float
+    compliance_rate: ApiDecimal
 
 
 class VatComplianceStalePendingResponse(BaseModel):
@@ -55,7 +55,7 @@ class AdvancePaymentCollectionsReportResponse(BaseModel):
     month: int | None = None
     total_expected: ApiDecimal
     total_paid: ApiDecimal
-    collection_rate: float
+    collection_rate: ApiDecimal
     total_gap: ApiDecimal
     items: list[AdvancePaymentReportItemResponse]
 
@@ -64,7 +64,7 @@ class AnnualReportStatusClientResponse(BaseModel):
     client_record_id: int
     client_name: str
     form_type: PrimaryAnnualReportForm | None = None
-    filing_deadline: date | None = None
+    filing_deadline: ApiDateTime | None = None
     days_until_deadline: int | None = None
 
 

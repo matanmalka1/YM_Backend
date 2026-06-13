@@ -17,6 +17,8 @@ class TestInvoices:
         data = response.json()
         assert data["invoice_type"] == "income"
         assert data["vat_amount"] == "180.00"
+        assert data["created_at"].endswith("Z")
+        assert "T" in data["created_at"]
 
     def test_add_invoice_updates_totals(self, client, advisor_headers, vat_client):
         item_id = create_work_item(client, advisor_headers, vat_client, "2026-06")
@@ -67,7 +69,10 @@ class TestInvoices:
         )
         r = client.get(f"/api/v1/vat/work-items/{item_id}/invoices", headers=advisor_headers)
         assert r.status_code == 200
-        assert len(r.json()["items"]) == 2
+        items = r.json()["items"]
+        assert len(items) == 2
+        assert all(item["created_at"].endswith("Z") for item in items)
+        assert all("T" in item["created_at"] for item in items)
 
     def test_delete_invoice(self, client, advisor_headers, vat_client):
         item_id = create_work_item(client, advisor_headers, vat_client, "2026-10")

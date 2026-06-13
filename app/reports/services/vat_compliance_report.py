@@ -1,5 +1,7 @@
 """VAT Compliance Report: per-client period coverage and stale pending flags."""
 
+from decimal import Decimal, ROUND_HALF_UP
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -51,6 +53,13 @@ class VatComplianceReportService:
             filed = int(r["periods_filed"] or 0)
             on_time = on_time_map.get(count_key, 0)
             late = late_map.get(count_key, 0)
+            compliance_rate = (
+                (Decimal(filed) / Decimal(expected) * Decimal("100")).quantize(
+                    Decimal("0.01"), rounding=ROUND_HALF_UP
+                )
+                if expected
+                else Decimal("0")
+            )
             items.append(
                 {
                     "client_record_id": client_record_id,
@@ -63,7 +72,7 @@ class VatComplianceReportService:
                     "periods_open": expected - filed,
                     "on_time_count": on_time,
                     "late_count": late,
-                    "compliance_rate": round(filed / expected * 100, 2) if expected else 0.0,
+                    "compliance_rate": compliance_rate,
                 }
             )
 

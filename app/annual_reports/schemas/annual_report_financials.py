@@ -128,7 +128,7 @@ class FinancialSummaryResponse(BaseModel):
 
 
 class BracketBreakdownItem(BaseModel):
-    rate: float
+    rate: ApiDecimal
     from_amount: ApiDecimal
     to_amount: ApiDecimal | None = None
     taxable_in_bracket: ApiDecimal
@@ -150,11 +150,11 @@ class TaxCalculationResponse(BaseModel):
     other_credits: ApiDecimal
     tax_after_credits: ApiDecimal
     net_profit: ApiDecimal
-    effective_rate: float
+    effective_rate: ApiDecimal
     national_insurance: NationalInsuranceResponse
     brackets: list[BracketBreakdownItem]
     total_liability: ApiDecimal
-    total_credit_points: float
+    total_credit_points: ApiDecimal
 
 
 # ── Advances summary ──────────────────────────────────────────────────────────
@@ -200,7 +200,7 @@ class TaxPreviewRequest(BaseModel):
     gross_income: ApiDecimal = Field(ge=0)
     expenses: ApiDecimal = Field(ge=0)
     advances_paid: ApiDecimal = Field(ge=0)
-    credit_points: float = Field(ge=0)
+    credit_points: ApiDecimal = Field(ge=0)
 
 
 class TaxPreviewResponse(BaseModel):
