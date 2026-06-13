@@ -1,3 +1,5 @@
+from decimal import ROUND_HALF_UP, Decimal
+
 from app.annual_reports.schemas.annual_report_responses import (
     DefaultTaxYearResponse,
     SeasonSummaryResponse,
@@ -59,4 +61,3 @@ __all__ = [
     "get_active_annual_report_tax_year",
     "get_filing_season_year",
 ]
-from decimal import ROUND_HALF_UP, Decimal
