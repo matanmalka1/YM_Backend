@@ -17,7 +17,11 @@ router = APIRouter(prefix="/settings/tax-calendar", tags=["settings-tax-calendar
 
 
 def _check_year_range(tax_year_after: int | None, tax_year_before: int | None) -> None:
-    if tax_year_after is not None and tax_year_before is not None and tax_year_after > tax_year_before:
+    if (
+        tax_year_after is not None
+        and tax_year_before is not None
+        and tax_year_after > tax_year_before
+    ):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="שנת ההתחלה חייבת להיות קטנה או שווה לשנת הסיום.",
