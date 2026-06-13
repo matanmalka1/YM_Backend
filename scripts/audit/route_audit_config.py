@@ -163,6 +163,9 @@ KNOWN_EXTERNAL_OR_MANUAL_ROUTES: set[tuple[str, str]] = {
     ("GET", "/api/v1/clients/export"),
     ("GET", "/api/v1/clients/template"),
     ("POST", "/api/v1/clients/import"),
+    # Manual/internal external invoice attachment flow; no dedicated frontend surface yet.
+    ("POST", "/api/v1/invoices"),
+    ("GET", "/api/v1/invoices/charge/{charge_id}"),
 }
 
 
@@ -178,11 +181,11 @@ ENUM_SYNC_MAP: dict[str, str] = {
     "IdNumberType": "features/clients/constants.ts:CLIENT_ID_NUMBER_TYPES",
     "VatType": "features/clients/constants.ts:VAT_TYPES",
     "VatWorkItemStatus": "features/vatReports/constants.ts:VAT_WORK_ITEM_STATUS_VALUES",
-    "VatRateType": "features/vatReports/constants.ts:VAT_RATE_TYPE_VALUES",
+    "VatRateType": "features/vatReports/constants.ts:VAT_RATE_TYPES",
     # DocumentType exists in two Python modules with different values.
     # Use module-qualified keys: "module.ClassName"
-    "app.vat_reports.models.vat_enums.DocumentType": "features/vatReports/constants.ts:VAT_DOCUMENT_TYPE_VALUES",
-    "app.permanent_documents.models.permanent_document.PermanentDocumentType": "features/documents/documents.constants.ts:DOCUMENT_TYPES",
+    "app.vat.models.vat_enums.DocumentType": "features/vatReports/constants.ts:DOCUMENT_TYPES",
+    "app.documents.permanent_documents.models.permanent_document.PermanentDocumentType": "features/documents/documents.constants.ts:DOCUMENT_TYPES",
     "ChargeStatus": "features/charges/constants.ts:CHARGE_STATUS_VALUES",
     "ChargeType": "features/charges/constants.ts:CHARGE_TYPE_VALUES",
     "UserRole": "features/users/constants.ts:USER_ROLE_VALUES",
