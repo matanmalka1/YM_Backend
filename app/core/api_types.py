@@ -32,6 +32,7 @@ class SortOrder(str, Enum):
     asc = "asc"
     desc = "desc"
 
+
 # Business-required text: strips surrounding whitespace then rejects empty,
 # so "" and whitespace-only ("   ") both fail validation with 422.
 NonBlankStr = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)]

@@ -59,4 +59,4 @@ __all__ = [
     "get_active_annual_report_tax_year",
     "get_filing_season_year",
 ]
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal

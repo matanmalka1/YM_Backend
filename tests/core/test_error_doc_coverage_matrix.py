@@ -102,7 +102,9 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("POST", "/api/v1/clients/{client_record_id}/notes"): {"400"},
     ("PATCH", "/api/v1/clients/{client_record_id}/notes/{note_id}"): {"400"},
     ("POST", "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes"): {"400"},
-    ("PATCH", "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes/{note_id}"): {"400"},
+    ("PATCH", "/api/v1/clients/{client_record_id}/businesses/{business_id}/notes/{note_id}"): {
+        "400"
+    },
     # authority_contacts
     ("POST", "/api/v1/clients/{client_record_id}/authority-contacts"): {"400"},
     ("PATCH", "/api/v1/clients/{client_record_id}/authority-contacts/{contact_id}"): {"400"},

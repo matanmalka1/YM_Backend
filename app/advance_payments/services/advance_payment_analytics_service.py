@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy.orm import Session
 
@@ -45,9 +45,7 @@ class AdvancePaymentAnalyticsService:
         expected = Decimal(total_expected or 0)
         if expected <= 0:
             return Decimal("0")
-        return (paid / expected * Decimal("100")).quantize(
-            Decimal("0.01"), rounding=ROUND_HALF_UP
-        )
+        return (paid / expected * Decimal("100")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     # ─── Overview ─────────────────────────────────────────────────────────────
 
