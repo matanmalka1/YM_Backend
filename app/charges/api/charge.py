@@ -19,6 +19,7 @@ from app.charges.services.bulk_billing_service import BulkBillingService
 from app.charges.services.charge_query_service import ChargeQueryService
 from app.charges.services.charge_response_builder import ChargeResponseBuilder
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -107,7 +108,7 @@ def list_charges(
     issued_after: datetime.date | None = None,
     issued_before: datetime.date | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     return ChargeQueryService(db).list_charges_paginated(
         business_id=business_id,

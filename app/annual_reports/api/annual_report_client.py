@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.annual_reports.schemas.annual_report_responses import AnnualReportListResponse
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -23,7 +24,7 @@ def list_client_reports(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """All annual reports for a client, sorted newest year first."""
     service = AnnualReportService(db)

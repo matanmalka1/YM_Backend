@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, Response
 
 from app.common.source_types import WorkQueueSourceType
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.tasks.api.responses import (
     TASK_CANCEL_RESPONSES,
     TASK_COMPLETE_RESPONSES,
@@ -42,7 +43,7 @@ def list_tasks(
     due_before: date | None = Query(None),
     due_after: date | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     svc = TaskService(db)
     items, total = svc.list(

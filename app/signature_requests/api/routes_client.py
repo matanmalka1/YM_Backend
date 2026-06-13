@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.signature_requests.api.responses import SIGNATURE_CANCEL_RESPONSES
 from app.signature_requests.schemas.signature_request import (
     CancelRequest,
@@ -56,7 +57,7 @@ def list_client_signature_requests(
     user: CurrentUser,
     status_filter: str | None = Query(None, alias="status"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """All signature requests for a legal entity, across all businesses."""
     service = SignatureRequestService(db)

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import datetime as dt
 
+from app.core.pagination import MAX_PAGE_SIZE
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -67,26 +68,39 @@ def test_list_notifications_accepts_page_size_50(client, test_db, advisor_header
     assert response.json()["page_size"] == 50
 
 
-def test_list_notifications_rejects_page_size_30(client, advisor_headers):
-    response = client.get("/api/v1/notifications?page_size=30", headers=advisor_headers)
+def test_list_notifications_accepts_page_size_at_max(client, test_db, advisor_headers):
+    seeded = _client(test_db, "page-size-max")
+    _notification(test_db, seeded.id)
+    test_db.commit()
+
+    response = client.get(
+        f"/api/v1/notifications?page_size={MAX_PAGE_SIZE}",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    assert response.json()["page_size"] == MAX_PAGE_SIZE
+
+
+def test_list_notifications_rejects_page_size_above_max(client, advisor_headers):
+    response = client.get(
+        f"/api/v1/notifications?page_size={MAX_PAGE_SIZE + 1}",
+        headers=advisor_headers,
+    )
 
     assert response.status_code == 422
     assert response.json()["error"]["code"] == "validation_error"
 
 
-def test_list_notifications_openapi_page_size_contract_is_enum(client):
+def test_list_notifications_openapi_page_size_contract_has_max(client):
     schema = client.app.openapi()
     parameters = schema["paths"]["/api/v1/notifications"]["get"]["parameters"]
     page_size_schema = next(
         parameter["schema"] for parameter in parameters if parameter["name"] == "page_size"
     )
-    if "$ref" in page_size_schema:
-        schema_name = page_size_schema["$ref"].removeprefix("#/components/schemas/")
-        page_size_schema = schema["components"]["schemas"][schema_name]
 
-    assert page_size_schema["enum"] == [25, 50]
-    assert "minimum" not in page_size_schema
-    assert "maximum" not in page_size_schema
+    assert page_size_schema["minimum"] == 1
+    assert page_size_schema["maximum"] == MAX_PAGE_SIZE
 
 
 def test_trigger_filter_returns_only_matching_records(client, test_db, advisor_headers):

@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import VatType
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.models.vat_enums import VatWorkItemStatus
@@ -49,7 +50,7 @@ def list_work_item_group_items(
     db: DBSession,
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
     client_name: str | None = Query(None),
 ):

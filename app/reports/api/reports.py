@@ -3,6 +3,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.reports.schemas import (
     AdvancePaymentCollectionsReportResponse,
     AgingReportResponse,
@@ -31,7 +32,7 @@ def get_vat_compliance_report(
     db: DBSession,
     year: int = Query(...),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = VatComplianceReportService(db)
     return service.get_vat_compliance_report(year, page=page, page_size=page_size)
@@ -61,7 +62,7 @@ def get_aging_report(
     db: DBSession,
     as_of_date: date | None = Query(None),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = AgingReportService(db)
     return service.generate_aging_report(as_of_date=as_of_date, page=page, page_size=page_size)

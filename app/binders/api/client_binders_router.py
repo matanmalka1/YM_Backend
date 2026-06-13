@@ -7,6 +7,7 @@ from app.binders.schemas.binder_extended import (
 from app.binders.services.binder_operations_service import BinderOperationsService
 from app.clients.services.client_service import get_client_or_raise
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -26,7 +27,7 @@ def list_client_binders(
     client_record_id: int,
     db: DBSession,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """List all binders for a specific client."""
     get_client_or_raise(db, client_record_id)

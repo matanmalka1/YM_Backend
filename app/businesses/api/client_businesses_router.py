@@ -14,6 +14,7 @@ from app.businesses.schemas.business_schemas import (
 from app.businesses.services.business_service import BusinessService
 from app.businesses.services.client_business_service import ClientBusinessService
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -55,7 +56,7 @@ def list_client_businesses(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     return ClientBusinessService(db).list_for_client(
         client_id,

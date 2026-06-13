@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.notes.api.responses import BUSINESS_NOTE_CREATE_RESPONSES, NOTE_UPDATE_RESPONSES
 from app.notes.schemas.entity_note import (
     EntityNoteCreateRequest,
@@ -29,7 +30,7 @@ def list_notes(
     business_id: int,
     db: DBSession,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=100),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     items, total = BusinessNoteService(db).list_notes(
         client_id=client_id,

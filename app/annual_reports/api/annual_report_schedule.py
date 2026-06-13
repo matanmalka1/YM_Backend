@@ -9,6 +9,7 @@ from app.annual_reports.schemas.annual_report_responses import ScheduleEntryResp
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.api_types import PaginatedResponse
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -43,7 +44,7 @@ def list_schedules(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     """List all schedules for a specific annual report."""
     service = AnnualReportService(db)

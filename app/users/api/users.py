@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.api.responses import (
     USER_ACTIVATE_RESPONSES,
@@ -50,7 +51,7 @@ def list_users(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
     is_active: bool | None = Query(None),
     search: str | None = Query(None),
 ):

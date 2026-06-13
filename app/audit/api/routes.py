@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from app.audit.schemas.entity_audit_log import EntityAuditTrailResponse
 from app.audit.services.audit_trail_service import AuditTrailService
 from app.core.openapi_responses import bad_request_response, error_responses, not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -26,7 +27,7 @@ def get_entity_audit_trail(
     db: DBSession,
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """Get the full audit trail for any audited entity."""
     return AuditTrailService(db).get_entity_audit_trail(entity_type, entity_id, page, page_size)

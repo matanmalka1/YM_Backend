@@ -15,6 +15,7 @@ from app.authority_contacts.services.authority_contact_service import (
     AuthorityContactService,
 )
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -67,7 +68,7 @@ def list_authority_contacts(
     _: CurrentUser,
     contact_type: ContactType | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """List authority contacts for client with pagination."""
     service = AuthorityContactService(db)

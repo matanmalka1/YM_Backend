@@ -8,6 +8,7 @@ from app.annual_reports.services.annual_report_charge_service import (
 from app.charges.schemas.charge import ChargeResponse
 from app.core.api_types import PaginatedResponse
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -28,7 +29,7 @@ def list_report_charges(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """רשימת חיובים המקושרים לדוח שנתי זה (מידע בלבד)."""
     svc = AnnualReportChargeService(db)

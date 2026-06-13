@@ -15,6 +15,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -61,7 +62,7 @@ def list_annual_reports(
     client_record_id: int | None = Query(None),
     status: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
     sort_by: str = Query(
         "tax_year",
         pattern="^(tax_year|status|filing_deadline|created_at|client_record_id)$",
@@ -93,7 +94,7 @@ def list_overdue(
     user: CurrentUser,
     tax_year: int | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """Reports past their filing deadline that have not been submitted."""
     service = AnnualReportService(db)

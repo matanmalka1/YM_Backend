@@ -405,7 +405,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -658,7 +658,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -2999,7 +2999,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -4100,7 +4100,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -4730,7 +4730,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -4917,7 +4917,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 25,
               "title": "Page Size"
@@ -5537,7 +5537,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -6387,7 +6387,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -6504,7 +6504,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 100,
               "title": "Page Size"
@@ -7102,7 +7102,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -7643,7 +7643,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -8558,7 +8558,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -8905,7 +8905,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -9102,7 +9102,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -9381,7 +9381,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -10212,7 +10212,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -11501,7 +11501,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -11577,7 +11577,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -12001,8 +12001,11 @@
             "in": "query",
             "required": false,
             "schema": {
-              "$ref": "#/components/schemas/NotificationPageSize",
-              "default": 25
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 25,
+              "title": "Page Size"
             }
           }
         ],
@@ -12396,7 +12399,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -12958,7 +12961,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -13930,7 +13933,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -14205,7 +14208,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -16109,7 +16112,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -16403,7 +16406,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 50,
               "title": "Page Size"
@@ -16770,7 +16773,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 50,
               "title": "Page Size"
@@ -17165,7 +17168,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -17391,7 +17394,7 @@
             "required": false,
             "schema": {
               "type": "integer",
-              "maximum": 100,
+              "maximum": 200,
               "minimum": 1,
               "default": 20,
               "title": "Page Size"
@@ -27202,14 +27205,6 @@
           "page_size"
         ],
         "title": "NotificationListResponse"
-      },
-      "NotificationPageSize": {
-        "type": "integer",
-        "enum": [
-          25,
-          50
-        ],
-        "title": "NotificationPageSize"
       },
       "NotificationPreviewRequest": {
         "properties": {

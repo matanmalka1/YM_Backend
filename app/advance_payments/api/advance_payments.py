@@ -24,6 +24,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.period_utils import parse_period_year
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -47,7 +48,7 @@ def list_advance_payments(
     year: int | None = Query(None),
     status_filter: list[AdvancePaymentStatus] = Query(default=[], alias="status"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = AdvancePaymentService(db)
     items, total = service.list_payments_for_client(

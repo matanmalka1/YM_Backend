@@ -30,6 +30,7 @@ from app.clients.services.create_client_service import CreateClientService
 from app.clients.services.impact_preview_service import compute_creation_impact
 from app.common.enums import EntityType
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -104,7 +105,7 @@ def list_clients(
     ),
     order: Literal["asc", "desc"] = Query("asc"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """List clients with optional search, status filter, and sorting."""
     service = ClientQueryService(db)
@@ -128,7 +129,7 @@ def list_sidebar_clients(
     sort_by: str = Query("full_name", pattern="^(full_name|office_client_number)$"),
     order: Literal["asc", "desc"] = Query("asc"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(100, ge=1, le=100),
+    page_size: int = Query(100, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = ClientQueryService(db)
     return service.list_sidebar_clients(

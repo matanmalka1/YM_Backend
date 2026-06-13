@@ -11,6 +11,7 @@ from app.binders.services.binder_intake_edit_service import BinderIntakeEditServ
 from app.binders.services.messages import BINDER_NOT_FOUND
 from app.core.api_types import PaginatedResponse
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -31,7 +32,7 @@ def get_binder_audit(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=50, ge=1, le=200),
+    page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = BinderAuditService(db)
     result = service.get_binder_audit(binder_id, page=page, page_size=page_size)
@@ -61,7 +62,7 @@ def get_binder_intakes(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = BinderAuditService(db)
     intakes, total = service.get_binder_intakes(binder_id, page=page, page_size=page_size)

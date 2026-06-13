@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Query
 
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.timeline.schemas.timeline import ClientTimelineResponse, TimelineEvent
 from app.timeline.services.timeline_service import TimelineService
 from app.users.api.deps import DBSession, require_role
@@ -22,7 +23,7 @@ def get_client_timeline(
     client_record_id: int,
     db: DBSession,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
     search: str | None = Query(None),
     event_type: list[str] | None = Query(None),
     important_only: bool = Query(False),

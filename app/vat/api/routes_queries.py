@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import VatType
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.serializers import (
@@ -106,7 +107,7 @@ def list_client_work_items(
     db: DBSession,
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=200, ge=1, le=200),
+    page_size: int = Query(default=200, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = VatReportService(db)
     enriched = service.get_client_items_enriched(
@@ -134,7 +135,7 @@ def list_work_items(
     current_user: CurrentUser,
     status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=200),
+    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
     period: str | None = Query(None),
     period_type: VatType | None = Query(None),
     client_name: str | None = Query(None),
@@ -168,7 +169,7 @@ def get_audit_trail(
     item_id: int,
     db: DBSession,
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = VatReportService(db)
     enriched = service.get_audit_trail_enriched(item_id, page, page_size)

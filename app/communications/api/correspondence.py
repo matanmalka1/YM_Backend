@@ -16,11 +16,11 @@ from app.communications.schemas.correspondence import (
 )
 from app.communications.services.correspondence_service import CorrespondenceService
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
 _DEFAULT_PAGE_SIZE = 20
-_MAX_PAGE_SIZE = 100
 
 _AUTH = [Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))]
 _ADVISOR_ONLY = [Depends(require_role(UserRole.ADVISOR))]
@@ -41,7 +41,7 @@ def list_correspondence_by_client(
     client_record_id: int,
     db: DBSession,
     page: int = Query(1, ge=1),
-    page_size: int = Query(_DEFAULT_PAGE_SIZE, ge=1, le=_MAX_PAGE_SIZE),
+    page_size: int = Query(_DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     business_id: int | None = Query(None),
     correspondence_type: CorrespondenceType | None = Query(None),
     contact_id: int | None = Query(None),

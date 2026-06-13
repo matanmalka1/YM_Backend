@@ -3,6 +3,7 @@ from datetime import date, timedelta
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.clients.models.client_record import ClientRecord
+from app.core.pagination import MAX_PAGE_SIZE
 from app.tasks.models.task import Task, TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.schemas.work_queue import WorkQueueSourceType
@@ -88,7 +89,7 @@ def test_work_queue_api_pagination(client, test_db, advisor_headers):
 
 def test_work_queue_api_page_size_max_enforced(client, advisor_headers):
     response = client.get(
-        "/api/v1/work-queue?page_size=999",
+        f"/api/v1/work-queue?page_size={MAX_PAGE_SIZE + 1}",
         headers=advisor_headers,
     )
     assert response.status_code == 422

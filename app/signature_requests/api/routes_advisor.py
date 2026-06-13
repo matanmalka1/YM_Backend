@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.signature_requests.api.responses import SIGNATURE_CREATE_RESPONSES
 from app.signature_requests.schemas.signature_request import (
     SignatureRequestCreatedResponse,
@@ -64,7 +65,7 @@ def list_pending_requests(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     service = SignatureRequestService(db)
     items, total = service.list_pending_requests(page=page, page_size=page_size)

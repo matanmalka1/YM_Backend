@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.clients.enums import ClientStatus
 from app.common.enums import EntityType
+from app.core.pagination import MAX_PAGE_SIZE
 from app.search.schemas.search import SearchResponse, SearchResult
 from app.search.services.search_service import SearchService
 from app.users.api.deps import CurrentUser, DBSession, require_role
@@ -29,7 +30,7 @@ def search(
     binder_capacity_status: BinderCapacityStatus | None = None,
     filename: str | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """Unified search for clients and binders."""
     service = SearchService(db)

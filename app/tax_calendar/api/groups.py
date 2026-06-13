@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import ObligationType
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupItemsResponse,
     TaxCalendarGroupListResponse,
@@ -29,7 +30,7 @@ def list_tax_calendar_groups(
     client_search: str | None = Query(None),
     status: str = Query("all", pattern="^(all|open|overdue|done)$"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(25, ge=1, le=100),
+    page_size: int = Query(25, ge=1, le=MAX_PAGE_SIZE),
 ):
     return list_groups_paginated(
         db,
@@ -55,7 +56,7 @@ def get_tax_calendar_group_items(
     tax_calendar_entry_id: int,
     db: DBSession,
     page: int = Query(1, ge=1),
-    page_size: int = Query(50, ge=1, le=200),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     client_search: str | None = Query(None),
     client_record_id: int | None = Query(None),
 ):

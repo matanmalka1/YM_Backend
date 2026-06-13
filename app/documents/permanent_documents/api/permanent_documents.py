@@ -3,6 +3,7 @@ from typing import Annotated
 from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
 from app.core.openapi_responses import not_found_response
+from app.core.pagination import MAX_PAGE_SIZE
 from app.documents.permanent_documents.api.responses import (
     DOCUMENT_DELETE_RESPONSES,
     DOCUMENT_REPLACE_RESPONSES,
@@ -80,7 +81,7 @@ def list_client_documents(
     document_type: PermanentDocumentType | None = Query(default=None),
     status: DocumentStatus | None = Query(default=None),
     page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=100),
+    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """List permanent documents for a client."""
     service = PermanentDocumentService(db)

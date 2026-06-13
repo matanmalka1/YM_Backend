@@ -11,6 +11,7 @@ from app.advance_payments.schemas.advance_payment import (
 from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
 )
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -32,7 +33,7 @@ def list_advance_payments_overview(
     client_search: str | None = Query(None),
     status: list[AdvancePaymentStatus] | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     resolved_statuses = status if status else None
 

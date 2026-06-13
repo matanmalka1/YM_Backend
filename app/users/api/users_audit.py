@@ -3,6 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Depends, Query
 
 from app.core.exceptions import AppError
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.users.models.user_audit_log import AuditAction
@@ -24,7 +25,7 @@ def list_audit_logs(
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=100),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
     action: AuditAction | None = None,
     target_user_id: int | None = None,
     actor_user_id: int | None = None,

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends, Query
 
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.tasks.models.task import TaskStatus
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
@@ -15,9 +16,6 @@ from app.work_queue.schemas.work_queue import (
 from app.work_queue.services.work_queue_service import WorkQueueService
 
 router = APIRouter(prefix="/work-queue", tags=["work-queue"])
-
-_PAGE_SIZE_MAX = 200
-_PAGE_SIZE_DEFAULT = 50
 
 
 class WorkQueueFilterParams:
@@ -55,7 +53,7 @@ def list_work_queue(
     db: DBSession,
     filters: WorkQueueFilterParams = Depends(),
     page: int = Query(1, ge=1),
-    page_size: int = Query(_PAGE_SIZE_DEFAULT, ge=1, le=_PAGE_SIZE_MAX),
+    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
 ):
     return WorkQueueService(db).list_items_with_total(
         client_record_id=filters.client_record_id,

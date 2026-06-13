@@ -7,6 +7,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.season_service import get_active_annual_report_tax_year
+from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -24,7 +25,7 @@ def list_active_season_reports(
     client_record_id: int | None = Query(None),
     status: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     tax_year = get_active_annual_report_tax_year()
     service = AnnualReportService(db)
@@ -62,7 +63,7 @@ def list_season_reports(
     client_record_id: int | None = Query(None),
     status: str | None = Query(None),
     page: int = Query(1, ge=1),
-    page_size: int = Query(20, ge=1, le=200),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     """All reports for a given tax year — the advisor's season dashboard."""
     service = AnnualReportService(db)
