@@ -81,7 +81,7 @@ def _format_ils(value: str) -> str | None:
         d = Decimal(str(value))
         formatted = f"{d:,.2f}".rstrip("0").rstrip(".")
         return f"₪{formatted}"
-    except (InvalidOperation, ValueError):
+    except InvalidOperation, ValueError:
         return None
 
 

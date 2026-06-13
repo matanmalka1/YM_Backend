@@ -1,5 +1,4 @@
 from datetime import date
-from typing import Optional
 
 from sqlalchemy.orm import Session
 
@@ -48,14 +47,14 @@ class BinderOperationsService:
         total = self.repo.count_by_client_record(client_record_id)
         return binders, total
 
-    def get_active_binder_for_client(self, client_record_id: int) -> Optional["Binder"]:
+    def get_active_binder_for_client(self, client_record_id: int) -> Binder | None:
         """Return the intake-eligible binder for a client, or None."""
         client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
         if not client_record:
             return None
         return self.repo.get_active_by_client_record(client_record_id)
 
-    def map_active_binders_for_clients(self, client_record_ids: list[int]) -> dict[int, "Binder"]:
+    def map_active_binders_for_clients(self, client_record_ids: list[int]) -> dict[int, Binder]:
         """Return {client_record_id: binder} for each client's intake-eligible binder."""
         return self.repo.map_active_by_clients(client_record_ids)
 

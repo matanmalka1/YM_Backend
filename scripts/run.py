@@ -337,7 +337,7 @@ def _pick(items: list[str], prompt: str = "Select") -> int | None:
     while True:
         try:
             raw = input(f"{B}{prompt}{X} [0-{len(items)}]: ").strip()
-        except (EOFError, KeyboardInterrupt):
+        except EOFError, KeyboardInterrupt:
             print()
             return None
 
@@ -355,7 +355,7 @@ def _prompt(label: str, default: str = "", *, secret: bool = False) -> str:
             value = getpass.getpass(f"  {label}{default_str}: ").strip()
         else:
             value = input(f"  {label}{default_str}: ").strip()
-    except (EOFError, KeyboardInterrupt):
+    except EOFError, KeyboardInterrupt:
         print()
         return default
     return value or default
@@ -389,7 +389,7 @@ def _pause() -> None:
         return
     try:
         input(f"\n  {D}Press Enter to continue...{X}")
-    except (EOFError, KeyboardInterrupt):
+    except EOFError, KeyboardInterrupt:
         pass
 
 

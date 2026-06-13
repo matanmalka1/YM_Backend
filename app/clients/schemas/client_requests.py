@@ -47,7 +47,7 @@ class ClientCreateRequest(BaseModel):
         return normalized
 
     @model_validator(mode="after")
-    def validate_create_rules(self) -> "ClientCreateRequest":
+    def validate_create_rules(self) -> ClientCreateRequest:
         validate_create_entity_rules(
             entity_type=self.entity_type,
             id_number=self.id_number,
@@ -80,7 +80,7 @@ class ClientUpdateRequest(NonEmptyUpdateMixin):
     accountant_id: int | None = None
 
     @model_validator(mode="after")
-    def validate_update_rules(self) -> "ClientUpdateRequest":
+    def validate_update_rules(self) -> ClientUpdateRequest:
         # status maps to a non-nullable column on ClientRecord; full_name is a
         # business identifier. Explicit null for either is invalid.
         for field in ("status", "full_name"):
@@ -97,7 +97,7 @@ class ClientOnboardingRequest(BaseModel):
     business: ClientBusinessCreateRequest
 
     @model_validator(mode="after")
-    def require_full_create_payload(self) -> "ClientOnboardingRequest":
+    def require_full_create_payload(self) -> ClientOnboardingRequest:
         required_values = (
             ("full_name", self.client.full_name),
             ("phone", self.client.phone),
@@ -122,7 +122,7 @@ class ClientImpactPreviewClientRequest(BaseModel):
     advance_rate: ApiDecimal | None = Field(None, ge=0, le=100)
 
     @model_validator(mode="after")
-    def validate_preview_rules(self) -> "ClientImpactPreviewClientRequest":
+    def validate_preview_rules(self) -> ClientImpactPreviewClientRequest:
         validate_preview_entity_rules(
             entity_type=self.entity_type,
             vat_reporting_frequency=self.vat_reporting_frequency,

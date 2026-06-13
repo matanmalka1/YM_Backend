@@ -141,9 +141,7 @@ def test_list_correspondence_ordered_desc_and_get_by_id(
     assert get_response.json()["id"] == later.id
 
 
-def test_list_correspondence_occurred_range_filter(
-    client, test_db, advisor_headers, test_user
-):
+def test_list_correspondence_occurred_range_filter(client, test_db, advisor_headers, test_user):
     business = _create_business(test_db)
     service = CorrespondenceService(test_db)
 
@@ -175,8 +173,7 @@ def test_list_correspondence_occurred_range_filter(
 
     # Narrowed range drops the earlier entry.
     narrowed = client.get(
-        f"/api/v1/clients/{business.client_id}/correspondence"
-        "?occurred_after=2026-02-02T00:00:00",
+        f"/api/v1/clients/{business.client_id}/correspondence?occurred_after=2026-02-02T00:00:00",
         headers=advisor_headers,
     )
     assert narrowed.status_code == 200

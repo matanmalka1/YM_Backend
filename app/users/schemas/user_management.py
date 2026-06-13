@@ -25,7 +25,7 @@ class UserUpdateRequest(NonEmptyUpdateMixin):
     email: EmailStr | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "UserUpdateRequest":
+    def _reject_null_for_required(self) -> UserUpdateRequest:
         # phone is nullable (explicit null clears it); role/email/full_name map
         # to non-nullable columns, so explicit null is invalid.
         for field in ("role", "email", "full_name"):

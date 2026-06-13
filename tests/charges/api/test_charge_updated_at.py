@@ -56,9 +56,9 @@ def test_soft_delete_bumps_updated_at(client, advisor_headers, test_db):
     charge_id = _create_charge(client, advisor_headers, business)
 
     # Soft-delete is a mutation → updated_at must be set.
-    assert (
-        client.delete(f"/api/v1/charges/{charge_id}", headers=advisor_headers).status_code
-        in (200, 204)
+    assert client.delete(f"/api/v1/charges/{charge_id}", headers=advisor_headers).status_code in (
+        200,
+        204,
     )
 
     from app.charges.models.charge import Charge

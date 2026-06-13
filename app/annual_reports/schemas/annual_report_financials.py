@@ -25,7 +25,7 @@ class IncomeLineUpdateRequest(NonEmptyUpdateMixin):
     description: str | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "IncomeLineUpdateRequest":
+    def _reject_null_for_required(self) -> IncomeLineUpdateRequest:
         for field in ("source_type", "amount"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")
@@ -70,7 +70,7 @@ class ExpenseLineUpdateRequest(NonEmptyUpdateMixin):
     supporting_document_id: int | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "ExpenseLineUpdateRequest":
+    def _reject_null_for_required(self) -> ExpenseLineUpdateRequest:
         # category/amount/recognition_rate are non-nullable columns
         # (recognition_rate has a DB default of 1.00, so null is not "clear").
         for field in ("category", "amount", "recognition_rate"):

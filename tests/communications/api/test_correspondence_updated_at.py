@@ -69,13 +69,10 @@ def test_soft_delete_bumps_updated_at(client, test_db, advisor_headers):
     business = _business(test_db, "911911911")
     entry_id = _create_entry(client, advisor_headers, business)
 
-    assert (
-        client.delete(
-            f"/api/v1/clients/{business.client_id}/correspondence/{entry_id}",
-            headers=advisor_headers,
-        ).status_code
-        in (200, 204)
-    )
+    assert client.delete(
+        f"/api/v1/clients/{business.client_id}/correspondence/{entry_id}",
+        headers=advisor_headers,
+    ).status_code in (200, 204)
 
     from app.communications.models.correspondence import Correspondence
 

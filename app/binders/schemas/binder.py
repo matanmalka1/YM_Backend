@@ -141,7 +141,7 @@ class BinderIntakeUpdateRequest(NonEmptyUpdateMixin):
     vat_report_ids: list[int] | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "BinderIntakeUpdateRequest":
+    def _reject_null_for_required(self) -> BinderIntakeUpdateRequest:
         # These map to non-nullable columns / transfer targets, and the FK
         # association lists use [] to clear, never null. Explicit null is invalid.
         for field in (

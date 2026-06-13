@@ -60,7 +60,7 @@ class BusinessUpdateRequest(NonEmptyUpdateMixin):
     closed_at: date | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "BusinessUpdateRequest":
+    def _reject_null_for_required(self) -> BusinessUpdateRequest:
         for field in ("business_name", "status"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")

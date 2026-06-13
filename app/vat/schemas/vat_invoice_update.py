@@ -41,7 +41,7 @@ class VatInvoiceUpdateRequest(NonEmptyUpdateMixin, VatInvoiceValidatorMixin):
         return v
 
     @model_validator(mode="after")
-    def _reject_null_for_non_clearable(self) -> "VatInvoiceUpdateRequest":
+    def _reject_null_for_non_clearable(self) -> VatInvoiceUpdateRequest:
         # Non-nullable columns + expense_category (deduction_rate cannot be
         # derived when the category is cleared) reject explicit null.
         # Clearable via explicit null: business_activity_id, counterparty_id,

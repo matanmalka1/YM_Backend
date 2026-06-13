@@ -85,7 +85,7 @@ class ClientExcelService:
     def import_clients_from_excel(
         self,
         workbook,
-        create_client_service: "CreateClientService",
+        create_client_service: CreateClientService,
         actor_id: int | None = None,
     ) -> tuple[int, list[dict]]:
         """Parse workbook and create clients with their first business."""
@@ -151,7 +151,7 @@ class ClientExcelService:
     def import_clients_from_upload(
         self,
         contents: bytes,
-        create_client_service: "CreateClientService",
+        create_client_service: CreateClientService,
         actor_id: int | None = None,
         content_length: int | None = None,
         max_upload_size: int = MAX_CLIENT_IMPORT_UPLOAD_SIZE,

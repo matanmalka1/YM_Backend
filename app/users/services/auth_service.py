@@ -164,7 +164,7 @@ class AuthService:
 
         try:
             user_id = int(payload["sub"])
-        except (ValueError, KeyError):
+        except ValueError, KeyError:
             return
 
         user = self.user_repo.get_by_id(user_id)

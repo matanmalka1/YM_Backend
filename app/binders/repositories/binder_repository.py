@@ -498,7 +498,7 @@ class BinderRepository(BaseRepository[Binder]):
             select(func.count(Binder.id)).where(Binder.client_record_id == client_record_id)
         )
 
-    def map_active_by_clients(self, client_record_ids: list[int]) -> dict[int, "Binder"]:
+    def map_active_by_clients(self, client_record_ids: list[int]) -> dict[int, Binder]:
         """Return {client_record_id: binder} for each client's intake-eligible binder."""
         if not client_record_ids:
             return {}

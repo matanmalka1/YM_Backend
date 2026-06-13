@@ -82,7 +82,7 @@ class AdvancePaymentCreateRequest(BaseModel):
     notes: str | None = Field(None, max_length=500)
 
     @model_validator(mode="after")
-    def validate_period_for_frequency(self) -> "AdvancePaymentCreateRequest":
+    def validate_period_for_frequency(self) -> AdvancePaymentCreateRequest:
         if self.period_months_count is None:
             return self
         if self.period_months_count not in SUPPORTED_PERIOD_MONTH_COUNTS:
@@ -118,7 +118,7 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
     override_amount: ApiDecimal | None = Field(None, ge=0)
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "AdvancePaymentUpdateRequest":
+    def _reject_null_for_required(self) -> AdvancePaymentUpdateRequest:
         # paid_amount/expected_amount/status are non-nullable columns.
         for field in ("paid_amount", "expected_amount", "status"):
             if field in self.model_fields_set and getattr(self, field) is None:

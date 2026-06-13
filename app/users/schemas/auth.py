@@ -19,7 +19,7 @@ class LoginRequest(BaseModel):
 class AuthTokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
-    user: "UserResponse"
+    user: UserResponse
 
 
 class RefreshResponse(BaseModel):

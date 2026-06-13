@@ -41,7 +41,7 @@ class InvoiceRepository(BaseRepository[Invoice]):
         """Retrieve invoice by charge ID."""
         return self.db.scalars(select(Invoice).where(Invoice.charge_id == charge_id)).first()
 
-    def list_by_charge_ids(self, charge_ids: list[int]) -> list["Invoice"]:
+    def list_by_charge_ids(self, charge_ids: list[int]) -> list[Invoice]:
         """Batch-fetch invoices for a list of charge IDs (single query)."""
         if not charge_ids:
             return []

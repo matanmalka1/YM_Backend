@@ -45,7 +45,7 @@ class CorrespondenceUpdateRequest(NonEmptyUpdateMixin):
         return _validate_occurred_at(v)
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "CorrespondenceUpdateRequest":
+    def _reject_null_for_required(self) -> CorrespondenceUpdateRequest:
         for field in ("correspondence_type", "subject", "occurred_at"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")
@@ -83,7 +83,7 @@ class CorrespondenceListResponse(BaseModel):
         page: int,
         page_size: int,
         total: int,
-    ) -> "CorrespondenceListResponse":
+    ) -> CorrespondenceListResponse:
         return cls(
             items=items,
             page=page,

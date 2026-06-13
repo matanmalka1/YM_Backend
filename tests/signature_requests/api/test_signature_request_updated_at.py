@@ -44,9 +44,7 @@ def test_updated_at_present_on_create_response(client, test_db, advisor_headers)
     business = _business(test_db, "A")
     request_id = _create(client, advisor_headers, business, "Has Field")
 
-    detail = client.get(
-        f"/api/v1/signature-requests/{request_id}", headers=advisor_headers
-    ).json()
+    detail = client.get(f"/api/v1/signature-requests/{request_id}", headers=advisor_headers).json()
     assert "updated_at" in detail
 
 
@@ -54,9 +52,7 @@ def test_cancel_bumps_updated_at(client, test_db, advisor_headers):
     business = _business(test_db, "B")
     request_id = _create(client, advisor_headers, business, "Cancelable")
 
-    before = client.get(
-        f"/api/v1/signature-requests/{request_id}", headers=advisor_headers
-    ).json()
+    before = client.get(f"/api/v1/signature-requests/{request_id}", headers=advisor_headers).json()
 
     cancel = client.post(
         f"/api/v1/clients/{business.client_id}/signature-requests/{request_id}/cancel",
@@ -66,9 +62,7 @@ def test_cancel_bumps_updated_at(client, test_db, advisor_headers):
     assert cancel.status_code == 200
     assert cancel.json()["status"] == "canceled"
 
-    after = client.get(
-        f"/api/v1/signature-requests/{request_id}", headers=advisor_headers
-    ).json()
+    after = client.get(f"/api/v1/signature-requests/{request_id}", headers=advisor_headers).json()
     assert after["updated_at"] is not None
     assert after["updated_at"] >= after["created_at"]
     if before["updated_at"] is not None:

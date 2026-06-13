@@ -30,7 +30,6 @@ from app.notifications.services.notification_service import NotificationService
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
-
 router = APIRouter(
     prefix="/notifications",
     tags=["notifications"],

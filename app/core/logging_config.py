@@ -19,7 +19,7 @@ from typing import Any
 
 # Context variable for request tracking
 request_id_ctx: ContextVar[str | None] = ContextVar("request_id", default=None)
-request_log_stats_ctx: ContextVar["RequestLogStats | None"] = ContextVar(
+request_log_stats_ctx: ContextVar[RequestLogStats | None] = ContextVar(
     "request_log_stats",
     default=None,
 )

@@ -49,7 +49,7 @@ class DeadlineUpdateRequest(NonEmptyUpdateMixin):
     custom_deadline_note: str | None = None
 
     @model_validator(mode="after")
-    def _reject_null_deadline_type(self) -> "DeadlineUpdateRequest":
+    def _reject_null_deadline_type(self) -> DeadlineUpdateRequest:
         if "deadline_type" in self.model_fields_set and self.deadline_type is None:
             raise ValueError("השדה deadline_type לא יכול להיות null")
         return self

@@ -71,7 +71,7 @@ class VatInvoiceValidatorMixin(BaseModel):
         return normalized or None
 
     @model_validator(mode="after")
-    def validate_counterparty_id(self) -> "VatInvoiceValidatorMixin":
+    def validate_counterparty_id(self) -> VatInvoiceValidatorMixin:
         validate_counterparty_pair(self.counterparty_id, self.counterparty_id_type)
         return self
 

@@ -23,7 +23,7 @@ class AuthorityContactUpdateRequest(NonEmptyUpdateMixin):
     notes: str | None = None
 
     @model_validator(mode="after")
-    def _reject_null_for_required(self) -> "AuthorityContactUpdateRequest":
+    def _reject_null_for_required(self) -> AuthorityContactUpdateRequest:
         for field in ("contact_type", "name"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")

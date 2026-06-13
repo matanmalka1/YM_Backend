@@ -144,7 +144,7 @@ class Settings(BaseSettings):
         return values
 
     @model_validator(mode="after")
-    def validate_config(self) -> "Settings":
+    def validate_config(self) -> Settings:
         if not self.JWT_SECRET:
             raise ValueError("JWT_SECRET חייב להיות מוגדר")
 
