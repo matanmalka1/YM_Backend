@@ -50,15 +50,18 @@ jobs:
           cache-dependency-path: requirements.txt
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: |
+          pip install -r requirements.txt
+          pip install pytest-cov
 
       - name: Run pytest
         # Tests use in-memory SQLite and set APP_ENV themselves; JWT_SECRET
-        # is the only required env for app import.
+        # is the only required env for app import. Coverage is reported but
+        # not enforced (no --cov-fail-under) — informational only.
         env:
           APP_ENV: test
           JWT_SECRET: ci-test-only
-        run: pytest
+        run: pytest --cov=app --cov-report=term-missing
 
   migrations:
     name: Alembic migrations
@@ -124,3 +127,65 @@ jobs:
           alembic upgrade head
           alembic downgrade base
           alembic upgrade head
+
+      - name: Models match migrations (alembic check)
+        # After upgrade head the DB reflects all migrations. `alembic check`
+        # autogenerates against the live SQLAlchemy metadata and fails if a
+        # model was changed without a matching migration. Note: env.py does
+        # not set compare_type, so column-type-only changes are not caught.
+        env:
+          APP_ENV: test
+          JWT_SECRET: ci-test-only
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/binder_crm
+        run: alembic check
+
+  openapi-sync:
+    name: OpenAPI in sync
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Committed openapi.json matches the app
+        # The frontend api-drift check pulls from the committed openapi.json.
+        # If a schema changes but openapi.json is not regenerated, drift would
+        # slip past both repos. This closes that loophole. No DB needed.
+        env:
+          APP_ENV: test
+          JWT_SECRET: ci-test-only
+        run: python -m scripts.tooling.check_contract_sync
+
+  typecheck:
+    name: Type check (pyright)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install pyright
+
+      - name: pyright
+        # pyrightconfig.json pins an absolute local venvPath that does not
+        # exist in CI; --pythonpath points pyright at the CI interpreter so
+        # it resolves installed packages instead. The config disables most
+        # report* checks, so this is a lenient gate (undefined names, bad
+        # imports, syntax) rather than strict typing.
+        run: pyright --pythonpath "$(which python)"
