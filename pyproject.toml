@@ -1,6 +1,6 @@
 [tool.ruff]
 line-length = 100
-target-version = "py311"
+target-version = "py314"
 exclude = [
   ".venv",
   "venv",
@@ -22,6 +22,7 @@ ignore = [
   "E501", # line length handled by formatter / line-length
   "B008", # FastAPI Depends/Query false positives
   "UP042", # keep str + Enum for existing API/SQLAlchemy enum behavior
+  "UP046", # keep Generic[T]: PEP 695 type params are invalid inside ClassVar (BaseRepository.model) and risky with Pydantic generics
 ]
 
 [tool.ruff.lint.isort]

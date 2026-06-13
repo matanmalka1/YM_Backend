@@ -1,0 +1,126 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+# Run-but-don't-block: report results, but do not enforce as required
+# status checks yet. To turn into a hard gate later, add these jobs as
+# required checks in GitHub branch protection for `main`.
+
+concurrency:
+  group: backend-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    name: Lint & format (ruff)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install ruff
+        run: pip install ruff==0.15.15
+
+      - name: ruff check
+        run: ruff check .
+
+      - name: ruff format --check
+        run: ruff format --check .
+
+  test:
+    name: Tests (pytest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run pytest
+        # Tests use in-memory SQLite and set APP_ENV themselves; JWT_SECRET
+        # is the only required env for app import.
+        env:
+          APP_ENV: test
+          JWT_SECRET: ci-test-only
+        run: pytest
+
+  migrations:
+    name: Alembic migrations
+    runs-on: ubuntu-latest
+
+    # Real Postgres so migrations are validated against the production
+    # dialect (JSONB, enum DDL, ALTER TYPE, gin/partial indexes, server
+    # defaults). SQLite would silently pass Postgres-only DDL. Pin 17 to
+    # match Neon (production runs PostgreSQL 17).
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: binder_crm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Single migration head (no divergence)
+        # No DB needed for this check; APP_ENV=test keeps the localhost
+        # guard in app/config.py from firing.
+        env:
+          APP_ENV: test
+          JWT_SECRET: ci-test-only
+        run: |
+          heads=$(alembic heads | grep -c '(head)') || true
+          echo "head count: $heads"
+          if [ "$heads" -ne 1 ]; then
+            echo "ERROR: expected exactly 1 alembic head, found $heads."
+            echo "Migration branches have diverged — merge them with 'alembic merge'."
+            alembic heads
+            exit 1
+          fi
+
+      - name: Migrations apply cleanly (Postgres)
+        # APP_ENV=test allows a non-SQLite URL without tripping the
+        # production localhost guard. Roundtrip (upgrade -> downgrade ->
+        # upgrade) also validates that downgrade() functions are correct.
+        env:
+          APP_ENV: test
+          JWT_SECRET: ci-test-only
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/binder_crm
+        run: |
+          alembic upgrade head
+          alembic downgrade base
+          alembic upgrade head
