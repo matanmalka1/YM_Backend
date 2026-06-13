@@ -10,9 +10,10 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 
+from app.invoices.models.invoice import Invoice
+
 if TYPE_CHECKING:
     from app.annual_reports.models.annual_report_model import AnnualReport
-    from app.invoices.models.invoice import Invoice
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 

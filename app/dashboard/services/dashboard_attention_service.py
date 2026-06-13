@@ -84,7 +84,7 @@ def _amount(item: WorkQueueItem) -> str | None:
 def _to_attention_item(item: WorkQueueItem, today: date) -> dict:
     days_delta = (item.due_date - today).days if item.due_date is not None else 0
     return {
-        "id": f"{item.source_type}:{item.source_id}",
+        "id": f"{item.source_type.value}:{item.source_id}",
         "source_type": item.source_type,
         "source_id": item.source_id,
         "title": item.title,
