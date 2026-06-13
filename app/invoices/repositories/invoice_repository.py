@@ -10,8 +10,10 @@ from app.invoices.models.invoice import Invoice
 class InvoiceRepository(BaseRepository[Invoice]):
     """Data access layer for Invoice entities."""
 
+    model = Invoice
+
     def __init__(self, db: Session):
-        self.db = db
+        super().__init__(db)
 
     def create(
         self,
