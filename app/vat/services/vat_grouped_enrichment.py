@@ -78,7 +78,7 @@ def get_group_items_enriched(
 def _resolve_client_ids(db, client_name: str | None) -> list[int] | None:
     if not client_name:
         return None
-    records, _ = ClientRecordRepository(db).search(query=client_name, page=1, page_size=500)
+    records, _ = ClientRecordRepository(db).search(search=client_name, page=1, page_size=500)
     return [r.id for r in records]
 
 

@@ -85,7 +85,7 @@ def test_list_count_search_and_list_by_ids(test_db):
     items_page_1 = repo.list(page=1, page_size=1)
     assert len(items_page_1) == 1
 
-    search_items, search_total = repo.search(query="Bob", page=1, page_size=10)
+    search_items, search_total = repo.search(search="Bob", page=1, page_size=10)
     assert search_total == 1
     assert [c.id for c in search_items] == [bob.id]
 
@@ -96,7 +96,7 @@ def test_list_count_search_and_list_by_ids(test_db):
     assert [c.id for c in by_ids] == [bob.id]
 
     search_items, search_total = repo.search(
-        client_name="Bob", id_number="400000002", page=1, page_size=10
+        search="Bob", id_number="400000002", page=1, page_size=10
     )
     assert search_total == 1
     assert [c.id for c in search_items] == [bob.id]
