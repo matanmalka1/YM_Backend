@@ -25,6 +25,7 @@ from app.advance_payments.services.advance_payment_service import AdvancePayment
 from app.common.period_utils import parse_period_year
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -42,7 +43,7 @@ logger = logging.getLogger(__name__)
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_advance_payments(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     year: int | None = Query(None),
@@ -89,7 +90,7 @@ def list_advance_payments(
     responses=ADVANCE_PAYMENT_CREATE_RESPONSES,
 )
 def create_advance_payment(
-    client_record_id: int,
+    client_record_id: PathId,
     request: AdvancePaymentCreateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -117,7 +118,7 @@ def create_advance_payment(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_prefill_turnover(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
@@ -141,7 +142,7 @@ def get_prefill_turnover(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_annual_kpis(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     year: int = Query(...),
@@ -158,8 +159,8 @@ def get_annual_kpis(
     responses=ADVANCE_PAYMENT_UPDATE_RESPONSES,
 )
 def update_advance_payment(
-    client_record_id: int,
-    payment_id: int,
+    client_record_id: PathId,
+    payment_id: PathId,
     request: AdvancePaymentUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -200,8 +201,8 @@ def update_advance_payment(
     responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
 )
 def delete_advance_payment(
-    client_record_id: int,
-    payment_id: int,
+    client_record_id: PathId,
+    payment_id: PathId,
     db: DBSession,
     user: CurrentUser,
 ):

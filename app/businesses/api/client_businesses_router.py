@@ -15,6 +15,7 @@ from app.businesses.services.business_service import BusinessService
 from app.businesses.services.client_business_service import ClientBusinessService
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -33,7 +34,7 @@ client_businesses_router = APIRouter(
     responses=BUSINESS_CREATE_RESPONSES,
 )
 def create_business(
-    client_record_id: int, request: BusinessCreateRequest, db: DBSession, user: CurrentUser
+    client_record_id: PathId, request: BusinessCreateRequest, db: DBSession, user: CurrentUser
 ):
     """יצירת עסק חדש תחת לקוח קיים (ADVISOR only)."""
     business = BusinessService(db).create_business(
@@ -52,7 +53,7 @@ def create_business(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_businesses(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
@@ -71,7 +72,7 @@ def list_client_businesses(
     response_model=BusinessResponse,
     responses=not_found_response(description="העסק המבוקש לא נמצא"),
 )
-def get_business(client_record_id: int, business_id: int, db: DBSession, user: CurrentUser):
+def get_business(client_record_id: PathId, business_id: PathId, db: DBSession, user: CurrentUser):
     service = ClientBusinessService(db)
     business = service.get_for_client(client_record_id, business_id)
     return service.to_response(business, user.role, client_id=client_record_id)
@@ -83,8 +84,8 @@ def get_business(client_record_id: int, business_id: int, db: DBSession, user: C
     responses=BUSINESS_UPDATE_RESPONSES,
 )
 def update_business(
-    client_record_id: int,
-    business_id: int,
+    client_record_id: PathId,
+    business_id: PathId,
     request: BusinessUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -105,7 +106,9 @@ def update_business(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=BUSINESS_ACTION_RESPONSES,
 )
-def delete_business(client_record_id: int, business_id: int, db: DBSession, user: CurrentUser):
+def delete_business(
+    client_record_id: PathId, business_id: PathId, db: DBSession, user: CurrentUser
+):
     ClientBusinessService(db).delete_for_client(client_record_id, business_id, actor_id=user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
@@ -116,7 +119,9 @@ def delete_business(client_record_id: int, business_id: int, db: DBSession, user
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=BUSINESS_ACTION_RESPONSES,
 )
-def restore_business(client_record_id: int, business_id: int, db: DBSession, user: CurrentUser):
+def restore_business(
+    client_record_id: PathId, business_id: PathId, db: DBSession, user: CurrentUser
+):
     service = ClientBusinessService(db)
     business = service.restore_for_client(
         client_record_id,

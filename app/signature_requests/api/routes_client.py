@@ -5,6 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.signature_requests.api.responses import SIGNATURE_CANCEL_RESPONSES
 from app.signature_requests.models.signature_request import SignatureRequestStatus
 from app.signature_requests.schemas.signature_request import (
@@ -31,8 +32,8 @@ client_router = APIRouter(
     responses=SIGNATURE_CANCEL_RESPONSES,
 )
 def cancel_client_signature_request(
-    client_record_id: int,
-    request_id: int,
+    client_record_id: PathId,
+    request_id: PathId,
     body: CancelRequest,
     db: DBSession,
     user: CurrentUser,
@@ -53,7 +54,7 @@ def cancel_client_signature_request(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_signature_requests(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     status_filter: SignatureRequestStatus | None = Query(None, alias="status"),

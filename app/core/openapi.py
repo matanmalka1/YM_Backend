@@ -34,6 +34,14 @@ if TYPE_CHECKING:
     from fastapi.dependencies.models import Dependant
 
 _ERROR_ENVELOPE_REF = {"$ref": "#/components/schemas/ErrorEnvelope"}
+_ERROR_RESPONSE_DESCRIPTIONS = {
+    "400": "Bad request",
+    "401": "Authentication required",
+    "403": "Forbidden",
+    "404": "Resource not found",
+    "409": "Conflict",
+    "500": "Internal server error",
+}
 
 
 def _error_response_doc(description: str) -> dict[str, Any]:
@@ -41,6 +49,12 @@ def _error_response_doc(description: str) -> dict[str, Any]:
         "description": description,
         "content": {"application/json": {"schema": _ERROR_ENVELOPE_REF}},
     }
+
+
+def _normalize_error_response_descriptions(responses: dict[str, Any]) -> None:
+    for status_code, description in _ERROR_RESPONSE_DESCRIPTIONS.items():
+        if status_code in responses:
+            responses[status_code]["description"] = description
 
 
 def _has_role_dependency(dependant: Dependant) -> bool:
@@ -106,9 +120,10 @@ def build_openapi(app: FastAPI) -> dict[str, Any]:
                 continue
             responses = operation.setdefault("responses", {})
             if not is_public:
-                responses.setdefault("401", _error_response_doc("נדרש אימות"))
+                responses.setdefault("401", _error_response_doc("Authentication required"))
             if (method_upper, path) in role_gated:
-                responses.setdefault("403", _error_response_doc("אין הרשאה לביצוע הפעולה"))
+                responses.setdefault("403", _error_response_doc("Forbidden"))
+            _normalize_error_response_descriptions(responses)
 
     app.openapi_schema = schema
     return schema

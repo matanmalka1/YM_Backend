@@ -4,6 +4,7 @@ from app.annual_reports.schemas.annual_report_responses import AnnualReportListR
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -20,7 +21,7 @@ clients_router = APIRouter(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_reports(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),

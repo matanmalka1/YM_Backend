@@ -1,7 +1,7 @@
 import hashlib
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Any
+from typing import Annotated, Any
 
 from fastapi import Depends, Header, HTTPException, Request, status
 from fastapi.encoders import jsonable_encoder
@@ -9,12 +9,45 @@ from fastapi.responses import JSONResponse
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.core.exceptions import AppError
 from app.core.logging_config import set_idempotency_context
 from app.database import get_db
 from app.infrastructure.idempotency.model import IdempotencyStatus
 from app.infrastructure.idempotency.repository import IdempotencyKeyRepository
 from app.users.api.deps import get_current_user
 from app.users.repositories.user_repository import AuthSubject
+
+IDEMPOTENCY_KEY_HEADER_NAME = "X-Idempotency-Key"
+IDEMPOTENCY_KEY_MIN_LENGTH = 8
+IDEMPOTENCY_KEY_MAX_LENGTH = 128
+IdempotencyKeyHeader = Annotated[
+    str,
+    Header(
+        alias=IDEMPOTENCY_KEY_HEADER_NAME,
+        min_length=IDEMPOTENCY_KEY_MIN_LENGTH,
+        max_length=IDEMPOTENCY_KEY_MAX_LENGTH,
+    ),
+]
+OptionalIdempotencyKeyHeader = Annotated[
+    str | None,
+    Header(alias=IDEMPOTENCY_KEY_HEADER_NAME),
+]
+
+
+def normalize_idempotency_key_header(
+    value: str | None,
+    *,
+    missing_message: str,
+    missing_code: str,
+    invalid_message: str,
+    invalid_code: str,
+) -> str:
+    key = value.strip() if value else ""
+    if not key:
+        raise AppError(missing_message, missing_code, status_code=400)
+    if len(key) < IDEMPOTENCY_KEY_MIN_LENGTH or len(key) > IDEMPOTENCY_KEY_MAX_LENGTH:
+        raise AppError(invalid_message, invalid_code, status_code=400)
+    return key
 
 
 @dataclass
@@ -90,9 +123,9 @@ class IdempotencyGuard:
 
 def require_idempotency_key(
     request: Request,
+    x_idempotency_key: IdempotencyKeyHeader,
     user: AuthSubject = Depends(get_current_user),
     db: Session = Depends(get_db),
-    x_idempotency_key: str = Header(alias="X-Idempotency-Key"),
 ) -> IdempotencyGuard:
     set_idempotency_context(x_idempotency_key)
     return IdempotencyGuard(

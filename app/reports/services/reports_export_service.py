@@ -4,6 +4,7 @@ from datetime import date
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.core.media_types import PDF_MEDIA_TYPE
 from app.reports.services.export_service import ExportService
 from app.reports.services.reports_service import AgingReportService
 
@@ -33,7 +34,7 @@ class ReportsExportService:
                 media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
             else:
                 result = self.export_service.export_aging_report_to_pdf(report)
-                media_type = "application/pdf"
+                media_type = PDF_MEDIA_TYPE
         except ImportError as exc:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

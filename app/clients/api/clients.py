@@ -31,6 +31,7 @@ from app.clients.services.impact_preview_service import compute_creation_impact
 from app.common.enums import EntityType
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -147,7 +148,7 @@ def list_sidebar_clients(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_client(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     tax_year: int | None = Query(None, ge=2000, le=2100),
 ):
@@ -175,7 +176,7 @@ def get_conflict_info(
     responses=CLIENT_UPDATE_RESPONSES,
 )
 def update_client(
-    client_record_id: int,
+    client_record_id: PathId,
     request: ClientUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -199,7 +200,7 @@ def update_client(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=CLIENT_ACTION_RESPONSES,
 )
-def delete_client(client_record_id: int, db: DBSession, user: CurrentUser):
+def delete_client(client_record_id: PathId, db: DBSession, user: CurrentUser):
     """Soft-delete a client (ADVISOR only)."""
     ClientLifecycleService(db).delete_client(client_record_id, actor_id=user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
@@ -211,7 +212,7 @@ def delete_client(client_record_id: int, db: DBSession, user: CurrentUser):
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=CLIENT_ACTION_RESPONSES,
 )
-def restore_client(client_record_id: int, db: DBSession, user: CurrentUser):
+def restore_client(client_record_id: PathId, db: DBSession, user: CurrentUser):
     """Restore a soft-deleted client (ADVISOR only)."""
     ClientLifecycleService(db).restore_client(client_record_id, actor_id=user.id)
     return ClientQueryService(db).get_full_client_including_deleted(client_record_id)

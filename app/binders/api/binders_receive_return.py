@@ -22,6 +22,7 @@ from app.binders.services.binder_handover_service import BinderHandoverService
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.binders.services.binder_list_service import BinderListService
 from app.binders.services.binder_service import BinderService
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -124,7 +125,7 @@ def handover_to_client_bulk(request: BinderHandoverRequest, db: DBSession, user:
     response_model=BinderResponse,
     responses=BINDER_ACTION_RESPONSES,
 )
-def receive_material(binder_id: int, db: DBSession, user: CurrentUser):
+def receive_material(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).receive_material_by_id(
         binder_id=binder_id,
         changed_by_user_id=user.id,
@@ -137,7 +138,7 @@ def receive_material(binder_id: int, db: DBSession, user: CurrentUser):
     response_model=BinderResponse,
     responses=BINDER_ACTION_RESPONSES,
 )
-def mark_full(binder_id: int, db: DBSession, user: CurrentUser):
+def mark_full(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).mark_full(
         binder_id=binder_id,
         changed_by_user_id=user.id,
@@ -150,7 +151,7 @@ def mark_full(binder_id: int, db: DBSession, user: CurrentUser):
     response_model=BinderResponse,
     responses=BINDER_ACTION_RESPONSES,
 )
-def reopen_capacity(binder_id: int, db: DBSession, user: CurrentUser):
+def reopen_capacity(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).reopen_capacity(
         binder_id=binder_id,
         changed_by_user_id=user.id,
@@ -163,7 +164,7 @@ def reopen_capacity(binder_id: int, db: DBSession, user: CurrentUser):
     response_model=BinderReadyForHandoverResponse,
     responses=BINDER_ACTION_RESPONSES,
 )
-def mark_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
+def mark_ready_for_handover(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder, notification = BinderLifecycleService(db).mark_ready_for_handover(
         binder_id=binder_id,
         changed_by_user_id=user.id,
@@ -179,7 +180,7 @@ def mark_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
     response_model=BinderResponse,
     responses=BINDER_ACTION_RESPONSES,
 )
-def revert_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
+def revert_ready_for_handover(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).revert_ready_for_handover(
         binder_id=binder_id,
         changed_by_user_id=user.id,
@@ -193,7 +194,7 @@ def revert_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
     responses=BINDER_ACTION_RESPONSES,
 )
 def handover_to_client(
-    binder_id: int,
+    binder_id: PathId,
     request: BinderHandoverToClientRequest,
     db: DBSession,
     user: CurrentUser,

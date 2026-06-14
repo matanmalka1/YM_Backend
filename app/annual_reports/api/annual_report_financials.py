@@ -35,6 +35,7 @@ from app.annual_reports.services.tax_service import (
 )
 from app.annual_reports.services.vat_import_service import VatImportService
 from app.core.openapi_responses import not_found_response
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -73,7 +74,7 @@ def get_tax_preview(body: TaxPreviewRequest, _user: CurrentUser):
     response_model=FinancialSummaryResponse,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def get_financial_summary(report_id: int, db: DBSession, user: CurrentUser):
+def get_financial_summary(report_id: PathId, db: DBSession, user: CurrentUser):
     """Income + expense lines and taxable income calculation."""
     svc = AnnualReportFinancialSummaryService(db)
     return svc.get_financial_summary(report_id)
@@ -87,7 +88,7 @@ def get_financial_summary(report_id: int, db: DBSession, user: CurrentUser):
     response_model=TaxCalculationResponse,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def get_tax_calculation(report_id: int, db: DBSession, user: CurrentUser):
+def get_tax_calculation(report_id: PathId, db: DBSession, user: CurrentUser):
     """Israeli 2024 income tax calculation for this report."""
     svc = AnnualReportTaxService(db)
     return svc.get_tax_calculation(report_id)
@@ -101,7 +102,7 @@ def get_tax_calculation(report_id: int, db: DBSession, user: CurrentUser):
     response_model=AdvancesSummary,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def get_advances_summary(report_id: int, db: DBSession, user: CurrentUser):
+def get_advances_summary(report_id: PathId, db: DBSession, user: CurrentUser):
     """Advance payments summary and final tax balance for this report."""
     svc = AnnualReportAdvancesSummaryService(db)
     return svc.get_advances_summary(report_id)
@@ -115,7 +116,7 @@ def get_advances_summary(report_id: int, db: DBSession, user: CurrentUser):
     response_model=ReadinessCheckResponse,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
+def get_readiness_check(report_id: PathId, db: DBSession, user: CurrentUser):
     """Return list of issues blocking this report from being filed."""
     svc = AnnualReportReadinessService(db)
     return svc.get_readiness_check(report_id)
@@ -131,7 +132,7 @@ def get_readiness_check(report_id: int, db: DBSession, user: CurrentUser):
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def add_income_line(
-    report_id: int, body: IncomeLineCreateRequest, db: DBSession, user: CurrentUser
+    report_id: PathId, body: IncomeLineCreateRequest, db: DBSession, user: CurrentUser
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.add_income(
@@ -146,8 +147,8 @@ def add_income_line(
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def update_income_line(
-    report_id: int,
-    line_id: int,
+    report_id: PathId,
+    line_id: PathId,
     body: IncomeLineUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -164,7 +165,7 @@ def update_income_line(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
-def delete_income_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
+def delete_income_line(report_id: PathId, line_id: PathId, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
     svc.delete_income(report_id, line_id, actor_id=user.id)
 
@@ -179,7 +180,7 @@ def delete_income_line(report_id: int, line_id: int, db: DBSession, user: Curren
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def add_expense_line(
-    report_id: int, body: ExpenseLineCreateRequest, db: DBSession, user: CurrentUser
+    report_id: PathId, body: ExpenseLineCreateRequest, db: DBSession, user: CurrentUser
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.add_expense(
@@ -201,8 +202,8 @@ def add_expense_line(
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def update_expense_line(
-    report_id: int,
-    line_id: int,
+    report_id: PathId,
+    line_id: PathId,
     body: ExpenseLineUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -219,7 +220,7 @@ def update_expense_line(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
-def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: CurrentUser):
+def delete_expense_line(report_id: PathId, line_id: PathId, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
     svc.delete_expense(report_id, line_id, actor_id=user.id)
 
@@ -234,7 +235,7 @@ def delete_expense_line(report_id: int, line_id: int, db: DBSession, user: Curre
     responses=REPORT_UPDATE_RESPONSES,
 )
 def auto_populate_from_vat(
-    report_id: int,
+    report_id: PathId,
     db: DBSession,
     user: CurrentUser,
     force: bool = Query(False, description="מחק שורות קיימות ומלא מחדש"),

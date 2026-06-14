@@ -4,6 +4,7 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import User, UserRole
 from app.vat.api.responses import VAT_WORK_ITEM_TRANSITION_RESPONSES
@@ -24,7 +25,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
     responses=VAT_WORK_ITEM_TRANSITION_RESPONSES,
 )
 def mark_ready_for_review(
-    item_id: int,
+    item_id: PathId,
     db: DBSession,
     current_user: CurrentUser,
 ):
@@ -47,7 +48,7 @@ def mark_ready_for_review(
     responses=VAT_WORK_ITEM_TRANSITION_RESPONSES,
 )
 def send_back_for_correction(
-    item_id: int,
+    item_id: PathId,
     request: SendBackForCorrectionRequest,
     db: DBSession,
     current_user: Annotated[User, Depends(require_role(UserRole.ADVISOR))],

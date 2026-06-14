@@ -13,6 +13,7 @@ from app.annual_reports.schemas.annual_report_annex import (
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -29,7 +30,7 @@ router = APIRouter(
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def list_annex_lines(
-    report_id: int,
+    report_id: PathId,
     schedule: AnnualReportSchedule,
     db: DBSession,
     user: CurrentUser,
@@ -51,7 +52,7 @@ def list_annex_lines(
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def add_annex_line(
-    report_id: int,
+    report_id: PathId,
     schedule: AnnualReportSchedule,
     body: AnnexDataAddRequest,
     db: DBSession,
@@ -67,9 +68,9 @@ def add_annex_line(
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def update_annex_line(
-    report_id: int,
+    report_id: PathId,
     schedule: AnnualReportSchedule,
-    line_id: int,
+    line_id: PathId,
     body: AnnexDataUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -85,9 +86,9 @@ def update_annex_line(
     responses=REPORT_LINE_WRITE_RESPONSES,
 )
 def delete_annex_line(
-    report_id: int,
+    report_id: PathId,
     schedule: AnnualReportSchedule,
-    line_id: int,
+    line_id: PathId,
     db: DBSession,
     user: CurrentUser,
 ):

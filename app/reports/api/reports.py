@@ -3,6 +3,9 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
+from app.clients.constants import EXCEL_MEDIA_TYPE
+from app.core.media_types import PDF_MEDIA_TYPE
+from app.core.openapi_responses import binary_response_doc
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.reports.schemas import (
     AdvancePaymentCollectionsReportResponse,
@@ -68,7 +71,11 @@ def get_aging_report(
     return service.generate_aging_report(as_of_date=as_of_date, page=page, page_size=page_size)
 
 
-@router.get("/aging/export")
+@router.get(
+    "/aging/export",
+    response_class=FileResponse,
+    responses=binary_response_doc(EXCEL_MEDIA_TYPE, PDF_MEDIA_TYPE),
+)
 def export_aging_report(
     db: DBSession,
     format: str = Query(..., pattern="^(excel|pdf)$"),

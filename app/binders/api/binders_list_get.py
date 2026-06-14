@@ -9,6 +9,7 @@ from app.binders.services.messages import BINDER_NOT_FOUND
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -64,7 +65,7 @@ def list_binders(
     response_model=BinderResponse,
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
-def get_binder(binder_id: int, db: DBSession, user: CurrentUser):
+def get_binder(binder_id: PathId, db: DBSession, user: CurrentUser):
     """Get binder by ID."""
     service = BinderListService(db)
     binder_response = service.get_binder_with_client_name(binder_id)
@@ -79,7 +80,7 @@ def get_binder(binder_id: int, db: DBSession, user: CurrentUser):
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
-def delete_binder(binder_id: int, db: DBSession, user: CurrentUser):
+def delete_binder(binder_id: PathId, db: DBSession, user: CurrentUser):
     """Soft-delete a binder (ADVISOR only)."""
     service = BinderService(db)
     deleted = service.delete_binder(binder_id, actor_id=user.id)

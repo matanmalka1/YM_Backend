@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Request
 
+from app.core.path_params import SigningTokenPath
 from app.signature_requests.schemas.signature_request import (
     SignerDeclineRequest,
     SignerViewResponse,
@@ -30,7 +31,7 @@ def _to_signer_view(req) -> SignerViewResponse:
 
 
 @signer_router.get("/{token}", response_model=SignerViewResponse)
-def signer_view(token: str, raw_request: Request, db: DBSession):
+def signer_view(token: SigningTokenPath, raw_request: Request, db: DBSession):
     service = SignatureRequestService(db)
     req = service.record_view(
         token=token,
@@ -41,7 +42,7 @@ def signer_view(token: str, raw_request: Request, db: DBSession):
 
 
 @signer_router.post("/{token}/approve", response_model=SignerViewResponse)
-def signer_approve(token: str, raw_request: Request, db: DBSession):
+def signer_approve(token: SigningTokenPath, raw_request: Request, db: DBSession):
     service = SignatureRequestService(db)
     req = service.sign_request(
         token=token,
@@ -52,7 +53,9 @@ def signer_approve(token: str, raw_request: Request, db: DBSession):
 
 
 @signer_router.post("/{token}/decline", response_model=SignerViewResponse)
-def signer_decline(token: str, body: SignerDeclineRequest, raw_request: Request, db: DBSession):
+def signer_decline(
+    token: SigningTokenPath, body: SignerDeclineRequest, raw_request: Request, db: DBSession
+):
     service = SignatureRequestService(db)
     req = service.decline_request(
         token=token,

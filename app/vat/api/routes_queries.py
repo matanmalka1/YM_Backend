@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query
 from app.common.enums import VatType
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.serializers import (
@@ -51,7 +52,7 @@ def lookup_work_item(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_period_options(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     year: int | None = Query(default=None, ge=2000, le=2100),
 ):
@@ -86,7 +87,7 @@ def get_status_summary(
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
-def get_work_item(item_id: int, db: DBSession, current_user: CurrentUser):
+def get_work_item(item_id: PathId, db: DBSession, current_user: CurrentUser):
     service = VatReportService(db)
     enriched = service.get_work_item_enriched(item_id)
     return serialize_enriched_work_item(
@@ -107,7 +108,7 @@ def get_work_item(item_id: int, db: DBSession, current_user: CurrentUser):
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_work_items(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
@@ -186,7 +187,7 @@ def list_work_items(
     responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def get_audit_trail(
-    item_id: int,
+    item_id: PathId,
     db: DBSession,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),

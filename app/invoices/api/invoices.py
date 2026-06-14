@@ -7,6 +7,7 @@ from app.core.openapi_responses import (
     error_responses,
     not_found_response,
 )
+from app.core.path_params import PathId
 from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.invoices.schemas.invoice_schemas import InvoiceAttachRequest, InvoiceResponse
 from app.invoices.services.invoice_service import InvoiceService
@@ -47,7 +48,7 @@ def attach_invoice(request: InvoiceAttachRequest, db: DBSession):
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
-def get_charge_invoice(charge_id: int, db: DBSession):
+def get_charge_invoice(charge_id: PathId, db: DBSession):
     invoice = InvoiceRepository(db).get_by_charge_id(charge_id)
     if not invoice:
         raise NotFoundError(f"לחיוב {charge_id} לא נמצאה חשבונית", "INVOICE.NOT_FOUND")

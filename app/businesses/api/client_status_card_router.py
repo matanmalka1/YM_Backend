@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.businesses.schemas.business_status_card import ClientStatusCardResponse
 from app.businesses.services.status_card_service import StatusCardService
 from app.core.openapi_responses import not_found_response
+from app.core.path_params import PathId
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -22,7 +23,7 @@ router = APIRouter(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_client_status_card(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     year: int | None = Query(None, ge=_YEAR_MIN, le=_YEAR_MAX),
 ):

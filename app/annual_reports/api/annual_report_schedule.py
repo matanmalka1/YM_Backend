@@ -12,6 +12,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -29,7 +30,7 @@ router = APIRouter(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=REPORT_SCHEDULE_WRITE_RESPONSES,
 )
-def add_schedule(report_id: int, body: ScheduleAddRequest, db: DBSession, user: CurrentUser):
+def add_schedule(report_id: PathId, body: ScheduleAddRequest, db: DBSession, user: CurrentUser):
     """Manually add a schedule to a report (auto-generated ones are created at report creation)."""
     service = AnnualReportService(db)
     entry = service.add_schedule(report_id, body.schedule, notes=body.notes)
@@ -42,7 +43,7 @@ def add_schedule(report_id: int, body: ScheduleAddRequest, db: DBSession, user: 
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def list_schedules(
-    report_id: int,
+    report_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
@@ -71,7 +72,7 @@ def list_schedules(
     responses=REPORT_SCHEDULE_WRITE_RESPONSES,
 )
 def complete_schedule(
-    report_id: int, body: ScheduleCompleteRequest, db: DBSession, user: CurrentUser
+    report_id: PathId, body: ScheduleCompleteRequest, db: DBSession, user: CurrentUser
 ):
     """Mark a specific schedule as complete."""
     service = AnnualReportService(db)

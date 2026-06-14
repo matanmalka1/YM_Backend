@@ -8,6 +8,7 @@ from app.binders.services.binder_operations_service import BinderOperationsServi
 from app.clients.services.client_service import get_client_or_raise
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -24,7 +25,7 @@ router = APIRouter(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_binders(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),

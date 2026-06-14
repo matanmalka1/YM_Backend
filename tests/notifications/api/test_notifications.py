@@ -217,7 +217,7 @@ def test_secretary_can_send(client, test_db, secretary_headers):
         },
         headers={
             **secretary_headers,
-            "X-Idempotency-Key": "00000000-0000-4000-8000-000000000401",
+            "X-Idempotency-Key": "notification-send-key-401",
         },
     )
     # 200 or skipped/sent — just not 403/422

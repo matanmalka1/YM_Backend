@@ -9,6 +9,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.season_service import get_active_annual_report_tax_year
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PositiveIntPath
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -58,7 +59,7 @@ def get_default_tax_year(db: DBSession, user: CurrentUser):
 
 @season_router.get("/{tax_year}/reports", response_model=AnnualReportListResponse)
 def list_season_reports(
-    tax_year: int,
+    tax_year: PositiveIntPath,
     db: DBSession,
     user: CurrentUser,
     client_record_id: int | None = Query(None),
@@ -84,5 +85,5 @@ def list_season_reports(
 
 
 @season_router.get("/{tax_year}/summary", response_model=SeasonSummaryResponse)
-def get_season_summary(tax_year: int, db: DBSession, user: CurrentUser):
+def get_season_summary(tax_year: PositiveIntPath, db: DBSession, user: CurrentUser):
     return AnnualReportService(db).get_season_summary_response(tax_year)

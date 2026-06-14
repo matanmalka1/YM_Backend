@@ -1,17 +1,20 @@
 """Notification center HTTP endpoints."""
 
 import datetime
-from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, Request
+from fastapi import APIRouter, Depends, Query
 
-from app.core.exceptions import AppError
 from app.core.openapi_responses import (
     bad_request_response,
     error_responses,
     not_found_response,
 )
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
+from app.infrastructure.idempotency.dependency import (
+    OptionalIdempotencyKeyHeader,
+    normalize_idempotency_key_header,
+)
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -87,7 +90,7 @@ def get_notification_summary(
     response_model=NotificationResponse,
     responses=not_found_response(description="ההודעה המבוקשת לא נמצאה"),
 )
-def get_notification(notification_id: int, db: DBSession):
+def get_notification(notification_id: PathId, db: DBSession):
     return NotificationService(db).get_detail(notification_id)
 
 
@@ -111,42 +114,19 @@ def preview_notification(
     responses=error_responses(
         bad_request_response(description="נדרש מפתח אידמפוטנטיות תקין לשליחת ההודעה")
     ),
-    openapi_extra={
-        "parameters": [
-            {
-                "name": "X-Idempotency-Key",
-                "in": "header",
-                "required": True,
-                "schema": {
-                    "type": "string",
-                    "format": "uuid",
-                    "title": "X-Idempotency-Key",
-                },
-            }
-        ]
-    },
 )
 def send_notification(
     body: NotificationSendRequest,
     db: DBSession,
     user: CurrentUser,
-    request: Request,
+    x_idempotency_key: OptionalIdempotencyKeyHeader = None,
 ):
-    x_idempotency_key = request.headers.get("X-Idempotency-Key")
-    idempotency_key = x_idempotency_key.strip() if x_idempotency_key else ""
-    if not idempotency_key:
-        raise AppError(
-            "נדרש X-Idempotency-Key לשליחת הודעה",
-            "NOTIFICATION.MISSING_IDEMPOTENCY_KEY",
-            status_code=400,
-        )
-    try:
-        UUID(idempotency_key)
-    except ValueError as exc:
-        raise AppError(
-            "X-Idempotency-Key חייב להיות UUID תקין",
-            "NOTIFICATION.INVALID_IDEMPOTENCY_KEY",
-            status_code=400,
-        ) from exc
+    idempotency_key = normalize_idempotency_key_header(
+        x_idempotency_key,
+        missing_message="נדרש X-Idempotency-Key לשליחת הודעה",
+        missing_code="NOTIFICATION.MISSING_IDEMPOTENCY_KEY",
+        invalid_message="X-Idempotency-Key חייב להיות באורך 8 עד 128 תווים",
+        invalid_code="NOTIFICATION.INVALID_IDEMPOTENCY_KEY",
+    )
     svc = NotificationService(db)
     return svc.send(body, triggered_by=user.id, idempotency_key=idempotency_key)

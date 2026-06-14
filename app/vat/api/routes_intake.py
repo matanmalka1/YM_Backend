@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, status
 
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.responses import (
@@ -54,7 +55,7 @@ def create_work_item(
     responses=VAT_WORK_ITEM_TRANSITION_RESPONSES,
 )
 def mark_materials_complete(
-    item_id: int,
+    item_id: PathId,
     db: DBSession,
     current_user: CurrentUser,
 ):

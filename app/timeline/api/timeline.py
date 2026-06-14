@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.timeline.schemas.timeline import ClientTimelineResponse, TimelineEvent
 from app.timeline.services.timeline_service import TimelineService
 from app.users.api.deps import DBSession, require_role
@@ -20,7 +21,7 @@ router = APIRouter(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_client_timeline(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),

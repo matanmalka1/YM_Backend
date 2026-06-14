@@ -4,6 +4,7 @@ from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.documents.permanent_documents.api.responses import (
     DOCUMENT_DELETE_RESPONSES,
     DOCUMENT_REPLACE_RESPONSES,
@@ -74,7 +75,7 @@ def upload_permanent_document(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_client_documents(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
     tax_year: int | None = Query(default=None),
@@ -109,7 +110,7 @@ def list_client_documents(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_operational_signals(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     user: CurrentUser,
 ):
@@ -124,7 +125,9 @@ def get_operational_signals(
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="המסמך המבוקש לא נמצא"),
 )
-def get_download_url(client_record_id: int, document_id: int, db: DBSession, user: CurrentUser):
+def get_download_url(
+    client_record_id: PathId, document_id: PathId, db: DBSession, user: CurrentUser
+):
     """Get a presigned download URL for a document (expires in 1 hour)."""
     url = PermanentDocumentService(db).get_download_url(client_record_id, document_id)
     return {"url": url}
@@ -136,7 +139,9 @@ def get_download_url(client_record_id: int, document_id: int, db: DBSession, use
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=DOCUMENT_DELETE_RESPONSES,
 )
-def delete_document(client_record_id: int, document_id: int, db: DBSession, user: CurrentUser):
+def delete_document(
+    client_record_id: PathId, document_id: PathId, db: DBSession, user: CurrentUser
+):
     """Soft-delete a permanent document (ADVISOR only)."""
     PermanentDocumentService(db).delete_document(client_record_id, document_id)
 
@@ -148,8 +153,8 @@ def delete_document(client_record_id: int, document_id: int, db: DBSession, user
     responses=DOCUMENT_REPLACE_RESPONSES,
 )
 def replace_document(
-    client_record_id: int,
-    document_id: int,
+    client_record_id: PathId,
+    document_id: PathId,
     file: Annotated[UploadFile, File(...)],
     db: DBSession,
     user: CurrentUser,

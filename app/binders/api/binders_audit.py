@@ -12,6 +12,7 @@ from app.binders.services.binder_intake_edit_service import BinderIntakeEditServ
 from app.binders.services.messages import BINDER_NOT_FOUND
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -28,7 +29,7 @@ router = APIRouter(
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
 def get_binder_audit(
-    binder_id: int,
+    binder_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(default=1, ge=1),
@@ -58,7 +59,7 @@ def get_binder_audit(
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
 def get_binder_intakes(
-    binder_id: int,
+    binder_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(default=1, ge=1),
@@ -80,8 +81,8 @@ def get_binder_intakes(
     responses=BINDER_INTAKE_UPDATE_RESPONSES,
 )
 def patch_binder_intake(
-    binder_id: int,
-    intake_id: int,
+    binder_id: PathId,
+    intake_id: PathId,
     request: BinderIntakeUpdateRequest,
     db: DBSession,
     user: CurrentUser,

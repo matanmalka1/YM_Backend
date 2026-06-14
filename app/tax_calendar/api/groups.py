@@ -3,6 +3,7 @@ from fastapi import APIRouter, Depends, Query
 from app.common.enums import ObligationType
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.tax_calendar.schemas.grouped import (
     TaxCalendarGroupItemsResponse,
     TaxCalendarGroupListResponse,
@@ -53,7 +54,7 @@ def list_tax_calendar_groups(
     responses=not_found_response(description="הישות המבוקשת לא נמצאה"),
 )
 def get_tax_calendar_group_items(
-    tax_calendar_entry_id: int,
+    tax_calendar_entry_id: PathId,
     db: DBSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),

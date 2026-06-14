@@ -21,6 +21,7 @@ from app.charges.services.charge_query_service import ChargeQueryService
 from app.charges.services.charge_response_builder import ChargeResponseBuilder
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -61,7 +62,7 @@ def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
-def issue_charge(charge_id: int, db: DBSession, user: CurrentUser):
+def issue_charge(charge_id: PathId, db: DBSession, user: CurrentUser):
     charge = BillingService(db).issue_charge(charge_id, actor_id=user.id)
     return _response_builder(db).build(charge, user.role)
 
@@ -72,7 +73,7 @@ def issue_charge(charge_id: int, db: DBSession, user: CurrentUser):
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
-def mark_charge_paid(charge_id: int, db: DBSession, user: CurrentUser):
+def mark_charge_paid(charge_id: PathId, db: DBSession, user: CurrentUser):
     charge = BillingService(db).mark_charge_paid(charge_id, actor_id=user.id)
     return _response_builder(db).build(charge, user.role)
 
@@ -84,7 +85,7 @@ def mark_charge_paid(charge_id: int, db: DBSession, user: CurrentUser):
     responses=CHARGE_CANCEL_RESPONSES,
 )
 def cancel_charge(
-    charge_id: int,
+    charge_id: PathId,
     db: DBSession,
     user: CurrentUser,
     request: ChargeCancelRequest = Body(default_factory=ChargeCancelRequest),
@@ -131,7 +132,7 @@ def list_charges(
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
-def get_charge(charge_id: int, db: DBSession, user: CurrentUser):
+def get_charge(charge_id: PathId, db: DBSession, user: CurrentUser):
     charge = BillingService(db).get_charge(charge_id)
     return _response_builder(db).build(charge, user.role)
 
@@ -167,7 +168,7 @@ def bulk_charge_action(
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
-def delete_charge(charge_id: int, db: DBSession, user: CurrentUser):
+def delete_charge(charge_id: PathId, db: DBSession, user: CurrentUser):
     service = BillingService(db)
     service.delete_charge(charge_id, actor_id=user.id)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

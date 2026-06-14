@@ -9,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
+from app.core.media_types import PDF_MEDIA_TYPE
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
@@ -69,7 +70,7 @@ def export_to_pdf(db: Session, client_record_id: int, year: int) -> dict[str, ob
 
 _MEDIA_TYPES = {
     "excel": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-    "pdf": "application/pdf",
+    "pdf": PDF_MEDIA_TYPE,
 }
 
 

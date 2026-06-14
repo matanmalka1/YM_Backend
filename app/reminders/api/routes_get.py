@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 
+from app.core.path_params import PathId
 from app.reminders.api.responses import REMINDER_DETAIL_RESPONSES
 from app.reminders.schemas.reminders import ReminderResponse
 from app.reminders.services.reminder_service import ReminderService
@@ -16,7 +17,7 @@ get_router = APIRouter()
     responses=REMINDER_DETAIL_RESPONSES,
 )
 def get_reminder(
-    reminder_id: int,
+    reminder_id: PathId,
     db: DBSession,
     _user: CurrentUser,
 ):

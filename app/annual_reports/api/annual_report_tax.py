@@ -10,6 +10,7 @@ from app.annual_reports.schemas.annual_report_financials import (
 from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -26,7 +27,7 @@ router = APIRouter(
     responses=REPORT_TAX_CALCULATION_RESPONSES,
 )
 def save_tax_calculation(
-    report_id: int,
+    report_id: PathId,
     body: TaxCalculationSaveRequest,
     db: DBSession,
     user: CurrentUser,

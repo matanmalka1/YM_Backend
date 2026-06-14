@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.notes.api.responses import BUSINESS_NOTE_CREATE_RESPONSES, NOTE_UPDATE_RESPONSES
 from app.notes.schemas.entity_note import (
     EntityNoteCreateRequest,
@@ -26,8 +27,8 @@ router = APIRouter(
     responses=not_found_response(description="העסק המבוקש לא נמצא"),
 )
 def list_notes(
-    client_record_id: int,
-    business_id: int,
+    client_record_id: PathId,
+    business_id: PathId,
     db: DBSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
@@ -53,8 +54,8 @@ def list_notes(
     responses=BUSINESS_NOTE_CREATE_RESPONSES,
 )
 def add_note(
-    client_record_id: int,
-    business_id: int,
+    client_record_id: PathId,
+    business_id: PathId,
     request: EntityNoteCreateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -74,9 +75,9 @@ def add_note(
     responses=NOTE_UPDATE_RESPONSES,
 )
 def update_note(
-    client_record_id: int,
-    business_id: int,
-    note_id: int,
+    client_record_id: PathId,
+    business_id: PathId,
+    note_id: PathId,
     request: EntityNoteUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -97,9 +98,9 @@ def update_note(
     responses=not_found_response(description="ההערה המבוקשת לא נמצאה"),
 )
 def delete_note(
-    client_record_id: int,
-    business_id: int,
-    note_id: int,
+    client_record_id: PathId,
+    business_id: PathId,
+    note_id: PathId,
     db: DBSession,
     user: CurrentUser,
 ):

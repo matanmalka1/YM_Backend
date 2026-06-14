@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, status
 
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.responses import VAT_WORK_ITEM_MUTATION_RESPONSES
@@ -22,7 +23,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
     responses=VAT_WORK_ITEM_MUTATION_RESPONSES,
 )
 def update_work_item_metadata(
-    item_id: int,
+    item_id: PathId,
     request: VatWorkItemUpdateRequest,
     db: DBSession,
     current_user: CurrentUser,
@@ -43,7 +44,7 @@ def update_work_item_metadata(
     responses=VAT_WORK_ITEM_MUTATION_RESPONSES,
 )
 def delete_work_item(
-    item_id: int,
+    item_id: PathId,
     db: DBSession,
     current_user: CurrentUser,
 ):

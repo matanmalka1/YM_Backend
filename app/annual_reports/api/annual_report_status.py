@@ -18,6 +18,7 @@ from app.annual_reports.services.annual_report_service import AnnualReportServic
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -35,7 +36,7 @@ router = APIRouter(
     responses=REPORT_TRANSITION_RESPONSES,
 )
 def transition_status(
-    report_id: int,
+    report_id: PathId,
     body: StatusTransitionRequest,
     db: DBSession,
     user: CurrentUser,
@@ -68,7 +69,7 @@ def transition_status(
     responses=REPORT_TRANSITION_RESPONSES,
 )
 def submit_report(
-    report_id: int,
+    report_id: PathId,
     body: SubmitRequest,
     db: DBSession,
     user: CurrentUser,
@@ -97,7 +98,7 @@ def submit_report(
     responses=REPORT_UPDATE_RESPONSES,
 )
 def update_deadline(
-    report_id: int,
+    report_id: PathId,
     body: DeadlineUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -129,7 +130,7 @@ def update_deadline(
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def get_report_audit(
-    report_id: int,
+    report_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),

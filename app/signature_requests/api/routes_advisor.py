@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.signature_requests.api.responses import SIGNATURE_CREATE_RESPONSES
 from app.signature_requests.models.signature_request import SignatureRequestType
 from app.signature_requests.schemas.signature_request import (
@@ -100,7 +101,7 @@ def list_pending_requests(
     response_model=SignatureRequestWithAuditResponse,
     responses=not_found_response(description="בקשת החתימה המבוקשת לא נמצאה"),
 )
-def get_signature_request(request_id: int, db: DBSession, user: CurrentUser):
+def get_signature_request(request_id: PathId, db: DBSession, user: CurrentUser):
     service = SignatureRequestService(db)
     req = service.get_request(request_id)
     audit_events = service.get_audit_trail(request_id)

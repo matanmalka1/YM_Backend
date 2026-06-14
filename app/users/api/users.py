@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query, status
 
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.api.responses import (
     USER_ACTIVATE_RESPONSES,
@@ -71,7 +72,7 @@ def list_users(
     response_model=UserManagementResponse,
     responses=not_found_response(description="המשתמש המבוקש לא נמצא"),
 )
-def get_user(user_id: int, db: DBSession, user: CurrentUser):
+def get_user(user_id: PathId, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.get_user(actor_role=user.role, user_id=user_id)
 
@@ -81,7 +82,7 @@ def get_user(user_id: int, db: DBSession, user: CurrentUser):
     response_model=UserManagementResponse,
     responses=USER_UPDATE_RESPONSES,
 )
-def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: CurrentUser):
+def update_user(user_id: PathId, request: UserUpdateRequest, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     update_data = request.model_dump(exclude_unset=True)
     return service.update_user(
@@ -97,7 +98,7 @@ def update_user(user_id: int, request: UserUpdateRequest, db: DBSession, user: C
     response_model=UserManagementResponse,
     responses=USER_ACTIVATE_RESPONSES,
 )
-def activate_user(user_id: int, db: DBSession, user: CurrentUser):
+def activate_user(user_id: PathId, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.activate_user(
         actor_user_id=user.id,
@@ -111,7 +112,7 @@ def activate_user(user_id: int, db: DBSession, user: CurrentUser):
     response_model=UserManagementResponse,
     responses=USER_DEACTIVATE_RESPONSES,
 )
-def deactivate_user(user_id: int, db: DBSession, user: CurrentUser):
+def deactivate_user(user_id: PathId, db: DBSession, user: CurrentUser):
     service = UserManagementService(db)
     return service.deactivate_user(
         actor_user_id=user.id,
@@ -125,7 +126,9 @@ def deactivate_user(user_id: int, db: DBSession, user: CurrentUser):
     response_model=UserManagementResponse,
     responses=USER_RESET_PASSWORD_RESPONSES,
 )
-def reset_password(user_id: int, request: PasswordResetRequest, db: DBSession, user: CurrentUser):
+def reset_password(
+    user_id: PathId, request: PasswordResetRequest, db: DBSession, user: CurrentUser
+):
     service = UserManagementService(db)
     return service.reset_password(
         actor_user_id=user.id,

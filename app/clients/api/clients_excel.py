@@ -16,6 +16,7 @@ from app.clients.services.client_excel_service import (
 )
 from app.clients.services.client_query_service import ClientQueryService
 from app.clients.services.create_client_service import CreateClientService
+from app.core.openapi_responses import binary_response_doc
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -29,7 +30,11 @@ router = APIRouter(
 )
 
 
-@router.get("/export")
+@router.get(
+    "/export",
+    response_class=FileResponse,
+    responses=binary_response_doc(EXCEL_MEDIA_TYPE),
+)
 def export_clients(db: DBSession):
     """Return all clients as an Excel workbook."""
     excel_service = ClientExcelService(db)
@@ -48,7 +53,11 @@ def export_clients(db: DBSession):
     )
 
 
-@router.get("/template")
+@router.get(
+    "/template",
+    response_class=FileResponse,
+    responses=binary_response_doc(EXCEL_MEDIA_TYPE),
+)
 def download_client_template(db: DBSession):
     """Download a starter Excel template for client imports."""
     excel_service = ClientExcelService(db)

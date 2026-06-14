@@ -19,6 +19,8 @@ _BODY_STATUSES = ("400", "409", "500")
 _EXPECTED: dict[tuple[str, str], set[str]] = {
     # vat
     ("POST", "/api/v1/vat/work-items"): {"400", "409"},
+    ("PATCH", "/api/v1/vat/work-items/{item_id}"): {"400"},
+    ("DELETE", "/api/v1/vat/work-items/{item_id}"): {"400"},
     ("POST", "/api/v1/vat/work-items/{item_id}/file"): {"400", "409"},
     ("POST", "/api/v1/vat/work-items/{item_id}/invoices"): {"400", "409"},
     ("PATCH", "/api/v1/vat/work-items/{item_id}/invoices/{invoice_id}"): {"400", "409"},

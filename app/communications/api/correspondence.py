@@ -17,6 +17,7 @@ from app.communications.services.correspondence_service import CorrespondenceSer
 from app.core.api_types import SortOrder
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -38,7 +39,7 @@ client_router = APIRouter(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_correspondence_by_client(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     page: int = Query(1, ge=1),
     page_size: int = Query(_DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
@@ -76,8 +77,8 @@ def list_correspondence_by_client(
     responses=not_found_response(description="רשומת ההתכתבות המבוקשת לא נמצאה"),
 )
 def get_correspondence(
-    client_record_id: int,
-    correspondence_id: int,
+    client_record_id: PathId,
+    correspondence_id: PathId,
     db: DBSession,
 ):
     entry = CorrespondenceService(db).get_entry(correspondence_id, client_record_id)
@@ -91,7 +92,7 @@ def get_correspondence(
     responses=CORRESPONDENCE_CREATE_RESPONSES,
 )
 def create_correspondence(
-    client_record_id: int,
+    client_record_id: PathId,
     request: CorrespondenceCreateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -115,8 +116,8 @@ def create_correspondence(
     responses=CORRESPONDENCE_UPDATE_RESPONSES,
 )
 def update_correspondence(
-    client_record_id: int,
-    correspondence_id: int,
+    client_record_id: PathId,
+    correspondence_id: PathId,
     request: CorrespondenceUpdateRequest,
     db: DBSession,
     user: CurrentUser,
@@ -136,8 +137,8 @@ def update_correspondence(
     responses=not_found_response(description="רשומת ההתכתבות המבוקשת לא נמצאה"),
 )
 def delete_correspondence(
-    client_record_id: int,
-    correspondence_id: int,
+    client_record_id: PathId,
+    correspondence_id: PathId,
     db: DBSession,
     user: CurrentUser,
 ):

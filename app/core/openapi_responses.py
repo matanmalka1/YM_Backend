@@ -23,31 +23,44 @@ def error_responses(*items: dict[int, dict[str, Any]]) -> dict[int, dict[str, An
     return merged
 
 
-def bad_request_response(*, description: str = "הבקשה אינה תקינה") -> dict[int, dict[str, Any]]:
+def bad_request_response(*, description: str = "Bad request") -> dict[int, dict[str, Any]]:
     return error_response_doc(400, description=description)
 
 
-def unauthorized_response(*, description: str = "נדרש אימות") -> dict[int, dict[str, Any]]:
+def unauthorized_response(
+    *, description: str = "Authentication required"
+) -> dict[int, dict[str, Any]]:
     return error_response_doc(401, description=description)
 
 
-def forbidden_response(
-    *, description: str = "אין הרשאה לביצוע הפעולה"
-) -> dict[int, dict[str, Any]]:
+def forbidden_response(*, description: str = "Forbidden") -> dict[int, dict[str, Any]]:
     return error_response_doc(403, description=description)
 
 
-def not_found_response(*, description: str = "המשאב לא נמצא") -> dict[int, dict[str, Any]]:
+def not_found_response(*, description: str = "Resource not found") -> dict[int, dict[str, Any]]:
     return error_response_doc(404, description=description)
 
 
-def conflict_response(
-    *, description: str = "הבקשה מתנגשת עם מצב קיים"
-) -> dict[int, dict[str, Any]]:
+def conflict_response(*, description: str = "Conflict") -> dict[int, dict[str, Any]]:
     return error_response_doc(409, description=description)
 
 
 def internal_server_error_response(
-    *, description: str = "אירעה שגיאה לא צפויה"
+    *, description: str = "Internal server error"
 ) -> dict[int, dict[str, Any]]:
     return error_response_doc(500, description=description)
+
+
+def binary_response_doc(
+    *media_types: str, description: str = "File download"
+) -> dict[int, dict[str, Any]]:
+    """OpenAPI ``responses=`` entry for file downloads."""
+    return {
+        200: {
+            "description": description,
+            "content": {
+                media_type: {"schema": {"type": "string", "format": "binary"}}
+                for media_type in media_types
+            },
+        }
+    }

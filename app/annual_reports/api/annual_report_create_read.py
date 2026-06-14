@@ -17,6 +17,7 @@ from app.annual_reports.services.annual_report_service import AnnualReportServic
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -107,7 +108,7 @@ def list_overdue(
     response_model=AnnualReportDetailResponse,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def get_annual_report(report_id: int, db: DBSession, user: CurrentUser):
+def get_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     """Get a single report with its schedule entries and status audit entries."""
     service = AnnualReportService(db)
     detail = service.get_detail_report(report_id)
@@ -122,7 +123,7 @@ def get_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
-def delete_annual_report(report_id: int, db: DBSession, user: CurrentUser):
+def delete_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     """Soft-delete an annual report (ADVISOR only)."""
     service = AnnualReportService(db)
     deleted = service.delete_report(report_id, actor_id=user.id, actor_name=user.full_name)
@@ -137,7 +138,7 @@ def delete_annual_report(report_id: int, db: DBSession, user: CurrentUser):
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=REPORT_AMEND_RESPONSES,
 )
-def amend_annual_report(report_id: int, body: AmendRequest, db: DBSession, user: CurrentUser):
+def amend_annual_report(report_id: PathId, body: AmendRequest, db: DBSession, user: CurrentUser):
     """Reopen a SUBMITTED report for amendment and record the reason (ADVISOR only)."""
     service = AnnualReportService(db)
     return service.amend_report(

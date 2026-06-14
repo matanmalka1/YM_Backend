@@ -7,6 +7,7 @@ from fastapi import APIRouter, Depends, Query, Response
 from app.common.source_types import WorkQueueSourceType
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.tasks.api.responses import (
     TASK_CANCEL_RESPONSES,
     TASK_COMPLETE_RESPONSES,
@@ -80,7 +81,7 @@ def create_task(
     response_model=TaskResponse,
     responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
 )
-def get_task(db: DBSession, task_id: int):
+def get_task(db: DBSession, task_id: PathId):
     return TaskService(db).get(task_id)
 
 
@@ -91,7 +92,7 @@ def get_task(db: DBSession, task_id: int):
 )
 def update_task(
     db: DBSession,
-    task_id: int,
+    task_id: PathId,
     data: TaskUpdateRequest,
 ):
     return TaskService(db).update(task_id, data)
@@ -102,7 +103,7 @@ def update_task(
     response_model=TaskResponse,
     responses=TASK_COMPLETE_RESPONSES,
 )
-def complete_task(db: DBSession, user: CurrentUser, task_id: int):
+def complete_task(db: DBSession, user: CurrentUser, task_id: PathId):
     return TaskService(db).complete(task_id, completed_by_user_id=user.id)
 
 
@@ -111,7 +112,7 @@ def complete_task(db: DBSession, user: CurrentUser, task_id: int):
     response_model=TaskResponse,
     responses=TASK_CANCEL_RESPONSES,
 )
-def cancel_task(db: DBSession, user: CurrentUser, task_id: int):
+def cancel_task(db: DBSession, user: CurrentUser, task_id: PathId):
     return TaskService(db).cancel(task_id, canceled_by_user_id=user.id)
 
 
@@ -120,6 +121,6 @@ def cancel_task(db: DBSession, user: CurrentUser, task_id: int):
     status_code=204,
     responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
 )
-def delete_task(db: DBSession, _user: CurrentUser, task_id: int):
+def delete_task(db: DBSession, _user: CurrentUser, task_id: PathId):
     TaskService(db).delete(task_id)
     return Response(status_code=204)

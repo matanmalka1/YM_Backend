@@ -3,6 +3,7 @@
 from fastapi import APIRouter, Depends, Query, status
 
 from app.core.openapi_responses import not_found_response
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat.api.responses import (
@@ -30,7 +31,7 @@ router = APIRouter(prefix="/vat", tags=["vat-reports"])
     responses=VAT_INVOICE_CREATE_RESPONSES,
 )
 def add_invoice(
-    item_id: int,
+    item_id: PathId,
     request: VatInvoiceCreateRequest,
     db: DBSession,
     current_user: CurrentUser,
@@ -64,7 +65,7 @@ def add_invoice(
     responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 def list_invoices(
-    item_id: int,
+    item_id: PathId,
     db: DBSession,
     current_user: CurrentUser,
     invoice_type: InvoiceType | None = Query(default=None),
@@ -83,8 +84,8 @@ def list_invoices(
     responses=VAT_INVOICE_UPDATE_RESPONSES,
 )
 def update_invoice(
-    item_id: int,
-    invoice_id: int,
+    item_id: PathId,
+    invoice_id: PathId,
     request: VatInvoiceUpdateRequest,
     db: DBSession,
     current_user: CurrentUser,
@@ -111,8 +112,8 @@ def update_invoice(
     responses=VAT_INVOICE_DELETE_RESPONSES,
 )
 def delete_invoice(
-    item_id: int,
-    invoice_id: int,
+    item_id: PathId,
+    invoice_id: PathId,
     db: DBSession,
     current_user: CurrentUser,
 ):

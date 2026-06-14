@@ -3,7 +3,10 @@
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import FileResponse
 
-from app.core.openapi_responses import not_found_response
+from app.clients.constants import EXCEL_MEDIA_TYPE
+from app.core.media_types import PDF_MEDIA_TYPE
+from app.core.openapi_responses import binary_response_doc, error_responses, not_found_response
+from app.core.path_params import PathId
 from app.users.api.deps import DBSession, require_role
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
@@ -26,7 +29,7 @@ _DEFAULT_YEAR_WINDOW = 4
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def get_vat_client_summary(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     period_year_after: int | None = Query(default=None, ge=2000, le=2100),
     period_year_before: int | None = Query(default=None, ge=2000, le=2100),
@@ -46,11 +49,15 @@ def get_vat_client_summary(
 
 @router.get(
     "/clients/{client_record_id}/export",
+    response_class=FileResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=error_responses(
+        binary_response_doc(EXCEL_MEDIA_TYPE, PDF_MEDIA_TYPE),
+        not_found_response(description="Client not found"),
+    ),
 )
 def export_vat_client(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     format: str = Query(..., pattern="^(excel|pdf)$"),
     year: int = Query(..., ge=2000, le=2100),

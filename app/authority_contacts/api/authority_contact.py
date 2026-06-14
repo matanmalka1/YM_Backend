@@ -16,6 +16,7 @@ from app.authority_contacts.services.authority_contact_service import (
 )
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -38,7 +39,7 @@ def _to_contact_response(contact) -> AuthorityContactResponse:
     responses=AUTHORITY_CONTACT_CREATE_RESPONSES,
 )
 def create_authority_contact(
-    client_record_id: int,
+    client_record_id: PathId,
     request: AuthorityContactCreateRequest,
     db: DBSession,
     _: CurrentUser,
@@ -63,7 +64,7 @@ def create_authority_contact(
     responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
 )
 def list_authority_contacts(
-    client_record_id: int,
+    client_record_id: PathId,
     db: DBSession,
     _: CurrentUser,
     contact_type: ContactType | None = None,
@@ -92,8 +93,8 @@ def list_authority_contacts(
     responses=not_found_response(description="איש הקשר המבוקש לא נמצא"),
 )
 def get_authority_contact(
-    client_record_id: int,
-    contact_id: int,
+    client_record_id: PathId,
+    contact_id: PathId,
     db: DBSession,
     _: CurrentUser,
 ):
@@ -108,8 +109,8 @@ def get_authority_contact(
     responses=AUTHORITY_CONTACT_UPDATE_RESPONSES,
 )
 def update_authority_contact(
-    client_record_id: int,
-    contact_id: int,
+    client_record_id: PathId,
+    contact_id: PathId,
     request: AuthorityContactUpdateRequest,
     db: DBSession,
     _: CurrentUser,
@@ -128,7 +129,7 @@ def update_authority_contact(
     responses=not_found_response(description="איש הקשר המבוקש לא נמצא"),
 )
 def delete_authority_contact(
-    client_record_id: int, contact_id: int, db: DBSession, user: CurrentUser
+    client_record_id: PathId, contact_id: PathId, db: DBSession, user: CurrentUser
 ):
     """Delete authority contact (ADVISOR only), scoped to client."""
     service = AuthorityContactService(db)

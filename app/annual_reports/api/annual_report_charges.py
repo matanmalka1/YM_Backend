@@ -8,6 +8,7 @@ from app.annual_reports.services.annual_report_charge_service import (
 from app.charges.schemas.charge import ChargeResponseListResponse
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
+from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -24,7 +25,7 @@ router = APIRouter(
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def list_report_charges(
-    report_id: int,
+    report_id: PathId,
     db: DBSession,
     user: CurrentUser,
     page: int = Query(1, ge=1),
