@@ -4,6 +4,13 @@ import pytest
 
 import app.config as config_mod
 import app.database as database_mod
+from app.core.logging_config import (
+    begin_request_log_stats,
+    clear_request_id,
+    clear_request_log_stats,
+    get_request_log_stats,
+    record_sql_query,
+)
 
 
 def test_get_db_closes_session_on_generator_close(monkeypatch):
@@ -24,6 +31,34 @@ def test_get_db_closes_session_on_generator_close(monkeypatch):
 
     dep.close()
     assert db.closed is True
+
+
+def test_get_db_does_not_log_summary_before_status_is_known(monkeypatch):
+    class _DB:
+        def close(self):
+            pass
+
+    calls = []
+    monkeypatch.setattr(database_mod, "SessionLocal", _DB)
+    monkeypatch.setattr(
+        database_mod,
+        "log_request_summary",
+        lambda *args, **kwargs: calls.append((args, kwargs)),
+    )
+
+    begin_request_log_stats()
+    record_sql_query("SELECT 1", 1.0)
+
+    try:
+        dep = database_mod.get_db()
+        next(dep)
+        dep.close()
+
+        assert calls == []
+        assert get_request_log_stats() is not None
+    finally:
+        clear_request_log_stats()
+        clear_request_id()
 
 
 def test_database_module_rejects_sqlite_in_production(monkeypatch):

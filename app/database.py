@@ -10,6 +10,7 @@ from app.core.logging_config import (
     clear_request_log_stats,
     get_logger,
     get_request_log_stats,
+    has_request_db_activity,
     log_request_summary,
     record_sql_query,
 )
@@ -71,7 +72,12 @@ def get_db():
         raise
     finally:
         db.close()
-        if get_request_log_stats() is not None:
+        stats = get_request_log_stats()
+        if (
+            stats is not None
+            and has_request_db_activity()
+            and stats.status_code is not None
+        ):
             log_request_summary(
                 logger,
                 service="binder-billing-crm",

@@ -18,7 +18,6 @@ from app.core.logging_config import (
     begin_request_log_stats,
     clear_request_log_stats,
     get_logger,
-    has_request_db_activity,
     log_request_summary,
     reset_request_id,
     set_request_error,
@@ -112,16 +111,15 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
                     referer=request.headers.get("referer"),
                 )
 
-                if not has_request_db_activity():
-                    log_request_summary(
-                        logger,
-                        service="binder-billing-crm",
-                        env=settings.APP_ENV,
-                        slow_request_ms=settings.LOG_SLOW_REQUEST_MS,
-                        slow_query_ms=settings.LOG_SLOW_QUERY_MS,
-                        high_query_count=settings.LOG_HIGH_QUERY_COUNT,
-                    )
-                    clear_request_log_stats()
-                    reset_request_id(request_id_token)
+                log_request_summary(
+                    logger,
+                    service="binder-billing-crm",
+                    env=settings.APP_ENV,
+                    slow_request_ms=settings.LOG_SLOW_REQUEST_MS,
+                    slow_query_ms=settings.LOG_SLOW_QUERY_MS,
+                    high_query_count=settings.LOG_HIGH_QUERY_COUNT,
+                )
+                clear_request_log_stats()
+                reset_request_id(request_id_token)
             else:
                 reset_request_id(request_id_token)
