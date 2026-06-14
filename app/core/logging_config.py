@@ -490,6 +490,7 @@ def setup_logging(level: str = "INFO", *, log_format: str = "text") -> None:
 
     # Silence noisy libraries
     logging.getLogger("uvicorn.access").setLevel(logging.WARNING)
+    logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
 
 def set_request_id(request_id: str) -> Token[str | None]:

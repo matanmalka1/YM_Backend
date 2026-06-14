@@ -6,6 +6,7 @@ from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import EntityType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.search.schemas.search import DocumentSearchResult
 from app.search.services.document_search_service import DocumentSearchService
@@ -27,11 +28,9 @@ class SearchService:
         self.business_repo = BusinessRepository(db)
         self.binder_repo = BinderRepository(db)
 
-    def _legal_entity_map(self, legal_entity_ids: list[int]) -> dict[int, object]:
-        return {
-            legal_id: self.legal_entity_repo.get_by_id(legal_id)
-            for legal_id in set(legal_entity_ids)
-        }
+    def _legal_entity_map(self, legal_entity_ids: list[int]) -> dict[int, LegalEntity]:
+        entities = self.legal_entity_repo.list_by_ids(list(set(legal_entity_ids)))
+        return {entity.id: entity for entity in entities}
 
     def search(
         self,

@@ -1,11 +1,15 @@
 from datetime import date
 
+from sqlalchemy import event
+
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.clients.enums import ClientStatus
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocument,
     PermanentDocumentType,
 )
+from app.search.services.search_service import SearchService
 
 
 def _make_binder(db, client_record_id: int, binder_number: str, user_id: int) -> Binder:
@@ -70,6 +74,39 @@ def test_global_search_by_client_name_returns_client_results(
     assert response.status_code == 200
     data = response.json()
     assert any(result["client_record_id"] == crm_client.id for result in data["results"])
+
+
+def test_client_search_bulk_loads_legal_entities(test_db, create_client_with_business):
+    for i in range(20):
+        create_client_with_business(
+            full_name=f"Bulk Legal Entity {i:02d}",
+            id_number=f"BLE{i:07d}",
+        )
+
+    statements: list[str] = []
+
+    def track_query(_conn, _cursor, statement, _parameters, _context, _executemany):
+        statements.append(statement)
+
+    bind = test_db.get_bind()
+    event.listen(bind, "before_cursor_execute", track_query)
+    try:
+        results, _total, _documents = SearchService(test_db).search(
+            client_status=ClientStatus.ACTIVE,
+            page=1,
+            page_size=20,
+        )
+    finally:
+        event.remove(bind, "before_cursor_execute", track_query)
+
+    assert len(results) == 20
+    single_legal_entity_loads = [
+        statement
+        for statement in statements
+        if "FROM legal_entities" in statement and "WHERE legal_entities.id =" in statement
+    ]
+    assert single_legal_entity_loads == []
+    assert len(statements) <= 6
 
 
 def test_search_binder_number_filter(
