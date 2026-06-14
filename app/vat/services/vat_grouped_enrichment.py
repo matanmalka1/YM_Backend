@@ -84,7 +84,9 @@ def _resolve_client_ids(
 ) -> list[int] | None:
     if client_record_id is not None:
         if client_name:
-            records, _ = ClientRecordRepository(db).search(search=client_name, page=1, page_size=500)
+            records, _ = ClientRecordRepository(db).search(
+                search=client_name, page=1, page_size=500
+            )
             if client_record_id not in {r.id for r in records}:
                 return []
         return [client_record_id]

@@ -73,11 +73,7 @@ def get_db():
     finally:
         db.close()
         stats = get_request_log_stats()
-        if (
-            stats is not None
-            and has_request_db_activity()
-            and stats.status_code is not None
-        ):
+        if stats is not None and has_request_db_activity() and stats.status_code is not None:
             log_request_summary(
                 logger,
                 service="binder-billing-crm",

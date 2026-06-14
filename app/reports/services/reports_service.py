@@ -36,7 +36,8 @@ class AgingReportService:
         }
         legal_entity_ids = {record.legal_entity_id for record in record_map.values()}
         legal_map = {
-            entity.id: entity for entity in self.legal_entity_repo.list_by_ids(list(legal_entity_ids))
+            entity.id: entity
+            for entity in self.legal_entity_repo.list_by_ids(list(legal_entity_ids))
         }
 
         items = []
