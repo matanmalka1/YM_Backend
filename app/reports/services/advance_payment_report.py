@@ -21,9 +21,10 @@ class AdvancePaymentReportService:
         records = {
             record.id: record for record in self.client_record_repo.list_by_ids(client_record_ids)
         }
+        legal_entity_ids = {record.legal_entity_id for record in records.values()}
         legal_entities = {
-            legal_id: self.legal_entity_repo.get_by_id(legal_id)
-            for legal_id in {record.legal_entity_id for record in records.values()}
+            entity.id: entity
+            for entity in self.legal_entity_repo.list_by_ids(list(legal_entity_ids))
         }
 
         items = [

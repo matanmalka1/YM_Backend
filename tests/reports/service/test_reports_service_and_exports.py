@@ -10,6 +10,7 @@ from app.reports.services.advance_payment_report import AdvancePaymentReportServ
 from app.reports.services.export_service import ExportService
 from app.reports.services.reports_service import AgingReportService
 from tests.helpers.identity import seed_client_with_business
+from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
 def _client_and_business(db, suffix: str):
@@ -149,7 +150,7 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
         ]
     )
     service.legal_entity_repo = SimpleNamespace(
-        get_by_id=lambda legal_id: SimpleNamespace(id=legal_id, official_name="Advance Client")
+        list_by_ids=lambda ids: [SimpleNamespace(id=70, official_name="Advance Client")]
     )
 
     report = service.get_collections_report(year=2026, month=3)
@@ -165,3 +166,36 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
             "gap": 180.0,
         }
     ]
+
+
+def test_advance_payment_report_batches_client_name_lookup(test_db):
+    for suffix in range(20, 28):
+        client, _business = _client_and_business(test_db, str(suffix))
+        create_linked_advance_payment(
+            test_db,
+            client_record_id=client.id,
+            period="2026-01",
+            due_date=date(2026, 2, 15),
+            expected_amount=Decimal("100.00"),
+            paid_amount=Decimal("25.00"),
+        )
+    test_db.commit()
+
+    query_count = 0
+
+    def track_query(*_args):
+        nonlocal query_count
+        query_count += 1
+
+    bind = test_db.get_bind()
+    event.listen(bind, "before_cursor_execute", track_query)
+    try:
+        report = AdvancePaymentReportService(test_db).get_collections_report(
+            year=2026,
+            month=1,
+        )
+    finally:
+        event.remove(bind, "before_cursor_execute", track_query)
+
+    assert len(report["items"]) == 8
+    assert query_count <= 3
