@@ -19,6 +19,7 @@ from app.documents.permanent_documents.schemas.permanent_document import (
     OperationalSignalsResponse,
     PermanentDocumentListResponse,
     PermanentDocumentResponse,
+    PermanentDocumentUpdateRequest,
 )
 from app.documents.permanent_documents.services.permanent_document_service import (
     PermanentDocumentService,
@@ -104,6 +105,31 @@ def list_client_documents(
 
 
 @router.get(
+    "/binder/{binder_id}",
+    response_model=PermanentDocumentListResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="התיק המבוקש לא נמצא"),
+)
+def list_binder_documents(
+    binder_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+    page: int = Query(default=1, ge=1),
+    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
+):
+    """List permanent documents linked to a binder."""
+    documents, total = PermanentDocumentService(db).list_binder_documents(
+        binder_id, page=page, page_size=page_size
+    )
+    return PermanentDocumentListResponse(
+        items=PermanentDocumentResponseBuilder(db).build_many(documents),
+        total=total,
+        page=page,
+        page_size=page_size,
+    )
+
+
+@router.get(
     "/client/{client_record_id}/signals",
     response_model=OperationalSignalsResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
@@ -149,7 +175,7 @@ def delete_document(
 @router.put(
     "/client/{client_record_id}/{document_id}/replace",
     response_model=PermanentDocumentResponse,
-    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=DOCUMENT_REPLACE_RESPONSES,
 )
 def replace_document(
@@ -159,7 +185,7 @@ def replace_document(
     db: DBSession,
     user: CurrentUser,
 ):
-    """Replace the file for an existing document (ADVISOR only)."""
+    """Replace the file for an existing document (ADVISOR and SECRETARY)."""
     doc = PermanentDocumentService(db).replace_document(
         client_record_id=client_record_id,
         document_id=document_id,
@@ -167,5 +193,39 @@ def replace_document(
         filename=file.filename or "document",
         uploaded_by=user.id,
         mime_type=file.content_type,
+    )
+    return PermanentDocumentResponseBuilder(db).build_one(doc)
+
+
+@router.get(
+    "/client/{client_record_id}/{document_id}",
+    response_model=PermanentDocumentResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="המסמך המבוקש לא נמצא"),
+)
+def get_document(
+    client_record_id: PathId, document_id: PathId, db: DBSession, user: CurrentUser
+):
+    """Get a single permanent document's metadata."""
+    doc = PermanentDocumentService(db).get_document(client_record_id, document_id)
+    return PermanentDocumentResponseBuilder(db).build_one(doc)
+
+
+@router.patch(
+    "/client/{client_record_id}/{document_id}",
+    response_model=PermanentDocumentResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=not_found_response(description="המסמך המבוקש לא נמצא"),
+)
+def update_document(
+    client_record_id: PathId,
+    document_id: PathId,
+    payload: PermanentDocumentUpdateRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """Update document metadata (type, filename, tax year) without touching the file."""
+    doc = PermanentDocumentService(db).update_document_metadata(
+        client_record_id, document_id, **payload.model_dump(exclude_unset=True)
     )
     return PermanentDocumentResponseBuilder(db).build_one(doc)

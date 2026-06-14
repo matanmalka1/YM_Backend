@@ -27,6 +27,7 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
         version: int = 1,
         status: DocumentStatus = DocumentStatus.PENDING,
         annual_report_id: int | None = None,
+        binder_id: int | None = None,
         original_filename: str | None = None,
         file_size_bytes: int | None = None,
         mime_type: str | None = None,
@@ -43,6 +44,7 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
             version=version,
             status=status,
             annual_report_id=annual_report_id,
+            binder_id=binder_id,
             original_filename=original_filename,
             file_size_bytes=file_size_bytes,
             mime_type=mime_type,
@@ -150,6 +152,27 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
             document_type=document_type,
             status=status,
             include_superseded=include_superseded,
+        )
+        total: int = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
+        items = list(
+            self.db.scalars(
+                stmt.order_by(PermanentDocument.uploaded_at.desc())
+                .offset((page - 1) * page_size)
+                .limit(page_size)
+            ).all()
+        )
+        return items, total
+
+    def list_by_binder_page(
+        self,
+        binder_id: int,
+        page: int,
+        page_size: int,
+    ) -> tuple[list[PermanentDocument], int]:
+        stmt = select(PermanentDocument).where(
+            PermanentDocument.binder_id == binder_id,
+            PermanentDocument.is_deleted.is_(False),
+            PermanentDocument.superseded_by.is_(None),
         )
         total: int = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
         items = list(

@@ -1,6 +1,7 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, model_validator
 
-from app.core.api_types import ApiDateTime
+from app.core.api_types import ApiDateTime, NonBlankStr
+from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
@@ -26,6 +27,7 @@ class PermanentDocumentResponse(BaseModel):
     version: int
     superseded_by: int | None = None
     annual_report_id: int | None = None
+    binder_id: int | None = None
     uploaded_by: int
     uploaded_at: ApiDateTime
     approved_by: int | None = None
@@ -34,6 +36,18 @@ class PermanentDocumentResponse(BaseModel):
     rejected_at: ApiDateTime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class PermanentDocumentUpdateRequest(NonEmptyUpdateMixin):
+    document_type: PermanentDocumentType | None = None
+    original_filename: NonBlankStr | None = None
+    tax_year: int | None = None
+
+    @model_validator(mode="after")
+    def _reject_null_document_type(self):
+        if "document_type" in self.model_fields_set and self.document_type is None:
+            raise ValueError("document_type לא יכול להיות null")
+        return self
 
 
 class PermanentDocumentListResponse(BaseModel):

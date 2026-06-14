@@ -5,6 +5,8 @@ from typing import BinaryIO
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.binders.repositories.binder_repository import BinderRepository
+from app.binders.services.messages import BINDER_NOT_FOUND
 from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
     get_business_or_raise,
@@ -190,6 +192,38 @@ class PermanentDocumentService:
             ) from exc
         self.db.refresh(document)
         return document
+
+    def get_document(self, client_record_id: int, document_id: int) -> PermanentDocument:
+        doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
+        if not doc:
+            raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.NOT_FOUND")
+        return doc
+
+    def update_document_metadata(
+        self,
+        client_record_id: int,
+        document_id: int,
+        **fields,
+    ) -> PermanentDocument:
+        doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
+        if not doc:
+            raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.NOT_FOUND")
+        for key, value in fields.items():
+            setattr(doc, key, value)
+        self.db.flush()
+        return doc
+
+    def list_binder_documents(
+        self,
+        binder_id: int,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[PermanentDocument], int]:
+        if not BinderRepository(self.db).get_by_id(binder_id):
+            raise NotFoundError(
+                BINDER_NOT_FOUND.format(binder_id=binder_id), "BINDER.NOT_FOUND"
+            )
+        return self.document_repo.list_by_binder_page(binder_id, page=page, page_size=page_size)
 
     def get_download_url(
         self, client_record_id: int, document_id: int, expires_in: int = 3600

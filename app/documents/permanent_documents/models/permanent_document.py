@@ -119,6 +119,9 @@ class PermanentDocument(Base):
     annual_report_id: Mapped[int | None] = mapped_column(
         ForeignKey("annual_reports.id"), nullable=True
     )
+    binder_id: Mapped[int | None] = mapped_column(
+        ForeignKey("binders.id"), nullable=True, index=True
+    )
 
     # ── Metadata ──────────────────────────────────────────────────────────────
     uploaded_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
