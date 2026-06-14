@@ -1,5 +1,7 @@
 """Repository for VatAuditLog entities."""
 
+from datetime import datetime
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
@@ -22,15 +24,21 @@ class VatAuditLogRepository(BaseRepository[VatAuditLog]):
         new_value: str | None = None,
         note: str | None = None,
         invoice_id: int | None = None,
+        performed_at: datetime | None = None,
     ) -> VatAuditLog:
+        fields: dict[str, object] = {
+            "work_item_id": work_item_id,
+            "performed_by": performed_by,
+            "action": action,
+            "old_value": old_value,
+            "new_value": new_value,
+            "note": note,
+            "invoice_id": invoice_id,
+        }
+        if performed_at is not None:
+            fields["performed_at"] = performed_at
         return self.build_and_add(
-            work_item_id=work_item_id,
-            performed_by=performed_by,
-            action=action,
-            old_value=old_value,
-            new_value=new_value,
-            note=note,
-            invoice_id=invoice_id,
+            **fields,
         )
 
     def count_audit_trail(self, work_item_id: int) -> int:

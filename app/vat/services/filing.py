@@ -112,6 +112,7 @@ def file_vat_return(
         work_item_id=item_id,
         performed_by=filed_by,
         action=ACTION_FILED,
+        performed_at=filed_item.filed_at,
         new_value=json.dumps(
             {
                 "final_vat_amount": str(final_amount),

@@ -478,6 +478,7 @@ def create_vat_audit_logs(db, rng: Random, work_items, users) -> None:
                 ("amendment_linked", str(work_item.amends_item_id), work_item.period)
             )
         for action, old, new in events:
+            performed_at = work_item.filed_at if action == "filed" else work_item.updated_at
             db.add(
                 VatAuditLog(
                     work_item_id=work_item.id,
@@ -495,6 +496,7 @@ def create_vat_audit_logs(db, rng: Random, work_items, users) -> None:
                         )
                     ),
                     invoice_id=None,
+                    performed_at=performed_at,
                 )
             )
     db.flush()

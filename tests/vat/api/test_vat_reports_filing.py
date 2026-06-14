@@ -17,6 +17,33 @@ class TestFiling:
         assert data["submission_method"] == "online"
         assert data["is_overridden"] is False
 
+    def test_file_vat_return_records_filed_audit_at_filed_at(
+        self, client, advisor_headers, vat_client, test_user
+    ):
+        item_id = setup_ready_item(
+            client, advisor_headers, vat_client, "2026-11", assigned_to=test_user.id
+        )
+        file_response = client.post(
+            f"/api/v1/vat/work-items/{item_id}/file",
+            headers=advisor_headers,
+            json={"submission_method": "online"},
+        )
+        assert file_response.status_code == 200
+        filed_at = file_response.json()["filed_at"]
+
+        audit_response = client.get(
+            f"/api/v1/vat/work-items/{item_id}/audit",
+            headers=advisor_headers,
+        )
+        assert audit_response.status_code == 200
+        filed_entries = [
+            entry
+            for entry in audit_response.json()["items"]
+            if entry["action"] == "filed"
+        ]
+        assert len(filed_entries) == 1
+        assert filed_entries[0]["performed_at"] == filed_at
+
     def test_cannot_file_without_advisor_role(self, client, secretary_headers, vat_client):
         response = client.post(
             "/api/v1/vat/work-items/1/file",
