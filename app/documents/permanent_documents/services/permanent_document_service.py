@@ -50,6 +50,8 @@ _DEFAULT_REQUIRED_TYPES = [
     PermanentDocumentType.ENGAGEMENT_AGREEMENT.value,
 ]
 
+_UPDATABLE_METADATA_FIELDS = {"document_type", "original_filename", "tax_year"}
+
 
 class PermanentDocumentService:
     """Permanent document management service."""
@@ -209,6 +211,8 @@ class PermanentDocumentService:
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, "PERMANENT_DOCUMENTS.NOT_FOUND")
         for key, value in fields.items():
+            if key not in _UPDATABLE_METADATA_FIELDS:
+                raise ValueError(f"Unsupported document metadata field: {key}")
             setattr(doc, key, value)
         self.db.flush()
         return doc
