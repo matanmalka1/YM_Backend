@@ -26,3 +26,14 @@ TASK_CANCEL_RESPONSES = error_responses(
     not_found_response(description="המשימה המבוקשת לא נמצאה"),
     conflict_response(description="לא ניתן לבטל משימה שהושלמה או שכבר בוטלה"),
 )
+
+TASK_BULK_COMPLETE_RESPONSES = error_responses(
+    bad_request_response(description="נתוני הבקשה אינם תקינים"),
+    conflict_response(description="מפתח אידמפוטנטיות בשימוש"),
+)
+
+TASK_BULK_ASSIGN_RESPONSES = error_responses(
+    bad_request_response(description="נתוני הבקשה אינם תקינים"),
+    not_found_response(description="המשתמש המשויך לא נמצא"),
+    conflict_response(description="מפתח אידמפוטנטיות בשימוש"),
+)

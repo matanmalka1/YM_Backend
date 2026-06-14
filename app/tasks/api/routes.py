@@ -8,7 +8,10 @@ from app.common.source_types import WorkQueueSourceType
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
+from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.tasks.api.responses import (
+    TASK_BULK_ASSIGN_RESPONSES,
+    TASK_BULK_COMPLETE_RESPONSES,
     TASK_CANCEL_RESPONSES,
     TASK_COMPLETE_RESPONSES,
     TASK_CREATE_RESPONSES,
@@ -16,6 +19,9 @@ from app.tasks.api.responses import (
 )
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.tasks.schemas.task import (
+    TaskBulkActionResponse,
+    TaskBulkAssignRequest,
+    TaskBulkCompleteRequest,
     TaskCreateRequest,
     TaskListResponse,
     TaskResponse,
@@ -74,6 +80,40 @@ def create_task(
     data: TaskCreateRequest,
 ):
     return TaskService(db).create(data, created_by_user_id=user.id)
+
+
+@router.post(
+    "/bulk-complete",
+    response_model=TaskBulkActionResponse,
+    responses=TASK_BULK_COMPLETE_RESPONSES,
+)
+def bulk_complete_tasks(
+    db: DBSession,
+    user: CurrentUser,
+    data: TaskBulkCompleteRequest,
+    idem: IdempotencyGuard = Depends(require_idempotency_key),
+):
+    return idem.execute(
+        payload=data.model_dump_json().encode(),
+        fn=lambda: TaskService(db).bulk_complete(data.task_ids, completed_by_user_id=user.id),
+    )
+
+
+@router.post(
+    "/bulk-assign",
+    response_model=TaskBulkActionResponse,
+    responses=TASK_BULK_ASSIGN_RESPONSES,
+)
+def bulk_assign_tasks(
+    db: DBSession,
+    _user: CurrentUser,
+    data: TaskBulkAssignRequest,
+    idem: IdempotencyGuard = Depends(require_idempotency_key),
+):
+    return idem.execute(
+        payload=data.model_dump_json().encode(),
+        fn=lambda: TaskService(db).bulk_assign(data.task_ids, assignee_user_id=data.assignee_user_id),
+    )
 
 
 @router.get(

@@ -86,6 +86,8 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("POST", "/api/v1/clients/{client_record_id}/businesses/{business_id}/restore"): {"409"},
     # tasks
     ("POST", "/api/v1/tasks"): {"400"},
+    ("POST", "/api/v1/tasks/bulk-complete"): {"400", "409"},
+    ("POST", "/api/v1/tasks/bulk-assign"): {"400", "409"},
     ("PATCH", "/api/v1/tasks/{task_id}"): {"400", "409"},
     ("POST", "/api/v1/tasks/{task_id}/complete"): {"409"},
     ("POST", "/api/v1/tasks/{task_id}/cancel"): {"409"},

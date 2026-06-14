@@ -110,3 +110,36 @@ class TaskRepository(BaseRepository[Task]):
             return []
         stmt = select(Task).where(Task.id.in_(task_ids), Task.deleted_at.is_(None))
         return list(self.db.scalars(stmt).all())
+
+    def list_by_client_id(
+        self,
+        client_record_id: int,
+        status: TaskStatus | None = None,
+        assigned_to_user_id: int | None = None,
+        source_domain: WorkQueueSourceType | None = None,
+        due_before: date | None = None,
+        due_after: date | None = None,
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[Task], int]:
+        base_where = (Task.client_record_id == client_record_id) & Task.deleted_at.is_(None)
+        base = select(Task).where(base_where)
+        count_base = select(func.count(Task.id)).where(base_where)
+
+        def _apply(stmt):
+            if status is not None:
+                stmt = stmt.where(Task.status == status)
+            if assigned_to_user_id is not None:
+                stmt = stmt.where(Task.assigned_to_user_id == assigned_to_user_id)
+            if source_domain is not None:
+                stmt = stmt.where(Task.source_domain == source_domain)
+            if due_before is not None:
+                stmt = stmt.where(Task.due_date <= due_before)
+            if due_after is not None:
+                stmt = stmt.where(Task.due_date >= due_after)
+            return stmt
+
+        total: int = self.db.scalar(_apply(count_base)) or 0
+        data_stmt = _apply(base).order_by(Task.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+        items = list(self.db.scalars(data_stmt).all())
+        return items, total

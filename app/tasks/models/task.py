@@ -49,6 +49,7 @@ class Task(Base):
     )
     source_domain: Mapped[str | None] = mapped_column(String(100), nullable=True)
     source_id: Mapped[int | None] = mapped_column(nullable=True)
+    client_record_id: Mapped[int | None] = mapped_column(ForeignKey("client_records.id"), nullable=True)
     action_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
     action_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
     created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
@@ -66,4 +67,5 @@ class Task(Base):
         Index("idx_tasks_due_date", "due_date"),
         Index("idx_tasks_assigned_to_user_id", "assigned_to_user_id"),
         Index("idx_tasks_source", "source_domain", "source_id"),
+        Index("idx_tasks_client_record_id", "client_record_id"),
     )

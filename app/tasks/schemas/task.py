@@ -3,12 +3,18 @@ from __future__ import annotations
 from datetime import date
 from typing import Annotated, Any
 
-from pydantic import BaseModel, Field, StringConstraints, model_validator
+from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
 from app.core.api_types import ApiDateTime, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.users.models.user import UserRole
+
+
+def _validate_positive_ids(v: list[int]) -> list[int]:
+    if any(i <= 0 for i in v):
+        raise ValueError("מזהי משימות חייבים להיות מספרים חיוביים")
+    return v
 
 
 class TaskCreateRequest(BaseModel):
@@ -20,6 +26,7 @@ class TaskCreateRequest(BaseModel):
     assigned_role: UserRole | None = None
     source_domain: str | None = Field(None, max_length=100)
     source_id: int | None = Field(None, gt=0)
+    client_record_id: int | None = Field(None, gt=0)
     action_key: str | None = Field(None, max_length=100)
     action_payload: dict[str, Any] | None = None
 
@@ -58,6 +65,7 @@ class TaskResponse(BaseModel):
     assigned_role: UserRole | None = None
     source_domain: str | None = None
     source_id: int | None = None
+    client_record_id: int | None = None
     action_key: str | None = None
     action_payload: dict[str, Any] | None = None
     created_by_user_id: int | None = None
@@ -73,3 +81,40 @@ class TaskResponse(BaseModel):
 
 class TaskListResponse(PaginatedResponse[TaskResponse]):
     pass
+
+
+class TaskBulkCompleteRequest(BaseModel):
+    task_ids: list[int] = Field(min_length=1, max_length=100)
+
+    @field_validator("task_ids")
+    @classmethod
+    def _positive(cls, v: list[int]) -> list[int]:
+        return _validate_positive_ids(v)
+
+
+class TaskBulkAssignRequest(BaseModel):
+    task_ids: list[int] = Field(min_length=1, max_length=100)
+    assignee_user_id: int | None = None
+
+    @field_validator("task_ids")
+    @classmethod
+    def _positive(cls, v: list[int]) -> list[int]:
+        return _validate_positive_ids(v)
+
+    @field_validator("assignee_user_id")
+    @classmethod
+    def _positive_assignee(cls, v: int | None) -> int | None:
+        if v is not None and v <= 0:
+            raise ValueError("מזהה משתמש חייב להיות מספר חיובי")
+        return v
+
+
+class TaskBulkFailure(BaseModel):
+    task_id: int
+    code: str
+    message: str
+
+
+class TaskBulkActionResponse(BaseModel):
+    succeeded: list[int]
+    failed: list[TaskBulkFailure]
