@@ -68,7 +68,9 @@ def test_pagination(client, test_db, advisor_headers):
     for _ in range(5):
         _task(test_db, client_record_id=biz.client_id)
 
-    resp = client.get(f"/api/v1/clients/{biz.client_id}/tasks?page=1&page_size=2", headers=advisor_headers)
+    resp = client.get(
+        f"/api/v1/clients/{biz.client_id}/tasks?page=1&page_size=2", headers=advisor_headers
+    )
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 5

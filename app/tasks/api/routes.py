@@ -112,7 +112,9 @@ def bulk_assign_tasks(
 ):
     return idem.execute(
         payload=data.model_dump_json().encode(),
-        fn=lambda: TaskService(db).bulk_assign(data.task_ids, assignee_user_id=data.assignee_user_id),
+        fn=lambda: TaskService(db).bulk_assign(
+            data.task_ids, assignee_user_id=data.assignee_user_id
+        ),
     )
 
 

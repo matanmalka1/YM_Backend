@@ -140,6 +140,11 @@ class TaskRepository(BaseRepository[Task]):
             return stmt
 
         total: int = self.db.scalar(_apply(count_base)) or 0
-        data_stmt = _apply(base).order_by(Task.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
+        data_stmt = (
+            _apply(base)
+            .order_by(Task.created_at.desc())
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
         items = list(self.db.scalars(data_stmt).all())
         return items, total

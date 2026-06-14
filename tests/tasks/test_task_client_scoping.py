@@ -37,7 +37,9 @@ def test_create_direct_client_record_id_no_source(test_db):
 def test_create_source_and_matching_client_record_id_succeeds(test_db):
     biz = create_business(test_db)
     charge = create_charge(test_db, biz.client_id, biz.id)  # type: ignore[attr-defined]
-    task = _create(test_db, source_domain="charge", source_id=charge.id, client_record_id=biz.client_id)  # type: ignore[attr-defined]
+    task = _create(
+        test_db, source_domain="charge", source_id=charge.id, client_record_id=biz.client_id
+    )  # type: ignore[attr-defined]
     assert task.client_record_id == biz.client_id  # type: ignore[attr-defined]
 
 
@@ -46,7 +48,9 @@ def test_create_source_and_mismatching_client_record_id_raises(test_db):
     biz2 = create_business(test_db)
     charge = create_charge(test_db, biz1.client_id, biz1.id)  # type: ignore[attr-defined]
     with pytest.raises(AppError) as exc_info:
-        _create(test_db, source_domain="charge", source_id=charge.id, client_record_id=biz2.client_id)  # type: ignore[attr-defined]
+        _create(
+            test_db, source_domain="charge", source_id=charge.id, client_record_id=biz2.client_id
+        )  # type: ignore[attr-defined]
     assert exc_info.value.code == "TASK.CLIENT_SOURCE_MISMATCH"
 
 
@@ -58,6 +62,7 @@ def test_create_nonexistent_direct_client_record_id_raises(test_db):
 
 def test_create_soft_deleted_source_raises_not_found(test_db):
     from app.utils.time_utils import utcnow
+
     biz = create_business(test_db)
     charge = create_charge(test_db, biz.client_id, biz.id)  # type: ignore[attr-defined]
     charge.deleted_at = utcnow()

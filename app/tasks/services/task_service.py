@@ -22,8 +22,8 @@ from app.tasks.schemas.task import (
 )
 from app.tasks.services.source_validator import source_exists
 from app.users.models.user import UserRole
-from app.vat.models.vat_work_item import VatWorkItem
 from app.utils.time_utils import utcnow
+from app.vat.models.vat_work_item import VatWorkItem
 
 _TERMINAL = {TaskStatus.DONE, TaskStatus.CANCELED}
 
@@ -214,11 +214,25 @@ class TaskService(BaseService):
         for task_id in deduped:
             task = found_map.get(task_id)
             if task is None:
-                results.append((False, task_id, TaskBulkFailure(task_id=task_id, code=_NOT_FOUND, message="משימה לא נמצאה")))
+                results.append(
+                    (
+                        False,
+                        task_id,
+                        TaskBulkFailure(task_id=task_id, code=_NOT_FOUND, message="משימה לא נמצאה"),
+                    )
+                )
             elif task.status == TaskStatus.DONE:
                 results.append((True, task_id, None))
             elif task.status == TaskStatus.CANCELED:
-                results.append((False, task_id, TaskBulkFailure(task_id=task_id, code=_CONFLICT, message="לא ניתן להשלים משימה שבוטלה")))
+                results.append(
+                    (
+                        False,
+                        task_id,
+                        TaskBulkFailure(
+                            task_id=task_id, code=_CONFLICT, message="לא ניתן להשלים משימה שבוטלה"
+                        ),
+                    )
+                )
             else:
                 results.append((True, task_id, None))
                 to_complete.append(task)
@@ -241,6 +255,7 @@ class TaskService(BaseService):
     ) -> TaskBulkActionResponse:
         if assignee_user_id is not None:
             from app.users.repositories.user_repository import UserRepository
+
             user = UserRepository(self.db).get_by_id(assignee_user_id)
             if user is None or not user.is_active:
                 raise NotFoundError("המשתמש המשויך לא נמצא או אינו פעיל", _INVALID_ASSIGNEE)
@@ -254,9 +269,25 @@ class TaskService(BaseService):
         for task_id in deduped:
             task = found_map.get(task_id)
             if task is None:
-                results.append((False, task_id, TaskBulkFailure(task_id=task_id, code=_NOT_FOUND, message="משימה לא נמצאה")))
+                results.append(
+                    (
+                        False,
+                        task_id,
+                        TaskBulkFailure(task_id=task_id, code=_NOT_FOUND, message="משימה לא נמצאה"),
+                    )
+                )
             elif task.status in _TERMINAL:
-                results.append((False, task_id, TaskBulkFailure(task_id=task_id, code=_CONFLICT, message="לא ניתן לשנות שיוך למשימה שהושלמה או בוטלה")))
+                results.append(
+                    (
+                        False,
+                        task_id,
+                        TaskBulkFailure(
+                            task_id=task_id,
+                            code=_CONFLICT,
+                            message="לא ניתן לשנות שיוך למשימה שהושלמה או בוטלה",
+                        ),
+                    )
+                )
             elif task.assigned_to_user_id == assignee_user_id:
                 results.append((True, task_id, None))
             else:
@@ -308,6 +339,7 @@ class TaskService(BaseService):
 
     def _validate_client_exists(self, client_record_id: int) -> None:
         from app.clients.repositories.client_record_repository import ClientRecordRepository
+
         repo = ClientRecordRepository(self.db)
         if repo.get_by_id(client_record_id) is None:
             raise NotFoundError("לקוח לא נמצא", "CLIENT.NOT_FOUND")
