@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: bfaed5b29bd3
+Revision ID: 3724bd314d54
 Revises: 
-Create Date: 2026-06-03 14:39:06.542889
+Create Date: 2026-06-14 19:39:48.257413
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'bfaed5b29bd3'
+revision: str = '3724bd314d54'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -697,6 +697,7 @@ def upgrade() -> None:
     sa.Column('version', sa.Integer(), server_default='1', nullable=False),
     sa.Column('superseded_by', sa.Integer(), nullable=True),
     sa.Column('annual_report_id', sa.Integer(), nullable=True),
+    sa.Column('binder_id', sa.Integer(), nullable=True),
     sa.Column('uploaded_by', sa.Integer(), nullable=False),
     sa.Column('uploaded_at', sa.DateTime(), nullable=False),
     sa.Column('approved_by', sa.Integer(), nullable=True),
@@ -706,6 +707,7 @@ def upgrade() -> None:
     sa.CheckConstraint("(scope = 'client') OR (scope = 'business' AND business_id IS NOT NULL)", name='ck_document_business_scope_requires_business_id'),
     sa.ForeignKeyConstraint(['annual_report_id'], ['annual_reports.id'], ),
     sa.ForeignKeyConstraint(['approved_by'], ['users.id'], ),
+    sa.ForeignKeyConstraint(['binder_id'], ['binders.id'], ),
     sa.ForeignKeyConstraint(['business_id'], ['businesses.id'], ),
     sa.ForeignKeyConstraint(['client_record_id'], ['client_records.id'], ),
     sa.ForeignKeyConstraint(['rejected_by'], ['users.id'], ),
@@ -713,6 +715,7 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['uploaded_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_index(op.f('ix_permanent_documents_binder_id'), 'permanent_documents', ['binder_id'], unique=False)
     op.create_index('ix_permanent_documents_business', 'permanent_documents', ['business_id', 'document_type', 'tax_year'], unique=False)
     op.create_index(op.f('ix_permanent_documents_business_id'), 'permanent_documents', ['business_id'], unique=False)
     op.create_index(op.f('ix_permanent_documents_client_record_id'), 'permanent_documents', ['client_record_id'], unique=False)
@@ -1015,6 +1018,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_permanent_documents_client_record_id'), table_name='permanent_documents')
     op.drop_index(op.f('ix_permanent_documents_business_id'), table_name='permanent_documents')
     op.drop_index('ix_permanent_documents_business', table_name='permanent_documents')
+    op.drop_index(op.f('ix_permanent_documents_binder_id'), table_name='permanent_documents')
     op.drop_table('permanent_documents')
     op.drop_index(op.f('ix_correspondence_entries_contact_id'), table_name='correspondence_entries')
     op.drop_index(op.f('ix_correspondence_entries_client_record_id'), table_name='correspondence_entries')
