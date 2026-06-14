@@ -80,3 +80,13 @@ def test_annual_report_charges_openapi_response_schema_is_typed():
     assert response_schema
     assert response_schema != {}
     assert response_schema["$ref"] == "#/components/schemas/ChargeResponseListResponse"
+
+
+def test_openapi_request_body_schemas_have_stable_names():
+    spec = app.openapi()
+    schemas = spec["components"]["schemas"]
+
+    assert not [name for name in schemas if name.startswith("Body_")]
+    assert "ClientImportRequestBody" in schemas
+    assert "DocumentReplaceRequestBody" in schemas
+    assert "PermanentDocumentUploadRequestBody" in schemas

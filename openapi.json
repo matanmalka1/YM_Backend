@@ -6135,7 +6135,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_import_clients_from_excel_api_v1_clients_import_post"
+                "$ref": "#/components/schemas/ClientImportRequestBody"
               }
             }
           }
@@ -10251,7 +10251,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_upload_permanent_document_api_v1_documents_upload_post"
+                "$ref": "#/components/schemas/PermanentDocumentUploadRequestBody"
               }
             }
           },
@@ -10746,7 +10746,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "$ref": "#/components/schemas/Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put"
+                "$ref": "#/components/schemas/DocumentReplaceRequestBody"
               }
             }
           }
@@ -23774,91 +23774,6 @@
         ],
         "title": "BindersCard"
       },
-      "Body_import_clients_from_excel_api_v1_clients_import_post": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_import_clients_from_excel_api_v1_clients_import_post"
-      },
-      "Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put": {
-        "properties": {
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File"
-          }
-        },
-        "type": "object",
-        "required": [
-          "file"
-        ],
-        "title": "Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put"
-      },
-      "Body_upload_permanent_document_api_v1_documents_upload_post": {
-        "properties": {
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "document_type": {
-            "type": "string",
-            "title": "Document Type"
-          },
-          "file": {
-            "type": "string",
-            "contentMediaType": "application/octet-stream",
-            "title": "File"
-          },
-          "business_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Id"
-          },
-          "tax_year": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax Year"
-          },
-          "annual_report_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annual Report Id"
-          }
-        },
-        "type": "object",
-        "required": [
-          "client_record_id",
-          "document_type",
-          "file"
-        ],
-        "title": "Body_upload_permanent_document_api_v1_documents_upload_post"
-      },
       "BracketBreakdownItem": {
         "properties": {
           "rate": {
@@ -35797,6 +35712,91 @@
           "label"
         ],
         "title": "WorkQueueWarning"
+      },
+      "ClientImportRequestBody": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "ClientImportRequestBody"
+      },
+      "DocumentReplaceRequestBody": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "DocumentReplaceRequestBody"
+      },
+      "PermanentDocumentUploadRequestBody": {
+        "properties": {
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "document_type": {
+            "type": "string",
+            "title": "Document Type"
+          },
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          },
+          "business_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Id"
+          },
+          "tax_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Year"
+          },
+          "annual_report_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Report Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_record_id",
+          "document_type",
+          "file"
+        ],
+        "title": "PermanentDocumentUploadRequestBody"
       }
     },
     "securitySchemes": {

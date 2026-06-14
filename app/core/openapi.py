@@ -42,6 +42,13 @@ _ERROR_RESPONSE_DESCRIPTIONS = {
     "409": "Conflict",
     "500": "Internal server error",
 }
+_REQUEST_BODY_SCHEMA_RENAMES = {
+    "Body_import_clients_from_excel_api_v1_clients_import_post": "ClientImportRequestBody",
+    "Body_replace_document_api_v1_documents_client__client_record_id___document_id__replace_put": (
+        "DocumentReplaceRequestBody"
+    ),
+    "Body_upload_permanent_document_api_v1_documents_upload_post": "PermanentDocumentUploadRequestBody",
+}
 
 
 def _error_response_doc(description: str) -> dict[str, Any]:
@@ -55,6 +62,31 @@ def _normalize_error_response_descriptions(responses: dict[str, Any]) -> None:
     for status_code, description in _ERROR_RESPONSE_DESCRIPTIONS.items():
         if status_code in responses:
             responses[status_code]["description"] = description
+
+
+def _rewrite_schema_refs(node: Any, rename_map: dict[str, str]) -> None:
+    if isinstance(node, dict):
+        ref = node.get("$ref")
+        if isinstance(ref, str) and ref.startswith("#/components/schemas/"):
+            schema_name = ref.rsplit("/", 1)[-1]
+            if schema_name in rename_map:
+                node["$ref"] = f"#/components/schemas/{rename_map[schema_name]}"
+        for value in node.values():
+            _rewrite_schema_refs(value, rename_map)
+    elif isinstance(node, list):
+        for item in node:
+            _rewrite_schema_refs(item, rename_map)
+
+
+def _rename_request_body_schemas(schema: dict[str, Any]) -> None:
+    schemas = schema.get("components", {}).get("schemas", {})
+    for old_name, new_name in _REQUEST_BODY_SCHEMA_RENAMES.items():
+        body_schema = schemas.pop(old_name, None)
+        if body_schema is None:
+            continue
+        body_schema["title"] = new_name
+        schemas[new_name] = body_schema
+    _rewrite_schema_refs(schema, _REQUEST_BODY_SCHEMA_RENAMES)
 
 
 def _has_role_dependency(dependant: Dependant) -> bool:
@@ -90,6 +122,7 @@ def build_openapi(app: FastAPI) -> dict[str, Any]:
         version=app.version,
         routes=app.routes,
     )
+    _rename_request_body_schemas(schema)
 
     # Global default: every operation requires a bearer token unless it opts out.
     schema["security"] = [{"HTTPBearer": []}]
