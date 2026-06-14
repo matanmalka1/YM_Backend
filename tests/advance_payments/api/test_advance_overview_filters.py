@@ -66,6 +66,44 @@ def test_overview_filter_by_due_date(client, test_db, advisor_headers):
     assert data["items"][0]["due_date"] == "2026-02-15"
 
 
+def test_overview_due_date_includes_monthly_and_bimonthly_rows(
+    client,
+    test_db,
+    advisor_headers,
+):
+    monthly_business = _business(test_db)
+    bimonthly_business = _business(test_db)
+    repo = AdvancePaymentRepository(test_db)
+    shared_due_date = date(2026, 3, 15)
+    monthly = create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=monthly_business.client_record_id,
+        period="2026-02",
+        period_months_count=1,
+        due_date=shared_due_date,
+    )
+    bimonthly = create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=bimonthly_business.client_record_id,
+        period="2026-01",
+        period_months_count=2,
+        due_date=shared_due_date,
+    )
+
+    resp = client.get(
+        f"{PATH}?year=2026&due_date=2026-03-15&page=1&page_size=10",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 2
+    assert {item["id"] for item in data["items"]} == {monthly.id, bimonthly.id}
+    assert {item["period_months_count"] for item in data["items"]} == {1, 2}
+
+
 def test_overview_filter_by_period_months_count(client, test_db, advisor_headers):
     b = _business(test_db)
     repo = AdvancePaymentRepository(test_db)
