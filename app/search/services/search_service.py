@@ -36,7 +36,7 @@ class SearchService:
     def search(
         self,
         search: str | None = None,
-        client_id: int | None = None,
+        client_record_id: int | None = None,
         id_number: str | None = None,
         binder_number: str | None = None,
         client_status: ClientStatus | None = None,
@@ -49,23 +49,29 @@ class SearchService:
     ) -> tuple[list[dict], int, list[DocumentSearchResult]]:
         doc_service = DocumentSearchService(self.db)
         document_query = search or filename
-        if client_id is not None and document_query:
-            documents = doc_service.list_client_documents(client_id, document_query)
+        if client_record_id is not None and document_query:
+            documents = doc_service.list_client_documents(client_record_id, document_query)
         elif search or filename:
             documents = doc_service.search_documents(search or "", filename=filename)
         else:
             documents = []
 
-        has_client_filter = bool(search or client_id or id_number or client_status or entity_type)
+        has_client_filter = bool(
+            search or client_record_id or id_number or client_status or entity_type
+        )
         has_binder_filter = bool(
-            search or client_id or binder_number or binder_location_status or binder_capacity_status
+            search
+            or client_record_id
+            or binder_number
+            or binder_location_status
+            or binder_capacity_status
         )
 
         # --- Pure client-only search: DB-level pagination ---
         if has_client_filter and not has_binder_filter:
             records, total = self.client_record_repo.search(
                 search=search,
-                client_id=client_id,
+                client_id=client_record_id,
                 id_number=id_number,
                 status=client_status,
                 entity_type=entity_type,
@@ -78,7 +84,7 @@ class SearchService:
                 [
                     {
                         "result_type": "client",
-                        "client_id": record.id,
+                        "client_record_id": record.id,
                         "office_client_number": record.office_client_number,
                         "client_name": legal_map[record.legal_entity_id].official_name
                         if legal_map.get(record.legal_entity_id)
@@ -105,7 +111,7 @@ class SearchService:
         if has_client_filter:
             all_records, _ = self.client_record_repo.search(
                 search=search,
-                client_id=client_id,
+                client_id=client_record_id,
                 id_number=id_number,
                 status=client_status,
                 entity_type=entity_type,
@@ -122,7 +128,7 @@ class SearchService:
                 results.append(
                     {
                         "result_type": "client",
-                        "client_id": record.id,
+                        "client_record_id": record.id,
                         "office_client_number": record.office_client_number,
                         "client_name": legal_entity.official_name if legal_entity else "לא ידוע",
                         "id_number": legal_entity.id_number if legal_entity else None,
@@ -133,7 +139,9 @@ class SearchService:
                 )
 
         if has_binder_filter:
-            db_binder_number = binder_number or (search if not (client_id or id_number) else None)
+            db_binder_number = binder_number or (
+                search if not (client_record_id or id_number) else None
+            )
             include_handed_over = binder_location_status == BinderLocationStatus.HANDED_OVER
             binders = self.binder_repo.list_active(
                 binder_number=db_binder_number,
@@ -143,8 +151,10 @@ class SearchService:
                 page_size=_MIXED_SEARCH_BINDER_LIMIT,
                 include_handed_over=include_handed_over,
             )
-            if client_id is not None:
-                binders = [binder for binder in binders if binder.client_record_id == client_id]
+            if client_record_id is not None:
+                binders = [
+                    binder for binder in binders if binder.client_record_id == client_record_id
+                ]
             binder_cr_ids = [b.client_record_id for b in binders]
             records = {
                 record.id: record for record in self.client_record_repo.list_by_ids(binder_cr_ids)
@@ -162,7 +172,7 @@ class SearchService:
                 results.append(
                     {
                         "result_type": "binder",
-                        "client_id": binder.client_record_id,
+                        "client_record_id": binder.client_record_id,
                         "office_client_number": record.office_client_number if record else None,
                         "client_name": business.full_name
                         if business

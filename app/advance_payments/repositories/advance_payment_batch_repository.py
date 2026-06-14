@@ -17,7 +17,12 @@ class AdvancePaymentBatchRepository(BaseRepository):
     def __init__(self, db: Session):
         super().__init__(db)
 
-    def batch_summary_by_month(self, year: int | None) -> list:
+    def batch_summary_by_month(
+        self,
+        year: int | None,
+        *,
+        client_record_id: int | None = None,
+    ) -> list:
         today_expr = func.current_date()
         start_month = advance_payment_start_month_expr()
         period_year = cast(func.substr(AdvancePayment.period, 1, 4), Integer)
@@ -84,6 +89,11 @@ class AdvancePaymentBatchRepository(BaseRepository):
             )
             .where(
                 *([advance_payment_year_range_filter(year)] if year is not None else []),
+                *(
+                    [AdvancePayment.client_record_id == client_record_id]
+                    if client_record_id is not None
+                    else []
+                ),
                 AdvancePayment.deleted_at.is_(None),
             )
             .group_by(period_year, start_month, AdvancePayment.period_months_count)

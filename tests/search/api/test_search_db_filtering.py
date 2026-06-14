@@ -52,8 +52,8 @@ def test_search_clients_db_pagination(
     assert len(d2["results"]) == 2
 
     # Pages must not overlap
-    ids_page1 = {r["client_id"] for r in d1["results"]}
-    ids_page2 = {r["client_id"] for r in d2["results"]}
+    ids_page1 = {r["client_record_id"] for r in d1["results"]}
+    ids_page2 = {r["client_record_id"] for r in d2["results"]}
     assert ids_page1.isdisjoint(ids_page2)
 
 
@@ -69,7 +69,7 @@ def test_global_search_by_client_name_returns_client_results(
 
     assert response.status_code == 200
     data = response.json()
-    assert any(result["client_id"] == crm_client.id for result in data["results"])
+    assert any(result["client_record_id"] == crm_client.id for result in data["results"])
 
 
 def test_search_binder_number_filter(
@@ -118,7 +118,7 @@ def _make_document(
     return document
 
 
-def test_search_documents_scoped_by_client_id(
+def test_search_documents_scoped_by_client_record_id(
     client, test_db, advisor_headers, test_user, create_client_with_business
 ):
     first_client, first_business = create_client_with_business(
@@ -145,7 +145,7 @@ def test_search_documents_scoped_by_client_id(
     )
 
     response = client.get(
-        f"/api/v1/search?search=audit_report&client_id={first_client.id}",
+        f"/api/v1/search?search=audit_report&client_record_id={first_client.id}",
         headers=advisor_headers,
     )
 
@@ -155,7 +155,7 @@ def test_search_documents_scoped_by_client_id(
     assert all(doc["client_record_id"] == first_client.id for doc in documents)
 
 
-def test_search_documents_with_different_client_id_does_not_leak(
+def test_search_documents_with_different_client_record_id_does_not_leak(
     client, test_db, advisor_headers, test_user, create_client_with_business
 ):
     owner_client, owner_business = create_client_with_business(
@@ -175,7 +175,7 @@ def test_search_documents_with_different_client_id_does_not_leak(
     )
 
     response = client.get(
-        f"/api/v1/search?search=audit_report_private&client_id={other_client.id}",
+        f"/api/v1/search?search=audit_report_private&client_record_id={other_client.id}",
         headers=advisor_headers,
     )
 
@@ -183,14 +183,15 @@ def test_search_documents_with_different_client_id_does_not_leak(
     assert response.json()["documents"] == []
 
 
-def test_search_openapi_uses_search_and_client_id_params(client):
+def test_search_openapi_uses_search_and_client_record_id_params(client):
     response = client.get("/openapi.json")
 
     assert response.status_code == 200
     operation = response.json()["paths"]["/api/v1/search"]["get"]
     param_names = {param["name"] for param in operation["parameters"]}
     assert "search" in param_names
-    assert "client_id" in param_names
+    assert "client_record_id" in param_names
+    assert "client_id" not in param_names
     assert "query" not in param_names
     assert "client_name" not in param_names
     assert "client_search" not in param_names

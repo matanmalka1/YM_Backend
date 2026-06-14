@@ -87,6 +87,7 @@ def list_work_items_by_status(
     page: int = 1,
     page_size: int = 50,
     period: str | None = None,
+    client_record_ids: list[int] | None = None,
     client_name: str | None = None,
     period_type: VatType | None = None,
 ):
@@ -95,12 +96,14 @@ def list_work_items_by_status(
         page=page,
         page_size=page_size,
         period=period,
+        client_record_ids=client_record_ids,
         period_type=period_type,
         client_name=client_name,
     )
     total = work_item_repo.count_by_status(
         status,
         period=period,
+        client_record_ids=client_record_ids,
         period_type=period_type,
         client_name=client_name,
     )
@@ -112,6 +115,7 @@ def list_all_work_items(
     page: int = 1,
     page_size: int = 50,
     period: str | None = None,
+    client_record_ids: list[int] | None = None,
     client_name: str | None = None,
     period_type: VatType | None = None,
 ):
@@ -119,11 +123,13 @@ def list_all_work_items(
         page=page,
         page_size=page_size,
         period=period,
+        client_record_ids=client_record_ids,
         period_type=period_type,
         client_name=client_name,
     )
     total = work_item_repo.count_all(
         period=period,
+        client_record_ids=client_record_ids,
         period_type=period_type,
         client_name=client_name,
     )
@@ -135,11 +141,13 @@ def get_status_summary(
     *,
     year: int | None = None,
     period_type: VatType | None = None,
+    client_record_id: int | None = None,
     client_name: str | None = None,
 ) -> VatWorkItemStatusSummaryResponse:
     counts = work_item_repo.count_by_status_summary(
         year=year,
         period_type=period_type,
+        client_record_id=client_record_id,
         client_name=client_name,
     )
     return VatWorkItemStatusSummaryResponse(

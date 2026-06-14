@@ -188,3 +188,34 @@ def test_overview_batches_returns_numeric_counts(client, test_db, advisor_header
     ):
         assert isinstance(row[key], int)
         assert row[key] >= 0
+
+
+def test_overview_batches_filter_by_exact_client_record_id(client, test_db, advisor_headers):
+    target = _business(test_db)
+    other = _business(test_db)
+    repo = AdvancePaymentRepository(test_db)
+    create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=target.client_record_id,
+        period="2026-03",
+        period_months_count=1,
+        due_date=date(2026, 4, 15),
+    )
+    create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=other.client_record_id,
+        period="2026-03",
+        period_months_count=1,
+        due_date=date(2026, 4, 15),
+    )
+
+    resp = client.get(
+        f"/api/v1/advance-payments/overview/batches?year=2026&client_record_id={target.client_record_id}",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    row = next(item for item in resp.json() if item["month"] == 3)
+    assert row["client_count"] == 1

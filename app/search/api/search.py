@@ -21,7 +21,7 @@ def search(
     db: DBSession,
     user: CurrentUser,
     search: str | None = None,
-    client_id: int | None = None,
+    client_record_id: int | None = None,
     id_number: str | None = None,
     binder_number: str | None = None,
     client_status: ClientStatus | None = None,
@@ -36,7 +36,7 @@ def search(
     service = SearchService(db)
     results, total, documents = service.search(
         search=search,
-        client_id=client_id,
+        client_record_id=client_record_id,
         id_number=id_number,
         binder_number=binder_number,
         client_status=client_status,

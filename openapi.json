@@ -11455,7 +11455,7 @@
             }
           },
           {
-            "name": "client_id",
+            "name": "client_record_id",
             "in": "query",
             "required": false,
             "schema": {
@@ -11467,7 +11467,7 @@
                   "type": "null"
                 }
               ],
-              "title": "Client Id"
+              "title": "Client Record Id"
             }
           },
           {
@@ -13643,6 +13643,22 @@
             }
           },
           {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
+            }
+          },
+          {
             "name": "client_search",
             "in": "query",
             "required": false,
@@ -13767,6 +13783,22 @@
                 }
               ],
               "title": "Year"
+            }
+          },
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
             }
           }
         ],
@@ -14757,6 +14789,22 @@
                 }
               ],
               "title": "Period Type"
+            }
+          },
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
             }
           },
           {
@@ -15873,6 +15921,22 @@
             }
           },
           {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
+            }
+          },
+          {
             "name": "client_name",
             "in": "query",
             "required": false,
@@ -16003,6 +16067,22 @@
                 }
               ],
               "title": "Status"
+            }
+          },
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
             }
           },
           {
@@ -16275,6 +16355,22 @@
                 }
               ],
               "title": "Period Type"
+            }
+          },
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Client Record Id"
             }
           },
           {
@@ -29869,9 +29965,9 @@
             "type": "string",
             "title": "Result Type"
           },
-          "client_id": {
+          "client_record_id": {
             "type": "integer",
-            "title": "Client Id"
+            "title": "Client Record Id"
           },
           "office_client_number": {
             "anyOf": [
@@ -29936,7 +30032,7 @@
         "type": "object",
         "required": [
           "result_type",
-          "client_id",
+          "client_record_id",
           "client_name"
         ],
         "title": "SearchResult",

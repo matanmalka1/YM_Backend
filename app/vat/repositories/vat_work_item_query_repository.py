@@ -211,6 +211,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         *,
         year: int | None = None,
         period_type: VatType | None = None,
+        client_record_id: int | None = None,
         client_name: str | None = None,
     ) -> dict[VatWorkItemStatus, int]:
         stmt = scope_to_active_clients_stmt(
@@ -221,6 +222,8 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             stmt = stmt.where(VatWorkItem.period.startswith(f"{year}-"))
         if period_type is not None:
             stmt = stmt.where(VatWorkItem.period_type == period_type)
+        if client_record_id is not None:
+            stmt = stmt.where(VatWorkItem.client_record_id == client_record_id)
         if client_name:
             term = f"%{client_name.strip()}%"
             stmt = stmt.join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id).where(

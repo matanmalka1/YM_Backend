@@ -56,6 +56,7 @@ class AdvancePaymentAnalyticsService:
         statuses: list[AdvancePaymentStatus] | None = None,
         page: int = 1,
         page_size: int = 50,
+        client_record_id: int | None = None,
         client_search: str | None = None,
         due_date: date | None = None,
         period_months_count: int | None = None,
@@ -69,6 +70,7 @@ class AdvancePaymentAnalyticsService:
             statuses=statuses,
             page=page,
             page_size=page_size,
+            client_record_id=client_record_id,
             client_search=client_search,
             due_date=due_date,
             period_months_count=period_months_count,
@@ -135,6 +137,7 @@ class AdvancePaymentAnalyticsService:
         statuses: list[AdvancePaymentStatus] | None = None,
         due_date: date | None = None,
         period_months_count: int | None = None,
+        client_record_id: int | None = None,
         client_search: str | None = None,
     ) -> dict:
         if statuses is None:
@@ -145,6 +148,7 @@ class AdvancePaymentAnalyticsService:
             statuses,
             due_date=due_date,
             period_months_count=period_months_count,
+            client_record_id=client_record_id,
             client_search=client_search,
         )
         return {
@@ -154,8 +158,16 @@ class AdvancePaymentAnalyticsService:
 
     # ─── Monthly batches ──────────────────────────────────────────────────────
 
-    def get_month_batches(self, year: int | None) -> list[MonthBatchSummary]:
-        rows = AdvancePaymentBatchRepository(self.db).batch_summary_by_month(year)
+    def get_month_batches(
+        self,
+        year: int | None,
+        *,
+        client_record_id: int | None = None,
+    ) -> list[MonthBatchSummary]:
+        rows = AdvancePaymentBatchRepository(self.db).batch_summary_by_month(
+            year,
+            client_record_id=client_record_id,
+        )
         result: list[MonthBatchSummary] = []
         for r in rows:
             total_expected = Decimal(r.total_expected or 0)

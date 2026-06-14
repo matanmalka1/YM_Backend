@@ -27,12 +27,14 @@ def list_work_item_groups(
     current_user: CurrentUser,
     period_type: VatType | None = Query(None),
     status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
+    client_record_id: int | None = Query(None),
     client_name: str | None = Query(None),
     year: int | None = Query(None),
 ):
     groups = vat_grouped_enrichment.get_groups(
         db,
         period_type=period_type,
+        client_record_id=client_record_id,
         client_name=client_name,
         status=status_filter,
         year=year,
@@ -52,6 +54,7 @@ def list_work_item_group_items(
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
     status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
+    client_record_id: int | None = Query(None),
     client_name: str | None = Query(None),
 ):
     result = vat_grouped_enrichment.get_group_items_enriched(
@@ -59,6 +62,7 @@ def list_work_item_group_items(
         group_key=group_key,
         page=page,
         page_size=page_size,
+        client_record_id=client_record_id,
         client_name=client_name,
         status=status_filter,
         user_role=current_user.role,

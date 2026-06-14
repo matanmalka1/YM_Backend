@@ -5,7 +5,7 @@ class SearchResult(BaseModel):
     """Single search result."""
 
     result_type: str  # "client" | "binder"
-    client_id: int
+    client_record_id: int
     office_client_number: int | None = None
     client_name: str
     id_number: str | None = None

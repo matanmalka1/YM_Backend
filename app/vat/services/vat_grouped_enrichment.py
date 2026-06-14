@@ -17,11 +17,12 @@ def get_groups(
     db,
     *,
     period_type: VatType | None = None,
+    client_record_id: int | None = None,
     client_name: str | None = None,
     status: VatWorkItemStatus | None = None,
     year: int | None = None,
 ) -> list[dict]:
-    client_record_ids = _resolve_client_ids(db, client_name)
+    client_record_ids = _resolve_client_ids(db, client_record_id, client_name)
     if client_name and not client_record_ids:
         return []
     return grouped_repo.list_due_date_groups(
@@ -39,6 +40,7 @@ def get_group_items_enriched(
     group_key: str,
     page: int,
     page_size: int,
+    client_record_id: int | None = None,
     client_name: str | None = None,
     status: VatWorkItemStatus | None = None,
     user_role: UserRole | str | None = None,
@@ -47,7 +49,7 @@ def get_group_items_enriched(
     if due_date is None:
         return {"items": [], "total": 0, "period": group_key}
 
-    client_record_ids = _resolve_client_ids(db, client_name)
+    client_record_ids = _resolve_client_ids(db, client_record_id, client_name)
     if client_name and not client_record_ids:
         return {"items": [], "total": 0, "period": group_key}
 
@@ -75,7 +77,17 @@ def get_group_items_enriched(
     return {"items": serialized, "total": total, "period": group_key}
 
 
-def _resolve_client_ids(db, client_name: str | None) -> list[int] | None:
+def _resolve_client_ids(
+    db,
+    client_record_id: int | None,
+    client_name: str | None,
+) -> list[int] | None:
+    if client_record_id is not None:
+        if client_name:
+            records, _ = ClientRecordRepository(db).search(search=client_name, page=1, page_size=500)
+            if client_record_id not in {r.id for r in records}:
+                return []
+        return [client_record_id]
     if not client_name:
         return None
     records, _ = ClientRecordRepository(db).search(search=client_name, page=1, page_size=500)

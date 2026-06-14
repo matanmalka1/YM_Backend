@@ -44,6 +44,8 @@ def _overview_filters(
     statuses: list[AdvancePaymentStatus],
     due_date: date | None,
     period_months_count: int | None,
+    *,
+    client_record_id: int | None,
     client_search: str | None,
 ) -> list:
     filters = [
@@ -58,6 +60,8 @@ def _overview_filters(
         filters.append(AdvancePayment.period_months_count == period_months_count)
     if statuses:
         filters.append(AdvancePayment.status.in_(statuses))
+    if client_record_id is not None:
+        filters.append(AdvancePayment.client_record_id == client_record_id)
     normalized_search = client_search.strip() if client_search else None
     if normalized_search:
         like = f"%{normalized_search}%"
@@ -96,12 +100,19 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         statuses: list[AdvancePaymentStatus],
         page: int,
         page_size: int,
+        client_record_id: int | None = None,
         client_search: str | None = None,
         due_date: date | None = None,
         period_months_count: int | None = None,
     ) -> tuple[list[AdvancePaymentOverviewRow], int]:
         filters = _overview_filters(
-            year, month, statuses, due_date, period_months_count, client_search
+            year,
+            month,
+            statuses,
+            due_date,
+            period_months_count,
+            client_record_id=client_record_id,
+            client_search=client_search,
         )
 
         count_stmt = (
@@ -238,10 +249,17 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         statuses: list[AdvancePaymentStatus],
         due_date: date | None = None,
         period_months_count: int | None = None,
+        client_record_id: int | None = None,
         client_search: str | None = None,
     ) -> dict:
         filters = _overview_filters(
-            year, month, statuses, due_date, period_months_count, client_search
+            year,
+            month,
+            statuses,
+            due_date,
+            period_months_count,
+            client_record_id=client_record_id,
+            client_search=client_search,
         )
         stmt = (
             scope_to_active_clients_stmt(

@@ -30,6 +30,7 @@ def list_advance_payments_overview(
     month: int | None = Query(None, ge=1, le=12),
     due_date: date | None = Query(None),
     period_months_count: int | None = Query(None, ge=1, le=2),
+    client_record_id: int | None = Query(None),
     client_search: str | None = Query(None),
     status: list[AdvancePaymentStatus] | None = Query(None),
     page: int = Query(1, ge=1),
@@ -43,6 +44,7 @@ def list_advance_payments_overview(
         month=month,
         due_date=due_date,
         period_months_count=period_months_count,
+        client_record_id=client_record_id,
         client_search=client_search,
         statuses=resolved_statuses,
         page=page,
@@ -54,6 +56,7 @@ def list_advance_payments_overview(
         statuses=resolved_statuses,
         due_date=due_date,
         period_months_count=period_months_count,
+        client_record_id=client_record_id,
         client_search=client_search,
     )
 
@@ -96,5 +99,9 @@ def list_advance_payment_batches(
     db: DBSession,
     user: CurrentUser,
     year: int | None = Query(None),
+    client_record_id: int | None = Query(None),
 ):
-    return AdvancePaymentAnalyticsService(db).get_month_batches(year)
+    return AdvancePaymentAnalyticsService(db).get_month_batches(
+        year,
+        client_record_id=client_record_id,
+    )

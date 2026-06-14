@@ -1,4 +1,4 @@
-"""Tests for advance payment overview filters: due_date, period_months_count, client_search."""
+"""Tests for advance payment overview filters."""
 
 from datetime import date
 from itertools import count
@@ -164,3 +164,38 @@ def test_overview_client_search_by_office_client_number(client, test_db, advisor
 
     assert resp.status_code == 200
     assert resp.json()["total"] == 1
+
+
+def test_overview_filter_by_exact_client_record_id(client, test_db, advisor_headers):
+    target = _business(test_db)
+    same_name = _business(test_db)
+    same_name.legal_entity.official_name = target.legal_entity.official_name
+    test_db.commit()
+
+    repo = AdvancePaymentRepository(test_db)
+    target_payment = create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=target.client_record_id,
+        period="2026-01",
+        period_months_count=1,
+        due_date=date(2026, 2, 15),
+    )
+    create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=same_name.client_record_id,
+        period="2026-01",
+        period_months_count=1,
+        due_date=date(2026, 2, 15),
+    )
+
+    resp = client.get(
+        f"{PATH}?year=2026&client_record_id={target.client_record_id}&page=1&page_size=10",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    assert data["items"][0]["id"] == target_payment.id

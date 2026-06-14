@@ -97,6 +97,7 @@ def get_list_enriched(
     page_size: int,
     period: str | None,
     period_type=None,
+    client_record_id: int | None = None,
     client_name: str | None = None,
 ) -> dict:
     """Return paginated work items + enrichment data."""
@@ -108,6 +109,7 @@ def get_list_enriched(
             page_size=page_size,
             period=period,
             period_type=period_type,
+            client_record_ids=[client_record_id] if client_record_id is not None else None,
             client_name=client_name,
         )
     else:
@@ -117,6 +119,7 @@ def get_list_enriched(
             page_size=page_size,
             period=period,
             period_type=period_type,
+            client_record_ids=[client_record_id] if client_record_id is not None else None,
             client_name=client_name,
         )
     client_record_ids = list({item.client_record_id for item in items})

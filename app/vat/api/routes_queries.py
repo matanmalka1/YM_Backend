@@ -68,12 +68,14 @@ def get_status_summary(
     db: DBSession,
     year: int | None = Query(default=None, ge=2000, le=2100),
     period_type: VatType | None = Query(None),
+    client_record_id: int | None = Query(None),
     client_name: str | None = Query(None),
 ):
     service = VatReportService(db)
     return service.get_status_summary(
         year=year,
         period_type=period_type,
+        client_record_id=client_record_id,
         client_name=client_name,
     )
 
@@ -154,6 +156,7 @@ def list_work_items(
     page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
     period: str | None = Query(None),
     period_type: VatType | None = Query(None),
+    client_record_id: int | None = Query(None),
     client_name: str | None = Query(None),
 ):
     service = VatReportService(db)
@@ -163,6 +166,7 @@ def list_work_items(
         page_size=page_size,
         period=period,
         period_type=period_type,
+        client_record_id=client_record_id,
         client_name=client_name,
     )
     items = serialize_enriched_work_items(

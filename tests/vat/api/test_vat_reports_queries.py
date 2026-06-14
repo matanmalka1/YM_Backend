@@ -1,10 +1,14 @@
+from datetime import date
+
 from sqlalchemy import select
 
-from app.common.enums import VatType
+from app.businesses.models.business import BusinessStatus
+from app.common.enums import IdNumberType, VatType
 from app.users.models.user import User, UserRole
 from app.users.services.auth_service import AuthService
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_work_item import VatWorkItem
+from tests.helpers.identity import seed_business, seed_client_identity
 from tests.vat.api.test_vat_reports_utils import (
     create_work_item,
     income_payload,
@@ -23,6 +27,24 @@ def _create_user(test_db, email: str, full_name: str, role: UserRole) -> User:
     test_db.commit()
     test_db.refresh(user)
     return user
+
+
+def _create_vat_client_with_name(test_db, full_name: str, id_number: str):
+    client = seed_client_identity(
+        test_db,
+        full_name=full_name,
+        id_number=id_number,
+        id_number_type=IdNumberType.INDIVIDUAL,
+    )
+    seed_business(
+        test_db,
+        legal_entity_id=client.legal_entity_id,
+        business_name=full_name,
+        status=BusinessStatus.ACTIVE,
+        opened_at=date.today(),
+    )
+    test_db.commit()
+    return client
 
 
 def test_get_work_item_includes_user_names_and_deadline_fields(
@@ -125,6 +147,23 @@ def test_list_work_items_supports_status_and_client_name_filters(
 def test_status_summary_returns_all_statuses_and_counts_by_filter(
     client, test_db, advisor_headers, vat_client, test_user
 ):
+    same_name_client = _create_vat_client_with_name(
+        test_db,
+        vat_client.full_name,
+        "987654321",
+    )
+    other_pending_resp = client.post(
+        "/api/v1/vat/work-items",
+        headers=advisor_headers,
+        json={
+            "client_record_id": same_name_client.id,
+            "period": "2026-01",
+            "mark_pending": True,
+            "pending_materials_note": "same name, different record",
+        },
+    )
+    assert other_pending_resp.status_code == 201
+
     pending_resp = client.post(
         "/api/v1/vat/work-items",
         headers=advisor_headers,
@@ -181,6 +220,21 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
 
     assert response.status_code == 200
     assert response.json() == {
+        "pending_materials": 2,
+        "material_received": 1,
+        "data_entry_in_progress": 1,
+        "ready_for_review": 1,
+        "filed": 1,
+        "canceled": 0,
+    }
+
+    exact_response = client.get(
+        f"/api/v1/vat/work-items/status-summary?year=2026&client_record_id={vat_client.id}",
+        headers=advisor_headers,
+    )
+
+    assert exact_response.status_code == 200
+    assert exact_response.json() == {
         "pending_materials": 1,
         "material_received": 1,
         "data_entry_in_progress": 1,
@@ -188,6 +242,27 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
         "filed": 1,
         "canceled": 0,
     }
+
+
+def test_grouped_work_items_filter_by_exact_client_record_id(
+    client, test_db, advisor_headers, vat_client
+):
+    same_name_client = _create_vat_client_with_name(
+        test_db,
+        vat_client.full_name,
+        "987654322",
+    )
+    create_work_item(client, advisor_headers, vat_client, "2026-01")
+    create_work_item(client, advisor_headers, same_name_client, "2026-02")
+
+    groups_resp = client.get(
+        f"/api/v1/vat/work-items/groups?year=2026&client_record_id={vat_client.id}",
+        headers=advisor_headers,
+    )
+
+    assert groups_resp.status_code == 200
+    groups = groups_resp.json()["groups"]
+    assert sum(group["total_count"] for group in groups) == 1
 
 
 def test_list_work_items_supports_filter_by_client_name_and_id_number(
