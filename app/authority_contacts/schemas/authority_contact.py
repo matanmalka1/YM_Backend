@@ -45,4 +45,5 @@ class AuthorityContactResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-AuthorityContactListResponse = PaginatedResponse[AuthorityContactResponse]
+class AuthorityContactListResponse(PaginatedResponse[AuthorityContactResponse]):
+    pass

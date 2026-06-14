@@ -71,4 +71,5 @@ class TaskResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-TaskListResponse = PaginatedResponse[TaskResponse]
+class TaskListResponse(PaginatedResponse[TaskResponse]):
+    pass

@@ -4,7 +4,7 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.models.binder_intake_material import MaterialType
-from app.core.api_types import ApiDateTime
+from app.core.api_types import ApiDateTime, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.notifications.schemas.notification_schemas import NotificationResult
 
@@ -118,6 +118,10 @@ class BinderIntakeResponse(BaseModel):
     materials: list[BinderIntakeMaterialResponse] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
+
+
+class BinderIntakeListResponse(PaginatedResponse[BinderIntakeResponse]):
+    pass
 
 
 class BinderReceiveResult(BaseModel):

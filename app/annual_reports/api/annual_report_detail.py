@@ -13,7 +13,7 @@ from app.users.models.user import UserRole
 
 router = APIRouter(
     prefix="/annual-reports",
-    tags=["annual-report-detail"],
+    tags=["annual-reports"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 

@@ -96,7 +96,8 @@ class BusinessWithClientResponse(BusinessResponse):
     model_config = {"from_attributes": True}
 
 
-BusinessListResponse = PaginatedResponse[BusinessWithClientResponse]
+class BusinessListResponse(PaginatedResponse[BusinessWithClientResponse]):
+    pass
 
 
 class ClientBusinessesResponse(BaseModel):

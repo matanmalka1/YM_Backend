@@ -67,7 +67,8 @@ class AdvancePaymentRow(BaseModel):
     model_config = {"from_attributes": True, "use_enum_values": True}
 
 
-AdvancePaymentListResponse = PaginatedResponse[AdvancePaymentRow]
+class AdvancePaymentListResponse(PaginatedResponse[AdvancePaymentRow]):
+    pass
 
 
 class AdvancePaymentCreateRequest(BaseModel):

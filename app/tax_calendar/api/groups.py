@@ -30,7 +30,7 @@ def list_tax_calendar_groups(
     client_search: str | None = Query(None),
     status: str = Query("all", pattern="^(all|open|overdue|done)$"),
     page: int = Query(1, ge=1),
-    page_size: int = Query(25, ge=1, le=MAX_PAGE_SIZE),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     return list_groups_paginated(
         db,

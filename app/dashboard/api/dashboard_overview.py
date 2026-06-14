@@ -7,7 +7,7 @@ from app.users.models.user import UserRole
 
 router = APIRouter(
     prefix="/dashboard",
-    tags=["dashboard-overview"],
+    tags=["dashboard"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 

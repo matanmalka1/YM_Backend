@@ -5,9 +5,11 @@ from app.annual_reports.schemas.annual_report_requests import (
     ScheduleAddRequest,
     ScheduleCompleteRequest,
 )
-from app.annual_reports.schemas.annual_report_responses import ScheduleEntryResponse
+from app.annual_reports.schemas.annual_report_responses import (
+    AnnualReportScheduleListResponse,
+    ScheduleEntryResponse,
+)
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.core.api_types import PaginatedResponse
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
@@ -36,7 +38,7 @@ def add_schedule(report_id: int, body: ScheduleAddRequest, db: DBSession, user: 
 
 @router.get(
     "/{report_id}/schedules",
-    response_model=PaginatedResponse[ScheduleEntryResponse],
+    response_model=AnnualReportScheduleListResponse,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def list_schedules(
@@ -54,7 +56,12 @@ def list_schedules(
     items = [
         ScheduleEntryResponse.model_validate(e) for e in all_schedules[start : start + page_size]
     ]
-    return PaginatedResponse(items=items, page=page, page_size=page_size, total=total)
+    return AnnualReportScheduleListResponse(
+        items=items,
+        page=page,
+        page_size=page_size,
+        total=total,
+    )
 
 
 @router.post(

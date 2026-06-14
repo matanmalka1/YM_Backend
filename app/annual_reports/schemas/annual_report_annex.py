@@ -3,7 +3,7 @@ from typing import Any
 from pydantic import BaseModel
 
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
-from app.core.api_types import ApiDateTime
+from app.core.api_types import ApiDateTime, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
@@ -19,6 +19,10 @@ class AnnexDataLineResponse(BaseModel):
     updated_at: ApiDateTime | None = None
 
     model_config = {"from_attributes": True}
+
+
+class AnnexDataLineListResponse(PaginatedResponse[AnnexDataLineResponse]):
+    pass
 
 
 class AnnexDataAddRequest(BaseModel):

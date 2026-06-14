@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.core.openapi_responses import not_found_response
+from app.reminders.api.responses import REMINDER_DETAIL_RESPONSES
 from app.reminders.schemas.reminders import ReminderResponse
 from app.reminders.services.reminder_service import ReminderService
 from app.users.api.deps import CurrentUser, DBSession
@@ -13,7 +13,7 @@ get_router = APIRouter()
 @get_router.get(
     "/{reminder_id:int}",
     response_model=ReminderResponse,
-    responses=not_found_response(description="התזכורת המבוקשת לא נמצאה"),
+    responses=REMINDER_DETAIL_RESPONSES,
 )
 def get_reminder(
     reminder_id: int,

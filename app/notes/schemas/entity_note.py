@@ -17,7 +17,8 @@ class EntityNoteResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-EntityNoteListResponse = PaginatedResponse[EntityNoteResponse]
+class EntityNoteListResponse(PaginatedResponse[EntityNoteResponse]):
+    pass
 
 
 class EntityNoteCreateRequest(BaseModel):

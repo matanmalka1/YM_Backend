@@ -28,4 +28,5 @@ class BinderDetailResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-BinderListResponseExtended = PaginatedResponse[BinderDetailResponse]
+class BinderListResponseExtended(PaginatedResponse[BinderDetailResponse]):
+    pass

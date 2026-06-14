@@ -3,6 +3,7 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends, Query
 
 from app.core.pagination import MAX_PAGE_SIZE
+from app.reminders.models.reminder import ReminderStatus
 from app.reminders.schemas.reminders import ReminderListResponse
 from app.reminders.services.reminder_service import ReminderService
 from app.users.api.deps import CurrentUser, DBSession, require_role
@@ -21,7 +22,7 @@ def list_reminders(
     _user: CurrentUser,
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
-    status_filter: str | None = Query(None, alias="status"),
+    status_filter: ReminderStatus | None = Query(None, alias="status"),
 ):
     service = ReminderService(db)
     items, total = service.get_reminders(

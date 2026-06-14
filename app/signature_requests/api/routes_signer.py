@@ -13,7 +13,7 @@ from app.users.api.deps import DBSession
 
 signer_router = APIRouter(
     prefix="/sign",
-    tags=["signature-signing"],
+    tags=["public-signing"],
 )
 
 

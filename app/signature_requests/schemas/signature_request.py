@@ -60,7 +60,8 @@ class SignatureRequestResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-SignatureRequestListResponse = PaginatedResponse[SignatureRequestResponse]
+class SignatureRequestListResponse(PaginatedResponse[SignatureRequestResponse]):
+    pass
 
 
 class SignatureRequestWithAuditResponse(SignatureRequestResponse):

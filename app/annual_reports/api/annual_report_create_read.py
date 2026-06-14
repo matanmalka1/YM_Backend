@@ -4,6 +4,7 @@ from app.annual_reports.api.responses import (
     REPORT_AMEND_RESPONSES,
     REPORT_CREATE_RESPONSES,
 )
+from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.schemas.annual_report_requests import (
     AmendRequest,
     AnnualReportCreateRequest,
@@ -60,7 +61,7 @@ def list_annual_reports(
     user: CurrentUser,
     tax_year: int | None = Query(None),
     client_record_id: int | None = Query(None),
-    status: str | None = Query(None),
+    status: AnnualReportStatus | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
     sort_by: str = Query(

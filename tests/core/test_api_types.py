@@ -109,6 +109,4 @@ def test_openapi_uses_string_contract_for_decimal_and_datetime_fields():
     assert annual_status_deadline["anyOf"][0]["format"] == "date-time"
     assert annual_card_deadline["anyOf"][0]["format"] == "date-time"
     assert "{source_type}:{source_id}" in work_queue_id["description"]
-    assert (
-        overdue_response["$ref"] == "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
-    )
+    assert overdue_response["$ref"] == "#/components/schemas/AnnualReportListResponse"

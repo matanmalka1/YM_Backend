@@ -49,7 +49,7 @@ def list_notifications(
     created_after: datetime.datetime | None = None,
     created_before: datetime.datetime | None = None,
     page: int = Query(1, ge=1),
-    page_size: int = Query(25, ge=1, le=MAX_PAGE_SIZE),
+    page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     svc = NotificationService(db)
     items, total = svc.list_paginated(

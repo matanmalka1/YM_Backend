@@ -10,12 +10,11 @@ from app.annual_reports.schemas.annual_report_requests import (
     SubmitRequest,
 )
 from app.annual_reports.schemas.annual_report_responses import (
-    AnnualReportAuditEntry,
+    AnnualReportAuditListResponse,
     AnnualReportDetailResponse,
     AnnualReportResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.core.api_types import PaginatedResponse
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
@@ -126,7 +125,7 @@ def update_deadline(
 
 @router.get(
     "/{report_id}/audit",
-    response_model=PaginatedResponse[AnnualReportAuditEntry],
+    response_model=AnnualReportAuditListResponse,
     responses=not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 def get_report_audit(
@@ -141,4 +140,9 @@ def get_report_audit(
     total = len(all_audit_entries)
     start = (page - 1) * page_size
     items = all_audit_entries[start : start + page_size]
-    return PaginatedResponse(items=items, page=page, page_size=page_size, total=total)
+    return AnnualReportAuditListResponse(
+        items=items,
+        page=page,
+        page_size=page_size,
+        total=total,
+    )

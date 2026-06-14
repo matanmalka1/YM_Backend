@@ -19,6 +19,11 @@ _PUBLIC_WITH_EXPLICIT_401 = {
     ("POST", "/api/v1/auth/refresh"),
 }
 
+_NON_ROLE_GATED_WITH_EXPLICIT_403 = {
+    ("GET", "/api/v1/reminders/{reminder_id}"),
+    ("POST", "/api/v1/reminders/{reminder_id}/cancel"),
+}
+
 
 def _iter_operations():
     spec = app.openapi()
@@ -63,7 +68,9 @@ def test_non_role_gated_operations_do_not_document_403():
     violations = [
         (m, p)
         for m, p, op in _iter_operations()
-        if (m, p) not in role_gated and "403" in (op.get("responses") or {})
+        if (m, p) not in role_gated
+        and (m, p) not in _NON_ROLE_GATED_WITH_EXPLICIT_403
+        and "403" in (op.get("responses") or {})
     ]
     assert not violations
 

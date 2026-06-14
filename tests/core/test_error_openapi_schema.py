@@ -79,6 +79,4 @@ def test_annual_report_charges_openapi_response_schema_is_typed():
 
     assert response_schema
     assert response_schema != {}
-    assert response_schema["$ref"].startswith(
-        "#/components/schemas/PaginatedResponse_ChargeResponse_"
-    )
+    assert response_schema["$ref"] == "#/components/schemas/ChargeResponseListResponse"

@@ -6,6 +6,7 @@ from app.clients.repositories.client_record_repository import ClientRecordReposi
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.signature_requests.api.responses import SIGNATURE_CANCEL_RESPONSES
+from app.signature_requests.models.signature_request import SignatureRequestStatus
 from app.signature_requests.schemas.signature_request import (
     CancelRequest,
     SignatureRequestListResponse,
@@ -55,7 +56,7 @@ def list_client_signature_requests(
     client_record_id: int,
     db: DBSession,
     user: CurrentUser,
-    status_filter: str | None = Query(None, alias="status"),
+    status_filter: SignatureRequestStatus | None = Query(None, alias="status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):

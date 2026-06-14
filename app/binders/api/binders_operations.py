@@ -14,7 +14,7 @@ from app.users.models.user import UserRole
 
 router = APIRouter(
     prefix="/binders",
-    tags=["binders-operations"],
+    tags=["binders"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 

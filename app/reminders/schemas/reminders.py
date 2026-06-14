@@ -44,4 +44,5 @@ class FireDueResponse(BaseModel):
     failed: int
 
 
-ReminderListResponse = PaginatedResponse[ReminderResponse]
+class ReminderListResponse(PaginatedResponse[ReminderResponse]):
+    pass

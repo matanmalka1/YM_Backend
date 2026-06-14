@@ -51,7 +51,8 @@ class UserManagementResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-UserManagementListResponse = PaginatedResponse[UserManagementResponse]
+class UserManagementListResponse(PaginatedResponse[UserManagementResponse]):
+    pass
 
 
 class UserAuditLogResponse(BaseModel):
@@ -68,4 +69,5 @@ class UserAuditLogResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-UserAuditLogListResponse = PaginatedResponse[UserAuditLogResponse]
+class UserAuditLogListResponse(PaginatedResponse[UserAuditLogResponse]):
+    pass

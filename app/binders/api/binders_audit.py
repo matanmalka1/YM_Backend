@@ -3,13 +3,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from app.binders.api.responses import BINDER_INTAKE_UPDATE_RESPONSES
 from app.binders.schemas.binder import (
     BinderAuditResponse,
+    BinderIntakeListResponse,
     BinderIntakeResponse,
     BinderIntakeUpdateRequest,
 )
 from app.binders.services.binder_audit_service import BinderAuditService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.binders.services.messages import BINDER_NOT_FOUND
-from app.core.api_types import PaginatedResponse
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.deps import CurrentUser, DBSession, require_role
@@ -17,7 +17,7 @@ from app.users.models.user import UserRole
 
 router = APIRouter(
     prefix="/binders",
-    tags=["binders-audit"],
+    tags=["binders"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 
@@ -54,7 +54,7 @@ def get_binder_audit(
 
 @router.get(
     "/{binder_id}/intakes",
-    response_model=PaginatedResponse[BinderIntakeResponse],
+    response_model=BinderIntakeListResponse,
     responses=not_found_response(description="הקלסר המבוקש לא נמצא"),
 )
 def get_binder_intakes(
@@ -66,7 +66,7 @@ def get_binder_intakes(
 ):
     service = BinderAuditService(db)
     intakes, total = service.get_binder_intakes(binder_id, page=page, page_size=page_size)
-    return PaginatedResponse[BinderIntakeResponse](
+    return BinderIntakeListResponse(
         items=intakes,
         total=total,
         page=page,

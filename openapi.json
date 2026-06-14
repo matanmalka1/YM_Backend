@@ -516,7 +516,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_UserAuditLogResponse_"
+                  "$ref": "#/components/schemas/UserAuditLogListResponse"
                 }
               }
             }
@@ -703,7 +703,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_UserManagementResponse_"
+                  "$ref": "#/components/schemas/UserManagementListResponse"
                 }
               }
             }
@@ -1224,7 +1224,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnexDataLineResponse_"
+                  "$ref": "#/components/schemas/AnnexDataLineListResponse"
                 }
               }
             }
@@ -1572,7 +1572,7 @@
     "/api/v1/annual-reports/{report_id}/details": {
       "get": {
         "tags": [
-          "annual-report-detail"
+          "annual-reports"
         ],
         "summary": "Get Annual Report Detail",
         "operationId": "get_annual_report_detail_api_v1_annual_reports__report_id__details_get",
@@ -1642,7 +1642,7 @@
       },
       "patch": {
         "tags": [
-          "annual-report-detail"
+          "annual-reports"
         ],
         "summary": "Update Annual Report Detail",
         "operationId": "update_annual_report_detail_api_v1_annual_reports__report_id__details_patch",
@@ -2858,7 +2858,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/AnnualReportStatus"
                 },
                 {
                   "type": "null"
@@ -2919,7 +2919,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
+                  "$ref": "#/components/schemas/AnnualReportListResponse"
                 }
               }
             }
@@ -3012,7 +3012,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
+                  "$ref": "#/components/schemas/AnnualReportListResponse"
                 }
               }
             }
@@ -3429,7 +3429,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_ScheduleEntryResponse_"
+                  "$ref": "#/components/schemas/AnnualReportScheduleListResponse"
                 }
               }
             }
@@ -4017,7 +4017,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportAuditEntry_"
+                  "$ref": "#/components/schemas/AnnualReportAuditListResponse"
                 }
               }
             }
@@ -4113,7 +4113,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
+                  "$ref": "#/components/schemas/AnnualReportListResponse"
                 }
               }
             }
@@ -4192,7 +4192,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/AnnualReportStatus"
                 },
                 {
                   "type": "null"
@@ -4231,7 +4231,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
+                  "$ref": "#/components/schemas/AnnualReportListResponse"
                 }
               }
             }
@@ -4392,7 +4392,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/AnnualReportStatus"
                 },
                 {
                   "type": "null"
@@ -4431,7 +4431,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AnnualReportListItem_"
+                  "$ref": "#/components/schemas/AnnualReportListResponse"
                 }
               }
             }
@@ -4743,7 +4743,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_ChargeResponse_"
+                  "$ref": "#/components/schemas/ChargeResponseListResponse"
                 }
               }
             }
@@ -4919,7 +4919,7 @@
               "type": "integer",
               "maximum": 200,
               "minimum": 1,
-              "default": 25,
+              "default": 20,
               "title": "Page Size"
             }
           }
@@ -5550,7 +5550,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AuthorityContactResponse_"
+                  "$ref": "#/components/schemas/AuthorityContactListResponse"
                 }
               }
             }
@@ -5856,7 +5856,7 @@
     "/api/v1/dashboard/tax-submissions": {
       "get": {
         "tags": [
-          "dashboard-tax"
+          "dashboard"
         ],
         "summary": "Get Tax Submission Widget",
         "description": "Return tax submission statistics for the dashboard.",
@@ -5927,7 +5927,7 @@
     "/api/v1/dashboard/overview": {
       "get": {
         "tags": [
-          "dashboard-overview"
+          "dashboard"
         ],
         "summary": "Get Dashboard Overview",
         "description": "Get dashboard overview (ADVISOR only).",
@@ -7620,7 +7620,7 @@
     "/api/v1/binders/open": {
       "get": {
         "tags": [
-          "binders-operations"
+          "binders"
         ],
         "summary": "List Open Binders",
         "description": "List binders that have not been handed over.",
@@ -7754,7 +7754,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_BinderDetailResponse_"
+                  "$ref": "#/components/schemas/BinderListResponseExtended"
                 }
               }
             }
@@ -8438,18 +8438,11 @@
           }
         ],
         "requestBody": {
+          "required": true,
           "content": {
             "application/json": {
               "schema": {
-                "anyOf": [
-                  {
-                    "$ref": "#/components/schemas/BinderHandoverToClientRequest"
-                  },
-                  {
-                    "type": "null"
-                  }
-                ],
-                "title": "Request"
+                "$ref": "#/components/schemas/BinderHandoverToClientRequest"
               }
             }
           }
@@ -8877,7 +8870,7 @@
     "/api/v1/binders/{binder_id}/audit": {
       "get": {
         "tags": [
-          "binders-audit"
+          "binders"
         ],
         "summary": "Get Binder Audit",
         "operationId": "get_binder_audit_api_v1_binders__binder_id__audit_get",
@@ -8972,7 +8965,7 @@
     "/api/v1/binders/{binder_id}/intakes": {
       "get": {
         "tags": [
-          "binders-audit"
+          "binders"
         ],
         "summary": "Get Binder Intakes",
         "operationId": "get_binder_intakes_api_v1_binders__binder_id__intakes_get",
@@ -9016,7 +9009,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_BinderIntakeResponse_"
+                  "$ref": "#/components/schemas/BinderIntakeListResponse"
                 }
               }
             }
@@ -9067,7 +9060,7 @@
     "/api/v1/binders/{binder_id}/intakes/{intake_id}": {
       "patch": {
         "tags": [
-          "binders-audit"
+          "binders"
         ],
         "summary": "Patch Binder Intake",
         "operationId": "patch_binder_intake_api_v1_binders__binder_id__intakes__intake_id__patch",
@@ -9168,7 +9161,7 @@
     "/api/v1/clients/{client_record_id}/binders": {
       "get": {
         "tags": [
-          "clients-binders"
+          "binders"
         ],
         "summary": "List Client Binders",
         "description": "List all binders for a specific client.",
@@ -9213,7 +9206,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_BinderDetailResponse_"
+                  "$ref": "#/components/schemas/BinderListResponseExtended"
                 }
               }
             }
@@ -9387,7 +9380,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ChargeStatus"
                 },
                 {
                   "type": "null"
@@ -11688,7 +11681,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/ReminderStatus"
                 },
                 {
                   "type": "null"
@@ -11704,7 +11697,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_ReminderResponse_"
+                  "$ref": "#/components/schemas/ReminderListResponse"
                 }
               }
             }
@@ -11850,6 +11843,16 @@
               }
             }
           },
+          "403": {
+            "description": "אין הרשאה לצפייה בתזכורת",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -11904,6 +11907,16 @@
           },
           "404": {
             "description": "התזכורת המבוקשת לא נמצאה",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "אין הרשאה לביצוע הפעולה",
             "content": {
               "application/json": {
                 "schema": {
@@ -12102,7 +12115,7 @@
               "type": "integer",
               "maximum": 200,
               "minimum": 1,
-              "default": 25,
+              "default": 20,
               "title": "Page Size"
             }
           }
@@ -13067,7 +13080,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_AdvancePaymentRow_"
+                  "$ref": "#/components/schemas/AdvancePaymentListResponse"
                 }
               }
             }
@@ -14170,7 +14183,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_SignatureRequestResponse_"
+                  "$ref": "#/components/schemas/SignatureRequestListResponse"
                 }
               }
             }
@@ -14406,7 +14419,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "type": "string"
+                  "$ref": "#/components/schemas/SignatureRequestStatus"
                 },
                 {
                   "type": "null"
@@ -14445,7 +14458,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_SignatureRequestResponse_"
+                  "$ref": "#/components/schemas/SignatureRequestListResponse"
                 }
               }
             }
@@ -14496,7 +14509,7 @@
     "/sign/{token}": {
       "get": {
         "tags": [
-          "signature-signing"
+          "public-signing"
         ],
         "summary": "Signer View",
         "operationId": "signer_view_sign__token__get",
@@ -14539,7 +14552,7 @@
     "/sign/{token}/approve": {
       "post": {
         "tags": [
-          "signature-signing"
+          "public-signing"
         ],
         "summary": "Signer Approve",
         "operationId": "signer_approve_sign__token__approve_post",
@@ -14582,7 +14595,7 @@
     "/sign/{token}/decline": {
       "post": {
         "tags": [
-          "signature-signing"
+          "public-signing"
         ],
         "summary": "Signer Decline",
         "operationId": "signer_decline_sign__token__decline_post",
@@ -16968,7 +16981,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_EntityNoteResponse_"
+                  "$ref": "#/components/schemas/EntityNoteListResponse"
                 }
               }
             }
@@ -17335,7 +17348,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_EntityNoteResponse_"
+                  "$ref": "#/components/schemas/EntityNoteListResponse"
                 }
               }
             }
@@ -18022,7 +18035,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PaginatedResponse_TaskResponse_"
+                  "$ref": "#/components/schemas/TaskListResponse"
                 }
               }
             }
@@ -19155,6 +19168,37 @@
         "title": "AdvancePaymentFrequency",
         "description": "Advance payment reporting frequency — independent from VAT frequency."
       },
+      "AdvancePaymentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AdvancePaymentRow"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "AdvancePaymentListResponse"
+      },
       "AdvancePaymentOverviewResponse": {
         "properties": {
           "items": {
@@ -20155,6 +20199,37 @@
         ],
         "title": "AnnexDataAddRequest"
       },
+      "AnnexDataLineListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnnexDataLineResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "AnnexDataLineListResponse"
+      },
       "AnnexDataLineResponse": {
         "properties": {
           "id": {
@@ -20365,6 +20440,37 @@
           "occurred_at"
         ],
         "title": "AnnualReportAuditEntry"
+      },
+      "AnnualReportAuditListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualReportAuditEntry"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "AnnualReportAuditListResponse"
       },
       "AnnualReportCard": {
         "properties": {
@@ -21155,6 +21261,37 @@
         "title": "AnnualReportListItem",
         "description": "Thin row DTO for annual-report list/card endpoints.\n\nOnly fields rendered by list/history/comparison UIs. Detail-only,\ncalculation, action, and transition fields are intentionally excluded\n(see AnnualReportDetailResponse for the full detail shape)."
       },
+      "AnnualReportListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualReportListItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "AnnualReportListResponse"
+      },
       "AnnualReportResponse": {
         "properties": {
           "id": {
@@ -21456,6 +21593,37 @@
         ],
         "title": "AnnualReportSchedule",
         "description": "Annexes / schedules that may be required alongside the main form."
+      },
+      "AnnualReportScheduleListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScheduleEntryResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "AnnualReportScheduleListResponse"
       },
       "AnnualReportStatus": {
         "type": "string",
@@ -22028,6 +22196,37 @@
         ],
         "title": "AuthorityContactCreateRequest"
       },
+      "AuthorityContactListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AuthorityContactResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "AuthorityContactListResponse"
+      },
       "AuthorityContactResponse": {
         "properties": {
           "id": {
@@ -22576,6 +22775,37 @@
         "type": "object",
         "title": "BinderHandoverToClientRequest"
       },
+      "BinderIntakeListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BinderIntakeResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "BinderIntakeListResponse"
+      },
       "BinderIntakeMaterialRequest": {
         "properties": {
           "material_type": {
@@ -22987,6 +23217,37 @@
           "counters"
         ],
         "title": "BinderListResponse"
+      },
+      "BinderListResponseExtended": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/BinderDetailResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "BinderListResponseExtended"
       },
       "BinderLocationStatus": {
         "type": "string",
@@ -24279,6 +24540,37 @@
           "created_at"
         ],
         "title": "ChargeResponse"
+      },
+      "ChargeResponseListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ChargeResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "ChargeResponseListResponse"
       },
       "ChargeStatus": {
         "type": "string",
@@ -26466,6 +26758,37 @@
         ],
         "title": "EntityNoteCreateRequest"
       },
+      "EntityNoteListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/EntityNoteResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "EntityNoteListResponse"
+      },
       "EntityNoteResponse": {
         "properties": {
           "id": {
@@ -28440,471 +28763,6 @@
         ],
         "title": "OperationalSignalsResponse"
       },
-      "PaginatedResponse_AdvancePaymentRow_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AdvancePaymentRow"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[AdvancePaymentRow]"
-      },
-      "PaginatedResponse_AnnexDataLineResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AnnexDataLineResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[AnnexDataLineResponse]"
-      },
-      "PaginatedResponse_AnnualReportAuditEntry_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AnnualReportAuditEntry"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[AnnualReportAuditEntry]"
-      },
-      "PaginatedResponse_AnnualReportListItem_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AnnualReportListItem"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[AnnualReportListItem]"
-      },
-      "PaginatedResponse_AuthorityContactResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AuthorityContactResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[AuthorityContactResponse]"
-      },
-      "PaginatedResponse_BinderDetailResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/BinderDetailResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[BinderDetailResponse]"
-      },
-      "PaginatedResponse_BinderIntakeResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/BinderIntakeResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[BinderIntakeResponse]"
-      },
-      "PaginatedResponse_ChargeResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ChargeResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[ChargeResponse]"
-      },
-      "PaginatedResponse_EntityNoteResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/EntityNoteResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[EntityNoteResponse]"
-      },
-      "PaginatedResponse_ReminderResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ReminderResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[ReminderResponse]"
-      },
-      "PaginatedResponse_ScheduleEntryResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/ScheduleEntryResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[ScheduleEntryResponse]"
-      },
-      "PaginatedResponse_SignatureRequestResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/SignatureRequestResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[SignatureRequestResponse]"
-      },
-      "PaginatedResponse_TaskResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/TaskResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[TaskResponse]"
-      },
-      "PaginatedResponse_UserAuditLogResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/UserAuditLogResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[UserAuditLogResponse]"
-      },
-      "PaginatedResponse_UserManagementResponse_": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/UserManagementResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total"
-        ],
-        "title": "PaginatedResponse[UserManagementResponse]"
-      },
       "PasswordResetRequest": {
         "properties": {
           "new_password": {
@@ -29429,6 +29287,37 @@
           "action_type"
         ],
         "title": "ReminderCreateRequest"
+      },
+      "ReminderListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ReminderResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "ReminderListResponse"
       },
       "ReminderResponse": {
         "properties": {
@@ -30616,6 +30505,37 @@
         "title": "SignatureRequestCreatedResponse",
         "description": "Returned once on creation with the signing link token."
       },
+      "SignatureRequestListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SignatureRequestResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "SignatureRequestListResponse"
+      },
       "SignatureRequestResponse": {
         "properties": {
           "id": {
@@ -31574,6 +31494,37 @@
           "title"
         ],
         "title": "TaskCreateRequest"
+      },
+      "TaskListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TaskResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "TaskListResponse"
       },
       "TaskPriority": {
         "type": "string",
@@ -32810,6 +32761,37 @@
         "title": "TimelineEvent",
         "description": "Single timeline event."
       },
+      "UserAuditLogListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserAuditLogResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "UserAuditLogListResponse"
+      },
       "UserAuditLogResponse": {
         "properties": {
           "id": {
@@ -32936,6 +32918,37 @@
           "password"
         ],
         "title": "UserCreateRequest"
+      },
+      "UserManagementListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/UserManagementResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "UserManagementListResponse"
       },
       "UserManagementResponse": {
         "properties": {

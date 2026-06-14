@@ -6,6 +6,7 @@ from app.charges.api.responses import (
     CHARGE_CANCEL_RESPONSES,
     CHARGE_CREATE_RESPONSES,
 )
+from app.charges.models.charge import ChargeStatus
 from app.charges.schemas.charge import (
     BulkChargeActionRequest,
     BulkChargeActionResponse,
@@ -102,7 +103,7 @@ def list_charges(
     user: CurrentUser,
     business_id: int | None = None,
     client_record_id: int | None = None,
-    status_filter: str | None = Query(None, alias="status"),
+    status_filter: ChargeStatus | None = Query(None, alias="status"),
     charge_type: str | None = None,
     period: str | None = None,
     issued_after: datetime.date | None = None,

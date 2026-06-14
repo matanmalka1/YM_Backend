@@ -76,7 +76,8 @@ class AnnualReportListItem(BaseModel):
     model_config = {"from_attributes": True}
 
 
-AnnualReportListResponse = PaginatedResponse[AnnualReportListItem]
+class AnnualReportListResponse(PaginatedResponse[AnnualReportListItem]):
+    pass
 
 
 class ScheduleEntryResponse(BaseModel):
@@ -103,6 +104,14 @@ class AnnualReportAuditEntry(BaseModel):
     occurred_at: ApiDateTime
 
     model_config = {"from_attributes": True}
+
+
+class AnnualReportAuditListResponse(PaginatedResponse[AnnualReportAuditEntry]):
+    pass
+
+
+class AnnualReportScheduleListResponse(PaginatedResponse[ScheduleEntryResponse]):
+    pass
 
 
 class AnnualReportTaxCalculationResponse(BaseModel):

@@ -194,14 +194,14 @@ def revert_ready_for_handover(binder_id: int, db: DBSession, user: CurrentUser):
 )
 def handover_to_client(
     binder_id: int,
+    request: BinderHandoverToClientRequest,
     db: DBSession,
     user: CurrentUser,
-    request: BinderHandoverToClientRequest | None = None,
 ):
     binder = BinderLifecycleService(db).handover_to_client(
         binder_id=binder_id,
         changed_by_user_id=user.id,
-        handed_over_at=request.handed_over_at if request else None,
-        handover_recipient_name=request.handover_recipient_name if request else None,
+        handed_over_at=request.handed_over_at,
+        handover_recipient_name=request.handover_recipient_name,
     )
     return fetch_client_and_build_response(binder, db)
