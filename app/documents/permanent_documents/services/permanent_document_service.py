@@ -224,9 +224,7 @@ class PermanentDocumentService:
         page_size: int = 20,
     ) -> tuple[list[PermanentDocument], int]:
         if not BinderRepository(self.db).get_by_id(binder_id):
-            raise NotFoundError(
-                BINDER_NOT_FOUND.format(binder_id=binder_id), "BINDER.NOT_FOUND"
-            )
+            raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), "BINDER.NOT_FOUND")
         return self.document_repo.list_by_binder_page(binder_id, page=page, page_size=page_size)
 
     def get_download_url(

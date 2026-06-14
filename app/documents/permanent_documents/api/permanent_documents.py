@@ -203,9 +203,7 @@ def replace_document(
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
     responses=not_found_response(description="המסמך המבוקש לא נמצא"),
 )
-def get_document(
-    client_record_id: PathId, document_id: PathId, db: DBSession, user: CurrentUser
-):
+def get_document(client_record_id: PathId, document_id: PathId, db: DBSession, user: CurrentUser):
     """Get a single permanent document's metadata."""
     doc = PermanentDocumentService(db).get_document(client_record_id, document_id)
     return PermanentDocumentResponseBuilder(db).build_one(doc)

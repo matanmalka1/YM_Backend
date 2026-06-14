@@ -77,9 +77,7 @@ def test_get_document_wrong_client_returns_404(client, test_db, advisor_headers)
     b2 = _business(test_db)
     doc = _make_document(test_db, b1)
 
-    resp = client.get(
-        f"/api/v1/documents/client/{b2.client_id}/{doc.id}", headers=advisor_headers
-    )
+    resp = client.get(f"/api/v1/documents/client/{b2.client_id}/{doc.id}", headers=advisor_headers)
     assert resp.status_code == 404
 
 

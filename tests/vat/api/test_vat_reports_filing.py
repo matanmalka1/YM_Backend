@@ -37,9 +37,7 @@ class TestFiling:
         )
         assert audit_response.status_code == 200
         filed_entries = [
-            entry
-            for entry in audit_response.json()["items"]
-            if entry["action"] == "filed"
+            entry for entry in audit_response.json()["items"] if entry["action"] == "filed"
         ]
         assert len(filed_entries) == 1
         assert filed_entries[0]["performed_at"] == filed_at
