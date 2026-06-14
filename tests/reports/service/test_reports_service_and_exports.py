@@ -3,6 +3,8 @@ from datetime import date, timedelta
 from decimal import Decimal
 from types import SimpleNamespace
 
+from sqlalchemy import event
+
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.reports.services.advance_payment_report import AdvancePaymentReportService
 from app.reports.services.export_service import ExportService
@@ -53,6 +55,28 @@ def test_aging_report_service_calculates_buckets(test_db):
     assert report["summary"]["total_30_days"] == 200.0
     assert report["summary"]["total_60_days"] == 300.0
     assert report["summary"]["total_90_plus"] == 400.0
+
+
+def test_aging_report_service_batches_client_name_lookup(test_db):
+    for suffix in range(10, 18):
+        c, b = _client_and_business(test_db, str(suffix))
+        _charge(test_db, c.id, b.id, "100.00", 45)
+
+    query_count = 0
+
+    def track_query(*_args):
+        nonlocal query_count
+        query_count += 1
+
+    bind = test_db.get_bind()
+    event.listen(bind, "before_cursor_execute", track_query)
+    try:
+        report = AgingReportService(test_db).generate_aging_report(page=1, page_size=8)
+    finally:
+        event.remove(bind, "before_cursor_execute", track_query)
+
+    assert len(report["items"]) == 8
+    assert query_count <= 6
 
 
 def test_export_service_generates_excel_and_pdf_files(test_db):
