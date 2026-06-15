@@ -9,6 +9,7 @@ from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
 )
+from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.utils.time_utils import start_of_day, start_of_next_day, utcnow
 
 
@@ -115,7 +116,9 @@ class SignatureRequestCrudMixin:
         page_size: int = 20,
     ) -> list[SignatureRequest]:
         """All requests for a legal entity, regardless of business."""
-        stmt = select(SignatureRequest).where(
+        stmt = scope_to_active_clients_stmt(
+            select(SignatureRequest), SignatureRequest
+        ).where(
             SignatureRequest.client_record_id == client_record_id,
             SignatureRequest.deleted_at.is_(None),
         )
@@ -130,7 +133,9 @@ class SignatureRequestCrudMixin:
         client_record_id: int,
         status: SignatureRequestStatus | None = None,
     ) -> int:
-        stmt = select(func.count(SignatureRequest.id)).where(
+        stmt = scope_to_active_clients_stmt(
+            select(func.count(SignatureRequest.id)), SignatureRequest
+        ).where(
             SignatureRequest.client_record_id == client_record_id,
             SignatureRequest.deleted_at.is_(None),
         )

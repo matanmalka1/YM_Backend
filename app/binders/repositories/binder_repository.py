@@ -473,9 +473,9 @@ class BinderRepository(BaseRepository[Binder]):
         return self.db.scalar(stmt)
 
     def list_by_client_record(self, client_record_id: int) -> list[Binder]:
-        """Return all non-deleted binders for a client_record (all statuses)."""
+        """Return all non-deleted binders for an active client_record (all statuses)."""
         return self.db.scalars(
-            select(Binder)
+            self._active_client_stmt()
             .where(
                 Binder.client_record_id == client_record_id,
                 Binder.deleted_at.is_(None),

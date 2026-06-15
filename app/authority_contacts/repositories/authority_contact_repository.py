@@ -2,6 +2,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
+from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
 
@@ -55,7 +56,7 @@ class AuthorityContactRepository(BaseRepository[AuthorityContact]):
         page_size: int = 20,
     ) -> list[AuthorityContact]:
         stmt = (
-            select(AuthorityContact)
+            scope_to_active_clients_stmt(select(AuthorityContact), AuthorityContact)
             .where(*self._base_where(client_record_id, contact_type))
             .order_by(AuthorityContact.created_at.desc())
         )
@@ -69,9 +70,9 @@ class AuthorityContactRepository(BaseRepository[AuthorityContact]):
     ) -> int:
         return (
             self.db.scalar(
-                select(func.count(AuthorityContact.id)).where(
-                    *self._base_where(client_record_id, contact_type)
-                )
+                scope_to_active_clients_stmt(
+                    select(func.count(AuthorityContact.id)), AuthorityContact
+                ).where(*self._base_where(client_record_id, contact_type))
             )
             or 0
         )
