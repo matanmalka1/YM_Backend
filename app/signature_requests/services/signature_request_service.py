@@ -6,8 +6,8 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import AppError, NotFoundError
+from app.clients.services.client_service import get_client_or_raise
+from app.core.exceptions import AppError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
     SignatureRequestStatus,
@@ -149,11 +149,7 @@ class SignatureRequestService:
         page_size: int = 20,
     ) -> tuple[list[SignatureRequest], int]:
         status_enum = self._parse_status(status)
-        record = ClientRecordRepository(self.db).get_by_id(client_record_id)
-        if not record:
-            raise NotFoundError(
-                f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
-            )
+        get_client_or_raise(self.db, client_record_id)
         items = self.repo.list_by_client_record(
             client_record_id, status=status_enum, page=page, page_size=page_size
         )

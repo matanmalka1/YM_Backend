@@ -9,7 +9,7 @@ from app.businesses.services.business_contact_service import BusinessContactServ
 from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
-from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
@@ -54,9 +54,7 @@ def create_request(
     client_record_id is always required — it is the primary anchor.
     business_id is optional; when provided it must belong to the given client_record_id.
     """
-    client_record = ClientRecordRepository(repo.db).get_by_id(client_record_id)
-    if not client_record:
-        raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
+    client_record = get_client_or_raise(repo.db, client_record_id)
 
     # Validate business ownership when business_id is supplied
     if business_id is not None:

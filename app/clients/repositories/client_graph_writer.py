@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_read_repository import get_full_record
-from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.legal_entities.repositories.person_repository import PersonRepository
@@ -35,10 +35,9 @@ def apply_graph_update(db: Session, client_id: int, **fields) -> dict:
 
     Returns the refreshed full-record dict, or raises NotFoundError.
     """
-    repo = ClientRecordRepository(db)
-    record = repo.get_by_id(client_id)
-    legal_entity = LegalEntityRepository(db).get_by_id(record.legal_entity_id) if record else None
-    if not record or not legal_entity:
+    record = get_client_or_raise(db, client_id)
+    legal_entity = LegalEntityRepository(db).get_by_id(record.legal_entity_id)
+    if not legal_entity:
         raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT.NOT_FOUND")
     person = PersonRepository(db).get_owner_for_legal_entity(legal_entity.id)
     if "full_name" in fields:

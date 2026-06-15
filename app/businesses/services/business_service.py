@@ -12,6 +12,7 @@ from app.businesses.services.business_guards import (
 )
 from app.businesses.services.business_lifecycle_service import BusinessLifecycleService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
@@ -58,9 +59,7 @@ class BusinessService:
         notes: str | None = None,
         actor_id: int | None = None,
     ) -> Business:
-        record = self.client_repo.get_by_id(client_record_id)
-        if not record:
-            raise NotFoundError(f"לקוח {client_record_id} לא נמצא", "CLIENT.NOT_FOUND")
+        record = get_client_or_raise(self.db, client_record_id)
 
         effective_opened_at = opened_at or israel_today()
 
@@ -122,9 +121,7 @@ class BusinessService:
     def list_businesses_for_client(
         self, client_id: int, page: int = 1, page_size: int = 20
     ) -> tuple[list[Business], int]:
-        record = self.client_repo.get_by_id(client_id)
-        if not record:
-            raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT.NOT_FOUND")
+        record = get_client_or_raise(self.db, client_id)
         items = self.business_repo.list_by_legal_entity(
             record.legal_entity_id,
             page=page,
@@ -141,9 +138,7 @@ class BusinessService:
         actor_id: int | None = None,
         **fields,
     ) -> Business:
-        record = self.client_repo.get_by_id(client_id)
-        if not record:
-            raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
+        record = get_client_or_raise(self.db, client_id)
 
         business = self.business_repo.get_by_id(business_id)
         if not business:

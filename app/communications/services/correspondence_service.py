@@ -139,7 +139,7 @@ class CorrespondenceService:
         client_record = self._get_client_record_or_raise(client_record_id)
         if business_id is not None:
             self._assert_business_belongs_to_client(business_id, client_record.legal_entity_id)
-        return self.repo.list_by_client_record_paginated(
+        return self.repo.list_by_client_paginated(
             client_record.id,
             business_id=business_id,
             page=page,

@@ -22,10 +22,9 @@ from app.charges.services.messages import (
     CHARGE_INVALID_STATUS_ISSUE,
     CHARGE_INVALID_STATUS_PAY,
     CHARGE_NOT_FOUND,
-    CLIENT_NOT_FOUND,
 )
 from app.clients.guards.client_record_guards import assert_client_record_is_active
-from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.clients.services.client_service import get_client_or_raise
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
 
@@ -42,12 +41,7 @@ class BillingService:
         business_id: int | None,
         legal_entity_id: int | None = None,
     ) -> int | None:
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
-        if not client_record:
-            raise NotFoundError(
-                CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-                "CHARGE.CLIENT_NOT_FOUND",
-            )
+        client_record = get_client_or_raise(self.db, client_record_id)
         if business_id is None:
             return None
         business = validate_business_for_create(self.db, business_id)
@@ -66,12 +60,7 @@ class BillingService:
     ) -> Charge:
         if amount <= 0:
             raise AppError(AMOUNT_MUST_BE_POSITIVE, "CHARGE.AMOUNT_INVALID")
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
-        if not client_record:
-            raise NotFoundError(
-                CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-                "CHARGE.CLIENT_RECORD_NOT_FOUND",
-            )
+        client_record = get_client_or_raise(self.db, client_record_id)
         assert_client_record_is_active(client_record)
         business_id = self._validate_charge_scope(
             client_record_id, business_id, client_record.legal_entity_id

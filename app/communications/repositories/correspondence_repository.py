@@ -106,49 +106,6 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             order=order,
         )
 
-    def list_by_client_record_paginated(
-        self,
-        client_record_id: int,
-        *,
-        page: int,
-        page_size: int,
-        business_id: int | None = None,
-        correspondence_type: CorrespondenceType | None = None,
-        contact_id: int | None = None,
-        occurred_after: datetime | None = None,
-        occurred_before: datetime | None = None,
-        order: Literal["asc", "desc"] = "desc",
-    ) -> tuple[list[Correspondence], int]:
-        filters = [
-            Correspondence.deleted_at.is_(None),
-            Correspondence.client_record_id == client_record_id,
-        ]
-        if business_id is not None:
-            filters.append(Correspondence.business_id == business_id)
-        if correspondence_type is not None:
-            filters.append(Correspondence.correspondence_type == correspondence_type)
-        if contact_id is not None:
-            filters.append(Correspondence.contact_id == contact_id)
-        if occurred_after is not None:
-            filters.append(Correspondence.occurred_at >= occurred_after)
-        if occurred_before is not None:
-            filters.append(Correspondence.occurred_at <= occurred_before)
-        total = self.db.scalar(select(func.count(Correspondence.id)).where(*filters)) or 0
-        order_expr = (
-            Correspondence.occurred_at.desc()
-            if order == "desc"
-            else Correspondence.occurred_at.asc()
-        )
-        offset = (page - 1) * page_size
-        items = self.db.scalars(
-            select(Correspondence)
-            .where(*filters)
-            .order_by(order_expr, Correspondence.id.desc())
-            .offset(offset)
-            .limit(page_size)
-        ).all()
-        return items, total
-
     def get_by_id(self, entry_id: int) -> Correspondence | None:
         return self.db.scalars(
             select(Correspondence).where(

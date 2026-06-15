@@ -338,8 +338,6 @@ class TaskService(BaseService):
         )
 
     def _validate_client_exists(self, client_record_id: int) -> None:
-        from app.clients.repositories.client_record_repository import ClientRecordRepository
+        from app.clients.services.client_service import get_client_or_raise
 
-        repo = ClientRecordRepository(self.db)
-        if repo.get_by_id(client_record_id) is None:
-            raise NotFoundError("לקוח לא נמצא", "CLIENT.NOT_FOUND")
+        get_client_or_raise(self.db, client_record_id)

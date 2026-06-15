@@ -21,8 +21,7 @@ from app.businesses.schemas.business_status_card import (
 )
 from app.charges.models.charge import ChargeStatus
 from app.charges.repositories.charge_repository import ChargeRepository
-from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.core.exceptions import NotFoundError
+from app.clients.services.client_service import get_client_or_raise
 from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
@@ -54,9 +53,7 @@ class StatusCardService:
         year: int | None = None,
     ) -> ClientStatusCardResponse:
         resolved_year = year or utcnow().year
-        client_record = ClientRecordRepository(self._db).get_by_id(client_id)
-        if not client_record:
-            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
+        client_record = get_client_or_raise(self._db, client_id)
         return ClientStatusCardResponse(
             client_id=client_id,
             year=resolved_year,
