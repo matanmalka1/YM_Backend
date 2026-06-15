@@ -486,35 +486,6 @@ class BinderRepository(BaseRepository[Binder]):
             )
         ).all()
 
-    def list_by_client_record_paginated(
-        self,
-        client_record_id: int,
-        page: int = 1,
-        page_size: int = 20,
-    ) -> list[Binder]:
-        """Return paginated non-deleted binders for a client_record (all statuses)."""
-        stmt = (
-            select(Binder)
-            .where(
-                Binder.client_record_id == client_record_id,
-                Binder.deleted_at.is_(None),
-            )
-            .order_by(
-                nullslast(Binder.period_start.asc()),
-                Binder.id.asc(),
-            )
-        )
-        return self.db.scalars(self.apply_pagination(stmt, page, page_size)).all()
-
-    def count_by_client_record(self, client_record_id: int) -> int:
-        """Count non-deleted binders for a client_record (all statuses)."""
-        return self.db.scalar(
-            select(func.count(Binder.id)).where(
-                Binder.client_record_id == client_record_id,
-                Binder.deleted_at.is_(None),
-            )
-        )
-
     def get_active_by_client_record(self, client_record_id: int) -> Binder | None:
         """Return the intake-eligible binder for a client_record."""
         stmt = (
@@ -534,13 +505,14 @@ class BinderRepository(BaseRepository[Binder]):
         client_record_id: int,
         page: int = 1,
         page_size: int = 20,
+        descending: bool = False,
     ) -> list[Binder]:
         """List all binders for a client (not soft-deleted) with pagination."""
         stmt = self._active_client_stmt().where(
             Binder.client_record_id == client_record_id,
             Binder.deleted_at.is_(None),
         )
-        stmt = self._order_by_period_start(stmt, descending=True)
+        stmt = self._order_by_period_start(stmt, descending=descending)
         stmt = self.apply_pagination(stmt, page, page_size)
         return self.db.scalars(stmt).all()
 

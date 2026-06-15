@@ -1,4 +1,5 @@
 from datetime import datetime
+from typing import Literal
 
 from sqlalchemy.orm import Session
 
@@ -133,7 +134,7 @@ class CorrespondenceService:
         contact_id: int | None = None,
         occurred_after: datetime | None = None,
         occurred_before: datetime | None = None,
-        order: str = "desc",
+        order: Literal["asc", "desc"] = "desc",
     ) -> tuple[list[Correspondence], int]:
         """All correspondence for a client, optionally filtered by business context."""
         client_record = self._get_client_record_or_raise(client_record_id)
