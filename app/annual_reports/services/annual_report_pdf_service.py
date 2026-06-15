@@ -26,6 +26,7 @@ from app.core.exceptions import NotFoundError
 class AnnualReportPdfService:
     def __init__(self, db: Session):
         self.db = db
+        self.client_repo = ClientRecordRepository(db)
 
     def generate(self, report_id: int) -> tuple[bytes, int]:
         repo = AnnualReportRepository(self.db)
@@ -36,7 +37,7 @@ class AnnualReportPdfService:
                 "ANNUAL_REPORT.NOT_FOUND",
             )
 
-        client_record = ClientRecordRepository(self.db).get_by_id(report.client_record_id)
+        client_record = self.client_repo.get_by_id(report.client_record_id)
         client_name = (
             f"לקוח {client_record.office_client_number}"
             if client_record and client_record.office_client_number

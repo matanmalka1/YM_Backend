@@ -38,6 +38,7 @@ class AdvancePaymentAnalyticsService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = AdvancePaymentAggregationRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     @staticmethod
     def _collection_rate(total_paid: Decimal, total_expected: Decimal) -> Decimal:
@@ -117,7 +118,7 @@ class AdvancePaymentAnalyticsService:
     # ─── KPIs ─────────────────────────────────────────────────────────────────
 
     def get_annual_kpis_for_client(self, client_record_id: int, year: int) -> dict:
-        if not ClientRecordRepository(self.db).get_by_id(client_record_id):
+        if not self.client_repo.get_by_id(client_record_id):
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",
                 "ADVANCE_PAYMENT.CLIENT_NOT_FOUND",

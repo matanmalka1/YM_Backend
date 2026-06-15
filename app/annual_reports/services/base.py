@@ -1,6 +1,9 @@
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
@@ -10,17 +13,21 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.annual_reports.services.constants import VALID_TRANSITIONS
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
-from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 from app.legal_entities.models.legal_entity import LegalEntity
+
+if TYPE_CHECKING:
+    from app.clients.repositories.client_record_repository import ClientRecordRepository
 
 
 class AnnualReportBaseService:
     """Shared helpers for annual report service mixins."""
 
+    db: Session  # set by concrete service
     repo: Any  # set by concrete service
     business_repo: Any  # set by concrete service
     user_repo: Any  # set by concrete service
+    client_repo: ClientRecordRepository  # set by concrete service
 
     def _get_or_raise(self, report_id: int) -> AnnualReport:
         report = self.repo.get_by_id(report_id)
@@ -42,7 +49,7 @@ class AnnualReportBaseService:
         records = (
             {
                 record.id: record
-                for record in ClientRecordRepository(self.db).list_by_ids(list(client_record_ids))
+                for record in self.client_repo.list_by_ids(list(client_record_ids))
             }
             if client_record_ids
             else {}

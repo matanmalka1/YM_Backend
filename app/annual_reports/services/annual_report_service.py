@@ -16,6 +16,8 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 
+from app.clients.repositories.client_record_repository import ClientRecordRepository
+
 from .annex_service import AnnualReportAnnexService
 from .create_service import AnnualReportCreateService
 from .messages import ANNUAL_REPORT_DELETED_REASON, ANNUAL_REPORT_NOT_FOUND
@@ -43,6 +45,7 @@ class AnnualReportService(
         # Lower annual_reports service mixins must consume these via self.<repo_name> only.
         self.business_repo = BusinessRepository(db)
         self.user_repo = UserRepository(db)
+        self.client_repo = ClientRecordRepository(db)
         self.vat_repo = VatWorkItemRepository(db)
         self.advance_repo = AdvancePaymentRepository(db)
 

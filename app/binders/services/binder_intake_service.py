@@ -39,6 +39,7 @@ class BinderIntakeService:
         self.material_repo = BinderIntakeMaterialRepository(db)
         # Used for the "all businesses locked" guard before intake is accepted.
         self.business_repo = BusinessRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def receive(
         self,
@@ -62,7 +63,7 @@ class BinderIntakeService:
         """
         from app.binders.services.messages import BINDER_OFFICE_NUMBER_MISSING
 
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         assert_client_record_is_active(client_record)
 
         businesses = self.business_repo.list_by_legal_entity(client_record.legal_entity_id)

@@ -61,6 +61,7 @@ class PermanentDocumentService:
         self.document_repo = PermanentDocumentRepository(db)
         self.query_repo = PermanentDocumentQueryRepository(db)
         self.storage = storage or get_storage_provider()
+        self.client_repo = ClientRecordRepository(db)
 
     def _resolve_mime(self, mime_type: str | None, filename: str) -> str:
         resolved = mime_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
@@ -104,7 +105,7 @@ class PermanentDocumentService:
         legal_entity_id: int | None = None,
     ) -> PermanentDocument:
         get_client_or_raise(self.db, client_record_id)
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if not client_record:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
@@ -272,7 +273,7 @@ class PermanentDocumentService:
         self, business_id: int, required: list[str] | None = None
     ) -> list[str]:
         business = get_business_or_raise(self.db, business_id)
-        client_record = ClientRecordRepository(self.db).get_by_legal_entity_id(
+        client_record = self.client_repo.get_by_legal_entity_id(
             business.legal_entity_id
         )
         if not client_record:

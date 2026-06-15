@@ -16,6 +16,7 @@ class BinderOperationsService:
         self.db = db
         self.repo = BinderRepository(db)
         self.list_service = BinderListService(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def get_open_binders(
         self,
@@ -49,7 +50,7 @@ class BinderOperationsService:
         page_size: int = 20,
     ) -> tuple[list[Binder], int]:
         """Get all binders for a client with pagination."""
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if not client_record:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
@@ -64,7 +65,7 @@ class BinderOperationsService:
 
     def get_active_binder_for_client(self, client_record_id: int) -> Binder | None:
         """Return the intake-eligible binder for a client, or None."""
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if not client_record:
             return None
         return self.repo.get_active_by_client_record(client_record_id)

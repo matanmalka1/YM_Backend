@@ -65,6 +65,7 @@ class AnnualReportTaxService:
         self.vat_repo = VatWorkItemRepository(db)
         self.advance_repo = AdvancePaymentAggregationRepository(db)
         self.summary_service = AnnualReportFinancialSummaryService(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def _get_report_or_raise(self, report_id: int):
         report = self.report_repo.get_by_id(report_id)
@@ -175,7 +176,7 @@ class AnnualReportTaxService:
         )
 
     def invalidate_tax_if_open(self, client_record_id: int, tax_year: int) -> None:
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if not client_record:
             return
         report = self.report_repo.get_by_client_record_year(client_record.id, tax_year)

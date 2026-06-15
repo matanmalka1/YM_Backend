@@ -37,9 +37,7 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
             )
 
     def _get_signature_client_context(self, report):
-        from app.clients.repositories.client_record_repository import ClientRecordRepository
-
-        record = ClientRecordRepository(self.db).get_by_id(report.client_record_id)
+        record = self.client_repo.get_by_id(report.client_record_id)
         if not record:
             raise NotFoundError(
                 ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=report.client_record_id),
@@ -48,9 +46,7 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
         return record
 
     def _resolve_signer_name(self, record) -> str:
-        from app.clients.repositories.client_record_repository import ClientRecordRepository
-
-        name = ClientRecordRepository(self.db).get_signer_name_by_legal_entity_id(
+        name = self.client_repo.get_signer_name_by_legal_entity_id(
             record.legal_entity_id
         )
         if not name:

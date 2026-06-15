@@ -21,8 +21,6 @@ from app.annual_reports.services.financial_summary_service import (
 from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
-from app.clients.repositories.client_record_repository import ClientRecordRepository
-
 from .base import AnnualReportBaseService
 
 
@@ -40,7 +38,7 @@ class AnnualReportQueryService(AnnualReportBaseService):
 
         from .messages import ANNUAL_REPORT_CLIENT_NOT_FOUND
 
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if client_record is None:
             raise NotFoundError(
                 ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),

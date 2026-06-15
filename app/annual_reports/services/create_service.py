@@ -9,7 +9,6 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.audit.constants import ENTITY_ANNUAL_REPORT
 from app.audit.services.entity_audit_writer import EntityAuditWriter
 from app.clients.guards.client_record_guards import assert_client_record_is_active
-from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.services.materialization_service import (
     TaxCalendarMaterializationService,
@@ -50,7 +49,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
         has_exempt_rental: bool = False,
     ) -> AnnualReport:
         """Create an annual report and initial schedules/status audit entry."""
-        client_record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if not client_record:
             from app.core.exceptions import NotFoundError
 

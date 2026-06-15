@@ -12,11 +12,12 @@ class PermanentDocumentActionService:
     def __init__(self, db: Session):
         self.db = db
         self.query_repo = PermanentDocumentQueryRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def get_document_versions(
         self, client_record_id: int, document_type: str, tax_year: int | None = None
     ) -> tuple[list[PermanentDocument], bool]:
-        record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        record = self.client_repo.get_by_id(client_record_id)
         if not record:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",

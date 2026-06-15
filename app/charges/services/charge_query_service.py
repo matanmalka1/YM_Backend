@@ -25,9 +25,10 @@ class ChargeQueryService:
         self.db = db
         self.charge_repo = ChargeRepository(db)
         self.business_repo = BusinessRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def enrich_charge_context(self, charge: Charge) -> tuple[str | None, str | None, int | None]:
-        client_record = ClientRecordRepository(self.db).get_by_id(charge.client_record_id)
+        client_record = self.client_repo.get_by_id(charge.client_record_id)
         client = get_full_record(self.db, charge.client_record_id)
         client_name = client["full_name"] if client else None
         office_number = client_record.office_client_number if client_record else None
@@ -56,7 +57,7 @@ class ChargeQueryService:
         dict[int, int | None],
     ]:
         client_record = (
-            ClientRecordRepository(self.db).get_by_id(client_record_id)
+            self.client_repo.get_by_id(client_record_id)
             if client_record_id is not None
             else None
         )
@@ -108,7 +109,7 @@ class ChargeQueryService:
         business_name_by_id = {c.id: c.full_name for c in businesses}
         client_record_ids = list({c.client_record_id for c in items})
         client_records = (
-            ClientRecordRepository(self.db).list_by_ids(client_record_ids)
+            self.client_repo.list_by_ids(client_record_ids)
             if client_record_ids
             else []
         )
@@ -169,7 +170,7 @@ class ChargeQueryService:
             return item
 
         client_record = (
-            ClientRecordRepository(self.db).get_by_id(client_record_id)
+            self.client_repo.get_by_id(client_record_id)
             if client_record_id is not None
             else None
         )

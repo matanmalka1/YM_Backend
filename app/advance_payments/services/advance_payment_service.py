@@ -35,9 +35,10 @@ class AdvancePaymentService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = AdvancePaymentRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def _get_record_or_raise(self, client_record_id: int):
-        record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        record = self.client_repo.get_by_id(client_record_id)
         if record is None:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",

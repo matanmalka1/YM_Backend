@@ -27,6 +27,7 @@ class CorrespondenceService:
         self.repo = CorrespondenceRepository(db)
         self.contact_repo = AuthorityContactRepository(db)
         self.business_repo = BusinessRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def _assert_business_belongs_to_client(self, business_id: int, legal_entity_id: int) -> None:
         """Validate optional business context belongs to the same client."""
@@ -36,7 +37,7 @@ class CorrespondenceService:
         assert_business_belongs_to_legal_entity(business, legal_entity_id)
 
     def _get_client_record_or_raise(self, client_record_id: int):
-        record = ClientRecordRepository(self.db).get_by_id(client_record_id)
+        record = self.client_repo.get_by_id(client_record_id)
         if not record:
             raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT.NOT_FOUND")
         return record

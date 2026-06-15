@@ -33,6 +33,7 @@ class AuditTrailService:
         self.db = db
         self.audit_repo = EntityAuditLogRepository(db)
         self.user_repo = UserRepository(db)
+        self.client_repo = ClientRecordRepository(db)
 
     def _validate_entity_type(self, entity_type: str) -> None:
         if entity_type not in ALLOWED_READ_ENTITY_TYPES:
@@ -40,7 +41,7 @@ class AuditTrailService:
 
     def _entity_exists(self, entity_type: str, entity_id: int) -> bool:
         if entity_type == ENTITY_CLIENT:
-            return ClientRecordRepository(self.db).get_by_id(entity_id) is not None
+            return self.client_repo.get_by_id(entity_id) is not None
         if entity_type == ENTITY_BUSINESS:
             return BusinessRepository(self.db).get_by_id(entity_id) is not None
         if entity_type == ENTITY_CHARGE:
