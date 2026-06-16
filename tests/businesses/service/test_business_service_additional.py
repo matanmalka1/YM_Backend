@@ -97,7 +97,7 @@ def test_update_business_rejects_wrong_client_id(test_db):
             status=BusinessStatus.ACTIVE.value,
         )
 
-    assert exc.value.code == "BUSINESS.NOT_FOUND"
+    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_update_business_to_active_clears_closed_at(test_db):
@@ -200,4 +200,4 @@ def test_list_businesses_for_client_raises_when_client_missing(test_db):
     with pytest.raises(NotFoundError) as exc:
         service.list_businesses_for_client(777)
 
-    assert exc.value.code == "CLIENT.NOT_FOUND"
+    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"

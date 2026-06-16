@@ -85,5 +85,5 @@ class BusinessNoteService:
             raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
         record = self.client_repo.get_by_id(client_id)
         if not record:
-            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
         assert_business_belongs_to_legal_entity(business, record.legal_entity_id)

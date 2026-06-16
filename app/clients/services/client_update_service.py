@@ -37,7 +37,7 @@ class ClientUpdateService:
     def update_client(self, client_id: int, actor_id: int | None = None, actor_role=None, **fields):
         existing = get_full_record(self.db, client_id)
         if not existing:
-            raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT.NOT_FOUND")
+            raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT_RECORD.NOT_FOUND")
         new_status = fields.get("status")
         new_entity_type = fields.get("entity_type")
         old_entity_type = existing.get("entity_type")

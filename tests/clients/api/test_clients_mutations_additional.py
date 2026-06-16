@@ -27,7 +27,7 @@ def test_get_client_not_found_returns_domain_error(client, advisor_headers):
 
     assert response.status_code == 404
     data = response.json()
-    assert data["error"]["code"] == "CLIENT.NOT_FOUND"
+    assert data["error"]["code"] == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_delete_and_restore_client_role_rules(client, advisor_headers, secretary_headers):

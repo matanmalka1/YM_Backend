@@ -111,7 +111,7 @@ def test_404_returns_not_found_code(client, advisor_headers):
     response = client.get("/api/v1/clients/99999999", headers=advisor_headers)
     assert response.status_code == 404
     err = response.json()["error"]
-    assert err["code"] == "CLIENT.NOT_FOUND"
+    assert err["code"] == "CLIENT_RECORD.NOT_FOUND"
     assert err["details"] is None or err["details"] is not None  # details key must exist
     assert "details" in err
 
@@ -216,7 +216,7 @@ def test_existing_route_runtime_404_returns_standard_error_envelope(client, advi
     assert "error_meta" not in data
 
     err = data["error"]
-    assert err["code"] == "CLIENT.NOT_FOUND"
+    assert err["code"] == "CLIENT_RECORD.NOT_FOUND"
     assert isinstance(err["message"], str)
     assert "details" in err
     assert err["request_id"] == "req-404"

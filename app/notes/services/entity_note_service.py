@@ -19,7 +19,7 @@ class EntityNoteService:
 
     def _assert_client_exists(self, client_id: int) -> None:
         if not self.client_repo.get_by_id(client_id):
-            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
 
     def _attach_created_by_names(self, notes: list[EntityNote]) -> list[EntityNote]:
         user_ids = sorted({note.created_by for note in notes if note.created_by is not None})
