@@ -87,7 +87,7 @@ def test_list_all_work_items_and_get_audit_trail(test_db):
     early.performed_at = now - timedelta(minutes=1)
     test_db.commit()
 
-    trail = service.get_audit_trail(older.id, limit=25, offset=0)
+    trail = service.get_audit_trail(older.id, page=1, page_size=25)
     assert {entry.action for entry in trail} == {"early", "late"}
 
 

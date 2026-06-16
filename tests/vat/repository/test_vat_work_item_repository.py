@@ -125,7 +125,7 @@ def test_status_listing_totals_and_audit_trail(test_db):
     early.performed_at = now - timedelta(minutes=1)
     test_db.commit()
 
-    trail = repo.get_audit_trail(oldest.id, limit=25, offset=0)
+    trail = repo.get_audit_trail(oldest.id, page=1, page_size=25)
     assert {event.action for event in trail} == {"early", "late"}
 
 
