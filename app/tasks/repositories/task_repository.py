@@ -13,14 +13,15 @@ from app.users.models.user import UserRole
 
 def _apply_filters(
     stmt,
-    status: TaskStatus | None,
-    priority: TaskPriority | None,
-    assigned_to_user_id: int | None,
-    assigned_role: UserRole | None,
-    source_domain: WorkQueueSourceType | None,
-    source_id: int | None,
-    due_before: date | None,
-    due_after: date | None,
+    *,
+    status: TaskStatus | None = None,
+    priority: TaskPriority | None = None,
+    assigned_to_user_id: int | None = None,
+    assigned_role: UserRole | None = None,
+    source_domain: WorkQueueSourceType | None = None,
+    source_id: int | None = None,
+    due_before: date | None = None,
+    due_after: date | None = None,
 ):
     if status is not None:
         stmt = stmt.where(Task.status == status)
@@ -71,25 +72,25 @@ class TaskRepository(BaseRepository[Task]):
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[Task], int]:
-        filter_args = (
-            status,
-            priority,
-            assigned_to_user_id,
-            assigned_role,
-            source_domain,
-            source_id,
-            due_before,
-            due_after,
+        filter_kwargs = dict(
+            status=status,
+            priority=priority,
+            assigned_to_user_id=assigned_to_user_id,
+            assigned_role=assigned_role,
+            source_domain=source_domain,
+            source_id=source_id,
+            due_before=due_before,
+            due_after=due_after,
         )
 
         base = _apply_filters(
             select(Task).where(Task.deleted_at.is_(None)),
-            *filter_args,
+            **filter_kwargs,
         )
 
         count_stmt = _apply_filters(
             select(func.count(Task.id)).where(Task.deleted_at.is_(None)),
-            *filter_args,
+            **filter_kwargs,
         )
         total: int = self.db.scalar(count_stmt) or 0
 
@@ -123,28 +124,19 @@ class TaskRepository(BaseRepository[Task]):
         page_size: int = 20,
     ) -> tuple[list[Task], int]:
         base_where = (Task.client_record_id == client_record_id) & Task.deleted_at.is_(None)
-        base = select(Task).where(base_where)
-        count_base = select(func.count(Task.id)).where(base_where)
+        filter_kwargs = dict(
+            status=status,
+            assigned_to_user_id=assigned_to_user_id,
+            source_domain=source_domain,
+            due_before=due_before,
+            due_after=due_after,
+        )
+        base = _apply_filters(select(Task).where(base_where), **filter_kwargs)
+        count_base = _apply_filters(select(func.count(Task.id)).where(base_where), **filter_kwargs)
 
-        def _apply(stmt):
-            if status is not None:
-                stmt = stmt.where(Task.status == status)
-            if assigned_to_user_id is not None:
-                stmt = stmt.where(Task.assigned_to_user_id == assigned_to_user_id)
-            if source_domain is not None:
-                stmt = stmt.where(Task.source_domain == source_domain)
-            if due_before is not None:
-                stmt = stmt.where(Task.due_date <= due_before)
-            if due_after is not None:
-                stmt = stmt.where(Task.due_date >= due_after)
-            return stmt
-
-        total: int = self.db.scalar(_apply(count_base)) or 0
+        total: int = self.db.scalar(count_base) or 0
         data_stmt = (
-            _apply(base)
-            .order_by(Task.created_at.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
+            base.order_by(Task.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
         )
         items = list(self.db.scalars(data_stmt).all())
         return items, total
