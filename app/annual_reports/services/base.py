@@ -69,16 +69,14 @@ class AnnualReportBaseService:
 
     def _to_responses(self, reports: list[AnnualReport]) -> list[AnnualReportResponse]:
         """
-        Project ORM instances to AnnualReportResponse, populating client context,
-        available actions, and allowed transitions. Used by detail/single paths.
+        Project ORM instances to AnnualReportResponse, populating client context
+        and allowed transitions. Used by detail/single paths.
         Reports are now client-scoped; business_name is resolved from the client's
         primary business (first non-deleted business) for display purposes.
         """
         if not reports:
             return []
         records, legal_entities = self._resolve_client_context(reports)
-
-        from app.actions.services.report_deadline_actions import get_annual_report_actions
 
         result = []
         for r in reports:
@@ -90,9 +88,6 @@ class AnnualReportBaseService:
                 obj.client_name = legal_entity.official_name
                 obj.client_id_number = legal_entity.id_number
                 obj.business_name = legal_entity.official_name
-            obj.available_actions = get_annual_report_actions(
-                r.status.value if hasattr(r.status, "value") else str(r.status)
-            )
             allowed = VALID_TRANSITIONS.get(r.status, set())
             obj.available_transitions = [
                 status for status in AnnualReportStatus if status in allowed
