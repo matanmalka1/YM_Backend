@@ -3,6 +3,9 @@
 from datetime import date
 from itertools import count
 
+from sqlalchemy import update
+
+from app.advance_payments.models.advance_payment import AdvancePayment
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -94,6 +97,38 @@ def test_overview_response_includes_effective_due_date(client, test_db, advisor_
     assert data["total"] == 1
     assert data["items"][0]["due_date"] == "2026-02-15"
     assert data["items"][0]["due_date_effective"] == "2026-02-20"
+
+
+def test_overview_response_allows_null_effective_due_date(client, test_db, advisor_headers):
+    b = _business(test_db)
+    repo = AdvancePaymentRepository(test_db)
+    payment = create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=b.client_record_id,
+        period="2026-01",
+        period_months_count=1,
+        due_date=date(2026, 2, 15),
+    )
+    # Force legacy/null effective due date state; repository insert defaults it from due_date.
+    test_db.execute(
+        update(AdvancePayment)
+        .where(AdvancePayment.id == payment.id)
+        .values(due_date_effective=None)
+        .execution_options(synchronize_session=False)
+    )
+    test_db.commit()
+
+    resp = client.get(
+        f"{PATH}?year=2026&client_record_id={b.client_record_id}&page=1&page_size=10",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    assert data["items"][0]["due_date"] == "2026-02-15"
+    assert data["items"][0]["due_date_effective"] is None
 
 
 def test_overview_due_date_includes_monthly_and_bimonthly_rows(
