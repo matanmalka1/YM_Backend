@@ -1,4 +1,5 @@
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
+from app.clients.models.client_record import ClientRecord
 from app.utils.time_utils import utcnow
 from tests.tax_calendar.api.grouped_helpers import (
     add_advance_payment,
@@ -131,6 +132,42 @@ def test_deleted_rows_are_not_returned(client, auth_token, test_db, test_user):
     entry = vat_entry(test_db)
     item = add_vat_item(test_db, entry, test_user.id)
     item.deleted_at = utcnow()
+    test_db.commit()
+
+    response = client.get(_path(entry.id), headers=headers(auth_token))
+
+    assert response.status_code == 200
+    assert _items(response) == []
+
+
+def test_soft_deleted_client_rows_are_not_returned_vat(client, auth_token, test_db, test_user):
+    entry = vat_entry(test_db)
+    item = add_vat_item(test_db, entry, test_user.id)
+    test_db.get(ClientRecord, item.client_record_id).deleted_at = utcnow()
+    test_db.commit()
+
+    response = client.get(_path(entry.id), headers=headers(auth_token))
+
+    assert response.status_code == 200
+    assert _items(response) == []
+
+
+def test_soft_deleted_client_rows_are_not_returned_advance(client, auth_token, test_db):
+    entry = advance_entry(test_db)
+    payment = add_advance_payment(test_db, entry)
+    test_db.get(ClientRecord, payment.client_record_id).deleted_at = utcnow()
+    test_db.commit()
+
+    response = client.get(_path(entry.id), headers=headers(auth_token))
+
+    assert response.status_code == 200
+    assert _items(response) == []
+
+
+def test_soft_deleted_client_rows_are_not_returned_annual(client, auth_token, test_db):
+    entry = annual_entry(test_db)
+    report = add_annual_report(test_db, entry)
+    test_db.get(ClientRecord, report.client_record_id).deleted_at = utcnow()
     test_db.commit()
 
     response = client.get(_path(entry.id), headers=headers(auth_token))

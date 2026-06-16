@@ -3,11 +3,11 @@ from typing import Any
 
 from sqlalchemy import String, case, cast, func, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import Select
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.models.client_record import ClientRecord
+from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.enums import ObligationType
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
@@ -106,7 +106,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             .where(VatWorkItem.deleted_at.is_(None))
         )
         stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
-        stmt = self._scope_to_active_clients(stmt, VatWorkItem)
+        stmt = scope_to_active_clients_stmt(stmt, VatWorkItem, join_legal_entity=True)
         if client_record_id is not None:
             stmt = stmt.where(VatWorkItem.client_record_id == client_record_id)
         stmt = self._apply_client_search(stmt, VatWorkItem, client_search)
@@ -133,7 +133,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             .where(AdvancePayment.deleted_at.is_(None))
         )
         stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
-        stmt = self._scope_to_active_clients(stmt, AdvancePayment)
+        stmt = scope_to_active_clients_stmt(stmt, AdvancePayment, join_legal_entity=True)
         if client_record_id is not None:
             stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
         stmt = self._apply_client_search(stmt, AdvancePayment, client_search)
@@ -160,7 +160,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             .where(AnnualReport.deleted_at.is_(None))
         )
         stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
-        stmt = self._scope_to_active_clients(stmt, AnnualReport)
+        stmt = scope_to_active_clients_stmt(stmt, AnnualReport, join_legal_entity=True)
         if client_record_id is not None:
             stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
         stmt = self._apply_client_search(stmt, AnnualReport, client_search)
@@ -173,16 +173,6 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         if tax_year_before is not None:
             stmt = stmt.where(TaxCalendarEntry.tax_year <= tax_year_before)
         return stmt
-
-    @staticmethod
-    def _scope_to_active_clients(stmt: Select, model: type) -> Select:
-        # Joins ClientRecord + LegalEntity so client_search can add WHERE
-        # predicates against either without re-joining.
-        return (
-            stmt.join(ClientRecord, ClientRecord.id == model.client_record_id)
-            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
-            .where(ClientRecord.deleted_at.is_(None))
-        )
 
     @staticmethod
     def _apply_client_search(stmt, model, client_search: str | None):
@@ -259,10 +249,7 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         return [GroupedItemRow(row=r[0], client=r[1], legal_entity=r[2]) for r in rows]
 
     def _with_client(self, model):
-        return (
-            select(model, ClientRecord, LegalEntity)
-            .join(ClientRecord, model.client_record_id == ClientRecord.id)
-            .join(LegalEntity, ClientRecord.legal_entity_id == LegalEntity.id)
-            .where(ClientRecord.deleted_at.is_(None))
-            .order_by(ClientRecord.office_client_number.asc(), model.id.asc())
+        stmt = scope_to_active_clients_stmt(
+            select(model, ClientRecord, LegalEntity), model, join_legal_entity=True
         )
+        return stmt.order_by(ClientRecord.office_client_number.asc(), model.id.asc())

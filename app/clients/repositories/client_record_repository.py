@@ -204,7 +204,7 @@ class ClientRecordRepository:
         accountant_id: int | None = None,
         entity_type: EntityType | None = None,
         sort_by: str = "official_name",
-        order: SortOrder = SortOrder.asc,
+        order: SortOrder | str = SortOrder.asc,
         page: int = 1,
         page_size: int = 20,
     ) -> list[ClientRecord]:
@@ -216,7 +216,8 @@ class ClientRecordRepository:
             sort_col = case(order_map, value=LegalEntity.entity_type)
         else:
             sort_col = self._SORTABLE_FIELDS.get(sort_by, LegalEntity.official_name)
-        stmt = stmt.order_by(desc(sort_col) if order == SortOrder.desc else asc(sort_col))
+        order = SortOrder(order)
+        stmt = stmt.order_by(desc(sort_col) if order is SortOrder.desc else asc(sort_col))
         offset = (page - 1) * page_size
         return list(self.db.scalars(stmt.offset(offset).limit(page_size)).all())
 
@@ -224,7 +225,7 @@ class ClientRecordRepository:
         self,
         search: str | None = None,
         sort_by: str = "full_name",
-        order: SortOrder = SortOrder.asc,
+        order: SortOrder | str = SortOrder.asc,
         page: int = 1,
         page_size: int = 100,
     ):
@@ -258,7 +259,8 @@ class ClientRecordRepository:
         sort_col = (
             ClientRecord.office_client_number if sort_by == "office_client_number" else full_name
         )
-        stmt = stmt.order_by(desc(sort_col) if order == SortOrder.desc else asc(sort_col))
+        order = SortOrder(order)
+        stmt = stmt.order_by(desc(sort_col) if order is SortOrder.desc else asc(sort_col))
         offset = (page - 1) * page_size
         return self.db.execute(stmt.offset(offset).limit(page_size)).mappings().all()
 
