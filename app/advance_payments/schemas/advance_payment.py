@@ -164,11 +164,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     model_config = {"from_attributes": False, "use_enum_values": True}
 
 
-class AdvancePaymentOverviewResponse(BaseModel):
-    items: list[AdvancePaymentOverviewRow]
-    page: int
-    page_size: int
-    total: int
+class AdvancePaymentOverviewResponse(PaginatedResponse[AdvancePaymentOverviewRow]):
     total_expected: ApiDecimal | None = None
     total_paid: ApiDecimal | None = None
     collection_rate: ApiDecimal | None = None  # 0.00–100.00

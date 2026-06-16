@@ -4,7 +4,7 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.core.api_types import ApiDateTime
+from app.core.api_types import ApiDateTime, PaginatedResponse
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -131,11 +131,8 @@ class NotificationSummaryResponse(BaseModel):
     total: int = 0
 
 
-class NotificationListResponse(BaseModel):
-    items: list[NotificationListItem]
-    total: int
-    page: int
-    page_size: int
+class NotificationListResponse(PaginatedResponse[NotificationListItem]):
+    pass
 
 
 # ── Bulk result ───────────────────────────────────────────────────────────────

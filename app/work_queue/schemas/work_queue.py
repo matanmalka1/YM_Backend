@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from app.common.source_types import WorkQueueSourceType
 from app.core.action_schemas import ActionDescriptor
+from app.core.api_types import PaginatedResponse
 from app.users.models.user import UserRole
 
 
@@ -92,9 +93,5 @@ class WorkQueueSummary(BaseModel):
     by_task_status: dict[str, int]
 
 
-class WorkQueueListResponse(BaseModel):
-    items: list[WorkQueueItem]
-    total: int
-    page: int
-    page_size: int
+class WorkQueueListResponse(PaginatedResponse[WorkQueueItem]):
     summary: WorkQueueSummary

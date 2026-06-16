@@ -1,6 +1,6 @@
 from pydantic import BaseModel, model_validator
 
-from app.core.api_types import ApiDateTime, NonBlankStr
+from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
@@ -50,11 +50,8 @@ class PermanentDocumentUpdateRequest(NonEmptyUpdateMixin):
         return self
 
 
-class PermanentDocumentListResponse(BaseModel):
-    items: list[PermanentDocumentResponse]
-    total: int
-    page: int
-    page_size: int
+class PermanentDocumentListResponse(PaginatedResponse[PermanentDocumentResponse]):
+    pass
 
 
 class DocumentVersionsResponse(BaseModel):

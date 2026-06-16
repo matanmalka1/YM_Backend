@@ -90,11 +90,7 @@ class ChargeListStats(BaseModel):
     canceled: ChargeStatusStat = ChargeStatusStat()
 
 
-class ChargeListResponse(BaseModel):
-    items: list[ChargeListItem]
-    page: int
-    page_size: int
-    total: int
+class ChargeListResponse(PaginatedResponse[ChargeListItem]):
     stats: ChargeListStats
 
 

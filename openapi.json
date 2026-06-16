@@ -20869,6 +20869,25 @@
       },
       "AgingReportResponse": {
         "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/AgingReportItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
           "report_date": {
             "type": "string",
             "format": "date",
@@ -20882,38 +20901,19 @@
               "123.45"
             ]
           },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/AgingReportItemResponse"
-            },
-            "type": "array",
-            "title": "Items"
-          },
           "summary": {
             "$ref": "#/components/schemas/AgingReportSummaryResponse"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
           }
         },
         "type": "object",
         "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
           "report_date",
           "total_outstanding",
-          "items",
-          "summary",
-          "total",
-          "page",
-          "page_size"
+          "summary"
         ],
         "title": "AgingReportResponse"
       },
@@ -25389,10 +25389,6 @@
       },
       "ClientBusinessesResponse": {
         "properties": {
-          "client_id": {
-            "type": "integer",
-            "title": "Client Id"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/BusinessResponse"
@@ -25411,15 +25407,19 @@
           "total": {
             "type": "integer",
             "title": "Total"
+          },
+          "client_id": {
+            "type": "integer",
+            "title": "Client Id"
           }
         },
         "type": "object",
         "required": [
-          "client_id",
           "items",
           "page",
           "page_size",
-          "total"
+          "total",
+          "client_id"
         ],
         "title": "ClientBusinessesResponse",
         "description": "רשימת עסקים של לקוח ספציפי."
@@ -27422,10 +27422,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -27433,14 +27429,18 @@
           "page_size": {
             "type": "integer",
             "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
-          "page_size"
+          "page_size",
+          "total"
         ],
         "title": "EntityAuditTrailResponse"
       },
@@ -28860,10 +28860,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -28871,14 +28867,18 @@
           "page_size": {
             "type": "integer",
             "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
-          "page_size"
+          "page_size",
+          "total"
         ],
         "title": "NotificationListResponse"
       },
@@ -29499,10 +29499,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -29510,14 +29506,18 @@
           "page_size": {
             "type": "integer",
             "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
-          "page_size"
+          "page_size",
+          "total"
         ],
         "title": "PermanentDocumentListResponse"
       },
@@ -33189,14 +33189,6 @@
       },
       "TaxCalendarGroupItemsResponse": {
         "properties": {
-          "tax_calendar_entry_id": {
-            "type": "integer",
-            "title": "Tax Calendar Entry Id"
-          },
-          "obligation_type": {
-            "type": "string",
-            "title": "Obligation Type"
-          },
           "items": {
             "items": {
               "$ref": "#/components/schemas/TaxCalendarGroupItem"
@@ -33206,25 +33198,33 @@
           },
           "page": {
             "type": "integer",
-            "title": "Page",
-            "default": 1
+            "title": "Page"
           },
           "page_size": {
             "type": "integer",
-            "title": "Page Size",
-            "default": 50
+            "title": "Page Size"
           },
           "total": {
             "type": "integer",
-            "title": "Total",
-            "default": 0
+            "title": "Total"
+          },
+          "tax_calendar_entry_id": {
+            "type": "integer",
+            "title": "Tax Calendar Entry Id"
+          },
+          "obligation_type": {
+            "type": "string",
+            "title": "Obligation Type"
           }
         },
         "type": "object",
         "required": [
+          "items",
+          "page",
+          "page_size",
+          "total",
           "tax_calendar_entry_id",
-          "obligation_type",
-          "items"
+          "obligation_type"
         ],
         "title": "TaxCalendarGroupItemsResponse"
       },
@@ -34153,10 +34153,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -34164,14 +34160,18 @@
           "page_size": {
             "type": "integer",
             "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
-          "page_size"
+          "page_size",
+          "total"
         ],
         "title": "VatAuditTrailResponse"
       },
@@ -34424,17 +34424,12 @@
       },
       "VatComplianceReportResponse": {
         "properties": {
-          "year": {
-            "type": "integer",
-            "title": "Year"
-          },
-          "total_clients": {
-            "type": "integer",
-            "title": "Total Clients"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/VatComplianceReportItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
           },
           "page": {
             "type": "integer",
@@ -34444,12 +34439,17 @@
             "type": "integer",
             "title": "Page Size"
           },
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/VatComplianceReportItemResponse"
-            },
-            "type": "array",
-            "title": "Items"
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "total_clients": {
+            "type": "integer",
+            "title": "Total Clients"
           },
           "stale_pending": {
             "items": {
@@ -34461,12 +34461,12 @@
         },
         "type": "object",
         "required": [
-          "year",
-          "total_clients",
-          "total",
+          "items",
           "page",
           "page_size",
-          "items",
+          "total",
+          "year",
+          "total_clients",
           "stale_pending"
         ],
         "title": "VatComplianceReportResponse"
@@ -34703,10 +34703,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -34714,14 +34710,18 @@
           "page_size": {
             "type": "integer",
             "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
-          "page_size"
+          "page_size",
+          "total"
         ],
         "title": "VatInvoiceListResponse"
       },
@@ -35620,10 +35620,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -35631,14 +35627,18 @@
           "page_size": {
             "type": "integer",
             "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
           }
         },
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
-          "page_size"
+          "page_size",
+          "total"
         ],
         "title": "VatWorkItemListResponse"
       },
@@ -36274,10 +36274,6 @@
             "type": "array",
             "title": "Items"
           },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -36286,6 +36282,10 @@
             "type": "integer",
             "title": "Page Size"
           },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
           "summary": {
             "$ref": "#/components/schemas/WorkQueueSummary"
           }
@@ -36293,9 +36293,9 @@
         "type": "object",
         "required": [
           "items",
-          "total",
           "page",
           "page_size",
+          "total",
           "summary"
         ],
         "title": "WorkQueueListResponse"

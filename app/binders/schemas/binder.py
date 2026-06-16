@@ -80,11 +80,7 @@ class BinderListCounters(BaseModel):
     capacity_full: int
 
 
-class BinderListResponse(BaseModel):
-    items: list[BinderResponse]
-    page: int
-    page_size: int
-    total: int
+class BinderListResponse(PaginatedResponse[BinderResponse]):
     counters: BinderListCounters
 
 

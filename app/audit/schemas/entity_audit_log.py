@@ -2,7 +2,7 @@
 
 from pydantic import BaseModel
 
-from app.core.api_types import ApiDateTime
+from app.core.api_types import ApiDateTime, PaginatedResponse
 
 
 class EntityAuditLogResponse(BaseModel):
@@ -20,8 +20,5 @@ class EntityAuditLogResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class EntityAuditTrailResponse(BaseModel):
-    items: list[EntityAuditLogResponse]
-    total: int
-    page: int
-    page_size: int
+class EntityAuditTrailResponse(PaginatedResponse[EntityAuditLogResponse]):
+    pass

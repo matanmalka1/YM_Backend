@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
-from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 from app.utils.id_validation import validate_israeli_id_checksum
 from app.vat.models.vat_enums import (
     CounterpartyIdType,
@@ -140,11 +140,8 @@ class VatInvoiceResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class VatInvoiceListResponse(BaseModel):
+class VatInvoiceListResponse(PaginatedResponse[VatInvoiceResponse]):
     # Non-paginated bounded child collection (all invoices for one work item).
     # Envelope fields are populated for shape consistency, not real pagination:
     # total == len(items), page == 1, page_size == len(items).
-    items: list[VatInvoiceResponse]
-    total: int
-    page: int
-    page_size: int
+    pass

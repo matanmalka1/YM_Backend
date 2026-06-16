@@ -98,11 +98,7 @@ class BusinessListResponse(PaginatedResponse[BusinessWithClientResponse]):
     pass
 
 
-class ClientBusinessesResponse(BaseModel):
+class ClientBusinessesResponse(PaginatedResponse[BusinessResponse]):
     """רשימת עסקים של לקוח ספציפי."""
 
     client_id: int
-    items: list[BusinessResponse]
-    page: int
-    page_size: int
-    total: int

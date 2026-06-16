@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field, field_validator
 
 from app.common.enums import SubmissionMethod, VatType
 from app.core.action_schemas import ActionDescriptor
-from app.core.api_types import ApiDateTime, ApiDecimal, PeriodStr
+from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.vat.models.vat_enums import VatWorkItemStatus
 
@@ -100,11 +100,8 @@ class VatWorkItemListItem(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class VatWorkItemListResponse(BaseModel):
-    items: list[VatWorkItemListItem]
-    total: int
-    page: int
-    page_size: int
+class VatWorkItemListResponse(PaginatedResponse[VatWorkItemListItem]):
+    pass
 
 
 class VatWorkItemStatusSummaryResponse(BaseModel):

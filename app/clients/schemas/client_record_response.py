@@ -7,7 +7,7 @@ from app.businesses.schemas.business_schemas import BusinessResponse
 from app.clients.enums import ClientStatus
 from app.clients.schemas.impact import ClientCreationImpactResponse
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
-from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 
 TurnoverSource = Literal["reported", "manual", "none"]
 
@@ -84,11 +84,7 @@ class ClientRecordListStats(BaseModel):
     closed: int = 0
 
 
-class ClientRecordListResponse(BaseModel):
-    items: list[ClientRecordListItem]
-    page: int
-    page_size: int
-    total: int
+class ClientRecordListResponse(PaginatedResponse[ClientRecordListItem]):
     stats: ClientRecordListStats
 
 
@@ -102,11 +98,8 @@ class ClientSidebarItemResponse(BaseModel):
     vat_reporting_frequency: VatType | None = None
 
 
-class ClientSidebarListResponse(BaseModel):
-    items: list[ClientSidebarItemResponse]
-    page: int
-    page_size: int
-    total: int
+class ClientSidebarListResponse(PaginatedResponse[ClientSidebarItemResponse]):
+    pass
 
 
 class CreateClientRecordResponse(BaseModel):

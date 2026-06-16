@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 from pydantic import BaseModel, field_validator, model_validator
 
 from app.communications.models.correspondence import CorrespondenceType
-from app.core.api_types import ApiDateTime, NonBlankStr
+from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
@@ -68,13 +68,9 @@ class CorrespondenceResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class CorrespondenceListResponse(BaseModel):
+class CorrespondenceListResponse(PaginatedResponse[CorrespondenceResponse]):
     # #42: total_pages removed — it's derived (ceil(total/page_size)) and computed
     # client-side; envelope matches the standard PaginatedResponse shape.
-    items: list[CorrespondenceResponse]
-    page: int
-    page_size: int
-    total: int
 
     @classmethod
     def build(

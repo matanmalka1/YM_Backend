@@ -6,7 +6,7 @@ from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     PrimaryAnnualReportForm,
 )
-from app.core.api_types import ApiDateTime, ApiDecimal
+from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 
 
 class VatComplianceReportItemResponse(BaseModel):
@@ -30,13 +30,9 @@ class VatComplianceStalePendingResponse(BaseModel):
     days_pending: int
 
 
-class VatComplianceReportResponse(BaseModel):
+class VatComplianceReportResponse(PaginatedResponse[VatComplianceReportItemResponse]):
     year: int
     total_clients: int
-    total: int
-    page: int
-    page_size: int
-    items: list[VatComplianceReportItemResponse]
     stale_pending: list[VatComplianceStalePendingResponse]
 
 
@@ -100,11 +96,7 @@ class AgingReportSummaryResponse(BaseModel):
     total_90_plus: ApiDecimal
 
 
-class AgingReportResponse(BaseModel):
+class AgingReportResponse(PaginatedResponse[AgingReportItemResponse]):
     report_date: date
     total_outstanding: ApiDecimal
-    items: list[AgingReportItemResponse]
     summary: AgingReportSummaryResponse
-    total: int
-    page: int
-    page_size: int
