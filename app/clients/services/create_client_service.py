@@ -268,7 +268,6 @@ class CreateClientService:
             client=self.client_query_service.get_full_client(client_record.id),
             business=ClientBusinessService(self.db).to_response(
                 business,
-                actor_role,
                 client_id=client_record.id,
             ),
             impact=impact,

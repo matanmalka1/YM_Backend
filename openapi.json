@@ -21697,13 +21697,6 @@
             "type": "integer",
             "title": "Created By"
           },
-          "available_actions": {
-            "items": {
-              "$ref": "#/components/schemas/ActionDescriptor"
-            },
-            "type": "array",
-            "title": "Available Actions"
-          },
           "available_transitions": {
             "items": {
               "$ref": "#/components/schemas/AnnualReportStatus"
@@ -22355,13 +22348,6 @@
           "created_by": {
             "type": "integer",
             "title": "Created By"
-          },
-          "available_actions": {
-            "items": {
-              "$ref": "#/components/schemas/ActionDescriptor"
-            },
-            "type": "array",
-            "title": "Available Actions"
           },
           "available_transitions": {
             "items": {
@@ -24648,13 +24634,6 @@
               }
             ],
             "title": "Updated At"
-          },
-          "available_actions": {
-            "items": {
-              "$ref": "#/components/schemas/ActionDescriptor"
-            },
-            "type": "array",
-            "title": "Available Actions"
           }
         },
         "type": "object",

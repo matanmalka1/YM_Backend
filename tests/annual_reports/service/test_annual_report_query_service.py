@@ -49,7 +49,6 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
         "schedules",
         "status_audit",
         "tax_calculation",
-        "available_actions",
         "available_transitions",
         "notes",
         "created_by",
@@ -80,9 +79,8 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     # Removed duplicate float copies (item 35) are gone.
     assert not hasattr(detail, "tax_refund_amount")
     assert not hasattr(detail, "tax_due_amount")
-    # Detail still carries detail-only + action/transition fields.
+    # Detail still carries detail-only + transition fields.
     assert len(detail.status_audit) >= 1
-    assert hasattr(detail, "available_actions")
     assert hasattr(detail, "available_transitions")
 
 

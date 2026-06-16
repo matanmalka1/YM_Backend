@@ -44,7 +44,7 @@ def create_business(
         notes=request.notes,
         actor_id=user.id,
     )
-    return ClientBusinessService(db).to_response(business, user.role, client_id=client_record_id)
+    return ClientBusinessService(db).to_response(business, client_id=client_record_id)
 
 
 @client_businesses_router.get(
@@ -61,7 +61,6 @@ def list_client_businesses(
 ):
     return ClientBusinessService(db).list_for_client(
         client_record_id,
-        user.role,
         page=page,
         page_size=page_size,
     )
@@ -75,7 +74,7 @@ def list_client_businesses(
 def get_business(client_record_id: PathId, business_id: PathId, db: DBSession, user: CurrentUser):
     service = ClientBusinessService(db)
     business = service.get_for_client(client_record_id, business_id)
-    return service.to_response(business, user.role, client_id=client_record_id)
+    return service.to_response(business, client_id=client_record_id)
 
 
 @client_businesses_router.patch(
@@ -97,7 +96,7 @@ def update_business(
         actor_id=user.id,
         **request.model_dump(exclude_unset=True),
     )
-    return ClientBusinessService(db).to_response(business, user.role, client_id=client_record_id)
+    return ClientBusinessService(db).to_response(business, client_id=client_record_id)
 
 
 @client_businesses_router.delete(
@@ -129,4 +128,4 @@ def restore_business(
         actor_id=user.id,
         actor_role=user.role,
     )
-    return service.to_response(business, user.role, client_id=client_record_id)
+    return service.to_response(business, client_id=client_record_id)

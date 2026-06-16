@@ -70,6 +70,7 @@ def list_advance_payments_overview(
             period=row.payment.period,
             period_months_count=row.payment.period_months_count,
             due_date=row.payment.due_date,
+            due_date_effective=row.payment.due_date_effective,
             expected_amount=row.payment.expected_amount,
             paid_amount=row.payment.paid_amount,
             status=row.payment.status,

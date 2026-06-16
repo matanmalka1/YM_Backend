@@ -2,7 +2,6 @@
 
 from sqlalchemy.orm import Session
 
-from app.actions.services.action_registry import get_business_actions
 from app.businesses.models.business import Business
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.businesses.schemas.business_schemas import (
@@ -25,21 +24,16 @@ class ClientBusinessService:
         self.business_repo = BusinessRepository(db)
 
     def to_response(
-        self, business: Business, user_role: UserRole, client_id: int | None = None
+        self, business: Business, client_id: int | None = None
     ) -> BusinessResponse:
         response = BusinessResponse.model_validate(business)
         if client_id is not None:
             response.client_id = client_id
-        response.available_actions = get_business_actions(
-            business,
-            user_role=user_role,
-        )
         return response
 
     def list_for_client(
         self,
         client_id: int,
-        user_role: UserRole,
         *,
         page: int = 1,
         page_size: int = 20,
@@ -51,9 +45,7 @@ class ClientBusinessService:
         )
         return ClientBusinessesResponse(
             client_id=client_id,
-            items=[
-                self.to_response(business, user_role, client_id=client_id) for business in items
-            ],
+            items=[self.to_response(business, client_id=client_id) for business in items],
             page=page,
             page_size=page_size,
             total=total,

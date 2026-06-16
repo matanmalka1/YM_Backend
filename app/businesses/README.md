@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/businesses tests/actions/test_business_actions.py -q
+pytest tests/businesses -q
 ```

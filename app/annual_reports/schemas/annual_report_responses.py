@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportSchedule,
@@ -9,7 +9,6 @@ from app.annual_reports.models.annual_report_enums import (
     PrimaryAnnualReportForm,
     SubmissionMethod,
 )
-from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 
 
@@ -43,7 +42,6 @@ class AnnualReportResponse(BaseModel):
     updated_at: ApiDateTime
     assigned_to: int | None = None
     created_by: int
-    available_actions: list[ActionDescriptor] = Field(default_factory=list)
     available_transitions: list[AnnualReportStatus] = []
 
     model_config = {"from_attributes": True}
