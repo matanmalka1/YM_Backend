@@ -3,23 +3,15 @@ from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 
 
 def test_get_annual_report_actions_submitted_has_amend_only():
-    actions = get_annual_report_actions(
-        report_id=8,
-        status=AnnualReportStatus.SUBMITTED.value,
-    )
+    actions = get_annual_report_actions(status=AnnualReportStatus.SUBMITTED.value)
 
     assert [action.key for action in actions] == ["amend"]
-    assert actions[0].endpoint == "/annual-reports/8/amend"
 
 
 def test_get_annual_report_actions_open_status_has_submit():
-    actions = get_annual_report_actions(
-        report_id=9,
-        status=AnnualReportStatus.IN_PREPARATION.value,
-    )
+    actions = get_annual_report_actions(status=AnnualReportStatus.IN_PREPARATION.value)
 
     assert [action.key for action in actions] == ["submit"]
-    assert actions[0].endpoint == "/annual-reports/9/submit"
 
 
 def test_get_annual_report_actions_closed_states_have_no_actions():
@@ -29,4 +21,4 @@ def test_get_annual_report_actions_closed_states_have_no_actions():
     ]
 
     for state in statuses:
-        assert get_annual_report_actions(report_id=10, status=state) == []
+        assert get_annual_report_actions(status=state) == []

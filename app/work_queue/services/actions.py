@@ -68,7 +68,6 @@ def task_actions(
                 _mutation(
                     f"complete_task{suffix}",
                     f"סמן כהושלמה{label_suffix}",
-                    f"/tasks/{task_id}/complete",
                     task_id=task_id,
                     confirm_title="השלמת משימה",
                     confirm_message="האם לסמן את המשימה כהושלמה?",
@@ -77,7 +76,6 @@ def task_actions(
                 _mutation(
                     f"cancel_task{suffix}",
                     f"בטל משימה{label_suffix}",
-                    f"/tasks/{task_id}/cancel",
                     task_id=task_id,
                     confirm_title="ביטול משימה",
                     confirm_message="האם לבטל את המשימה?",
@@ -101,7 +99,6 @@ def task_actions(
                     _mutation(
                         f"complete_task{suffix}",
                         f"סמן כהושלמה{label_suffix}",
-                        f"/tasks/{task_id}/complete",
                         task_id=task_id,
                         variant="primary",
                     ),
@@ -111,7 +108,6 @@ def task_actions(
                     _mutation(
                         f"cancel_task{suffix}",
                         f"בטל משימה{label_suffix}",
-                        f"/tasks/{task_id}/cancel",
                         task_id=task_id,
                         variant="danger",
                     ),
@@ -124,9 +120,7 @@ def task_actions(
             _mutation(
                 f"delete_task{suffix}",
                 f"מחק משימה{label_suffix}",
-                f"/tasks/{task_id}",
                 task_id=task_id,
-                method="delete",
                 confirm_title="מחיקת משימה",
                 confirm_message="האם למחוק את המשימה? המחיקה לא תשפיע על מקור המערכת.",
                 variant="danger",

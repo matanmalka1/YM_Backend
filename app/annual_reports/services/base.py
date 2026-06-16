@@ -91,7 +91,7 @@ class AnnualReportBaseService:
                 obj.client_id_number = legal_entity.id_number
                 obj.business_name = legal_entity.official_name
             obj.available_actions = get_annual_report_actions(
-                r.id, r.status.value if hasattr(r.status, "value") else str(r.status)
+                r.status.value if hasattr(r.status, "value") else str(r.status)
             )
             allowed = VALID_TRANSITIONS.get(r.status, set())
             obj.available_transitions = [

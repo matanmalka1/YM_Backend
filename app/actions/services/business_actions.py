@@ -9,14 +9,9 @@ from app.users.models.user import UserRole
 def get_business_actions(
     business: Business,
     user_role: UserRole | None = None,
-    client_id: int | None = None,
 ) -> list[ActionDescriptor]:
-    """Return executable actions for a business (role-aware)."""
+    """Return available actions for a business (role-aware)."""
     status = business.status
-    client_id = client_id if client_id is not None else getattr(business, "client_id", None)
-    if client_id is None:
-        raise ValueError("Business actions require client_id for endpoint construction")
-    endpoint = f"/clients/{client_id}/businesses/{business.id}"
     actions: list[ActionDescriptor] = []
 
     if status == BusinessStatus.ACTIVE and user_role == UserRole.ADVISOR:
@@ -24,9 +19,6 @@ def get_business_actions(
             mutation_action(
                 key="freeze",
                 label="הקפאת עסק",
-                method="patch",
-                endpoint=endpoint,
-                payload_schema="simple",
                 confirm_title="אישור הקפאת עסק",
                 confirm_message="האם להקפיא את העסק?",
             )
@@ -35,9 +27,6 @@ def get_business_actions(
             mutation_action(
                 key="close",
                 label="סגירת עסק",
-                method="patch",
-                endpoint=endpoint,
-                payload_schema="simple",
                 confirm_title="אישור סגירת עסק",
                 confirm_message="האם לסגור את העסק?",
             )
@@ -48,9 +37,6 @@ def get_business_actions(
             mutation_action(
                 key="activate",
                 label="הפעלת עסק",
-                method="patch",
-                endpoint=endpoint,
-                payload_schema="simple",
             )
         )
         if user_role == UserRole.ADVISOR:
@@ -58,9 +44,6 @@ def get_business_actions(
                 mutation_action(
                     key="close",
                     label="סגירת עסק",
-                    method="patch",
-                    endpoint=endpoint,
-                    payload_schema="simple",
                     confirm_title="אישור סגירת עסק",
                     confirm_message="האם לסגור את העסק?",
                 )

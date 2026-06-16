@@ -19660,35 +19660,6 @@
             ],
             "title": "Route"
           },
-          "endpoint": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Endpoint"
-          },
-          "method": {
-            "anyOf": [
-              {
-                "type": "string",
-                "enum": [
-                  "get",
-                  "post",
-                  "patch",
-                  "put",
-                  "delete"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Method"
-          },
           "task_id": {
             "anyOf": [
               {
@@ -19699,16 +19670,6 @@
               }
             ],
             "title": "Task Id"
-          },
-          "payload_schema": {
-            "type": "string",
-            "enum": [
-              "none",
-              "simple",
-              "requires_input"
-            ],
-            "title": "Payload Schema",
-            "default": "none"
           },
           "confirm": {
             "type": "boolean",
@@ -19770,7 +19731,8 @@
           "label",
           "type"
         ],
-        "title": "ActionDescriptor"
+        "title": "ActionDescriptor",
+        "description": "Availability metadata: which action a resource currently exposes.\n\nDescriptors are NOT executable commands. The frontend reads ``key`` to know\nan action is available and routes it to a typed API client/hook; it never\nexecutes a descriptor-supplied endpoint/method/payload. The remaining fields\nare presentation/UX metadata consumed by the work-queue UI (label, type,\nroute for link actions, confirm dialog text, variant, disabled state).\nTarget endpoints/services remain the source of truth for authorization and\nbusiness validation."
       },
       "ActiveClientSummary": {
         "properties": {

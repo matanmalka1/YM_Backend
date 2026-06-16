@@ -26,27 +26,21 @@ def link_action(
 def mutation_action(
     key: str,
     label: str,
-    endpoint: str,
     *,
-    method: Literal["get", "post", "patch", "put", "delete"] = "post",
     task_id: int | None = None,
     confirm_title: str | None = None,
     confirm_message: str | None = None,
     variant: ActionVariant = "secondary",
-    payload_schema: Literal["none", "simple", "requires_input"] = "none",
 ) -> ActionDescriptor:
     return ActionDescriptor(
         key=key,
         label=label,
         type="mutation",
-        endpoint=endpoint,
-        method=method,
         task_id=task_id,
         confirm=confirm_title is not None or confirm_message is not None,
         confirm_title=confirm_title,
         confirm_message=confirm_message,
         variant=variant,
-        payload_schema=payload_schema,
     )
 
 

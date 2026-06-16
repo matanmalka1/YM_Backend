@@ -33,7 +33,6 @@ class ClientBusinessService:
         response.available_actions = get_business_actions(
             business,
             user_role=user_role,
-            client_id=response.client_id,
         )
         return response
 

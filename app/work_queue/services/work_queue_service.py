@@ -453,7 +453,6 @@ class WorkQueueService:
                     severity="info",
                 )
             )
-        existing_endpoints = {action.endpoint for action in item.available_actions}
         existing_keys = {action.key for action in item.available_actions}
         task_row_actions = task_actions(
             task.id,
@@ -465,20 +464,13 @@ class WorkQueueService:
         if item.linked_tasks_count == 1 and task_row_actions:
             first, *rest = task_row_actions
             item.available_actions = [first, *item.available_actions]
-            existing_endpoints.add(first.endpoint)
             existing_keys.add(first.key)
             task_row_actions = rest
         for action in task_row_actions:
-            if action.endpoint is None:
-                if action.key in existing_keys:
-                    continue
-                item.available_actions.append(action)
-                existing_keys.add(action.key)
+            if action.key in existing_keys:
                 continue
-            if action.endpoint not in existing_endpoints:
-                item.available_actions.append(action)
-                existing_endpoints.add(action.endpoint)
-                existing_keys.add(action.key)
+            item.available_actions.append(action)
+            existing_keys.add(action.key)
         if item.linked_tasks_count > 1:
             self._label_linked_task_actions(item)
         if task.due_date is not None:

@@ -16,7 +16,7 @@ def get_vat_work_item_actions(
     *,
     user_role: UserRole | str | None = None,
 ) -> list[ActionDescriptor]:
-    """Return executable actions for a VAT work item."""
+    """Return available actions for a VAT work item."""
     status = item.status
     actions: list[ActionDescriptor] = []
 
@@ -25,7 +25,6 @@ def get_vat_work_item_actions(
             mutation_action(
                 key="materials_complete",
                 label="אישור קבלת חומרים",
-                endpoint=f"/vat/work-items/{item.id}/materials-complete",
             )
         )
 
@@ -38,7 +37,6 @@ def get_vat_work_item_actions(
             mutation_action(
                 key="add_invoice",
                 label="הוספת חשבונית",
-                endpoint=f"/vat/work-items/{item.id}/invoices",
             )
         )
 
@@ -47,7 +45,6 @@ def get_vat_work_item_actions(
             mutation_action(
                 key="ready_for_review",
                 label="שלח לבדיקה",
-                endpoint=f"/vat/work-items/{item.id}/ready-for-review",
             )
         )
 
@@ -57,12 +54,10 @@ def get_vat_work_item_actions(
                 mutation_action(
                     key="file_vat_return",
                     label='הגש מע"מ',
-                    endpoint=f"/vat/work-items/{item.id}/file",
                 ),
                 mutation_action(
                     key="send_back",
                     label="החזר לתיקון",
-                    endpoint=f"/vat/work-items/{item.id}/send-back",
                     confirm_title="החזרה לתיקון",
                     confirm_message="יש לציין הערה לפני החזרת התיק לתיקון.",
                 ),

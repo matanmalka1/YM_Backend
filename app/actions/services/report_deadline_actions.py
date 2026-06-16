@@ -13,8 +13,8 @@ SUBMIT_BLOCKED_STATUSES = {
 }
 
 
-def get_annual_report_actions(report_id: int, status: str) -> list[ActionDescriptor]:
-    """Return executable actions for an annual report based on its status."""
+def get_annual_report_actions(status: str) -> list[ActionDescriptor]:
+    """Return available actions for an annual report based on its status."""
     actions: list[ActionDescriptor] = []
 
     if status == AnnualReportStatus.SUBMITTED.value:
@@ -22,7 +22,6 @@ def get_annual_report_actions(report_id: int, status: str) -> list[ActionDescrip
             mutation_action(
                 key="amend",
                 label="תיקון דוח",
-                endpoint=f"/annual-reports/{report_id}/amend",
             )
         )
 
@@ -31,7 +30,6 @@ def get_annual_report_actions(report_id: int, status: str) -> list[ActionDescrip
             mutation_action(
                 key="submit",
                 label="הגשה לרשות המסים",
-                endpoint=f"/annual-reports/{report_id}/submit",
             )
         )
 
