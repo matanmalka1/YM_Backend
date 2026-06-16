@@ -40,32 +40,18 @@ def _create_business_row(
     return business
 
 
-def test_create_business_defaults_opened_at_to_today_when_missing_everywhere(monkeypatch, test_db):
-    captured = {}
-
-    def _create(**kwargs):
-        captured.update(kwargs)
-        return SimpleNamespace(id=15, **kwargs)
-
+def test_create_business_defaults_opened_at_to_today_when_missing_everywhere(test_db):
+    client = seed_client_identity(test_db, full_name="Today Client", id_number="BTODAY1")
     service = BusinessService(test_db)
-    service.client_repo = SimpleNamespace(
-        get_by_id=lambda _client_id: SimpleNamespace(legal_entity_id=10)
-    )
-    service.business_repo = SimpleNamespace(
-        all_non_deleted_are_closed_for_legal_entity=lambda _legal_entity_id: False,
-        list_by_legal_entity=lambda _legal_entity_id, **_kwargs: [],
-        create=_create,
-    )
 
     with patch("app.businesses.services.business_service.israel_today") as mock_today:
         mock_today.return_value = date(2026, 4, 9)
         result = service.create_business(
-            client_id=1,
+            client_id=client.id,
             business_name="Uses Today",
         )
 
     assert result.opened_at == date(2026, 4, 9)
-    assert captured["opened_at"] == date(2026, 4, 9)
 
 
 def test_update_business_rejects_invalid_status_value(test_db):

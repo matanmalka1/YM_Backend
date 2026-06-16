@@ -166,13 +166,10 @@ def test_create_request_raises_when_business_missing():
         db=SimpleNamespace(),
     )
     business_repo = SimpleNamespace(get_by_id=lambda _business_id: None)
-    client_record_repo = SimpleNamespace(
-        get_by_id=lambda _client_record_id: SimpleNamespace(id=123, legal_entity_id=1)
-    )
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "app.signature_requests.services.create_request.ClientRecordRepository",
-            lambda _db: client_record_repo,
+            "app.signature_requests.services.create_request.get_client_or_raise",
+            lambda _db, _client_record_id: SimpleNamespace(id=123, legal_entity_id=1),
         )
         with pytest.raises(NotFoundError) as exc_info:
             create_request_module.create_request(
@@ -193,9 +190,6 @@ def test_create_request_raises_when_business_missing():
 
 
 def test_create_request_raises_on_invalid_type():
-    client_record_repo = SimpleNamespace(
-        get_by_id=lambda _client_record_id: SimpleNamespace(id=1, legal_entity_id=1)
-    )
     repo = SimpleNamespace(
         create_pending=lambda **kwargs: None,
         append_audit_event=lambda **kwargs: None,
@@ -208,8 +202,8 @@ def test_create_request_raises_on_invalid_type():
     )
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "app.signature_requests.services.create_request.ClientRecordRepository",
-            lambda _db: client_record_repo,
+            "app.signature_requests.services.create_request.get_client_or_raise",
+            lambda _db, _client_record_id: SimpleNamespace(id=1, legal_entity_id=1),
         )
         mp.setattr(
             "app.signature_requests.services.create_request.BusinessContactService",
@@ -238,9 +232,6 @@ def test_create_request_raises_on_invalid_type():
 
 def test_create_request_falls_back_to_business_contact_details():
     captured = {}
-    client_record_repo = SimpleNamespace(
-        get_by_id=lambda _client_record_id: SimpleNamespace(id=7, legal_entity_id=9)
-    )
 
     def _create(**kwargs):
         captured["create"] = kwargs
@@ -261,8 +252,8 @@ def test_create_request_falls_back_to_business_contact_details():
     )
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "app.signature_requests.services.create_request.ClientRecordRepository",
-            lambda _db: client_record_repo,
+            "app.signature_requests.services.create_request.get_client_or_raise",
+            lambda _db, _client_record_id: SimpleNamespace(id=7, legal_entity_id=9),
         )
         mp.setattr(
             "app.signature_requests.services.create_request.BusinessContactService",

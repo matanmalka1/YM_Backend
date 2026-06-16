@@ -1,5 +1,4 @@
 from datetime import date
-from types import SimpleNamespace
 
 import pytest
 
@@ -15,9 +14,10 @@ def _create_business_row(
     *,
     status: BusinessStatus = BusinessStatus.ACTIVE,
     legal_entity_id: int | None = None,
+    business_name: str = "Service Test Business",
 ) -> Business:
     business = Business(
-        business_name="Service Test Business",
+        business_name=business_name,
         opened_at=date(2026, 1, 1),
         status=status,
         legal_entity_id=legal_entity_id,
@@ -29,20 +29,17 @@ def _create_business_row(
 
 
 def test_create_business_rejects_duplicate_name_for_client(test_db):
+    client = seed_client_identity(test_db, full_name="Dup Client", id_number="BDUP001")
+    _create_business_row(
+        test_db,
+        legal_entity_id=client.legal_entity_id,
+        business_name="Dup Name",
+    )
     service = BusinessService(test_db)
-    service.client_repo = SimpleNamespace(
-        get_by_id=lambda _client_id: SimpleNamespace(legal_entity_id=10)
-    )
-    service.business_repo = SimpleNamespace(
-        all_non_deleted_are_closed_for_legal_entity=lambda _legal_entity_id: False,
-        list_by_legal_entity=lambda _legal_entity_id, **_kwargs: [
-            SimpleNamespace(business_name="Dup Name")
-        ],
-    )
 
     with pytest.raises(ConflictError) as exc:
         service.create_business(
-            client_id=1,
+            client_id=client.id,
             opened_at=date(2026, 1, 1),
             business_name="Dup Name",
         )
