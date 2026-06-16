@@ -27,7 +27,7 @@ def test_add_contact_missing_client_raises_not_found(test_db):
             contact_type=ContactType.VAT_BRANCH,
             name="Missing Client",
         )
-    assert exc_info.value.code == "CLIENT.NOT_FOUND"
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_update_contact_missing_raises_not_found(test_db):

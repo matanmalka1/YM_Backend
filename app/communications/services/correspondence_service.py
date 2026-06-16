@@ -39,7 +39,7 @@ class CorrespondenceService:
     def _get_client_record_or_raise(self, client_record_id: int):
         record = self.client_repo.get_by_id(client_record_id)
         if not record:
-            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
         return record
 
     def _assert_contact_belongs_to_client(self, contact_id: int, client_record_id: int) -> None:

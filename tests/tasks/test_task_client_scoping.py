@@ -57,7 +57,7 @@ def test_create_source_and_mismatching_client_record_id_raises(test_db):
 def test_create_nonexistent_direct_client_record_id_raises(test_db):
     with pytest.raises(NotFoundError) as exc_info:
         _create(test_db, client_record_id=999999)
-    assert exc_info.value.code == "CLIENT.NOT_FOUND"
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_create_soft_deleted_source_raises_not_found(test_db):

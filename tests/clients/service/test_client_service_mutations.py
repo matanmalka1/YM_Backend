@@ -134,7 +134,7 @@ def test_get_client_or_raise_not_found(test_db):
     with pytest.raises(NotFoundError) as exc:
         get_client_or_raise(test_db, 999)
 
-    assert exc.value.code == "CLIENT.NOT_FOUND"
+    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_update_delete_restore_flow(test_db):
@@ -223,7 +223,7 @@ def test_delete_raises_not_found_when_client_already_deleted(test_db):
     with pytest.raises(NotFoundError) as exc:
         service.delete_client(created.id, actor_id=2)
 
-    assert exc.value.code == "CLIENT.NOT_FOUND"
+    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_restore_raises_when_not_deleted(test_db):
@@ -346,7 +346,7 @@ def test_restore_raises_not_found_when_client_missing(test_db):
     with pytest.raises(NotFoundError) as exc:
         service.restore_client(9999, actor_id=1)
 
-    assert exc.value.code == "CLIENT.NOT_FOUND"
+    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_restore_raises_not_found_when_repo_restore_returns_none(test_db, monkeypatch):
@@ -363,4 +363,4 @@ def test_restore_raises_not_found_when_repo_restore_returns_none(test_db, monkey
     with pytest.raises(NotFoundError) as exc:
         service.restore_client(created.id, actor_id=2)
 
-    assert exc.value.code == "CLIENT.NOT_FOUND"
+    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"

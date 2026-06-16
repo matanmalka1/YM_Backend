@@ -140,7 +140,7 @@ class NotificationAutoSendService:
 
         client_record = self.db.get(ClientRecord, client_record_id)
         if client_record is None:
-            raise NotFoundError("הלקוח לא נמצא", "CLIENT.NOT_FOUND")
+            raise NotFoundError("הלקוח לא נמצא", "CLIENT_RECORD.NOT_FOUND")
 
         policy = self.policy.can_send(
             client_record,

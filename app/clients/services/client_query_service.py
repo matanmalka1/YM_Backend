@@ -69,7 +69,7 @@ class ClientQueryService:
     ) -> ClientRecordResponse:
         data = get_full_record(self.db, client_record_id)
         if not data:
-            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
         return ClientEnrichmentService(self.db).enrich_single(
             ClientRecordResponse(**data), tax_year=tax_year
         )
@@ -77,7 +77,7 @@ class ClientQueryService:
     def get_full_client_including_deleted(self, client_record_id: int) -> ClientRecordResponse:
         data = get_full_record_including_deleted(self.db, client_record_id)
         if not data:
-            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
         return ClientRecordResponse(**data)
 
     def list_full_clients(

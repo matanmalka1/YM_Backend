@@ -78,7 +78,7 @@ def test_list_client_notes_requires_existing_client(test_db):
     with pytest.raises(NotFoundError) as exc_info:
         service.list_notes(entity_type="client", entity_id=999999)
 
-    assert exc_info.value.code == "CLIENT.NOT_FOUND"
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_add_client_note_requires_existing_client(test_db):
@@ -91,4 +91,4 @@ def test_add_client_note_requires_existing_client(test_db):
             note="לקוח חסר",
         )
 
-    assert exc_info.value.code == "CLIENT.NOT_FOUND"
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"

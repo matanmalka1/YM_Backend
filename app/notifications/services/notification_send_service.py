@@ -127,7 +127,7 @@ class NotificationSendService:
 
         client_record = self.db.get(ClientRecord, request.client_record_id)
         if client_record is None:
-            raise NotFoundError("הלקוח לא נמצא", "CLIENT.NOT_FOUND")
+            raise NotFoundError("הלקוח לא נמצא", "CLIENT_RECORD.NOT_FOUND")
 
         annual_report_id = (
             request.entity_id
@@ -208,7 +208,7 @@ class NotificationSendService:
 
         client_record = self.db.get(ClientRecord, request.client_record_id)
         if client_record is None:
-            raise NotFoundError("הלקוח לא נמצא", "CLIENT.NOT_FOUND")
+            raise NotFoundError("הלקוח לא נמצא", "CLIENT_RECORD.NOT_FOUND")
 
         # Policy check — blocked = no record created
         annual_report_id_for_policy = (

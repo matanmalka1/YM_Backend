@@ -110,7 +110,7 @@ def test_add_entry_raises_not_found_for_missing_client(test_db, test_user):
             created_by=test_user.id,
         )
 
-    assert exc_info.value.code == "CLIENT.NOT_FOUND"
+    assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
 def test_add_entry_rejected_for_business_client_mismatch(test_db, test_user):
