@@ -49,11 +49,14 @@ class VatAuditLogRepository(BaseRepository[VatAuditLog]):
             or 0
         )
 
-    def get_audit_trail(self, work_item_id: int, limit: int, offset: int) -> list[VatAuditLog]:
-        return self.db.scalars(
+    def get_audit_trail(
+        self, work_item_id: int, page: int = 1, page_size: int = 20
+    ) -> list[VatAuditLog]:
+        stmt = self.apply_pagination(
             select(VatAuditLog)
             .where(VatAuditLog.work_item_id == work_item_id)
-            .order_by(VatAuditLog.performed_at.desc())
-            .offset(offset)
-            .limit(limit)
-        ).all()
+            .order_by(VatAuditLog.performed_at.desc()),
+            page,
+            page_size,
+        )
+        return self.db.scalars(stmt).all()

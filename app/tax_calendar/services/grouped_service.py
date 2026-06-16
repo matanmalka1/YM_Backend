@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.common.enums import ObligationType
+from app.core.pagination import paginate_sequence
 from app.tax_calendar.repositories.grouped_repository import (
     TaxCalendarGroupedRepository,
 )
@@ -72,9 +73,8 @@ def list_groups_paginated(
         overdue=sum(g.overdue_count for g in groups),
         done=sum(g.done_count for g in groups),
     )
-    start = (page - 1) * page_size
     return TaxCalendarGroupListResponse(
-        items=groups[start : start + page_size],
+        items=paginate_sequence(groups, page, page_size),
         page=page,
         page_size=page_size,
         total=total,

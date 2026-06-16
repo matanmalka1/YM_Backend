@@ -68,7 +68,6 @@ class AuditTrailService:
         created_before: datetime | None = None,
     ) -> EntityAuditTrailResponse:
         self._assert_entity_readable(entity_type, entity_id)
-        offset = (page - 1) * page_size
         filters = {
             "action": action,
             "user_id": user_id,
@@ -76,7 +75,7 @@ class AuditTrailService:
             "created_before": created_before,
         }
         entries = self.audit_repo.get_audit_trail(
-            entity_type, entity_id, page_size, offset, **filters
+            entity_type, entity_id, page=page, page_size=page_size, **filters
         )
         total = self.audit_repo.count_audit_trail(entity_type, entity_id, **filters)
         user_ids = list({entry.performed_by for entry in entries})

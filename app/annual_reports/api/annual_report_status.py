@@ -17,7 +17,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
-from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, paginate_sequence
 from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -139,8 +139,7 @@ def get_report_audit(
     service = AnnualReportService(db)
     all_audit_entries = service.get_report_audit(report_id)
     total = len(all_audit_entries)
-    start = (page - 1) * page_size
-    items = all_audit_entries[start : start + page_size]
+    items = paginate_sequence(all_audit_entries, page, page_size)
     return AnnualReportAuditListResponse(
         items=items,
         page=page,

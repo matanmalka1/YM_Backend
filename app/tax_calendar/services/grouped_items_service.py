@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.common.enums import ObligationType
 from app.core.exceptions import NotFoundError
+from app.core.pagination import paginate_sequence
 from app.tax_calendar.repositories.grouped_repository import (
     TaxCalendarGroupedRepository,
 )
@@ -49,12 +50,11 @@ def get_group_items(
         for source_type, row, client, legal_entity in rows
     ]
     total = len(items)
-    start = (page - 1) * page_size
 
     return TaxCalendarGroupItemsResponse(
         tax_calendar_entry_id=entry.id,
         obligation_type=entry.obligation_type.value,
-        items=items[start : start + page_size],
+        items=paginate_sequence(items, page, page_size),
         page=page,
         page_size=page_size,
         total=total,

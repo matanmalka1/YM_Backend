@@ -94,9 +94,7 @@ class TaskRepository(BaseRepository[Task]):
         )
         total: int = self.db.scalar(count_stmt) or 0
 
-        data_stmt = (
-            base.order_by(Task.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
-        )
+        data_stmt = self.apply_pagination(base.order_by(Task.created_at.desc()), page, page_size)
         items = list(self.db.scalars(data_stmt).all())
         return items, total
 
@@ -135,8 +133,6 @@ class TaskRepository(BaseRepository[Task]):
         count_base = _apply_filters(select(func.count(Task.id)).where(base_where), **filter_kwargs)
 
         total: int = self.db.scalar(count_base) or 0
-        data_stmt = (
-            base.order_by(Task.created_at.desc()).offset((page - 1) * page_size).limit(page_size)
-        )
+        data_stmt = self.apply_pagination(base.order_by(Task.created_at.desc()), page, page_size)
         items = list(self.db.scalars(data_stmt).all())
         return items, total

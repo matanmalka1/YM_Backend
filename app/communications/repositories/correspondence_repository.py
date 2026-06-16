@@ -71,14 +71,12 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             if order == "desc"
             else Correspondence.occurred_at.asc()
         )
-        offset = (page - 1) * page_size
-        items = self.db.scalars(
-            select(Correspondence)
-            .where(*filters)
-            .order_by(order_expr, Correspondence.id.desc())
-            .offset(offset)
-            .limit(page_size)
-        ).all()
+        stmt = self.apply_pagination(
+            select(Correspondence).where(*filters).order_by(order_expr, Correspondence.id.desc()),
+            page,
+            page_size,
+        )
+        items = self.db.scalars(stmt).all()
         return items, total
 
     def list_by_client_paginated(

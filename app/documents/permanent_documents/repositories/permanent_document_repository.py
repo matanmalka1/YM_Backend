@@ -154,13 +154,10 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
             include_superseded=include_superseded,
         )
         total: int = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-        items = list(
-            self.db.scalars(
-                stmt.order_by(PermanentDocument.uploaded_at.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
-            ).all()
+        stmt = self.apply_pagination(
+            stmt.order_by(PermanentDocument.uploaded_at.desc()), page, page_size
         )
+        items = list(self.db.scalars(stmt).all())
         return items, total
 
     def list_by_binder_page(
@@ -175,13 +172,10 @@ class PermanentDocumentRepository(BaseRepository[PermanentDocument]):
             PermanentDocument.superseded_by.is_(None),
         )
         total: int = self.db.scalar(select(func.count()).select_from(stmt.subquery())) or 0
-        items = list(
-            self.db.scalars(
-                stmt.order_by(PermanentDocument.uploaded_at.desc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
-            ).all()
+        stmt = self.apply_pagination(
+            stmt.order_by(PermanentDocument.uploaded_at.desc()), page, page_size
         )
+        items = list(self.db.scalars(stmt).all())
         return items, total
 
     # ── Aggregates ────────────────────────────────────────────────────────────

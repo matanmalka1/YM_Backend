@@ -4,12 +4,13 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
+from app.common.repositories.base_repository import BaseRepository
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
     SignatureRequestStatus,
     SignatureRequestType,
 )
-from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.utils.time_utils import start_of_day, start_of_next_day, utcnow
 
 
@@ -116,16 +117,15 @@ class SignatureRequestCrudMixin:
         page_size: int = 20,
     ) -> list[SignatureRequest]:
         """All requests for a legal entity, regardless of business."""
-        stmt = scope_to_active_clients_stmt(
-            select(SignatureRequest), SignatureRequest
-        ).where(
+        stmt = scope_to_active_clients_stmt(select(SignatureRequest), SignatureRequest).where(
             SignatureRequest.client_record_id == client_record_id,
             SignatureRequest.deleted_at.is_(None),
         )
         if status:
             stmt = stmt.where(SignatureRequest.status == status)
-        offset = (page - 1) * page_size
-        stmt = stmt.order_by(SignatureRequest.created_at.desc()).offset(offset).limit(page_size)
+        stmt = BaseRepository.apply_pagination(
+            stmt.order_by(SignatureRequest.created_at.desc()), page, page_size
+        )
         return self.db.scalars(stmt).all()
 
     def count_by_client_record(
@@ -158,8 +158,9 @@ class SignatureRequestCrudMixin:
         )
         if status:
             stmt = stmt.where(SignatureRequest.status == status)
-        offset = (page - 1) * page_size
-        stmt = stmt.order_by(SignatureRequest.created_at.desc()).offset(offset).limit(page_size)
+        stmt = BaseRepository.apply_pagination(
+            stmt.order_by(SignatureRequest.created_at.desc()), page, page_size
+        )
         return self.db.scalars(stmt).all()
 
     def count_by_business(
@@ -237,9 +238,8 @@ class SignatureRequestCrudMixin:
                 SignatureRequest.sent_at.asc().nulls_last(),
                 SignatureRequest.id.asc(),
             )
-            .offset((page - 1) * page_size)
-            .limit(page_size)
         )
+        stmt = BaseRepository.apply_pagination(stmt, page, page_size)
         return self.db.scalars(stmt).all()
 
     def count_pending(

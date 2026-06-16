@@ -122,7 +122,6 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         )
         total = self.db.scalar(count_stmt)
 
-        offset = (page - 1) * page_size
         stmt = (
             scope_to_active_clients_stmt(
                 select(
@@ -139,9 +138,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
                 func.coalesce(LegalEntity.official_name, "").asc(),
                 AdvancePayment.period.asc(),
             )
-            .offset(offset)
-            .limit(page_size)
         )
+        stmt = self.apply_pagination(stmt, page, page_size)
         rows = [
             AdvancePaymentOverviewRow(
                 payment=payment,

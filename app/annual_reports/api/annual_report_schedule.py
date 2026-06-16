@@ -11,7 +11,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
-from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, paginate_sequence
 from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -53,9 +53,9 @@ def list_schedules(
     service = AnnualReportService(db)
     all_schedules = service.get_schedules(report_id)
     total = len(all_schedules)
-    start = (page - 1) * page_size
     items = [
-        ScheduleEntryResponse.model_validate(e) for e in all_schedules[start : start + page_size]
+        ScheduleEntryResponse.model_validate(e)
+        for e in paginate_sequence(all_schedules, page, page_size)
     ]
     return AnnualReportScheduleListResponse(
         items=items,

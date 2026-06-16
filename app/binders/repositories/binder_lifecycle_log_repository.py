@@ -52,13 +52,12 @@ class BinderLifecycleLogRepository(BaseRepository[BinderLifecycleLog]):
         """Paginated lifecycle logs for a binder."""
         base = select(BinderLifecycleLog).where(BinderLifecycleLog.binder_id == binder_id)
         total: int = self.db.scalar(select(func.count()).select_from(base.subquery())) or 0
-        items = list(
-            self.db.scalars(
-                base.order_by(BinderLifecycleLog.changed_at.asc(), BinderLifecycleLog.id.asc())
-                .offset((page - 1) * page_size)
-                .limit(page_size)
-            ).all()
+        stmt = self.apply_pagination(
+            base.order_by(BinderLifecycleLog.changed_at.asc(), BinderLifecycleLog.id.asc()),
+            page,
+            page_size,
         )
+        items = list(self.db.scalars(stmt).all())
         return items, total
 
     def list_recent(self, limit: int = 20) -> list[BinderLifecycleLog]:

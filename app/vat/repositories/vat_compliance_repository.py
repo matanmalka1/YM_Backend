@@ -42,16 +42,12 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
         """Paginated compliance aggregates with total count of distinct client/period_type groups."""
         base = self._compliance_aggregates_base_stmt(year).subquery()
         count = self.db.scalar(select(func.count()).select_from(base)) or 0
-        rows = (
-            self.db.execute(
-                select(base)
-                .order_by(base.c.client_record_id, base.c.period_type)
-                .offset((page - 1) * page_size)
-                .limit(page_size)
-            )
-            .mappings()
-            .all()
+        stmt = self.apply_pagination(
+            select(base).order_by(base.c.client_record_id, base.c.period_type),
+            page,
+            page_size,
         )
+        rows = self.db.execute(stmt).mappings().all()
         return list(rows), count
 
     def get_filed_items_for_clients(self, year: int, client_record_ids: list[int]) -> list:

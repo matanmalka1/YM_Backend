@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from app.clients.enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
+from app.common.repositories.base_repository import BaseRepository
 from app.core.api_types import SortOrder
 from app.core.exceptions import NotFoundError
 from app.legal_entities.models.legal_entity import LegalEntity
@@ -218,8 +219,8 @@ class ClientRecordRepository:
             sort_col = self._SORTABLE_FIELDS.get(sort_by, LegalEntity.official_name)
         order = SortOrder(order)
         stmt = stmt.order_by(desc(sort_col) if order is SortOrder.desc else asc(sort_col))
-        offset = (page - 1) * page_size
-        return list(self.db.scalars(stmt.offset(offset).limit(page_size)).all())
+        stmt = BaseRepository.apply_pagination(stmt, page, page_size)
+        return list(self.db.scalars(stmt).all())
 
     def list_sidebar(
         self,
@@ -261,8 +262,8 @@ class ClientRecordRepository:
         )
         order = SortOrder(order)
         stmt = stmt.order_by(desc(sort_col) if order is SortOrder.desc else asc(sort_col))
-        offset = (page - 1) * page_size
-        return self.db.execute(stmt.offset(offset).limit(page_size)).mappings().all()
+        stmt = BaseRepository.apply_pagination(stmt, page, page_size)
+        return self.db.execute(stmt).mappings().all()
 
     def count(
         self,
@@ -327,12 +328,10 @@ class ClientRecordRepository:
             id_number=id_number,
         )
         total = self.db.scalar(select(func.count()).select_from(stmt.subquery()))
-        offset = (page - 1) * page_size
-        items = list(
-            self.db.scalars(
-                stmt.order_by(LegalEntity.official_name.asc()).offset(offset).limit(page_size)
-            ).all()
+        stmt = BaseRepository.apply_pagination(
+            stmt.order_by(LegalEntity.official_name.asc()), page, page_size
         )
+        items = list(self.db.scalars(stmt).all())
         return items, total
 
     def list_all(self) -> list[ClientRecord]:

@@ -163,8 +163,8 @@ def list_invoices(
     return invoice_repo.list_by_work_item(item_id, invoice_type=invoice_type)
 
 
-def get_audit_trail(work_item_repo: VatWorkItemRepository, item_id: int, limit: int, offset: int):
-    return work_item_repo.get_audit_trail(item_id, limit, offset)
+def get_audit_trail(work_item_repo: VatWorkItemRepository, item_id: int, page: int, page_size: int):
+    return work_item_repo.get_audit_trail(item_id, page=page, page_size=page_size)
 
 
 def count_audit_trail(work_item_repo: VatWorkItemRepository, item_id: int):

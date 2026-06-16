@@ -41,13 +41,12 @@ class EntityNoteRepository(BaseRepository[EntityNote]):
             EntityNote.deleted_at.is_(None),
         ]
         total = self.db.scalar(select(func.count(EntityNote.id)).where(*base_where)) or 0
-        items = self.db.scalars(
-            select(EntityNote)
-            .where(*base_where)
-            .order_by(EntityNote.created_at.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        ).all()
+        stmt = self.apply_pagination(
+            select(EntityNote).where(*base_where).order_by(EntityNote.created_at.desc()),
+            page,
+            page_size,
+        )
+        items = self.db.scalars(stmt).all()
         return items, total
 
     def get_by_id(self, note_id: int) -> EntityNote | None:

@@ -70,8 +70,8 @@ class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
         self,
         entity_type: str,
         entity_id: int,
-        limit: int = 50,
-        offset: int = 0,
+        page: int = 1,
+        page_size: int = 50,
         *,
         action: str | None = None,
         user_id: int | None = None,
@@ -86,13 +86,14 @@ class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
             created_after=created_after,
             created_before=created_before,
         )
-        return self.db.scalars(
+        stmt = self.apply_pagination(
             select(EntityAuditLog)
             .where(*filters)
-            .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
-            .limit(limit)
-            .offset(offset)
-        ).all()
+            .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc()),
+            page,
+            page_size,
+        )
+        return self.db.scalars(stmt).all()
 
     def count_audit_trail(
         self,

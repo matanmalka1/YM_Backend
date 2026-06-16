@@ -5,6 +5,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.core.pagination import paginate_sequence
 from app.tasks.models.task import TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository
 from app.utils.time_utils import israel_today
@@ -217,8 +218,7 @@ class WorkQueueService:
             ),
         )
         items.sort(key=self._sort_key)
-        offset = (page - 1) * page_size
-        return items[offset : offset + page_size]
+        return paginate_sequence(items, page, page_size)
 
     def list_items_with_total(
         self,
@@ -252,9 +252,8 @@ class WorkQueueService:
             ),
         )
         all_items.sort(key=self._sort_key)
-        offset = (page - 1) * page_size
         return WorkQueueListResponse(
-            items=all_items[offset : offset + page_size],
+            items=paginate_sequence(all_items, page, page_size),
             total=len(all_items),
             page=page,
             page_size=page_size,

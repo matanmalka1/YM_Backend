@@ -142,11 +142,10 @@ class NotificationRepository(BaseRepository[Notification]):
             list_stmt = list_stmt.where(*filters)
 
         total = self.db.scalar(count_stmt) or 0
-        items = self.db.scalars(
-            list_stmt.order_by(Notification.created_at.desc())
-            .offset((page - 1) * page_size)
-            .limit(page_size)
-        ).all()
+        list_stmt = self.apply_pagination(
+            list_stmt.order_by(Notification.created_at.desc()), page, page_size
+        )
+        items = self.db.scalars(list_stmt).all()
         return list(items), total
 
     def count_by_status(

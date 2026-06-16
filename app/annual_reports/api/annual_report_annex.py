@@ -12,7 +12,7 @@ from app.annual_reports.schemas.annual_report_annex import (
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
-from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
+from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, paginate_sequence
 from app.core.path_params import PathId
 from app.users.api.deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -40,8 +40,7 @@ def list_annex_lines(
     svc = AnnualReportService(db)
     all_lines = svc.get_annex_lines(report_id, schedule)
     total = len(all_lines)
-    start = (page - 1) * page_size
-    items = all_lines[start : start + page_size]
+    items = paginate_sequence(all_lines, page, page_size)
     return AnnexDataLineListResponse(items=items, page=page, page_size=page_size, total=total)
 
 

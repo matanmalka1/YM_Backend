@@ -12,6 +12,7 @@ from app.businesses.models.business import Business
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
+from app.core.pagination import paginate_sequence
 from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.notifications.models.notification import NotificationStatus
 from app.notifications.repositories.notification_repository import NotificationRepository
@@ -135,8 +136,7 @@ class TimelineService:
             events = [e for e in events if e.get("event_type") in _STRONG]
 
         total = len(events)
-        offset = (page - 1) * page_size
-        return events[offset : offset + page_size], total
+        return paginate_sequence(events, page, page_size), total
 
     @staticmethod
     def _status_str(value) -> str | None:

@@ -272,5 +272,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
     def count_audit_trail(self, work_item_id: int) -> int:
         return self._audit.count_audit_trail(work_item_id)
 
-    def get_audit_trail(self, work_item_id: int, limit: int, offset: int) -> list[VatAuditLog]:
-        return self._audit.get_audit_trail(work_item_id, limit, offset)
+    def get_audit_trail(
+        self, work_item_id: int, page: int = 1, page_size: int = 20
+    ) -> list[VatAuditLog]:
+        return self._audit.get_audit_trail(work_item_id, page=page, page_size=page_size)

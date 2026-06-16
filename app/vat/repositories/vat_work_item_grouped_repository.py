@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
 from app.common.enums import VatType
+from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import israel_today
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
@@ -167,8 +168,8 @@ def list_by_due_date_paginated(
 
     count_stmt = count_stmt.where(VatWorkItem.due_date_effective == due_date)
     stmt = stmt.where(VatWorkItem.due_date_effective == due_date)
-    start = (page - 1) * page_size
-    items = db.scalars(
-        stmt.order_by(VatWorkItem.client_record_id.asc()).offset(start).limit(page_size)
-    ).all()
+    stmt = BaseRepository.apply_pagination(
+        stmt.order_by(VatWorkItem.client_record_id.asc()), page, page_size
+    )
+    items = db.scalars(stmt).all()
     return list(items), int(db.scalar(count_stmt) or 0)
