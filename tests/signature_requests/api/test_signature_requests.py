@@ -156,6 +156,8 @@ def test_create_signature_request_sends_immediately(client, test_db, advisor_hea
 
 
 def test_invalid_token_returns_error_on_sign(client):
-    resp = client.post("/sign/does-not-exist/approve")
+    # Valid-format (>=32 chars) but non-existent token: passes path validation,
+    # then fails the token lookup with TOKEN_INVALID.
+    resp = client.post(f"/sign/{'z' * 40}/approve")
     assert resp.status_code == 400
     assert resp.json()["error"]["code"] == "SIGNATURE_REQUEST.TOKEN_INVALID"
