@@ -2,7 +2,6 @@ from datetime import datetime
 from typing import Literal
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
 from app.communications.models.correspondence import Correspondence, CorrespondenceType
@@ -10,8 +9,7 @@ from app.utils.time_utils import utcnow_aware
 
 
 class CorrespondenceRepository(BaseRepository[Correspondence]):
-    def __init__(self, db: Session):
-        self.db = db
+    model = Correspondence
 
     def create(
         self,
@@ -103,13 +101,6 @@ class CorrespondenceRepository(BaseRepository[Correspondence]):
             occurred_before=occurred_before,
             order=order,
         )
-
-    def get_by_id(self, entry_id: int) -> Correspondence | None:
-        return self.db.scalars(
-            select(Correspondence).where(
-                Correspondence.id == entry_id, Correspondence.deleted_at.is_(None)
-            )
-        ).first()
 
     def update(self, entry_id: int, **fields) -> Correspondence | None:
         entry = self.get_by_id(entry_id)

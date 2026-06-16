@@ -3,7 +3,6 @@ from __future__ import annotations
 import datetime
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
 from app.notifications.models.notification import (
@@ -16,8 +15,7 @@ from app.utils.time_utils import utcnow
 
 
 class NotificationRepository(BaseRepository[Notification]):
-    def __init__(self, db: Session):
-        self.db = db
+    model = Notification
 
     def create(
         self,
@@ -78,11 +76,6 @@ class NotificationRepository(BaseRepository[Notification]):
         notification.error_message = error_message
         self.db.flush()
         return notification
-
-    def get_by_id(self, notification_id: int) -> Notification | None:
-        return self.db.scalars(
-            select(Notification).where(Notification.id == notification_id)
-        ).first()
 
     def find_by_idempotency_key(
         self,

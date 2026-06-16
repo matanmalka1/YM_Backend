@@ -1,5 +1,6 @@
 """Business-scoped note operations."""
 
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
@@ -82,8 +83,8 @@ class BusinessNoteService:
     def _assert_business_belongs_to_client(self, client_id: int, business_id: int) -> None:
         business = self.business_repo.get_by_id(business_id)
         if not business:
-            raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
+            raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
         record = self.client_repo.get_by_id(client_id)
         if not record:
-            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND)
         assert_business_belongs_to_legal_entity(business, record.legal_entity_id)

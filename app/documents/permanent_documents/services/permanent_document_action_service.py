@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -21,7 +22,7 @@ class PermanentDocumentActionService:
         if not record:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",
-                "CLIENT_RECORD.NOT_FOUND",
+                ErrorCode.CLIENT_RECORD_NOT_FOUND,
             )
         return self.query_repo.get_all_versions_by_client_record(
             record.id, document_type, tax_year=tax_year

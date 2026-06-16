@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import datetime
 
 from fastapi import APIRouter, Depends, Query
@@ -36,7 +37,7 @@ def list_audit_logs(
     if created_after is not None and created_before is not None and created_after > created_before:
         raise AppError(
             "טווח תאריכים לא תקין: created_after חייב להיות לפני created_before",
-            "USER.INVALID_DATE_RANGE",
+            ErrorCode.USER_INVALID_DATE_RANGE,
         )
     service = AuditLogService(db)
     items, total = service.list_logs(

@@ -1,5 +1,6 @@
 """Analytics, KPI, and overview service for AdvancePayment domain."""
 
+from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
@@ -121,7 +122,7 @@ class AdvancePaymentAnalyticsService:
         if not self.client_repo.get_by_id(client_record_id):
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",
-                "ADVANCE_PAYMENT.CLIENT_NOT_FOUND",
+                ErrorCode.ADVANCE_PAYMENT_CLIENT_NOT_FOUND,
             )
         data = self.repo.get_annual_kpis_for_client(client_record_id, year)
         return {

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.guards.client_record_guards import assert_client_record_is_active
@@ -17,13 +18,13 @@ class VatClientContextService:
         if not client_record:
             raise NotFoundError(
                 VAT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-                "VAT.NOT_FOUND",
+                ErrorCode.VAT_NOT_FOUND,
             )
         assert_client_record_is_active(client_record)
         legal_entity = self.legal_entity_repo.get_by_id(client_record.legal_entity_id)
         if not legal_entity:
             raise NotFoundError(
                 VAT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-                "VAT.NOT_FOUND",
+                ErrorCode.VAT_NOT_FOUND,
             )
         return client_record, legal_entity

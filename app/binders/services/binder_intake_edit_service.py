@@ -4,6 +4,7 @@ Intake edit service with field-level audit trail.
 Handles editing of BinderIntake fields and cross-client transfer with FK validation.
 """
 
+from app.core.error_codes import ErrorCode
 from typing import Any
 
 from sqlalchemy.orm import Session
@@ -74,7 +75,7 @@ class BinderIntakeEditService:
         """
         intake = self.intake_repo.get_by_id(intake_id)
         if not intake or (binder_id is not None and intake.binder_id != binder_id):
-            raise NotFoundError(BINDER_INTAKE_NOT_FOUND, "BINDER_INTAKE.NOT_FOUND")
+            raise NotFoundError(BINDER_INTAKE_NOT_FOUND, ErrorCode.BINDER_INTAKE_NOT_FOUND)
 
         normalized_patch = self._normalize_patch(patch)
 
@@ -117,14 +118,14 @@ class BinderIntakeEditService:
         if not current_binder:
             raise NotFoundError(
                 BINDER_NOT_FOUND.format(binder_id=intake.binder_id),
-                "BINDER.NOT_FOUND",
+                ErrorCode.BINDER_NOT_FOUND,
             )
 
         target_binder = self._resolve_target_binder(current_binder=current_binder, patch=patch)
         target_client_id = target_binder.client_record_id
         target_client_record = self.client_record_repo.get_by_id(target_client_id)
         if not target_client_record:
-            raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, "BINDER.CROSS_CLIENT")
+            raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, ErrorCode.BINDER_CROSS_CLIENT)
         target_legal_entity_id = target_client_record.legal_entity_id
 
         if current_binder.client_record_id != target_client_id:
@@ -192,13 +193,13 @@ class BinderIntakeEditService:
             if not target_binder:
                 raise NotFoundError(
                     BINDER_NOT_FOUND.format(binder_id=requested_binder_id),
-                    "BINDER.NOT_FOUND",
+                    ErrorCode.BINDER_NOT_FOUND,
                 )
             if (
                 requested_client_record_id is not None
                 and target_binder.client_record_id != requested_client_record_id
             ):
-                raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, "BINDER.CROSS_CLIENT")
+                raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, ErrorCode.BINDER_CROSS_CLIENT)
             return target_binder
 
         if (
@@ -209,7 +210,7 @@ class BinderIntakeEditService:
 
         target_binder = self.binder_repo.get_active_by_client_record(requested_client_record_id)
         if not target_binder:
-            raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, "BINDER.CROSS_CLIENT")
+            raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, ErrorCode.BINDER_CROSS_CLIENT)
         return target_binder
 
     def _validate_and_apply_fk_updates(
@@ -227,13 +228,13 @@ class BinderIntakeEditService:
         linked_materials = [m for m in materials if getattr(m, attr_name) is not None]
 
         if replacements is not None and len(replacements) != len(linked_materials):
-            raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, "BINDER.CROSS_CLIENT")
+            raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, ErrorCode.BINDER_CROSS_CLIENT)
 
         effective_ids = replacements or [getattr(m, attr_name) for m in linked_materials]
         for idx, entity_id in enumerate(effective_ids):
             entity = loader(entity_id)
             if not entity or getattr(entity, owner_attr, None) != client_record_id:
-                raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, "BINDER.CROSS_CLIENT")
+                raise AppError(BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED, ErrorCode.BINDER_CROSS_CLIENT)
 
             if replacements is None:
                 continue

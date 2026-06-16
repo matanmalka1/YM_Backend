@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -28,7 +29,7 @@ def get_group_items(
     repo = TaxCalendarGroupedRepository(db)
     entry = repo.get_entry(tax_calendar_entry_id)
     if entry is None:
-        raise NotFoundError("רשומת יומן מס לא נמצאה", "TAX_CALENDAR.NOT_FOUND")
+        raise NotFoundError("רשומת יומן מס לא נמצאה", ErrorCode.TAX_CALENDAR_NOT_FOUND)
 
     rows = _rows_for_entry(
         repo,

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_read_repository import get_full_record
@@ -38,7 +39,7 @@ def apply_graph_update(db: Session, client_id: int, **fields) -> dict:
     record = get_client_or_raise(db, client_id)
     legal_entity = LegalEntityRepository(db).get_by_id(record.legal_entity_id)
     if not legal_entity:
-        raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT_RECORD.NOT_FOUND")
+        raise NotFoundError(f"לקוח {client_id} לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
     person = PersonRepository(db).get_owner_for_legal_entity(legal_entity.id)
     if "full_name" in fields:
         legal_entity.official_name = fields["full_name"]
@@ -54,5 +55,5 @@ def apply_graph_update(db: Session, client_id: int, **fields) -> dict:
     db.flush()
     updated = get_full_record(db, client_id)
     if not updated:
-        raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT_RECORD.NOT_FOUND")
+        raise NotFoundError(f"לקוח {client_id} לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
     return updated

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
@@ -34,7 +36,7 @@ class AnnualReportBaseService:
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
         return report
 

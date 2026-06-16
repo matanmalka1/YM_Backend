@@ -35,10 +35,6 @@ class InvoiceRepository(BaseRepository[Invoice]):
         self.db.flush()
         return invoice
 
-    def get_by_id(self, invoice_id: int) -> Invoice | None:
-        """Retrieve invoice by ID."""
-        return self.db.scalars(select(Invoice).where(Invoice.id == invoice_id)).first()
-
     def get_by_charge_id(self, charge_id: int) -> Invoice | None:
         """Retrieve invoice by charge ID."""
         return self.db.scalars(select(Invoice).where(Invoice.charge_id == charge_id)).first()

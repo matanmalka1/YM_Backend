@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -71,8 +72,8 @@ class BinderHandoverService:
         for bid in binder_ids:
             binder = self.binder_repo.get_by_id_for_update(bid)
             if not binder or binder.client_record_id != client_record_id:
-                raise AppError(BINDER_HANDOVER_INVALID_BINDERS, "BINDER.HANDOVER_INVALID")
+                raise AppError(BINDER_HANDOVER_INVALID_BINDERS, ErrorCode.BINDER_HANDOVER_INVALID)
             if binder.location_status != BinderLocationStatus.READY_FOR_HANDOVER:
-                raise AppError(BINDER_HANDOVER_INVALID_BINDERS, "BINDER.HANDOVER_INVALID")
+                raise AppError(BINDER_HANDOVER_INVALID_BINDERS, ErrorCode.BINDER_HANDOVER_INVALID)
             binders.append(binder)
         return binders

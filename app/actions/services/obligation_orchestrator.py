@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 import logging
 from dataclasses import dataclass, field
 from datetime import date
@@ -98,7 +99,7 @@ def generate_client_obligations_result(
             return result
         raise NotFoundError(
             f"רשומת לקוח עבור מזהה {client_record_id} לא נמצאה",
-            "CLIENT_RECORD.NOT_FOUND",
+            ErrorCode.CLIENT_RECORD_NOT_FOUND,
         )
 
     client_type = _derive_client_type(entity_type).value

@@ -1,7 +1,6 @@
 """Repository for AnnualReportAnnexData entities."""
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
@@ -12,8 +11,7 @@ from app.common.repositories.base_repository import BaseRepository
 
 
 class AnnexDataRepository(BaseRepository[AnnualReportAnnexData]):
-    def __init__(self, db: Session):
-        self.db = db
+    model = AnnualReportAnnexData
 
     def list_by_report_and_schedule(
         self, report_id: int, schedule: AnnualReportSchedule
@@ -77,11 +75,6 @@ class AnnexDataRepository(BaseRepository[AnnualReportAnnexData]):
         self.db.add(row)
         self.db.flush()
         return row
-
-    def get_by_id(self, line_id: int) -> AnnualReportAnnexData | None:
-        return self.db.scalars(
-            select(AnnualReportAnnexData).where(AnnualReportAnnexData.id == line_id)
-        ).first()
 
     def update_line(
         self, line_id: int, data: dict, notes: str | None = None

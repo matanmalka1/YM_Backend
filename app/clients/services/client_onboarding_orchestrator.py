@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 from datetime import date
 
@@ -57,7 +58,7 @@ class ClientOnboardingOrchestrator:
         if not record:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",
-                "CLIENT_RECORD.NOT_FOUND",
+                ErrorCode.CLIENT_RECORD_NOT_FOUND,
             )
         result = ClientOnboardingResult()
         self._ensure_initial_binder(record, actor_id)

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
@@ -70,7 +71,7 @@ def get_binder(binder_id: PathId, db: DBSession, user: CurrentUser):
     service = BinderListService(db)
     binder_response = service.get_binder_with_client_name(binder_id)
     if not binder_response:
-        raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), "BINDER.NOT_FOUND")
+        raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
     return binder_response
 
 
@@ -85,5 +86,5 @@ def delete_binder(binder_id: PathId, db: DBSession, user: CurrentUser):
     service = BinderService(db)
     deleted = service.delete_binder(binder_id, actor_id=user.id)
     if not deleted:
-        raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), "BINDER.NOT_FOUND")
+        raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

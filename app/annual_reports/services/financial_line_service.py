@@ -1,5 +1,6 @@
 """Annual report income and expense line mutation service."""
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -61,7 +62,7 @@ class AnnualReportFinancialLineService:
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
         return report
 
@@ -85,7 +86,7 @@ class AnnualReportFinancialLineService:
         if source_type not in valid_sources:
             raise AppError(
                 INVALID_INCOME_SOURCE_ERROR.format(source_type=source_type),
-                "ANNUAL_REPORT.INVALID_TYPE",
+                ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
             )
         line = self.income_repo.create_for_report(
             report_id, IncomeSourceType(source_type), amount, description
@@ -110,7 +111,7 @@ class AnnualReportFinancialLineService:
             if fields["source_type"] not in valid_sources:
                 raise AppError(
                     INVALID_INCOME_SOURCE_ERROR.format(source_type=fields["source_type"]),
-                    "ANNUAL_REPORT.INVALID_TYPE",
+                    ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
                 )
             fields["source_type"] = IncomeSourceType(fields["source_type"])
         # `fields` already contains only client-sent keys (exclude_unset). Pass
@@ -121,7 +122,7 @@ class AnnualReportFinancialLineService:
         if not line:
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         if not update_fields:
             return IncomeLineResponse.model_validate(line)
@@ -145,7 +146,7 @@ class AnnualReportFinancialLineService:
         if not line:
             raise NotFoundError(
                 INCOME_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         old_value = income_line_snapshot(line)
         self.income_repo.delete_line(line)
@@ -176,7 +177,7 @@ class AnnualReportFinancialLineService:
         if category not in valid_categories:
             raise AppError(
                 INVALID_EXPENSE_CATEGORY_ERROR.format(category=category),
-                "ANNUAL_REPORT.INVALID_TYPE",
+                ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
             )
         expense_category = ExpenseCategoryType(category)
         rate = (
@@ -213,7 +214,7 @@ class AnnualReportFinancialLineService:
             if fields["category"] not in valid_categories:
                 raise AppError(
                     INVALID_EXPENSE_CATEGORY_ERROR.format(category=fields["category"]),
-                    "ANNUAL_REPORT.INVALID_TYPE",
+                    ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
                 )
             fields["category"] = ExpenseCategoryType(fields["category"])
         # `fields` already contains only client-sent keys (exclude_unset). Pass
@@ -224,7 +225,7 @@ class AnnualReportFinancialLineService:
         if not line:
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         if not update_fields:
             return ExpenseLineResponse.model_validate(line)
@@ -248,7 +249,7 @@ class AnnualReportFinancialLineService:
         if not line:
             raise NotFoundError(
                 EXPENSE_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         old_value = expense_line_snapshot(line)
         self.expense_repo.delete_line(line)

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 
 import bcrypt
@@ -29,7 +30,7 @@ class InvalidRefreshTokenError(AppError):
     def __init__(self) -> None:
         super().__init__(
             "טוקן הרענון אינו תקין או שפג תוקפו",
-            "AUTH.INVALID_REFRESH_TOKEN",
+            ErrorCode.AUTH_INVALID_REFRESH_TOKEN,
             status_code=401,
         )
 

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from app.annual_reports.models.annual_report_enums import ClientAnnualFilingType
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.models.annual_report_schedule_entry import AnnualReportSchedule
@@ -21,7 +22,7 @@ class AnnualReportScheduleService(AnnualReportBaseService):
         if not entry:
             raise NotFoundError(
                 SCHEDULE_NOT_FOUND.format(schedule=schedule, report_id=report_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         return entry
 
@@ -31,7 +32,7 @@ class AnnualReportScheduleService(AnnualReportBaseService):
         except ValueError as exc:
             raise AppError(
                 INVALID_SCHEDULE_ERROR.format(schedule=schedule),
-                "ANNUAL_REPORT.INVALID_TYPE",
+                ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
             ) from exc
 
     def get_schedules(self, report_id: int):

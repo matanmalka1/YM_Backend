@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
@@ -42,16 +43,16 @@ class AdvancePaymentService:
         if record is None:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",
-                "ADVANCE_PAYMENT.CLIENT_RECORD_NOT_FOUND",
+                ErrorCode.ADVANCE_PAYMENT_CLIENT_RECORD_NOT_FOUND,
             )
         return record
 
     def _assert_client_allows_create(self, client_record_id: int) -> None:
         record = self._get_record_or_raise(client_record_id)
         if record.status == ClientStatus.CLOSED:
-            raise ForbiddenError("לקוח סגור — לא ניתן ליצור מקדמה", "CLIENT.CLOSED")
+            raise ForbiddenError("לקוח סגור — לא ניתן ליצור מקדמה", ErrorCode.CLIENT_CLOSED)
         if record.status == ClientStatus.FROZEN:
-            raise ForbiddenError("לקוח מוקפא — לא ניתן ליצור מקדמה", "CLIENT.FROZEN")
+            raise ForbiddenError("לקוח מוקפא — לא ניתן ליצור מקדמה", ErrorCode.CLIENT_FROZEN)
 
     def default_period_months_count_for_client(self, client_record_id: int) -> int:
         record = self._get_record_or_raise(client_record_id)
@@ -61,15 +62,15 @@ class AdvancePaymentService:
             return 2
         if freq == AdvancePaymentFrequency.MONTHLY:
             return 1
-        raise NotFoundError("תדירות מקדמות לא מוגדרת ללקוח", "ADVANCE_PAYMENT.FREQUENCY_NOT_SET")
+        raise NotFoundError("תדירות מקדמות לא מוגדרת ללקוח", ErrorCode.ADVANCE_PAYMENT_FREQUENCY_NOT_SET)
 
     def _validate_period_months_count(self, period: str, period_months_count: int) -> None:
         if period_months_count not in SUPPORTED_PERIOD_MONTH_COUNTS:
-            raise ConflictError("תדירות מקדמה לא נתמכת", "ADVANCE_PAYMENT.INVALID_PERIOD")
+            raise ConflictError("תדירות מקדמה לא נתמכת", ErrorCode.ADVANCE_PAYMENT_INVALID_PERIOD)
         if period_months_count == 2 and parse_period_month(period) not in BIMONTHLY_START_MONTHS:
             raise ConflictError(
                 "מקדמה דו-חודשית חייבת להתחיל בחודש אי-זוגי",
-                "ADVANCE_PAYMENT.INVALID_PERIOD",
+                ErrorCode.ADVANCE_PAYMENT_INVALID_PERIOD,
             )
 
     def _compute_amounts(
@@ -132,13 +133,13 @@ class AdvancePaymentService:
         elif period_months_count != configured_count:
             raise ConflictError(
                 "תדירות המקדמות בבקשה אינה תואמת להגדרת הלקוח",
-                "ADVANCE_PAYMENT.FREQUENCY_MISMATCH",
+                ErrorCode.ADVANCE_PAYMENT_FREQUENCY_MISMATCH,
             )
         self._validate_period_months_count(period, period_months_count)
         if self.repo.exists_for_period(client_record_id, period):
             raise ConflictError(
                 f"תשלום מקדמה לתקופה {period} כבר קיים",
-                "ADVANCE_PAYMENT.CONFLICT",
+                ErrorCode.ADVANCE_PAYMENT_CONFLICT,
             )
 
         if advance_rate is None:
@@ -195,7 +196,7 @@ class AdvancePaymentService:
         if not payment:
             raise NotFoundError(
                 f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
-                "ADVANCE_PAYMENT.NOT_FOUND",
+                ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
         filtered = {k: v for k, v in fields.items() if k in self._ALLOWED_UPDATE_FIELDS}
 
@@ -240,7 +241,7 @@ class AdvancePaymentService:
         if not payment:
             raise NotFoundError(
                 f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
-                "ADVANCE_PAYMENT.NOT_FOUND",
+                ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
         self.repo.soft_delete(payment_id, deleted_by=actor_id)
 
@@ -262,7 +263,7 @@ class AdvancePaymentService:
         elif period_months_count != configured_count:
             raise ConflictError(
                 "תדירות המקדמות בבקשה אינה תואמת להגדרת הלקוח",
-                "ADVANCE_PAYMENT.FREQUENCY_MISMATCH",
+                ErrorCode.ADVANCE_PAYMENT_FREQUENCY_MISMATCH,
             )
         tax_calendar = TaxCalendarMaterializationService(self.db)
         created: list[AdvancePayment] = []

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from app.core.exceptions import NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
@@ -29,7 +31,7 @@ def cancel_request(
     if not req:
         raise NotFoundError(
             SIGNATURE_REQUEST_NOT_FOUND.format(request_id=request_id),
-            "SIGNATURE_REQUEST.NOT_FOUND",
+            ErrorCode.SIGNATURE_REQUEST_NOT_FOUND,
         )
 
     req = repo.update(

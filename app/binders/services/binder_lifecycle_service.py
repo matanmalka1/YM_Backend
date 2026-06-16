@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -90,7 +92,7 @@ class BinderLifecycleService:
             and binder.capacity_status == BinderCapacityStatus.FULL
         )
         if not eligible:
-            raise AppError("לא ניתן לקלוט חומר לקלסר במצב הנוכחי", "BINDER.NOT_INTAKE_ELIGIBLE")
+            raise AppError("לא ניתן לקלוט חומר לקלסר במצב הנוכחי", ErrorCode.BINDER_NOT_INTAKE_ELIGIBLE)
         self._append_log(
             binder,
             "capacity_status",
@@ -114,7 +116,7 @@ class BinderLifecycleService:
         binder = self._get_for_update(binder_id)
         self._ensure_capacity_change_allowed(binder)
         if binder.capacity_status == BinderCapacityStatus.FULL:
-            raise AppError("הקלסר כבר מלא", "BINDER.ALREADY_FULL")
+            raise AppError("הקלסר כבר מלא", ErrorCode.BINDER_ALREADY_FULL)
         return self._set_capacity(
             binder,
             BinderCapacityStatus.FULL,
@@ -131,7 +133,7 @@ class BinderLifecycleService:
         binder = self._get_for_update(binder_id)
         self._ensure_capacity_change_allowed(binder)
         if binder.capacity_status == BinderCapacityStatus.OPEN:
-            raise AppError("הקלסר אינו מלא", "BINDER.NOT_FULL")
+            raise AppError("הקלסר אינו מלא", ErrorCode.BINDER_NOT_FULL)
         return self._set_capacity(
             binder,
             BinderCapacityStatus.OPEN,
@@ -149,7 +151,7 @@ class BinderLifecycleService:
         if binder.location_status != BinderLocationStatus.IN_OFFICE:
             raise AppError(
                 "לא ניתן לסמן קלסר כמוכן למסירה מהמצב הנוכחי",
-                "BINDER.INVALID_LOCATION_TRANSITION",
+                ErrorCode.BINDER_INVALID_LOCATION_TRANSITION,
             )
         old_value = binder.location_status.value
         binder.location_status = BinderLocationStatus.READY_FOR_HANDOVER
@@ -214,7 +216,7 @@ class BinderLifecycleService:
         if binder.location_status != BinderLocationStatus.READY_FOR_HANDOVER:
             raise AppError(
                 "לא ניתן לבטל מוכנות למסירה מהמצב הנוכחי",
-                "BINDER.INVALID_LOCATION_TRANSITION",
+                ErrorCode.BINDER_INVALID_LOCATION_TRANSITION,
             )
         old_value = binder.location_status.value
         binder.location_status = BinderLocationStatus.IN_OFFICE
@@ -255,9 +257,9 @@ class BinderLifecycleService:
         notes: str | None = None,
     ) -> Binder:
         if binder.location_status == BinderLocationStatus.HANDED_OVER:
-            raise AppError("הקלסר כבר נמסר ללקוח", "BINDER.ALREADY_HANDED_OVER")
+            raise AppError("הקלסר כבר נמסר ללקוח", ErrorCode.BINDER_ALREADY_HANDED_OVER)
         if binder.location_status != BinderLocationStatus.READY_FOR_HANDOVER:
-            raise AppError("הקלסר אינו מוכן למסירה", "BINDER.NOT_READY_FOR_HANDOVER")
+            raise AppError("הקלסר אינו מוכן למסירה", ErrorCode.BINDER_NOT_READY_FOR_HANDOVER)
         old_value = binder.location_status.value
         effective_handover_at = handed_over_at or israel_today()
         binder.location_status = BinderLocationStatus.HANDED_OVER
@@ -279,17 +281,17 @@ class BinderLifecycleService:
     def _get_for_update(self, binder_id: int) -> Binder:
         binder = self.binder_repo.get_by_id_for_update(binder_id)
         if not binder:
-            raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), "BINDER.NOT_FOUND")
+            raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
         return binder
 
     @staticmethod
     def _ensure_capacity_change_allowed(binder: Binder) -> None:
         if binder.location_status == BinderLocationStatus.HANDED_OVER:
-            raise AppError("הקלסר כבר נמסר ללקוח", "BINDER.ALREADY_HANDED_OVER")
+            raise AppError("הקלסר כבר נמסר ללקוח", ErrorCode.BINDER_ALREADY_HANDED_OVER)
         if binder.location_status != BinderLocationStatus.IN_OFFICE:
             raise AppError(
                 "לא ניתן לשנות קיבולת כשהקלסר אינו במשרד",
-                "BINDER.CAPACITY_CHANGE_NOT_ALLOWED",
+                ErrorCode.BINDER_CAPACITY_CHANGE_NOT_ALLOWED,
             )
 
     def _set_capacity(

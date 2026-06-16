@@ -1,5 +1,6 @@
 """Service layer for client-scoped business routes."""
 
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.businesses.models.business import Business
@@ -70,7 +71,7 @@ class ClientBusinessService:
     ) -> Business:
         business = self.business_repo.get_by_id_including_deleted(business_id)
         if not business:
-            raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
+            raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
         self._assert_business_belongs_to_client(business, client_id)
         return self.business_service.restore_business(
             business_id,

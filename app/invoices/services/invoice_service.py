@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -39,20 +40,20 @@ class InvoiceService:
         # Validate charge exists
         charge = self.charge_repo.get_by_id(charge_id)
         if not charge:
-            raise NotFoundError(f"חיוב {charge_id} לא נמצא", "INVOICE.NOT_FOUND")
+            raise NotFoundError(f"חיוב {charge_id} לא נמצא", ErrorCode.INVOICE_NOT_FOUND)
 
         # Validate charge is issued
         if charge.status != ChargeStatus.ISSUED:
             raise AppError(
                 f"לא ניתן לצרף חשבונית לחיוב במצב {charge.status.value}",
-                "INVOICE.INVALID_STATUS",
+                ErrorCode.INVOICE_INVALID_STATUS,
             )
 
         # Validate no existing invoice
         if self.invoice_repo.exists_for_charge(charge_id):
             raise ConflictError(
                 f"לחיוב {charge_id} כבר קיימת חשבונית",
-                "INVOICE.CONFLICT",
+                ErrorCode.INVOICE_CONFLICT,
             )
 
         # Create invoice reference

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from fastapi import APIRouter, Depends, status
 
 from app.core.exceptions import NotFoundError
@@ -51,5 +52,5 @@ def attach_invoice(request: InvoiceAttachRequest, db: DBSession):
 def get_charge_invoice(charge_id: PathId, db: DBSession):
     invoice = InvoiceRepository(db).get_by_charge_id(charge_id)
     if not invoice:
-        raise NotFoundError(f"לחיוב {charge_id} לא נמצאה חשבונית", "INVOICE.NOT_FOUND")
+        raise NotFoundError(f"לחיוב {charge_id} לא נמצאה חשבונית", ErrorCode.INVOICE_NOT_FOUND)
     return invoice

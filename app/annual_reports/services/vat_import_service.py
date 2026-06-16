@@ -5,6 +5,7 @@ maps expense categories to annual report categories, and creates income/expense
 lines in bulk. Existing lines are only replaced when force=True.
 """
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -132,14 +133,14 @@ class VatImportService:
         if actor_id is None:
             raise AppError(
                 AUTOPOPULATE_AUDIT_ACTOR_REQUIRED,
-                "ANNUAL_REPORT.AUDIT_ACTOR_REQUIRED",
+                ErrorCode.ANNUAL_REPORT_AUDIT_ACTOR_REQUIRED,
             )
 
         report = self.report_repo.get_by_id(report_id)
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
 
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
@@ -147,7 +148,7 @@ class VatImportService:
         if report.status not in _ALLOWED_STATUSES:
             raise AppError(
                 AUTOPOPULATE_INVALID_STATUS,
-                "ANNUAL_REPORT.INVALID_STATUS_FOR_AUTOPOPULATE",
+                ErrorCode.ANNUAL_REPORT_INVALID_STATUS_FOR_AUTOPOPULATE,
             )
 
         existing_income = self.income_repo.list_by_report(report_id)
@@ -158,7 +159,7 @@ class VatImportService:
         if (existing_income or existing_expenses) and not force:
             raise ConflictError(
                 AUTOPOPULATE_LINES_ALREADY_EXIST,
-                "ANNUAL_REPORT.LINES_ALREADY_EXIST",
+                ErrorCode.ANNUAL_REPORT_LINES_ALREADY_EXIST,
             )
 
         if force:

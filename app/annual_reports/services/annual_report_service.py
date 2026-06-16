@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.advance_payments.repositories.advance_payment_repository import (
@@ -54,7 +55,7 @@ class AnnualReportService(
         if not self.repo.get_by_id(report_id):
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
 
     def delete_report(self, report_id: int, actor_id: int, actor_name: str) -> bool:

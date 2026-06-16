@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import hashlib
 import json
 import re
@@ -116,18 +118,18 @@ class NotificationSendService:
     ) -> NotificationPreviewResponse:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
             raise AppError(
-                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", "NOTIFICATION.AUTO_ONLY_TRIGGER"
+                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", ErrorCode.NOTIFICATION_AUTO_ONLY_TRIGGER
             )
         if request.trigger in _ANNUAL_TRIGGERS and not request.entity_id:
             raise AppError(
-                "חובה לספק מזהה דוח שנתי לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID"
+                "חובה לספק מזהה דוח שנתי לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
             )
         if request.trigger in _GENERIC_ENTITY_TRIGGERS and not request.entity_id:
-            raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID")
+            raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID)
 
         client_record = self.db.get(ClientRecord, request.client_record_id)
         if client_record is None:
-            raise NotFoundError("הלקוח לא נמצא", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError("הלקוח לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 
         annual_report_id = (
             request.entity_id
@@ -197,18 +199,18 @@ class NotificationSendService:
     ) -> NotificationResult:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
             raise AppError(
-                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", "NOTIFICATION.AUTO_ONLY_TRIGGER"
+                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", ErrorCode.NOTIFICATION_AUTO_ONLY_TRIGGER
             )
         if request.trigger in _ANNUAL_TRIGGERS and not request.entity_id:
             raise AppError(
-                "חובה לספק מזהה דוח שנתי לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID"
+                "חובה לספק מזהה דוח שנתי לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
             )
         if request.trigger in _GENERIC_ENTITY_TRIGGERS and not request.entity_id:
-            raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", "NOTIFICATION.MISSING_ENTITY_ID")
+            raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID)
 
         client_record = self.db.get(ClientRecord, request.client_record_id)
         if client_record is None:
-            raise NotFoundError("הלקוח לא נמצא", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError("הלקוח לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 
         # Policy check — blocked = no record created
         annual_report_id_for_policy = (
@@ -273,21 +275,21 @@ class NotificationSendService:
         body = body_value.strip()
         _placeholder_re = re.compile(r"\{[a-z_]+\}")
         if not subject:
-            raise AppError("נושא ההודעה לא יכול להיות ריק", "NOTIFICATION.EMPTY_SUBJECT")
+            raise AppError("נושא ההודעה לא יכול להיות ריק", ErrorCode.NOTIFICATION_EMPTY_SUBJECT)
         if not body:
-            raise AppError("גוף ההודעה לא יכול להיות ריק", "NOTIFICATION.EMPTY_BODY")
+            raise AppError("גוף ההודעה לא יכול להיות ריק", ErrorCode.NOTIFICATION_EMPTY_BODY)
         if len(subject) > SUBJECT_MAX_LENGTH:
             raise AppError(
                 f"הנושא ארוך מדי (מקסימום {SUBJECT_MAX_LENGTH} תווים)",
-                "NOTIFICATION.SUBJECT_TOO_LONG",
+                ErrorCode.NOTIFICATION_SUBJECT_TOO_LONG,
             )
         if len(body) > BODY_MAX_LENGTH:
             raise AppError(
                 f"גוף ההודעה ארוך מדי (מקסימום {BODY_MAX_LENGTH} תווים)",
-                "NOTIFICATION.BODY_TOO_LONG",
+                ErrorCode.NOTIFICATION_BODY_TOO_LONG,
             )
         if _placeholder_re.search(subject) or _placeholder_re.search(body):
-            raise AppError("ההודעה מכילה שדות שלא מולאו", "NOTIFICATION.VISIBLE_PLACEHOLDER")
+            raise AppError("ההודעה מכילה שדות שלא מולאו", ErrorCode.NOTIFICATION_VISIBLE_PLACEHOLDER)
 
         channel = NotificationChannel(request.channel or NotificationChannel.EMAIL.value)
         req_hash = _hash_request(

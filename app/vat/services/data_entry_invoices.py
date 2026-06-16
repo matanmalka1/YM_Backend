@@ -1,5 +1,6 @@
 """Invoice add flow for VAT work items."""
 
+from app.core.error_codes import ErrorCode
 import json
 from datetime import datetime
 from uuid import uuid4
@@ -67,7 +68,7 @@ def add_invoice(
     """Add an invoice to a work item. Validation delegated to resolve_invoice_derived_fields."""
     item = work_item_repo.get_by_id(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
     assert_editable(item)
 
@@ -76,25 +77,25 @@ def add_invoice(
     if not record:
         raise NotFoundError(
             VAT_ITEM_NOT_FOUND.format(item_id=item_id),
-            "VAT.CLIENT_RECORD_NOT_FOUND",
+            ErrorCode.VAT_CLIENT_RECORD_NOT_FOUND,
         )
     legal_entity = (
         LegalEntityRepository(db).get_by_id(record.legal_entity_id) if db and record else None
     )
 
     if record.status == ClientStatus.CLOSED:
-        raise AppError(VAT_CLIENT_CLOSED_ADD_INVOICES, "VAT.CLIENT_CLOSED")
+        raise AppError(VAT_CLIENT_CLOSED_ADD_INVOICES, ErrorCode.VAT_CLIENT_CLOSED)
 
     if business_activity_id is not None:
         business = BusinessRepository(db).get_by_id(business_activity_id) if db else None
         if not business or not record or business.legal_entity_id != record.legal_entity_id:
             raise AppError(
                 VAT_BUSINESS_ACTIVITY_WRONG_CLIENT,
-                "BUSINESS_ACTIVITY.WRONG_CLIENT",
+                ErrorCode.BUSINESS_ACTIVITY_WRONG_CLIENT,
             )
 
     if gross_amount <= 0:
-        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, "VAT.NET_NOT_POSITIVE")
+        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, ErrorCode.VAT_NET_NOT_POSITIVE)
 
     net_amount, vat_amount = split_gross_amount(gross_amount, rate_type, int(item.period[:4]))
 
@@ -135,7 +136,7 @@ def add_invoice(
     if existing:
         raise ConflictError(
             VAT_INVOICE_NUMBER_CONFLICT.format(invoice_number=invoice_number),
-            "VAT.CONFLICT",
+            ErrorCode.VAT_CONFLICT,
         )
 
     original_status = item.status
@@ -156,7 +157,7 @@ def add_invoice(
     ):
         raise AppError(
             VAT_ADD_INVOICE_INVALID_STATUS.format(status=original_status.value),
-            "VAT.INVALID_STATUS",
+            ErrorCode.VAT_INVALID_STATUS,
         )
 
     invoice = invoice_repo.create(

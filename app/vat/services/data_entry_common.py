@@ -1,5 +1,6 @@
 """Shared helpers for VAT work item data-entry flows."""
 
+from app.core.error_codes import ErrorCode
 import json
 from decimal import Decimal
 
@@ -32,7 +33,7 @@ from app.vat.services.messages import (
 def assert_editable(item) -> None:
     """Raise if the work item is FILED (immutable)."""
     if item.status == VatWorkItemStatus.FILED:
-        raise AppError(VAT_FILED_ITEM_IMMUTABLE, "VAT.FILED_IMMUTABLE")
+        raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
 
 def assert_transition_allowed(item, target_status: VatWorkItemStatus) -> None:
@@ -44,7 +45,7 @@ def assert_transition_allowed(item, target_status: VatWorkItemStatus) -> None:
                 current_status=item.status.value,
                 target_status=target_status.value,
             ),
-            "VAT.INVALID_TRANSITION",
+            ErrorCode.VAT_INVALID_TRANSITION,
         )
 
 
@@ -82,13 +83,13 @@ def resolve_invoice_derived_fields(
 ) -> dict:
     """Validate amounts/category rules and return derived fields: deduction_rate, is_exceptional."""
     if vat_amount < 0:
-        raise AppError(VAT_NEGATIVE_AMOUNT, "VAT.NEGATIVE_VAT")
+        raise AppError(VAT_NEGATIVE_AMOUNT, ErrorCode.VAT_NEGATIVE_VAT)
     if net_amount <= 0:
-        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, "VAT.NET_NOT_POSITIVE")
+        raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, ErrorCode.VAT_NET_NOT_POSITIVE)
     if invoice_type == InvoiceType.EXPENSE and not expense_category:
         raise AppError(
             VAT_EXPENSE_CATEGORY_REQUIRED,
-            "VAT.EXPENSE_CATEGORY_REQUIRED",
+            ErrorCode.VAT_EXPENSE_CATEGORY_REQUIRED,
         )
     if (
         invoice_type == InvoiceType.EXPENSE
@@ -97,7 +98,7 @@ def resolve_invoice_derived_fields(
     ):
         raise AppError(
             VAT_SUPPLIER_ID_REQUIRED,
-            "VAT.COUNTERPARTY_ID_REQUIRED",
+            ErrorCode.VAT_COUNTERPARTY_ID_REQUIRED,
         )
 
     deduction_rate = Decimal("1.0000")
@@ -134,6 +135,6 @@ def check_osek_patur_ceiling(
                 new_total=float(new_total),
                 ceiling=float(ceiling),
             ),
-            "VAT.OSEK_PATUR_CEILING_EXCEEDED",
+            ErrorCode.VAT_OSEK_PATUR_CEILING_EXCEEDED,
         )
     return new_total >= ceiling * OSEK_PATUR_CEILING_WARNING_RATE

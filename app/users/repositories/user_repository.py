@@ -28,9 +28,6 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, db: Session):
         super().__init__(db)
 
-    def get_by_id(self, entity_id: int) -> User | None:
-        return self.db.scalars(select(User).where(User.id == entity_id)).first()
-
     def get_auth_subject_by_id(self, user_id: int) -> AuthSubject | None:
         """Fetch only the columns needed for per-request JWT validation.
 

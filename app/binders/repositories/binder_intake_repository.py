@@ -1,7 +1,6 @@
 from datetime import date
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
 from app.binders.models.binder_intake import BinderIntake
 from app.common.repositories.base_repository import BaseRepository
@@ -10,8 +9,7 @@ from app.common.repositories.base_repository import BaseRepository
 class BinderIntakeRepository(BaseRepository[BinderIntake]):
     """Data access layer for BinderIntake entities."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    model = BinderIntake
 
     def create(
         self,
@@ -30,10 +28,6 @@ class BinderIntakeRepository(BaseRepository[BinderIntake]):
         self.db.add(intake)
         self.db.flush()
         return intake
-
-    def get_by_id(self, intake_id: int) -> BinderIntake | None:
-        """Get a single intake by ID."""
-        return self.db.scalars(select(BinderIntake).where(BinderIntake.id == intake_id)).first()
 
     def get_first_by_binder(self, binder_id: int) -> BinderIntake | None:
         """Get the earliest intake for a binder (first material received)."""

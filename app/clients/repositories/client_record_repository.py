@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from sqlalchemy import asc, case, desc, func, select
 from sqlalchemy.orm import Session
 
@@ -119,7 +121,7 @@ class ClientRecordRepository:
         if row is None:
             raise NotFoundError(
                 f"רשומת לקוח {client_record_id} לא נמצאה",
-                "CLIENT_RECORD.NOT_FOUND",
+                ErrorCode.CLIENT_RECORD_NOT_FOUND,
             )
         return row[0]
 

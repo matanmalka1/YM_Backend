@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
@@ -66,7 +67,7 @@ class BusinessService:
         if self.business_repo.all_non_deleted_are_closed_for_legal_entity(record.legal_entity_id):
             raise AppError(
                 "כל העסקים של לקוח זה סגורים — לא ניתן להוסיף עסק חדש ללא אישור מפורש",
-                "BUSINESS.CLIENT_ALL_CLOSED",
+                ErrorCode.BUSINESS_CLIENT_ALL_CLOSED,
                 status_code=409,
             )
 
@@ -80,7 +81,7 @@ class BusinessService:
                 ):
                     raise ConflictError(
                         f"עסק בשם '{business_name}' כבר קיים ללקוח זה",
-                        "BUSINESS.NAME_CONFLICT",
+                        ErrorCode.BUSINESS_NAME_CONFLICT,
                     )
 
         try:
@@ -94,7 +95,7 @@ class BusinessService:
         except IntegrityError as exc:
             raise ConflictError(
                 f"שגיאת כפילות ביצירת עסק ללקוח {client_record_id}",
-                "BUSINESS.CONFLICT",
+                ErrorCode.BUSINESS_CONFLICT,
             ) from exc
 
         self._audit.record_create(
@@ -115,7 +116,7 @@ class BusinessService:
     def get_business_or_raise(self, business_id: int) -> Business:
         business = self.business_repo.get_by_id(business_id)
         if not business:
-            raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
+            raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
         return business
 
     def list_businesses_for_client(
@@ -142,7 +143,7 @@ class BusinessService:
 
         business = self.business_repo.get_by_id(business_id)
         if not business:
-            raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
+            raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
         if business.legal_entity_id is not None:
             assert_business_belongs_to_legal_entity(business, record.legal_entity_id)
 
@@ -152,14 +153,14 @@ class BusinessService:
             except ValueError as exc:
                 raise AppError(
                     f"סטטוס לא חוקי: {fields['status']}",
-                    "BUSINESS.INVALID_STATUS",
+                    ErrorCode.BUSINESS_INVALID_STATUS,
                     status_code=400,
                 ) from exc
 
         new_status = fields.get("status")
         if new_status in (BusinessStatus.FROZEN, BusinessStatus.CLOSED):
             if user_role != UserRole.ADVISOR:
-                raise ForbiddenError("רק יועצים יכולים להקפיא או לסגור עסקים", "BUSINESS.FORBIDDEN")
+                raise ForbiddenError("רק יועצים יכולים להקפיא או לסגור עסקים", ErrorCode.BUSINESS_FORBIDDEN)
         if new_status == BusinessStatus.CLOSED:
             fields.setdefault("closed_at", israel_today())
         if new_status == BusinessStatus.ACTIVE:

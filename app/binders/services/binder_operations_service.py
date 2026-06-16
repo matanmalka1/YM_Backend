@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -53,7 +54,7 @@ class BinderOperationsService:
         client_record = self.client_repo.get_by_id(client_record_id)
         if not client_record:
             raise NotFoundError(
-                f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
+                f"רשומת לקוח {client_record_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
         binders = self.repo.list_by_client_paginated(
             client_record_id,

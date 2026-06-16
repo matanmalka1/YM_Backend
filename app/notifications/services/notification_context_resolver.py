@@ -7,6 +7,8 @@ template context.
 
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -153,7 +155,7 @@ class NotificationContextResolver:
 
         binder = self.db.get(Binder, binder_id)
         if binder is None or binder.client_record_id != client_record_id:
-            raise NotFoundError("הקלסר לא נמצא", "BINDER.NOT_FOUND")
+            raise NotFoundError("הקלסר לא נמצא", ErrorCode.BINDER_NOT_FOUND)
         return binder.binder_number
 
     def _resolve_annual_report_tax_year(self, annual_report_id: int, client_record_id: int) -> int:
@@ -161,7 +163,7 @@ class NotificationContextResolver:
 
         report = self.db.get(AnnualReport, annual_report_id)
         if report is None or report.client_record_id != client_record_id:
-            raise NotFoundError("הדוח השנתי לא נמצא", "ANNUAL_REPORT.NOT_FOUND")
+            raise NotFoundError("הדוח השנתי לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
         return report.tax_year
 
     def _resolve_charge_context(self, charge_id: int, client_record_id: int) -> dict:
@@ -169,7 +171,7 @@ class NotificationContextResolver:
 
         charge = self.db.get(Charge, charge_id)
         if charge is None or charge.client_record_id != client_record_id:
-            raise NotFoundError("החיוב לא נמצא", "CHARGE.NOT_FOUND")
+            raise NotFoundError("החיוב לא נמצא", ErrorCode.CHARGE_NOT_FOUND)
         amount = int(charge.amount) if charge.amount == int(charge.amount) else float(charge.amount)
         return {
             "charge_amount": str(amount),
@@ -183,7 +185,7 @@ class NotificationContextResolver:
 
         item = self.db.get(VatWorkItem, vat_work_item_id)
         if item is None or item.client_record_id != client_record_id:
-            raise NotFoundError('פריט מע"מ לא נמצא', "VAT.NOT_FOUND")
+            raise NotFoundError('פריט מע"מ לא נמצא', ErrorCode.VAT_NOT_FOUND)
         deadline = item.due_date_effective
         today = israel_today()
         days_until = (deadline - today).days if deadline else None
@@ -200,7 +202,7 @@ class NotificationContextResolver:
 
         sig = self.db.get(SignatureRequest, signature_request_id)
         if sig is None or sig.client_record_id != client_record_id:
-            raise NotFoundError("בקשת חתימה לא נמצאה", "SIGNATURE_REQUEST.NOT_FOUND")
+            raise NotFoundError("בקשת חתימה לא נמצאה", ErrorCode.SIGNATURE_REQUEST_NOT_FOUND)
         signature_link = (
             f"{settings.FRONTEND_BASE_URL}/sign/{sig.signing_token}" if sig.signing_token else ""
         )

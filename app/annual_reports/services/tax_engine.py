@@ -1,5 +1,6 @@
 """Pure Israeli income tax calculation engine — multi-year brackets."""
 
+from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 
 from tax_rules.statutory import (
@@ -73,7 +74,7 @@ def calculate_tax(
             UNSUPPORTED_TAX_YEAR_ERROR.format(
                 tax_year=tax_year, supported_years=get_supported_tax_years()
             ),
-            "TAX_ENGINE.INVALID_INPUT",
+            ErrorCode.TAX_ENGINE_INVALID_INPUT,
             status_code=400,
         ) from exc
 

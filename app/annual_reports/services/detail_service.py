@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date, datetime
 from enum import Enum
 
@@ -35,7 +36,7 @@ class AnnualReportDetailService:
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
         existing = self.repo.get_by_report_id(report_id)
         changes = {

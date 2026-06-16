@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import UTC, datetime
 
 from app.common.enums import SubmissionMethod, VatType
@@ -43,7 +44,7 @@ def get_vat_deadline_fields(item, submission_method: SubmissionMethod | None = N
 def get_work_item(work_item_repo: VatWorkItemRepository, item_id: int):
     item = work_item_repo.get_by_id(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
     return item
 
 

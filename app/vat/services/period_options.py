@@ -1,5 +1,6 @@
 """Period options logic for VAT work item creation UI."""
 
+from app.core.error_codes import ErrorCode
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType
 from app.core.exceptions import AppError, NotFoundError
@@ -31,13 +32,13 @@ def get_period_options(
     if not client_record:
         raise NotFoundError(
             VAT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-            "VAT.NOT_FOUND",
+            ErrorCode.VAT_NOT_FOUND,
         )
     legal_entity = LegalEntityRepository(db).get_by_id(client_record.legal_entity_id)
     if not legal_entity:
         raise NotFoundError(
             VAT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-            "VAT.NOT_FOUND",
+            ErrorCode.VAT_NOT_FOUND,
         )
 
     selected_year = year or israel_today().year
@@ -46,7 +47,7 @@ def get_period_options(
     if period_type == VatType.EXEMPT:
         raise AppError(
             VAT_CLIENT_EXEMPT,
-            "VAT.CLIENT_EXEMPT",
+            ErrorCode.VAT_CLIENT_EXEMPT,
         )
 
     start_months = range(1, 12, 2) if period_type == VatType.BIMONTHLY else range(1, 13)

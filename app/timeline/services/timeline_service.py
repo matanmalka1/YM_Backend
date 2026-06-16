@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -63,7 +64,7 @@ class TimelineService:
     ) -> tuple[list[dict], int]:
         client_record = self.client_record_repo.get_by_id(client_record_id)
         if not client_record:
-            raise NotFoundError(message="לקוח לא נמצא", code="TIMELINE.CLIENT_NOT_FOUND")
+            raise NotFoundError(message="לקוח לא נמצא", code=ErrorCode.TIMELINE_CLIENT_NOT_FOUND)
         businesses = self.db.scalars(
             select(Business).where(
                 Business.legal_entity_id == client_record.legal_entity_id,

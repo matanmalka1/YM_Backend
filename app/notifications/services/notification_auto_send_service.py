@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import hashlib
 import json
 
@@ -104,11 +106,11 @@ class NotificationAutoSendService:
         if trigger not in _AUTO_SEND_ALLOWED_TRIGGERS:
             raise AppError(
                 f"trigger {trigger.value} אינו מורשה לשליחה אוטומטית",
-                "NOTIFICATION.AUTO_SEND_TRIGGER_NOT_ALLOWED",
+                ErrorCode.NOTIFICATION_AUTO_SEND_TRIGGER_NOT_ALLOWED,
             )
         if not idempotency_key.strip():
             raise AppError(
-                "idempotency_key נדרש לשליחה אוטומטית", "NOTIFICATION.MISSING_IDEMPOTENCY_KEY"
+                "idempotency_key נדרש לשליחה אוטומטית", ErrorCode.NOTIFICATION_MISSING_IDEMPOTENCY_KEY
             )
         req_hash = _hash_auto(
             trigger.value,
@@ -140,7 +142,7 @@ class NotificationAutoSendService:
 
         client_record = self.db.get(ClientRecord, client_record_id)
         if client_record is None:
-            raise NotFoundError("הלקוח לא נמצא", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError("הלקוח לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 
         policy = self.policy.can_send(
             client_record,

@@ -1,5 +1,6 @@
 """Service mixin for annex (schedule) data lines."""
 
+from app.core.error_codes import ErrorCode
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
 from app.annual_reports.schemas.annex_schemas import SCHEDULE_VALIDATORS
@@ -43,7 +44,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         except Exception as exc:
             raise AppError(
                 ANNEX_VALIDATION_ERROR.format(error=exc),
-                "ANNUAL_REPORT.ANNEX_VALIDATION_ERROR",
+                ErrorCode.ANNUAL_REPORT_ANNEX_VALIDATION_ERROR,
             ) from exc
 
     def get_annex_lines(
@@ -84,7 +85,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         if not existing or existing.annual_report_id != report_id:
             raise NotFoundError(
                 ANNEX_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         old_value = _annex_snapshot(existing)
         data = self._validate_annex_data(existing.schedule, data)
@@ -92,7 +93,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         if not row:
             raise NotFoundError(
                 ANNEX_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         self._record_annex_audit(
             report_id,
@@ -109,13 +110,13 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         if not existing or existing.annual_report_id != report_id:
             raise NotFoundError(
                 ANNEX_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         old_value = _annex_snapshot(existing)
         if not self.annex_repo.delete_line(line_id):  # type: ignore[attr-defined]
             raise NotFoundError(
                 ANNEX_LINE_NOT_FOUND.format(line_id=line_id),
-                "ANNUAL_REPORT.LINE_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         self._record_annex_audit(
             report_id, actor_id, ACTION_ANNEX_LINE_DELETED, old_value=old_value

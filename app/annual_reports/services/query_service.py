@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
@@ -42,7 +43,7 @@ class AnnualReportQueryService(AnnualReportBaseService):
         if client_record is None:
             raise NotFoundError(
                 ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-                "ANNUAL_REPORT.CLIENT_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_CLIENT_NOT_FOUND,
             )
         reports = self.repo.list_by_client_record(client_record.id, page=page, page_size=page_size)
         total = self.repo.count_by_client_record(client_record.id)

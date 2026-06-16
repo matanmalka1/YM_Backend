@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from collections.abc import Iterator
 from contextlib import contextmanager
 
@@ -53,7 +55,7 @@ class BaseService:
         """
         Fetch entity via repo.get_by_id(). Raise NotFoundError if None.
 
-        error_code format: "DOMAIN.NOT_FOUND" — e.g. "BINDER.NOT_FOUND"
+        error_code format: ErrorCode.DOMAIN_NOT_FOUND — e.g. ErrorCode.BINDER_NOT_FOUND
         """
         entity = repo.get_by_id(entity_id)
         if not entity:

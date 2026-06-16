@@ -3,6 +3,7 @@ Pure calculation functions for advance payment suggestions.
 No DB access — all inputs are passed as arguments.
 """
 
+from app.core.error_codes import ErrorCode
 from decimal import ROUND_HALF_UP, Decimal
 
 from app.core.exceptions import AppError
@@ -14,7 +15,7 @@ def derive_annual_income_from_vat(
 ) -> Decimal:
     """Reverse-calculate annual taxable income from total output VAT."""
     if vat_rate == 0:
-        raise AppError("שיעור המע״מ לא יכול להיות אפס", "ADVANCE_PAYMENT.RATE_INVALID")
+        raise AppError("שיעור המע״מ לא יכול להיות אפס", ErrorCode.ADVANCE_PAYMENT_RATE_INVALID)
     return total_output_vat / vat_rate
 
 

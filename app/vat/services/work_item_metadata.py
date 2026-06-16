@@ -1,5 +1,6 @@
 """Operational metadata mutations for VAT work items."""
 
+from app.core.error_codes import ErrorCode
 import json
 
 from app.core.exceptions import AppError, NotFoundError
@@ -28,9 +29,9 @@ def update_work_item_metadata(
 ):
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
     if item.status == VatWorkItemStatus.FILED:
-        raise AppError(VAT_FILED_ITEM_IMMUTABLE, "VAT.FILED_IMMUTABLE")
+        raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
     fields = {key: value for key, value in patch.items() if key in _UPDATEABLE_FIELDS}
     old_values = {key: getattr(item, key) for key in fields}
@@ -62,9 +63,9 @@ def soft_delete_work_item(
 ) -> None:
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
     if item.status == VatWorkItemStatus.FILED:
-        raise AppError(VAT_FILED_ITEM_IMMUTABLE, "VAT.FILED_IMMUTABLE")
+        raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
     work_item_repo.soft_delete_work_item(item_id, deleted_by=deleted_by, item=item)
     work_item_repo.append_audit(

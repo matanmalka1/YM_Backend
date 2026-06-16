@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
@@ -28,7 +29,7 @@ _USER_CANNOT_DEACTIVATE_SELF = "אינך יכול להשבית את החשבון
 def get_user_or_raise(repo: UserRepository, user_id: int) -> User:
     user = repo.get_by_id(user_id)
     if not user:
-        raise NotFoundError(f"משתמש {user_id} לא נמצא", "USER.NOT_FOUND")
+        raise NotFoundError(f"משתמש {user_id} לא נמצא", ErrorCode.USER_NOT_FOUND)
     return user
 
 
@@ -53,7 +54,7 @@ class UserManagementService:
         validate_password(password)
 
         if self.user_repo.get_by_email(email):
-            raise ConflictError(_USER_EMAIL_EXISTS.format(email=email), "USER.CONFLICT")
+            raise ConflictError(_USER_EMAIL_EXISTS.format(email=email), ErrorCode.USER_CONFLICT)
 
         user = self.user_repo.create(
             full_name=full_name,
@@ -104,7 +105,7 @@ class UserManagementService:
             existing = self.user_repo.get_by_email(fields["email"])
             if existing and existing.id != user_id:
                 raise ConflictError(
-                    _USER_EMAIL_EXISTS.format(email=fields["email"]), "USER.CONFLICT"
+                    _USER_EMAIL_EXISTS.format(email=fields["email"]), ErrorCode.USER_CONFLICT
                 )
 
         immutable_attempt = IMMUTABLE_UPDATE_FIELDS.intersection(fields.keys())
@@ -112,11 +113,11 @@ class UserManagementService:
             disallowed = ", ".join(sorted(immutable_attempt))
             raise AppError(
                 _USER_IMMUTABLE_FIELDS.format(disallowed=disallowed),
-                "USER.INVALID_UPDATE",
+                ErrorCode.USER_INVALID_UPDATE,
             )
 
         if not fields:
-            raise AppError(_USER_NO_FIELDS_PROVIDED, "USER.NO_FIELDS_PROVIDED")
+            raise AppError(_USER_NO_FIELDS_PROVIDED, ErrorCode.USER_NO_FIELDS_PROVIDED)
 
         get_user_or_raise(self.user_repo, user_id)
         user = self.user_repo.update(user_id, **fields)
@@ -150,7 +151,7 @@ class UserManagementService:
     ) -> User:
         ensure_advisor(actor_role)
         if actor_user_id == target_user_id:
-            raise ForbiddenError(_USER_CANNOT_DEACTIVATE_SELF, "USER.FORBIDDEN")
+            raise ForbiddenError(_USER_CANNOT_DEACTIVATE_SELF, ErrorCode.USER_FORBIDDEN)
 
         get_user_or_raise(self.user_repo, target_user_id)
         user = self.user_repo.deactivate_and_bump_token(target_user_id)

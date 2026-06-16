@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import os
 import tempfile
 
@@ -32,7 +34,7 @@ def _load(db: Session, client_record_id: int, year: int):
     if not client_record:
         raise NotFoundError(
             VAT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-            "VAT.NOT_FOUND",
+            ErrorCode.VAT_NOT_FOUND,
         )
     legal_entity = LegalEntityRepository(db).get_by_id(client_record.legal_entity_id)
     display_name = legal_entity.official_name if legal_entity else f"לקוח #{client_record_id}"

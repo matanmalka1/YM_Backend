@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -6,7 +7,7 @@ from app.notes.models.entity_note import EntityNote
 from app.notes.repositories.entity_note_repository import EntityNoteRepository
 from app.users.repositories.user_repository import UserRepository
 
-_NOT_FOUND = "NOTE.NOT_FOUND"
+_NOT_FOUND = ErrorCode.NOTE_NOT_FOUND
 _CLIENT_ENTITY_TYPE = "client"
 
 
@@ -19,7 +20,7 @@ class EntityNoteService:
 
     def _assert_client_exists(self, client_id: int) -> None:
         if not self.client_repo.get_by_id(client_id):
-            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 
     def _attach_created_by_names(self, notes: list[EntityNote]) -> list[EntityNote]:
         user_ids = sorted({note.created_by for note in notes if note.created_by is not None})
@@ -87,7 +88,7 @@ class EntityNoteService:
     ) -> EntityNote:
         obj = self._get_or_raise(note_id, entity_type, entity_id)
         if obj.created_by != actor_id:
-            raise ForbiddenError("אין הרשאה לעדכן הערה זו", "NOTE.FORBIDDEN")
+            raise ForbiddenError("אין הרשאה לעדכן הערה זו", ErrorCode.NOTE_FORBIDDEN)
         updated = self.repo.update(note_id, note=note)
         if not updated:
             raise NotFoundError(f"הערה {note_id} לא נמצאה", _NOT_FOUND)

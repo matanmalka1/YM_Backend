@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import re
 
 from app.core.exceptions import AppError
@@ -9,7 +11,7 @@ from app.notifications.services.messages import FALLBACK_CLIENT_NAME, TEMPLATES
 
 logger = get_logger(__name__)
 
-_TEMPLATE_ERROR_CODE = "NOTIFICATION.TEMPLATE_ERROR"
+_TEMPLATE_ERROR_CODE = ErrorCode.NOTIFICATION_TEMPLATE_ERROR
 _PLACEHOLDER_RE = re.compile(r"\{[a-z_]+\}")
 
 

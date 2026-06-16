@@ -1,5 +1,6 @@
 """Invoice delete flow for VAT work items."""
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
@@ -34,7 +35,7 @@ def delete_invoice(
     """
     item = work_item_repo.get_by_id(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
     assert_editable(item)
 
@@ -42,7 +43,7 @@ def delete_invoice(
     if not invoice or invoice.work_item_id != item_id:
         raise NotFoundError(
             VAT_INVOICE_NOT_FOUND_IN_WORK_ITEM.format(invoice_id=invoice_id, item_id=item_id),
-            "VAT.NOT_FOUND",
+            ErrorCode.VAT_NOT_FOUND,
         )
 
     snapshot = audit_invoice_snapshot(invoice)

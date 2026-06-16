@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.annual_reports.api.responses import (
@@ -113,7 +114,7 @@ def get_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     service = AnnualReportService(db)
     detail = service.get_detail_report(report_id)
     if detail is None:
-        raise NotFoundError("הדוח לא נמצא", "ANNUAL_REPORT.NOT_FOUND")
+        raise NotFoundError("הדוח לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
     return detail
 
 
@@ -128,7 +129,7 @@ def delete_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     service = AnnualReportService(db)
     deleted = service.delete_report(report_id, actor_id=user.id, actor_name=user.full_name)
     if not deleted:
-        raise NotFoundError("הדוח לא נמצא", "ANNUAL_REPORT.NOT_FOUND")
+        raise NotFoundError("הדוח לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 

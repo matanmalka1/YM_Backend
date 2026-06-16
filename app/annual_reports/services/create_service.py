@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     ClientAnnualFilingType,
@@ -55,7 +56,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
 
             raise NotFoundError(
                 ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-                "ANNUAL_REPORT.CLIENT_NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_CLIENT_NOT_FOUND,
             )
         assert_client_record_is_active(client_record)
         client_record_id = int(client_record.id)
@@ -64,7 +65,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
         if client_type not in valid_client_types:
             raise AppError(
                 INVALID_CLIENT_TYPE_ERROR.format(client_type=client_type),
-                "ANNUAL_REPORT.INVALID_TYPE",
+                ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
             )
         ct = ClientAnnualFilingType(client_type)
 
@@ -72,7 +73,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
         if deadline_type not in valid_deadline_types:
             raise AppError(
                 INVALID_DEADLINE_TYPE_ERROR.format(deadline_type=deadline_type),
-                "ANNUAL_REPORT.INVALID_TYPE",
+                ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
             )
         dt = FilingDeadlineType(deadline_type)
 
@@ -88,7 +89,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
                     existing_id=existing.id,
                     status=existing.status.value,
                 ),
-                "ANNUAL_REPORT.CONFLICT",
+                ErrorCode.ANNUAL_REPORT_CONFLICT,
             )
 
         form_type = FORM_MAP[ct]

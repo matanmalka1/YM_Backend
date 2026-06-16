@@ -1,5 +1,4 @@
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
 from app.notes.models.entity_note import EntityNote
@@ -7,8 +6,7 @@ from app.utils.time_utils import utcnow_aware
 
 
 class EntityNoteRepository(BaseRepository[EntityNote]):
-    def __init__(self, db: Session):
-        self.db = db
+    model = EntityNote
 
     def create(
         self,
@@ -48,11 +46,6 @@ class EntityNoteRepository(BaseRepository[EntityNote]):
         )
         items = self.db.scalars(stmt).all()
         return items, total
-
-    def get_by_id(self, note_id: int) -> EntityNote | None:
-        return self.db.scalars(
-            select(EntityNote).where(EntityNote.id == note_id, EntityNote.deleted_at.is_(None))
-        ).first()
 
     def update(self, note_id: int, **fields) -> EntityNote | None:
         obj = self.get_by_id(note_id)

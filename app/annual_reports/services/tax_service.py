@@ -1,5 +1,6 @@
 """Annual report tax calculation service."""
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -72,7 +73,7 @@ class AnnualReportTaxService:
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
         return report
 
@@ -164,7 +165,7 @@ class AnnualReportTaxService:
         if tax_due is not None and refund_due is not None:
             raise AppError(
                 TAX_CONFLICT_ERROR,
-                "ANNUAL_REPORT.TAX_CONFLICT",
+                ErrorCode.ANNUAL_REPORT_TAX_CONFLICT,
             )
         report = self._get_report_or_raise(report_id)
         updated = self.report_repo.update(report.id, tax_due=tax_due, refund_due=refund_due)

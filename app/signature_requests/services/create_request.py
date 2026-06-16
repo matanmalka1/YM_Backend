@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import hashlib
 import secrets
 from datetime import timedelta
@@ -61,7 +63,7 @@ def create_request(
         business = business_repo.get_by_id(business_id)
         if not business:
             raise NotFoundError(
-                BUSINESS_NOT_FOUND.format(business_id=business_id), "BUSINESS.NOT_FOUND"
+                BUSINESS_NOT_FOUND.format(business_id=business_id), ErrorCode.BUSINESS_NOT_FOUND
             )
         assert_business_belongs_to_legal_entity(business, client_record.legal_entity_id)
         contact_service = BusinessContactService(repo.db)
@@ -79,7 +81,7 @@ def create_request(
                 request_type=request_type,
                 valid_types=sorted(valid_types),
             ),
-            "SIGNATURE_REQUEST.INVALID_TYPE",
+            ErrorCode.SIGNATURE_REQUEST_INVALID_TYPE,
         )
     req_type = SignatureRequestType(request_type)
 

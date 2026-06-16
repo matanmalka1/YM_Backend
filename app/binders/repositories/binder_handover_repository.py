@@ -1,7 +1,6 @@
 from datetime import date
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
 
 from app.binders.models.binder_handover import BinderHandover, BinderHandoverBinder
 from app.common.repositories.base_repository import BaseRepository
@@ -10,8 +9,7 @@ from app.common.repositories.base_repository import BaseRepository
 class BinderHandoverRepository(BaseRepository[BinderHandover]):
     """Data access layer for BinderHandover entities."""
 
-    def __init__(self, db: Session):
-        self.db = db
+    model = BinderHandover
 
     def create(
         self,
@@ -45,11 +43,6 @@ class BinderHandoverRepository(BaseRepository[BinderHandover]):
         self.db.flush()
 
         return handover
-
-    def get_by_id(self, handover_id: int) -> BinderHandover | None:
-        return self.db.scalars(
-            select(BinderHandover).where(BinderHandover.id == handover_id)
-        ).first()
 
     def list_by_client_record(self, client_record_id: int) -> list[BinderHandover]:
         return self.db.scalars(

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import re
 from datetime import date
 
@@ -138,7 +140,7 @@ class TaxCalendarMaterializationService:
         except LookupError as exc:
             raise AppError(
                 "לא מוגדר כלל מועד מתאים ליומן המס",
-                "TAX_CALENDAR.DEADLINE_RULE_MISSING",
+                ErrorCode.TAX_CALENDAR_DEADLINE_RULE_MISSING,
             ) from exc
 
     def _insert_or_refetch(self, entity, refetch):
@@ -178,7 +180,7 @@ class TaxCalendarMaterializationService:
         obligation_type = TaxCalendarMaterializationService._obligation(obligation_type)
         rule_type = _PERIODIC_RULES.get((obligation_type, months))
         if rule_type is None:
-            raise AppError("תקופת החובה אינה נתמכת", "TAX_CALENDAR.INVALID_PERIOD_FREQUENCY")
+            raise AppError("תקופת החובה אינה נתמכת", ErrorCode.TAX_CALENDAR_INVALID_PERIOD_FREQUENCY)
         return rule_type
 
     @staticmethod
@@ -186,12 +188,12 @@ class TaxCalendarMaterializationService:
         try:
             return value if isinstance(value, ObligationType) else ObligationType(value)
         except ValueError as exc:
-            raise AppError("סוג החובה אינו נתמך", "TAX_CALENDAR.INVALID_OBLIGATION_TYPE") from exc
+            raise AppError("סוג החובה אינו נתמך", ErrorCode.TAX_CALENDAR_INVALID_OBLIGATION_TYPE) from exc
 
     @staticmethod
     def _parse_period(period: str) -> tuple[int, int]:
         if not isinstance(period, str) or not _PERIOD_RE.match(period):
-            raise AppError("תקופת המס אינה תקינה", "TAX_CALENDAR.INVALID_PERIOD")
+            raise AppError("תקופת המס אינה תקינה", ErrorCode.TAX_CALENDAR_INVALID_PERIOD)
         return int(period[:4]), int(period[5:7])
 
     @staticmethod
@@ -199,7 +201,7 @@ class TaxCalendarMaterializationService:
         if months == 2 and month % 2 == 0:
             raise AppError(
                 "תקופה דו-חודשית חייבת להתחיל בחודש אי-זוגי",
-                "TAX_CALENDAR.INVALID_PERIOD_ALIGNMENT",
+                ErrorCode.TAX_CALENDAR_INVALID_PERIOD_ALIGNMENT,
             )
 
     @staticmethod
@@ -207,9 +209,9 @@ class TaxCalendarMaterializationService:
         try:
             year = int(tax_year)
         except (TypeError, ValueError) as exc:
-            raise AppError("שנת המס אינה תקינה", "TAX_CALENDAR.INVALID_TAX_YEAR") from exc
+            raise AppError("שנת המס אינה תקינה", ErrorCode.TAX_CALENDAR_INVALID_TAX_YEAR) from exc
         if year < 1900 or year > 2200:
-            raise AppError("שנת המס אינה תקינה", "TAX_CALENDAR.INVALID_TAX_YEAR")
+            raise AppError("שנת המס אינה תקינה", ErrorCode.TAX_CALENDAR_INVALID_TAX_YEAR)
         return year
 
     @staticmethod
@@ -219,4 +221,4 @@ class TaxCalendarMaterializationService:
             entity.tax_calendar_entry_id = entry.id
             return
         if int(current) != int(entry.id):
-            raise ConflictError("רשומת יומן המס אינה תואמת לחובה", "TAX_CALENDAR.LINK_CONFLICT")
+            raise ConflictError("רשומת יומן המס אינה תואמת לחובה", ErrorCode.TAX_CALENDAR_LINK_CONFLICT)

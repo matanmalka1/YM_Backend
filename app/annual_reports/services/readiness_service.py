@@ -1,5 +1,6 @@
 """Annual report filing readiness service."""
 
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_schedule_entry import (
@@ -42,7 +43,7 @@ class AnnualReportReadinessService:
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
 
         issues: list[str] = []

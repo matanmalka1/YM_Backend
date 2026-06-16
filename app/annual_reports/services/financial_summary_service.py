@@ -1,5 +1,6 @@
 """Annual report financial summary service."""
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -36,7 +37,7 @@ class AnnualReportFinancialSummaryService:
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
         return self.get_financial_summary_for_report(report)
 

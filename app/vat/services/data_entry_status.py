@@ -1,5 +1,6 @@
 """Status transitions for VAT work items during data entry."""
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
@@ -28,12 +29,12 @@ def mark_ready_for_review(
     """
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
     if item.status != VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS:
         raise AppError(
             VAT_READY_FOR_REVIEW_INVALID_STATUS.format(status=item.status.value),
-            "VAT.INVALID_TRANSITION",
+            ErrorCode.VAT_INVALID_TRANSITION,
         )
 
     updated = work_item_repo.update_status(item_id, VatWorkItemStatus.READY_FOR_REVIEW, item=item)
@@ -65,12 +66,12 @@ def send_back_for_correction(
     if not correction_note or not correction_note.strip():
         raise AppError(
             VAT_CORRECTION_NOTE_REQUIRED,
-            "VAT.JUSTIFICATION_REQUIRED",
+            ErrorCode.VAT_JUSTIFICATION_REQUIRED,
         )
 
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
     assert_transition_allowed(item, VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS)
 

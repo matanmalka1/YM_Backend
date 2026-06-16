@@ -1,5 +1,6 @@
 """Invoice update flow for VAT work items."""
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from app.businesses.repositories.business_repository import BusinessRepository
@@ -58,7 +59,7 @@ def update_invoice(
 
     item = work_item_repo.get_by_id(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
     assert_editable(item)
 
@@ -66,7 +67,7 @@ def update_invoice(
     if not invoice or invoice.work_item_id != item_id:
         raise NotFoundError(
             VAT_INVOICE_NOT_FOUND_IN_WORK_ITEM.format(invoice_id=invoice_id, item_id=item_id),
-            "VAT.NOT_FOUND",
+            ErrorCode.VAT_NOT_FOUND,
         )
 
     if invoice_number and invoice_number != invoice.invoice_number:
@@ -74,7 +75,7 @@ def update_invoice(
         if existing:
             raise ConflictError(
                 VAT_INVOICE_NUMBER_CONFLICT.format(invoice_number=invoice_number),
-                "VAT.CONFLICT",
+                ErrorCode.VAT_CONFLICT,
             )
 
     # business_activity_id: explicit null clears the FK; a non-null value is
@@ -86,13 +87,13 @@ def update_invoice(
         if not business or not record or business.legal_entity_id != record.legal_entity_id:
             raise AppError(
                 VAT_BUSINESS_ACTIVITY_NOT_FOUND,
-                code="BUSINESS_ACTIVITY.NOT_FOUND",
+                code=ErrorCode.BUSINESS_ACTIVITY_NOT_FOUND,
                 status_code=404,
             )
 
     if gross_amount is not None and gross_amount <= 0:
         raise AppError(
-            VAT_NET_AMOUNT_POSITIVE_REQUIRED, code="VAT.NET_NOT_POSITIVE", status_code=400
+            VAT_NET_AMOUNT_POSITIVE_REQUIRED, code=ErrorCode.VAT_NET_NOT_POSITIVE, status_code=400
         )
 
     # Validate the merged effective counterparty pair: a partial PATCH that

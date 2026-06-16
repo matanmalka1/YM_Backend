@@ -1,5 +1,6 @@
 """Work item creation and material intake flows."""
 
+from app.core.error_codes import ErrorCode
 import json
 
 from app.clients.enums import ClientStatus
@@ -37,14 +38,14 @@ def _validate_period_for_vat_type(period: str, vat_type: VatType) -> None:
     if vat_type == VatType.EXEMPT:
         raise AppError(
             VAT_CLIENT_EXEMPT,
-            "VAT.CLIENT_EXEMPT",
+            ErrorCode.VAT_CLIENT_EXEMPT,
         )
     if vat_type == VatType.BIMONTHLY:
         month = int(period.split("-")[1])
         if month % 2 == 0:
             raise AppError(
                 VAT_INVALID_BIMONTHLY_PERIOD.format(period=period),
-                "VAT.INVALID_PERIOD_FOR_FREQUENCY",
+                ErrorCode.VAT_INVALID_PERIOD_FOR_FREQUENCY,
             )
 
 
@@ -63,9 +64,9 @@ def create_work_item(
         client_record_id
     )
     if client_record.status == ClientStatus.CLOSED:
-        raise AppError(VAT_CLIENT_CLOSED_CREATE_ITEM, "VAT.CLIENT_CLOSED")
+        raise AppError(VAT_CLIENT_CLOSED_CREATE_ITEM, ErrorCode.VAT_CLIENT_CLOSED)
     if client_record.status == ClientStatus.FROZEN:
-        raise AppError(VAT_CLIENT_FROZEN_CREATE_ITEM, "VAT.CLIENT_FROZEN")
+        raise AppError(VAT_CLIENT_FROZEN_CREATE_ITEM, ErrorCode.VAT_CLIENT_FROZEN)
     effective_vat_type = resolve_effective_vat_type(legal_entity)
     _validate_period_for_vat_type(period, effective_vat_type)
 
@@ -76,14 +77,14 @@ def create_work_item(
     if existing:
         raise ConflictError(
             VAT_WORK_ITEM_CONFLICT.format(client_record_id=client_record_id, period=period),
-            "VAT.CONFLICT",
+            ErrorCode.VAT_CONFLICT,
         )
 
     if mark_pending:
         if not pending_materials_note:
             raise AppError(
                 VAT_PENDING_MATERIALS_NOTE_REQUIRED,
-                "VAT.PENDING_NOTE_REQUIRED",
+                ErrorCode.VAT_PENDING_NOTE_REQUIRED,
             )
         status = VatWorkItemStatus.PENDING_MATERIALS
     else:
@@ -130,12 +131,12 @@ def mark_materials_complete(
 ):
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
-        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), "VAT.NOT_FOUND")
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
     if item.status != VatWorkItemStatus.PENDING_MATERIALS:
         raise AppError(
             VAT_MATERIALS_COMPLETE_INVALID_STATUS.format(status=item.status.value),
-            "VAT.INVALID_TRANSITION",
+            ErrorCode.VAT_INVALID_TRANSITION,
         )
 
     old_status = item.status.value

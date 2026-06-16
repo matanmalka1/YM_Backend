@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 import logging
 from datetime import date
 
@@ -69,7 +70,7 @@ class BinderIntakeService:
         businesses = self.business_repo.list_by_legal_entity(client_record.legal_entity_id)
         has_active = any(b.status == BusinessStatus.ACTIVE for b in businesses)
         if businesses and not has_active:
-            raise AppError(BINDER_CLIENT_LOCKED, "BINDER.CLIENT_LOCKED")
+            raise AppError(BINDER_CLIENT_LOCKED, ErrorCode.BINDER_CLIENT_LOCKED)
 
         active_binder = self.binder_repo.get_active_by_client_record(client_record_id)
         existing = self._resolve_existing_binder_for_materials(
@@ -96,7 +97,7 @@ class BinderIntakeService:
                 )
 
             if client_record.office_client_number is None:
-                raise AppError(BINDER_OFFICE_NUMBER_MISSING, "BINDER.OFFICE_NUMBER_MISSING")
+                raise AppError(BINDER_OFFICE_NUMBER_MISSING, ErrorCode.BINDER_OFFICE_NUMBER_MISSING)
             seq = self.binder_repo.count_all_by_client(client_record_id) + 1
             binder = self.binder_repo.create(
                 client_record_id=client_record_id,
@@ -312,7 +313,7 @@ class BinderIntakeService:
                 if not notes or not notes.strip():
                     raise AppError(
                         BINDER_OLD_PERIOD_NOTE_REQUIRED,
-                        "BINDER.OLD_PERIOD_NOTE_REQUIRED",
+                        ErrorCode.BINDER_OLD_PERIOD_NOTE_REQUIRED,
                     )
                 break
 

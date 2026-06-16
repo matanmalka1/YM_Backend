@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
@@ -109,7 +110,7 @@ class CreateClientService:
                 reference_date=reference_date,
             )
         except ConflictError as exc:
-            if exc.code not in {"CLIENT.CONFLICT", "CLIENT.DELETED_EXISTS"}:
+            if exc.code not in {ErrorCode.CLIENT_CONFLICT, ErrorCode.CLIENT_DELETED_EXISTS}:
                 raise
             conflict = self.client_query_service.get_conflict_info(id_number)
             raise AppError(
@@ -161,16 +162,16 @@ class CreateClientService:
 
         if self.record_repo.get_active_by_id_number(id_number):
             raise ConflictError(
-                CLIENT_ID_NUMBER_EXISTS.format(id_number=id_number), "CLIENT.CONFLICT"
+                CLIENT_ID_NUMBER_EXISTS.format(id_number=id_number), ErrorCode.CLIENT_CONFLICT
             )
         if self.record_repo.get_deleted_by_id_number(id_number):
             raise ConflictError(
                 CLIENT_ID_NUMBER_DELETED.format(id_number=id_number),
-                "CLIENT.DELETED_EXISTS",
+                ErrorCode.CLIENT_DELETED_EXISTS,
             )
         if self.legal_entity_repo.get_by_id_number(id_number_type, id_number):
             raise ConflictError(
-                CLIENT_ID_NUMBER_EXISTS.format(id_number=id_number), "CLIENT.CONFLICT"
+                CLIENT_ID_NUMBER_EXISTS.format(id_number=id_number), ErrorCode.CLIENT_CONFLICT
             )
 
         legal_entity = self.legal_entity_repo.create(
@@ -204,7 +205,7 @@ class CreateClientService:
             )
         except IntegrityError as exc:
             raise ConflictError(
-                CLIENT_ID_NUMBER_EXISTS.format(id_number=id_number), "CLIENT.CONFLICT"
+                CLIENT_ID_NUMBER_EXISTS.format(id_number=id_number), ErrorCode.CLIENT_CONFLICT
             ) from exc
         ClientOnboardingOrchestrator(self.db).run(
             client_record.id,

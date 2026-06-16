@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -128,7 +130,7 @@ class NotificationService:
         if notification is None:
             raise AppError(
                 "ההודעה המבוקשת לא נמצאה",
-                "NOTIFICATION.NOT_FOUND",
+                ErrorCode.NOTIFICATION_NOT_FOUND,
                 status_code=404,
             )
         business_name_map = self._build_business_name_map([notification])

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 import logging
 
 from sqlalchemy.orm import Session
@@ -37,7 +38,7 @@ class ClientUpdateService:
     def update_client(self, client_id: int, actor_id: int | None = None, actor_role=None, **fields):
         existing = get_full_record(self.db, client_id)
         if not existing:
-            raise NotFoundError(f"לקוח {client_id} לא נמצא", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError(f"לקוח {client_id} לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
         new_status = fields.get("status")
         new_entity_type = fields.get("entity_type")
         old_entity_type = existing.get("entity_type")
@@ -49,7 +50,7 @@ class ClientUpdateService:
             if actor_role != UserRole.ADVISOR:
                 raise ForbiddenError(
                     "שינוי סוג ישות מותר לרואה חשבון בלבד",
-                    "CLIENT.ENTITY_TYPE_CHANGE_FORBIDDEN",
+                    ErrorCode.CLIENT_ENTITY_TYPE_CHANGE_FORBIDDEN,
                 )
             self._cancel_deadlines_on_entity_type_change(
                 client_id, old_entity_type, new_entity_type, actor_id

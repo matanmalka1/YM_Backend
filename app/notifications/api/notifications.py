@@ -1,5 +1,6 @@
 """Notification center HTTP endpoints."""
 
+from app.core.error_codes import ErrorCode
 import datetime
 
 from fastapi import APIRouter, Depends, Query
@@ -124,9 +125,9 @@ def send_notification(
     idempotency_key = normalize_idempotency_key_header(
         x_idempotency_key,
         missing_message="נדרש X-Idempotency-Key לשליחת הודעה",
-        missing_code="NOTIFICATION.MISSING_IDEMPOTENCY_KEY",
+        missing_code=ErrorCode.NOTIFICATION_MISSING_IDEMPOTENCY_KEY,
         invalid_message="X-Idempotency-Key חייב להיות באורך 8 עד 128 תווים",
-        invalid_code="NOTIFICATION.INVALID_IDEMPOTENCY_KEY",
+        invalid_code=ErrorCode.NOTIFICATION_INVALID_IDEMPOTENCY_KEY,
     )
     svc = NotificationService(db)
     return svc.send(body, triggered_by=user.id, idempotency_key=idempotency_key)

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
@@ -21,7 +23,7 @@ def get_or_raise(repo: SignatureRequestRepository, request_id: int) -> Signature
     if not req:
         raise NotFoundError(
             SIGNATURE_REQUEST_NOT_FOUND.format(request_id=request_id),
-            "SIGNATURE_REQUEST.NOT_FOUND",
+            ErrorCode.SIGNATURE_REQUEST_NOT_FOUND,
         )
     return req
 
@@ -29,7 +31,7 @@ def get_or_raise(repo: SignatureRequestRepository, request_id: int) -> Signature
 def get_by_token_or_raise(repo: SignatureRequestRepository, token: str) -> SignatureRequest:
     req = repo.get_by_token(token)
     if not req:
-        raise AppError(INVALID_SIGNING_TOKEN, "SIGNATURE_REQUEST.TOKEN_INVALID")
+        raise AppError(INVALID_SIGNING_TOKEN, ErrorCode.SIGNATURE_REQUEST_TOKEN_INVALID)
     return req
 
 
@@ -39,7 +41,7 @@ def get_by_token_or_raise_for_update(
     """Fetch by token with a row-level lock. Use for signer transition entrypoints."""
     req = repo.get_by_token_for_update(token)
     if not req:
-        raise AppError(INVALID_SIGNING_TOKEN, "SIGNATURE_REQUEST.TOKEN_INVALID")
+        raise AppError(INVALID_SIGNING_TOKEN, ErrorCode.SIGNATURE_REQUEST_TOKEN_INVALID)
     return req
 
 
@@ -52,7 +54,7 @@ def assert_pending(req: SignatureRequest) -> None:
     if req.status != SignatureRequestStatus.PENDING_SIGNATURE:
         raise AppError(
             REQUEST_NOT_ACTIONABLE_IN_STATUS.format(status=req.status.value),
-            "SIGNATURE_REQUEST.INVALID_STATUS",
+            ErrorCode.SIGNATURE_REQUEST_INVALID_STATUS,
         )
 
 

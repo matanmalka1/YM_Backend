@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.audit.constants import (
@@ -59,7 +60,7 @@ class BillingService:
         months_covered: int = 1,
     ) -> Charge:
         if amount <= 0:
-            raise AppError(AMOUNT_MUST_BE_POSITIVE, "CHARGE.AMOUNT_INVALID")
+            raise AppError(AMOUNT_MUST_BE_POSITIVE, ErrorCode.CHARGE_AMOUNT_INVALID)
         client_record = get_client_or_raise(self.db, client_record_id)
         assert_client_record_is_active(client_record)
         business_id = self._validate_charge_scope(
@@ -88,11 +89,11 @@ class BillingService:
     def issue_charge(self, charge_id: int, actor_id: int | None = None) -> Charge:
         charge = self.charge_repo.get_by_id_for_update(charge_id)
         if not charge:
-            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), "CHARGE.NOT_FOUND")
+            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), ErrorCode.CHARGE_NOT_FOUND)
         if charge.status != ChargeStatus.DRAFT:
             raise AppError(
                 CHARGE_INVALID_STATUS_ISSUE.format(status=charge.status.value),
-                "CHARGE.INVALID_STATUS",
+                ErrorCode.CHARGE_INVALID_STATUS,
             )
         issued = self.charge_repo.update_status(
             charge_id,
@@ -114,11 +115,11 @@ class BillingService:
     def mark_charge_paid(self, charge_id: int, actor_id: int | None = None) -> Charge:
         charge = self.charge_repo.get_by_id_for_update(charge_id)
         if not charge:
-            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), "CHARGE.NOT_FOUND")
+            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), ErrorCode.CHARGE_NOT_FOUND)
         if charge.status != ChargeStatus.ISSUED:
             raise AppError(
                 CHARGE_INVALID_STATUS_PAY.format(status=charge.status.value),
-                "CHARGE.INVALID_STATUS",
+                ErrorCode.CHARGE_INVALID_STATUS,
             )
         paid = self.charge_repo.update_status(
             charge_id,
@@ -145,11 +146,11 @@ class BillingService:
     ) -> Charge:
         charge = self.charge_repo.get_by_id_for_update(charge_id)
         if not charge:
-            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), "CHARGE.NOT_FOUND")
+            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), ErrorCode.CHARGE_NOT_FOUND)
         if charge.status == ChargeStatus.PAID:
-            raise AppError(CHARGE_CANNOT_CANCEL_PAID, "CHARGE.INVALID_STATUS")
+            raise AppError(CHARGE_CANNOT_CANCEL_PAID, ErrorCode.CHARGE_INVALID_STATUS)
         if charge.status == ChargeStatus.CANCELED:
-            raise ConflictError(CHARGE_ALREADY_CANCELED, "CHARGE.CONFLICT")
+            raise ConflictError(CHARGE_ALREADY_CANCELED, ErrorCode.CHARGE_CONFLICT)
         old_status = charge.status.value
         canceled = self.charge_repo.update_status(
             charge_id,
@@ -173,11 +174,11 @@ class BillingService:
     def delete_charge(self, charge_id: int, actor_id: int | None = None) -> bool:
         charge = self.charge_repo.get_by_id(charge_id)
         if not charge:
-            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), "CHARGE.NOT_FOUND")
+            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), ErrorCode.CHARGE_NOT_FOUND)
         if charge.status not in (ChargeStatus.DRAFT, ChargeStatus.CANCELED):
             raise AppError(
                 CHARGE_DELETE_INVALID_STATUS.format(status=charge.status.value),
-                "CHARGE.INVALID_STATUS",
+                ErrorCode.CHARGE_INVALID_STATUS,
             )
         result = self.charge_repo.soft_delete(charge_id, deleted_by=actor_id)
         if result:
@@ -187,5 +188,5 @@ class BillingService:
     def get_charge(self, charge_id: int) -> Charge:
         charge = self.charge_repo.get_by_id(charge_id)
         if not charge:
-            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), "CHARGE.NOT_FOUND")
+            raise NotFoundError(CHARGE_NOT_FOUND.format(charge_id=charge_id), ErrorCode.CHARGE_NOT_FOUND)
         return charge

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from datetime import datetime
 
 from app.core.exceptions import AppError
@@ -34,7 +36,7 @@ def _expire_and_raise(repo: SignatureRequestRepository, req: SignatureRequest) -
         actor_type="system",
         notes=SIGNATURE_REQUEST_EXPIRED_NOTE.format(expires_at=req.expires_at.date().isoformat()),
     )
-    raise AppError(SIGNATURE_REQUEST_EXPIRED_ERROR, "SIGNATURE_REQUEST.EXPIRED")
+    raise AppError(SIGNATURE_REQUEST_EXPIRED_ERROR, ErrorCode.SIGNATURE_REQUEST_EXPIRED)
 
 
 def record_view(

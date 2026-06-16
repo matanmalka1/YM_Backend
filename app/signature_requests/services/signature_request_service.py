@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 import logging
 from datetime import date
 
@@ -192,6 +194,6 @@ class SignatureRequestService:
         if status not in valid_statuses:
             raise AppError(
                 INVALID_FILTER_STATUS.format(status=status, valid_statuses=sorted(valid_statuses)),
-                "SIGNATURE_REQUEST.INVALID_STATUS",
+                ErrorCode.SIGNATURE_REQUEST_INVALID_STATUS,
             )
         return SignatureRequestStatus(status)

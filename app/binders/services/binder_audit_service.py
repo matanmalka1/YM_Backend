@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.binders.models.binder import Binder
@@ -63,7 +64,7 @@ class BinderAuditService:
         if not binder:
             raise NotFoundError(
                 BINDER_NOT_FOUND.format(binder_id=binder_id),
-                "BINDER.NOT_FOUND",
+                ErrorCode.BINDER_NOT_FOUND,
             )
 
         intakes, total = self.intake_repo.list_by_binder_page(binder_id, page, page_size)

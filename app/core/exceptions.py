@@ -13,6 +13,7 @@ from fastapi import Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
+from app.core.error_codes import ErrorCode
 from app.core.logging_config import get_request_id
 
 REQUEST_LOC_PREFIXES = {"body", "query", "path", "header", "cookie"}
@@ -132,7 +133,9 @@ def error_response(
 
 
 class AppError(Exception):
-    def __init__(self, message: str, code: str, status_code: int = 400, details: Any = None):
+    def __init__(
+        self, message: str, code: ErrorCode, status_code: int = 400, details: Any = None
+    ):
         super().__init__(message)
         self.message = message
         self.code = code
@@ -141,15 +144,15 @@ class AppError(Exception):
 
 
 class NotFoundError(AppError):
-    def __init__(self, message: str, code: str):
+    def __init__(self, message: str, code: ErrorCode):
         super().__init__(message, code, status_code=404)
 
 
 class ConflictError(AppError):
-    def __init__(self, message: str, code: str):
+    def __init__(self, message: str, code: ErrorCode):
         super().__init__(message, code, status_code=409)
 
 
 class ForbiddenError(AppError):
-    def __init__(self, message: str, code: str):
+    def __init__(self, message: str, code: ErrorCode):
         super().__init__(message, code, status_code=403)

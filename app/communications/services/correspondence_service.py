@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import datetime
 from typing import Literal
 
@@ -17,8 +18,8 @@ from app.communications.repositories.correspondence_repository import (
 )
 from app.core.exceptions import ForbiddenError, NotFoundError
 
-_NOT_FOUND = "CORRESPONDENCE.NOT_FOUND"
-_FORBIDDEN_CONTACT = "CORRESPONDENCE.FORBIDDEN_CONTACT"
+_NOT_FOUND = ErrorCode.CORRESPONDENCE_NOT_FOUND
+_FORBIDDEN_CONTACT = ErrorCode.CORRESPONDENCE_FORBIDDEN_CONTACT
 
 
 class CorrespondenceService:
@@ -33,13 +34,13 @@ class CorrespondenceService:
         """Validate optional business context belongs to the same client."""
         business = self.business_repo.get_by_id(business_id)
         if not business:
-            raise NotFoundError(f"עסק {business_id} לא נמצא", "BUSINESS.NOT_FOUND")
+            raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
         assert_business_belongs_to_legal_entity(business, legal_entity_id)
 
     def _get_client_record_or_raise(self, client_record_id: int):
         record = self.client_repo.get_by_id(client_record_id)
         if not record:
-            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND")
+            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND)
         return record
 
     def _assert_contact_belongs_to_client(self, contact_id: int, client_record_id: int) -> None:

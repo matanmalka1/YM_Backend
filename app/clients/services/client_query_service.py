@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.enums import ClientStatus
@@ -71,7 +72,7 @@ class ClientQueryService:
         data = get_full_record(self.db, client_record_id)
         if not data:
             raise NotFoundError(
-                f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
+                f"רשומת לקוח {client_record_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
         return ClientEnrichmentService(self.db).enrich_single(
             ClientRecordResponse(**data), tax_year=tax_year
@@ -81,7 +82,7 @@ class ClientQueryService:
         data = get_full_record_including_deleted(self.db, client_record_id)
         if not data:
             raise NotFoundError(
-                f"רשומת לקוח {client_record_id} לא נמצאה", "CLIENT_RECORD.NOT_FOUND"
+                f"רשומת לקוח {client_record_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
         return ClientRecordResponse(**data)
 

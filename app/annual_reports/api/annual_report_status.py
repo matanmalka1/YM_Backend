@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from fastapi import APIRouter, Depends, Query
 
 from app.annual_reports.api.responses import (
@@ -87,7 +88,7 @@ def submit_report(
     )
     detail = service.get_detail_report(report_id)
     if detail is None:
-        raise NotFoundError(f"דוח שנתי {report_id} לא נמצא", "ANNUAL_REPORT.NOT_FOUND")
+        raise NotFoundError(f"דוח שנתי {report_id} לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
     return detail
 
 

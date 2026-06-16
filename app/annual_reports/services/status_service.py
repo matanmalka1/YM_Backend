@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 from datetime import datetime
 
 from app.annual_reports.models.annual_report_enums import (
@@ -64,7 +65,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         if not report:
             raise NotFoundError(
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
-                "ANNUAL_REPORT.NOT_FOUND",
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
         return report
 
@@ -76,7 +77,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             issues_str = "; ".join(result.issues)
             raise AppError(
                 REPORT_NOT_READY_FOR_SUBMISSION.format(issues=issues_str),
-                "ANNUAL_REPORT.INVALID_STATUS",
+                ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
             )
 
     def transition_status(
@@ -98,7 +99,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         if new_status not in valid_statuses:
             raise AppError(
                 INVALID_ANNUAL_REPORT_STATUS.format(new_status=new_status),
-                "ANNUAL_REPORT.INVALID_STATUS",
+                ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
             )
         ns = AnnualReportStatus(new_status)
 
@@ -110,7 +111,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                     new_status=ns.value,
                     allowed=allowed,
                 ),
-                "ANNUAL_REPORT.INVALID_STATUS",
+                ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
             )
 
         if ns == AnnualReportStatus.SUBMITTED:
@@ -227,7 +228,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             if deadline_type not in valid_deadline_types:
                 raise AppError(
                     INVALID_DEADLINE_TYPE_ERROR.format(deadline_type=deadline_type),
-                    "ANNUAL_REPORT.INVALID_TYPE",
+                    ErrorCode.ANNUAL_REPORT_INVALID_TYPE,
                 )
             dt = FilingDeadlineType(deadline_type)
         # When the client did not send custom_deadline_note, preserve the
@@ -279,7 +280,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         if not target_status:
             raise AppError(
                 INVALID_STAGE_ERROR.format(stage=to_stage),
-                "ANNUAL_REPORT.INVALID_STAGE",
+                ErrorCode.ANNUAL_REPORT_INVALID_STAGE,
             )
         return self.transition_status(
             report_id=report_id,
@@ -300,7 +301,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         if report.status != AnnualReportStatus.SUBMITTED:
             raise ConflictError(
                 REPORT_AMEND_ONLY_SUBMITTED_ERROR.format(status=report.status.value),
-                "ANNUAL_REPORT.INVALID_STATUS_FOR_AMEND",
+                ErrorCode.ANNUAL_REPORT_INVALID_STATUS_FOR_AMEND,
             )
 
         self.transition_status(

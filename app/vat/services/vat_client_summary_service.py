@@ -1,5 +1,6 @@
 """Service: client-level VAT summary."""
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -29,7 +30,7 @@ def get_client_summary(
     if not ClientRecordRepository(db).get_by_id(client_record_id):
         raise NotFoundError(
             VAT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-            "VAT.NOT_FOUND",
+            ErrorCode.VAT_NOT_FOUND,
         )
 
     raw_periods = summary_repo.get_periods_for_client(

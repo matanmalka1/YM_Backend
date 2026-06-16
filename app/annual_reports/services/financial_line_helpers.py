@@ -1,5 +1,6 @@
 """Shared helpers for annual-report financial line mutations and audit payloads."""
 
+from app.core.error_codes import ErrorCode
 from decimal import Decimal
 from enum import Enum
 
@@ -55,9 +56,9 @@ def assert_client_allows_financial_mutation(db: Session, client_record_id: int) 
     if client_record is None:
         raise NotFoundError(
             ANNUAL_REPORT_CLIENT_NOT_FOUND.format(client_record_id=client_record_id),
-            "CLIENT_RECORD.NOT_FOUND",
+            ErrorCode.CLIENT_RECORD_NOT_FOUND,
         )
     if client_record.status == ClientStatus.CLOSED:
-        raise ForbiddenError(CLIENT_CLOSED_FINANCIAL_MUTATION_ERROR, "CLIENT.CLOSED")
+        raise ForbiddenError(CLIENT_CLOSED_FINANCIAL_MUTATION_ERROR, ErrorCode.CLIENT_CLOSED)
     if client_record.status == ClientStatus.FROZEN:
-        raise ForbiddenError(CLIENT_FROZEN_FINANCIAL_MUTATION_ERROR, "CLIENT.FROZEN")
+        raise ForbiddenError(CLIENT_FROZEN_FINANCIAL_MUTATION_ERROR, ErrorCode.CLIENT_FROZEN)

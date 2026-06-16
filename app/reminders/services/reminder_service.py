@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_identity_repository import ClientIdentityRepository
@@ -47,11 +49,11 @@ class ReminderService:
     def cancel_reminder(self, reminder_id: int) -> Reminder:
         reminder = self.reminder_repo.get_by_id(reminder_id)
         if reminder is None:
-            raise NotFoundError("התזכורת לא נמצאה", "REMINDER.NOT_FOUND")
+            raise NotFoundError("התזכורת לא נמצאה", ErrorCode.REMINDER_NOT_FOUND)
         if reminder.status != ReminderStatus.SCHEDULED:
             raise AppError(
                 "ניתן לבטל רק טריגר מתוזמן",
-                "REMINDER.INVALID_STATUS",
+                ErrorCode.REMINDER_INVALID_STATUS,
             )
         return self.reminder_repo.update_status(reminder_id, ReminderStatus.CANCELED)
 
@@ -154,6 +156,6 @@ class ReminderService:
         if status not in valid_statuses:
             raise AppError(
                 f"סטטוס לא חוקי: {status}. חייב להיות אחד מהבאים: {', '.join(valid_statuses)}",
-                "REMINDER.INVALID_STATUS",
+                ErrorCode.REMINDER_INVALID_STATUS,
             )
         return ReminderStatus(status)

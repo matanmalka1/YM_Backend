@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from app.core.error_codes import ErrorCode
+
 from typing import Any
 
 from sqlalchemy import select
@@ -27,11 +29,11 @@ from app.vat.models.vat_work_item import VatWorkItem
 
 _TERMINAL = {TaskStatus.DONE, TaskStatus.CANCELED}
 
-_NOT_FOUND = "TASK.NOT_FOUND"
-_CONFLICT = "TASK.CONFLICT"
-_INVALID_SOURCE = "TASK.INVALID_SOURCE"
-_INVALID_ASSIGNEE = "TASK.INVALID_ASSIGNEE"
-_CLIENT_SOURCE_MISMATCH = "TASK.CLIENT_SOURCE_MISMATCH"
+_NOT_FOUND = ErrorCode.TASK_NOT_FOUND
+_CONFLICT = ErrorCode.TASK_CONFLICT
+_INVALID_SOURCE = ErrorCode.TASK_INVALID_SOURCE
+_INVALID_ASSIGNEE = ErrorCode.TASK_INVALID_ASSIGNEE
+_CLIENT_SOURCE_MISMATCH = ErrorCode.TASK_CLIENT_SOURCE_MISMATCH
 
 _SOURCE_CLIENT_MAP: dict[WorkQueueSourceType, type] = {
     WorkQueueSourceType.VAT_WORK_ITEM: VatWorkItem,

@@ -1,3 +1,4 @@
+from app.core.error_codes import ErrorCode
 import hashlib
 import html as html_lib
 import secrets
@@ -97,14 +98,14 @@ class PasswordResetService:
         validate_password(new_password)
         token_record = self.token_repo.get_valid_by_token_hash(_hash_token(raw_token))
         if token_record is None:
-            raise AppError(_INVALID_TOKEN_MESSAGE, "AUTH.INVALID_PASSWORD_RESET_TOKEN", 400)
+            raise AppError(_INVALID_TOKEN_MESSAGE, ErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN, 400)
 
         user = self.user_repo.get_by_id(token_record.user_id)
         if user is None or not user.is_active:
-            raise AppError(_INVALID_TOKEN_MESSAGE, "AUTH.INVALID_PASSWORD_RESET_TOKEN", 400)
+            raise AppError(_INVALID_TOKEN_MESSAGE, ErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN, 400)
 
         if not self.token_repo.mark_used(token_record.id):
-            raise AppError(_INVALID_TOKEN_MESSAGE, "AUTH.INVALID_PASSWORD_RESET_TOKEN", 400)
+            raise AppError(_INVALID_TOKEN_MESSAGE, ErrorCode.AUTH_INVALID_PASSWORD_RESET_TOKEN, 400)
 
         user.password_hash = AuthService.hash_password(new_password)
         user.token_version += 1
