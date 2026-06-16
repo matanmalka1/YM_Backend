@@ -102,6 +102,11 @@ def list_advance_payment_batches(
     year: int | None = Query(None),
     client_record_id: int | None = Query(None),
 ):
+    """Unpaginated by design. Returns one summary per (year, month) with a batch.
+
+    Bounded by data, not a fixed cap: <= 12 rows when ``year`` is given,
+    otherwise grows with the number of distinct months across history (small).
+    """
     return AdvancePaymentAnalyticsService(db).get_month_batches(
         year,
         client_record_id=client_record_id,

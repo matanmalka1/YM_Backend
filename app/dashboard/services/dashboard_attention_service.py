@@ -29,7 +29,13 @@ _URGENCY_ORDER = {
     WorkQueueUrgency.UPCOMING: 3,
 }
 
+# Display cap: dashboard attention widget shows at most _MAX_ITEMS rows.
 _MAX_ITEMS = 7
+# Fetch headroom: WorkQueueService.list_items already returns items sorted by
+# urgency then due_date (DB-side urgency filtering is not possible — work-queue
+# items are aggregated in-memory from multiple sources). We over-fetch so the
+# _is_attention_eligible filter (drops items lacking a due_date) still leaves
+# >= _MAX_ITEMS rows in the common case before trimming.
 _ATTENTION_FETCH_PAGE_SIZE = 20
 
 

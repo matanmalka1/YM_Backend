@@ -34,6 +34,10 @@ def _check_year_range(tax_year_after: int | None, tax_year_before: int | None) -
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
 )
 def list_deadline_rules(db: DBSession) -> list[DeadlineRuleResponse]:
+    """Unpaginated by design. Returns all deadline-rule config rows.
+
+    No cap: bounded by the (small, admin-managed) number of configured rules.
+    """
     return settings_calendar_service.list_rules(db)
 
 

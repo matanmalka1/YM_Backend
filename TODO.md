@@ -46,11 +46,10 @@ Last verified from code, migrations, and tests: 2026-06-07.
 
 ## Cross-Domain: Pagination Audit
 
-- [ ] Document bounded-but-unpaginated lists.
+- [x] Document bounded-but-unpaginated lists.
   - Severity: Low.
-  - Current state: some endpoints intentionally return small bounded lists but do not document the bound.
-  - Scope: `GET /advance-payments/overview/batches`, `GET /settings/tax-calendar/rules`, dashboard attention and recent activity widgets.
-  - Recommended fix: add code comments or endpoint notes documenting the bound; for dashboard attention, push urgency filtering into the DB before applying the display cap.
+  - Done: added docstrings/comments documenting the bound on `GET /advance-payments/overview/batches` (one row per month with a batch; <=12 with `year`), `GET /settings/tax-calendar/rules` (all config rows, no cap), and the dashboard attention fetch/cap constants. Recent activity was already documented.
+  - Note: the original "push urgency filtering into the DB" recommendation does not apply — work-queue items are aggregated in-memory from multiple sources, so urgency filtering and sorting are necessarily Python-side. `list_items` already returns items globally sorted by urgency+due_date before the over-fetch and display cap, so the cap is correct in the common case.
 
 ## High
 
