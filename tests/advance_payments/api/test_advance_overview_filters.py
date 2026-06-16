@@ -66,6 +66,36 @@ def test_overview_filter_by_due_date(client, test_db, advisor_headers):
     assert data["items"][0]["due_date"] == "2026-02-15"
 
 
+def test_overview_response_includes_effective_due_date(client, test_db, advisor_headers):
+    b = _business(test_db)
+    repo = AdvancePaymentRepository(test_db)
+    payment = create_linked_advance_payment(
+        test_db,
+        repo=repo,
+        client_record_id=b.client_record_id,
+        period="2026-01",
+        period_months_count=1,
+        due_date=date(2026, 2, 15),
+    )
+    repo.update_payment(
+        payment,
+        due_date_effective=date(2026, 2, 20),
+        due_date_override_reason="דחייה לפי רשות המסים",
+    )
+    test_db.commit()
+
+    resp = client.get(
+        f"{PATH}?year=2026&client_record_id={b.client_record_id}&page=1&page_size=10",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 1
+    assert data["items"][0]["due_date"] == "2026-02-15"
+    assert data["items"][0]["due_date_effective"] == "2026-02-20"
+
+
 def test_overview_due_date_includes_monthly_and_bimonthly_rows(
     client,
     test_db,
