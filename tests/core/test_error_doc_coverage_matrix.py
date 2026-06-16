@@ -1,6 +1,6 @@
 """#53 per-endpoint coverage: body-driven error statuses (400/409/500).
 
-Source of truth: ``docs/architecture/error-doc-matrix.md``. This test encodes the
+Source of truth: ``docs/backend/error-doc-matrix.md``. This test encodes the
 same matrix as a data table and asserts the live OpenAPI spec documents exactly
 those 400/409/500 statuses per endpoint — no missing, no accidental extras.
 
@@ -14,7 +14,7 @@ from app.main import app
 _BODY_STATUSES = ("400", "409", "500")
 
 # (METHOD, path) -> set of body-driven statuses the endpoint must document.
-# Mirrors docs/architecture/error-doc-matrix.md. Endpoints not listed must not
+# Mirrors docs/backend/error-doc-matrix.md. Endpoints not listed must not
 # document any of 400/409/500.
 _EXPECTED: dict[tuple[str, str], set[str]] = {
     # vat
