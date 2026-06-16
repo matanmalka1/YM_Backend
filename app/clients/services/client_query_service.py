@@ -22,6 +22,7 @@ from app.clients.schemas.client_record_response import (
 )
 from app.clients.services.client_enrichment_service import ClientEnrichmentService
 from app.common.enums import EntityType
+from app.core.api_types import SortOrder
 from app.core.exceptions import NotFoundError
 
 
@@ -87,7 +88,7 @@ class ClientQueryService:
         accountant_id: int | None = None,
         entity_type: EntityType | None = None,
         sort_by: str = "full_name",
-        order: str = "asc",
+        order: SortOrder = SortOrder.asc,
         page: int = 1,
         page_size: int = 20,
     ) -> ClientRecordListResponse:
@@ -97,7 +98,7 @@ class ClientQueryService:
             accountant_id=accountant_id,
             entity_type=entity_type,
             sort_by="official_name" if sort_by == "full_name" else sort_by,
-            sort_order=order,
+            order=order,
             page=page,
             page_size=page_size,
         )
@@ -136,14 +137,14 @@ class ClientQueryService:
         self,
         search: str | None = None,
         sort_by: str = "full_name",
-        order: str = "asc",
+        order: SortOrder = SortOrder.asc,
         page: int = 1,
         page_size: int = 100,
     ) -> ClientSidebarListResponse:
         rows = self.record_repo.list_sidebar(
             search=search,
             sort_by=sort_by,
-            sort_order=order,
+            order=order,
             page=page,
             page_size=page_size,
         )

@@ -6426,13 +6426,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "asc",
-                "desc"
-              ],
-              "type": "string",
-              "default": "asc",
-              "title": "Order"
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
             }
           },
           {
@@ -6543,13 +6538,8 @@
             "in": "query",
             "required": false,
             "schema": {
-              "enum": [
-                "asc",
-                "desc"
-              ],
-              "type": "string",
-              "default": "asc",
-              "title": "Order"
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
             }
           },
           {

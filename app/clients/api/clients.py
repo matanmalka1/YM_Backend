@@ -1,5 +1,3 @@
-from typing import Literal
-
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.clients.api.responses import (
@@ -29,6 +27,7 @@ from app.clients.services.client_update_service import ClientUpdateService
 from app.clients.services.create_client_service import CreateClientService
 from app.clients.services.impact_preview_service import compute_creation_impact
 from app.common.enums import EntityType
+from app.core.api_types import SortOrder
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
@@ -104,7 +103,7 @@ def list_clients(
         "full_name",
         pattern="^(full_name|created_at|status|entity_type)$",
     ),
-    order: Literal["asc", "desc"] = Query("asc"),
+    order: SortOrder = Query(SortOrder.asc),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
@@ -128,7 +127,7 @@ def list_sidebar_clients(
     db: DBSession,
     search: str | None = Query(None),
     sort_by: str = Query("full_name", pattern="^(full_name|office_client_number)$"),
-    order: Literal["asc", "desc"] = Query("asc"),
+    order: SortOrder = Query(SortOrder.asc),
     page: int = Query(1, ge=1),
     page_size: int = Query(100, ge=1, le=MAX_PAGE_SIZE),
 ):

@@ -34,9 +34,9 @@ Last verified from code, migrations, and tests: 2026-06-07.
 
 ## Cross-Domain: Sorting & Search
 
-- [ ] Add sort_by / sort_order to all data tables (cross-domain).
+- [ ] Add sort_by / order to all data tables (cross-domain).
   - Current state: most domains sort by a hardcoded column (usually `created_at DESC`). Only `clients` has sort params today.
-  - Plan: establish a single convention (query params `sort_by` + `sort_order=asc|desc`) and apply uniformly across all list endpoints + DataTable column headers in the frontend.
+  - Plan: establish a single convention (query params `sort_by` + `order=asc|desc`) and apply uniformly across all list endpoints + DataTable column headers in the frontend.
   - Domains to cover: charges (`amount`, `issued_at`, `status`, `created_at`), vat_reports, annual_reports, binders, reminders, notifications, signature_requests, and any other paginated list.
   - Scope: every affected repo, router, frontend hook, and `DataTable` column header — requires a design pass before implementation.
 
