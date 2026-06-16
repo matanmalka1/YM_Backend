@@ -4,7 +4,6 @@ from typing import Annotated
 from pydantic import BaseModel, Field, StringConstraints, field_validator, model_validator
 
 from app.businesses.models.business import BusinessStatus
-from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 
@@ -82,7 +81,6 @@ class BusinessResponse(BaseModel):
     notes: str | None = None
     created_at: ApiDateTime | None = None
     updated_at: ApiDateTime | None = None
-    available_actions: list[ActionDescriptor] = Field(default_factory=list)
 
     model_config = {"from_attributes": True}
 

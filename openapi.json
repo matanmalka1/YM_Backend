@@ -24648,13 +24648,6 @@
               }
             ],
             "title": "Updated At"
-          },
-          "available_actions": {
-            "items": {
-              "$ref": "#/components/schemas/ActionDescriptor"
-            },
-            "type": "array",
-            "title": "Available Actions"
           }
         },
         "type": "object",
