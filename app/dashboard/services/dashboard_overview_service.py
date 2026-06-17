@@ -15,7 +15,7 @@ from app.utils.time_utils import israel_today
 def _format_ils(amount: Decimal) -> str:
     try:
         normalized = amount.quantize(Decimal("0.01"))
-    except InvalidOperation, ValueError:
+    except (InvalidOperation, ValueError):
         normalized = Decimal("0.00")
     formatted = f"{normalized:,.2f}".rstrip("0").rstrip(".")
     return f"₪{formatted}"
