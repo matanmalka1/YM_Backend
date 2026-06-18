@@ -5150,6 +5150,7 @@
           "settings-tax-calendar"
         ],
         "summary": "List Deadline Rules",
+        "description": "Unpaginated by design. Returns all deadline-rule config rows.\n\nNo cap: bounded by the (small, admin-managed) number of configured rules.",
         "operationId": "list_deadline_rules_api_v1_settings_tax_calendar_rules_get",
         "responses": {
           "200": {
@@ -14365,6 +14366,7 @@
           "advance-payments"
         ],
         "summary": "List Advance Payment Batches",
+        "description": "Unpaginated by design. Returns one summary per (year, month) with a batch.\n\nBounded by data, not a fixed cap: <= 12 rows when ``year`` is given,\notherwise grows with the number of distinct months across history (small).",
         "operationId": "list_advance_payment_batches_api_v1_advance_payments_overview_batches_get",
         "parameters": [
           {
