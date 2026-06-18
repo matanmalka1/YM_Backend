@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 import hashlib
 import json
 import re
@@ -10,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
 from app.config import settings
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.core.logging_config import get_logger
 from app.infrastructure.notifications import EmailChannel
@@ -118,14 +117,17 @@ class NotificationSendService:
     ) -> NotificationPreviewResponse:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
             raise AppError(
-                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", ErrorCode.NOTIFICATION_AUTO_ONLY_TRIGGER
+                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית",
+                ErrorCode.NOTIFICATION_AUTO_ONLY_TRIGGER,
             )
         if request.trigger in _ANNUAL_TRIGGERS and not request.entity_id:
             raise AppError(
                 "חובה לספק מזהה דוח שנתי לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
             )
         if request.trigger in _GENERIC_ENTITY_TRIGGERS and not request.entity_id:
-            raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID)
+            raise AppError(
+                "חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
+            )
 
         client_record = self.db.get(ClientRecord, request.client_record_id)
         if client_record is None:
@@ -199,14 +201,17 @@ class NotificationSendService:
     ) -> NotificationResult:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
             raise AppError(
-                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית", ErrorCode.NOTIFICATION_AUTO_ONLY_TRIGGER
+                "הודעה זו נשלחת אוטומטית ואינה זמינה לשליחה ידנית",
+                ErrorCode.NOTIFICATION_AUTO_ONLY_TRIGGER,
             )
         if request.trigger in _ANNUAL_TRIGGERS and not request.entity_id:
             raise AppError(
                 "חובה לספק מזהה דוח שנתי לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
             )
         if request.trigger in _GENERIC_ENTITY_TRIGGERS and not request.entity_id:
-            raise AppError("חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID)
+            raise AppError(
+                "חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
+            )
 
         client_record = self.db.get(ClientRecord, request.client_record_id)
         if client_record is None:
@@ -289,7 +294,9 @@ class NotificationSendService:
                 ErrorCode.NOTIFICATION_BODY_TOO_LONG,
             )
         if _placeholder_re.search(subject) or _placeholder_re.search(body):
-            raise AppError("ההודעה מכילה שדות שלא מולאו", ErrorCode.NOTIFICATION_VISIBLE_PLACEHOLDER)
+            raise AppError(
+                "ההודעה מכילה שדות שלא מולאו", ErrorCode.NOTIFICATION_VISIBLE_PLACEHOLDER
+            )
 
         channel = NotificationChannel(request.channel or NotificationChannel.EMAIL.value)
         req_hash = _hash_request(

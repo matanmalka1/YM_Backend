@@ -1,6 +1,5 @@
 """Service layer for read-only entity audit trail queries."""
 
-from app.core.error_codes import ErrorCode
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -25,6 +24,7 @@ from app.audit.schemas.entity_audit_log import (
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.users.repositories.user_repository import UserRepository
 
@@ -54,7 +54,9 @@ class AuditTrailService:
     def _assert_entity_readable(self, entity_type: str, entity_id: int) -> None:
         self._validate_entity_type(entity_type)
         if not self._entity_exists(entity_type, entity_id):
-            raise AppError(ENTITY_NOT_FOUND_ERROR, ErrorCode.AUDIT_ENTITY_NOT_FOUND, status_code=404)
+            raise AppError(
+                ENTITY_NOT_FOUND_ERROR, ErrorCode.AUDIT_ENTITY_NOT_FOUND, status_code=404
+            )
 
     def get_entity_audit_trail(
         self,

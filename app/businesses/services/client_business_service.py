@@ -1,6 +1,5 @@
 """Service layer for client-scoped business routes."""
 
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.businesses.models.business import Business
@@ -14,6 +13,7 @@ from app.businesses.services.business_guards import (
 )
 from app.businesses.services.business_service import BusinessService
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.users.models.user import UserRole
 
@@ -24,9 +24,7 @@ class ClientBusinessService:
         self.business_service = BusinessService(db)
         self.business_repo = BusinessRepository(db)
 
-    def to_response(
-        self, business: Business, client_id: int | None = None
-    ) -> BusinessResponse:
+    def to_response(self, business: Business, client_id: int | None = None) -> BusinessResponse:
         response = BusinessResponse.model_validate(business)
         if client_id is not None:
             response.client_id = client_id

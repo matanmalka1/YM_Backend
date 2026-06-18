@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 import logging
 from datetime import date
 
@@ -9,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,

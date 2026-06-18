@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import select
@@ -15,6 +13,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.annual_reports.services.constants import VALID_TRANSITIONS
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.legal_entities.models.legal_entity import LegalEntity
 
@@ -49,10 +48,7 @@ class AnnualReportBaseService:
         """
         client_record_ids = {r.client_record_id for r in reports}
         records = (
-            {
-                record.id: record
-                for record in self.client_repo.list_by_ids(list(client_record_ids))
-            }
+            {record.id: record for record in self.client_repo.list_by_ids(list(client_record_ids))}
             if client_record_ids
             else {}
         )

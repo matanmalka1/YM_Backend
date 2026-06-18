@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.enums import ClientStatus
@@ -24,6 +23,7 @@ from app.clients.schemas.client_record_response import (
 from app.clients.services.client_enrichment_service import ClientEnrichmentService
 from app.common.enums import EntityType
 from app.core.api_types import SortOrder
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

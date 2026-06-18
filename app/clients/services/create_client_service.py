@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
@@ -35,6 +34,7 @@ from app.clients.services.messages import (
     CLIENT_ID_NUMBER_EXISTS,
 )
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.legal_entities.repositories.person_repository import PersonRepository

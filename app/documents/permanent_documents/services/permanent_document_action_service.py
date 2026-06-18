@@ -1,7 +1,7 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.documents.permanent_documents.repositories.permanent_document_query_repository import (

@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
@@ -6,6 +5,7 @@ from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 
@@ -55,7 +55,9 @@ class AuthorityContactService:
 
         updated = self.contact_repo.update_for_client(client_record_id, contact_id, **fields)
         if not updated:
-            raise NotFoundError(f"איש קשר {contact_id} לא נמצא", ErrorCode.AUTHORITY_CONTACT_NOT_FOUND)
+            raise NotFoundError(
+                f"איש קשר {contact_id} לא נמצא", ErrorCode.AUTHORITY_CONTACT_NOT_FOUND
+            )
         return updated
 
     def list_client_contacts(
@@ -81,11 +83,15 @@ class AuthorityContactService:
             client_record_id, contact_id, deleted_by=actor_id
         )
         if not success:
-            raise NotFoundError(f"איש קשר {contact_id} לא נמצא", ErrorCode.AUTHORITY_CONTACT_NOT_FOUND)
+            raise NotFoundError(
+                f"איש קשר {contact_id} לא נמצא", ErrorCode.AUTHORITY_CONTACT_NOT_FOUND
+            )
 
     def get_contact(self, client_record_id: int, contact_id: int) -> AuthorityContact:
         """Get contact by ID, scoped to client_record_id."""
         contact = self.contact_repo.get_for_client(client_record_id, contact_id)
         if not contact:
-            raise NotFoundError(f"איש קשר {contact_id} לא נמצא", ErrorCode.AUTHORITY_CONTACT_NOT_FOUND)
+            raise NotFoundError(
+                f"איש קשר {contact_id} לא נמצא", ErrorCode.AUTHORITY_CONTACT_NOT_FOUND
+            )
         return contact

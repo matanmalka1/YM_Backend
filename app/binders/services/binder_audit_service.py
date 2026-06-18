@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.binders.models.binder import Binder
@@ -15,6 +14,7 @@ from app.binders.schemas.binder import (
     BinderIntakeResponse,
 )
 from app.binders.services.messages import BINDER_NOT_FOUND
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.users.repositories.user_repository import UserRepository
 

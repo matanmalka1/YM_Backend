@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.annual_reports.api.responses import (
@@ -15,6 +14,7 @@ from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportListResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE

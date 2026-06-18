@@ -57,9 +57,7 @@ class ChargeQueryService:
         dict[int, int | None],
     ]:
         client_record = (
-            self.client_repo.get_by_id(client_record_id)
-            if client_record_id is not None
-            else None
+            self.client_repo.get_by_id(client_record_id) if client_record_id is not None else None
         )
         if client_record is not None:
             items = self.charge_repo.list_charges_by_client_record(
@@ -109,9 +107,7 @@ class ChargeQueryService:
         business_name_by_id = {c.id: c.full_name for c in businesses}
         client_record_ids = list({c.client_record_id for c in items})
         client_records = (
-            self.client_repo.list_by_ids(client_record_ids)
-            if client_record_ids
-            else []
+            self.client_repo.list_by_ids(client_record_ids) if client_record_ids else []
         )
         record_by_id = {record.id: record for record in client_records}
         clients = get_full_records_bulk(self.db, client_record_ids)
@@ -170,9 +166,7 @@ class ChargeQueryService:
             return item
 
         client_record = (
-            self.client_repo.get_by_id(client_record_id)
-            if client_record_id is not None
-            else None
+            self.client_repo.get_by_id(client_record_id) if client_record_id is not None else None
         )
         raw = self.charge_repo.stats_by_status(
             client_record_id=client_record.id if client_record else None,

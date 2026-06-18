@@ -1,11 +1,11 @@
 """Service: client-level VAT summary."""
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,

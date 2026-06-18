@@ -1,12 +1,12 @@
 """Signature request helpers for annual report status transitions."""
 
-from app.core.error_codes import ErrorCode
 from app.annual_reports.services.base import AnnualReportBaseService
 from app.annual_reports.services.messages import (
     ANNUAL_REPORT_APPROVAL_TITLE,
     ANNUAL_REPORT_CLIENT_NOT_FOUND,
     ANNUAL_REPORT_SIGNER_NAME_MISSING,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
 
@@ -47,9 +47,7 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
         return record
 
     def _resolve_signer_name(self, record) -> str:
-        name = self.client_repo.get_signer_name_by_legal_entity_id(
-            record.legal_entity_id
-        )
+        name = self.client_repo.get_signer_name_by_legal_entity_id(record.legal_entity_id)
         if not name:
             raise AppError(
                 ANNUAL_REPORT_SIGNER_NAME_MISSING,

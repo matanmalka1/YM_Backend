@@ -1,10 +1,10 @@
 """Notification center HTTP endpoints."""
 
-from app.core.error_codes import ErrorCode
 import datetime
 
 from fastapi import APIRouter, Depends, Query
 
+from app.core.error_codes import ErrorCode
 from app.core.openapi_responses import (
     bad_request_response,
     error_responses,

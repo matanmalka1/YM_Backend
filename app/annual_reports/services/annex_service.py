@@ -1,6 +1,5 @@
 """Service mixin for annex (schedule) data lines."""
 
-from app.core.error_codes import ErrorCode
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
 from app.annual_reports.schemas.annex_schemas import SCHEDULE_VALIDATORS
@@ -12,6 +11,7 @@ from app.audit.constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
 from .base import AnnualReportBaseService

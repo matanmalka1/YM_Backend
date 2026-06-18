@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 import logging
 
 from sqlalchemy.orm import Session
@@ -19,6 +18,7 @@ from app.clients.repositories.client_record_read_repository import (
     get_full_record,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today

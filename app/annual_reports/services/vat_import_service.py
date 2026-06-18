@@ -5,7 +5,6 @@ maps expense categories to annual report categories, and creates income/expense
 lines in bulk. Existing lines are only replaced when force=True.
 """
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -45,6 +44,7 @@ from app.audit.constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat.repositories.vat_invoice_aggregation_repository import (
     VatInvoiceAggregationRepository,

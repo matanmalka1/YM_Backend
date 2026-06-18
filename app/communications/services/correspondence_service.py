@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import datetime
 from typing import Literal
 
@@ -16,6 +15,7 @@ from app.communications.models.correspondence import Correspondence, Corresponde
 from app.communications.repositories.correspondence_repository import (
     CorrespondenceRepository,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ForbiddenError, NotFoundError
 
 _NOT_FOUND = ErrorCode.CORRESPONDENCE_NOT_FOUND
@@ -40,7 +40,9 @@ class CorrespondenceService:
     def _get_client_record_or_raise(self, client_record_id: int):
         record = self.client_repo.get_by_id(client_record_id)
         if not record:
-            raise NotFoundError(f"רשומת לקוח {client_record_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND)
+            raise NotFoundError(
+                f"רשומת לקוח {client_record_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND
+            )
         return record
 
     def _assert_contact_belongs_to_client(self, contact_id: int, client_record_id: int) -> None:

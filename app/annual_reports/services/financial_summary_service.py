@@ -1,6 +1,5 @@
 """Annual report financial summary service."""
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -21,6 +20,7 @@ from app.annual_reports.schemas.annual_report_financials import (
     IncomeLineResponse,
 )
 from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

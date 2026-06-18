@@ -53,9 +53,7 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
 
     def count_by_client_record(self, client_record_id: int) -> int:
         return self.db.scalar(
-            scope_to_active_clients_stmt(
-                select(func.count(AnnualReport.id)), AnnualReport
-            ).where(
+            scope_to_active_clients_stmt(select(func.count(AnnualReport.id)), AnnualReport).where(
                 AnnualReport.client_record_id == client_record_id,
                 AnnualReport.deleted_at.is_(None),
             )

@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -9,6 +8,7 @@ from app.binders.repositories.binder_handover_repository import BinderHandoverRe
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.binders.services.messages import BINDER_HANDOVER_INVALID_BINDERS
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 
 

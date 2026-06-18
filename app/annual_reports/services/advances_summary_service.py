@@ -1,6 +1,5 @@
 """Advances summary — links advance payments to an annual report."""
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -18,6 +17,7 @@ from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
 from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

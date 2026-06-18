@@ -1,8 +1,8 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_read_repository import get_full_record
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.legal_entities.repositories.person_repository import PersonRepository

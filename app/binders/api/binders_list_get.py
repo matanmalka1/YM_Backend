@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
@@ -7,6 +6,7 @@ from app.binders.schemas.binder import BinderListResponse, BinderResponse
 from app.binders.services.binder_list_service import BinderListService
 from app.binders.services.binder_service import BinderService
 from app.binders.services.messages import BINDER_NOT_FOUND
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
@@ -71,7 +71,9 @@ def get_binder(binder_id: PathId, db: DBSession, user: CurrentUser):
     service = BinderListService(db)
     binder_response = service.get_binder_with_client_name(binder_id)
     if not binder_response:
-        raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
+        raise NotFoundError(
+            BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND
+        )
     return binder_response
 
 
@@ -86,5 +88,7 @@ def delete_binder(binder_id: PathId, db: DBSession, user: CurrentUser):
     service = BinderService(db)
     deleted = service.delete_binder(binder_id, actor_id=user.id)
     if not deleted:
-        raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
+        raise NotFoundError(
+            BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND
+        )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from collections.abc import Iterator
 from contextlib import contextmanager
 

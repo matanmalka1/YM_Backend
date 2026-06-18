@@ -1,6 +1,5 @@
 """Annual report filing readiness service."""
 
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_schedule_entry import (
@@ -24,6 +23,7 @@ from app.annual_reports.services.messages import (
     MISSING_REPORT_INCOME_ISSUE,
     MISSING_TAX_CALCULATION_ISSUE,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from app.core.error_codes import ErrorCode
-
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,

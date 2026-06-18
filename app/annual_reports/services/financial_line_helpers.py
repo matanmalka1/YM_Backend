@@ -1,6 +1,5 @@
 """Shared helpers for annual-report financial line mutations and audit payloads."""
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 from enum import Enum
 
@@ -13,6 +12,7 @@ from app.annual_reports.services.messages import (
 )
 from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ForbiddenError, NotFoundError
 
 

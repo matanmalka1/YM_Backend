@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 import logging
 from dataclasses import dataclass, field
 from datetime import date
@@ -14,6 +13,7 @@ from app.clients.constants import (
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import EntityType
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, NotFoundError
 from app.utils.time_utils import israel_today
 

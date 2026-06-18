@@ -1,6 +1,5 @@
 """Analytics, KPI, and overview service for AdvancePayment domain."""
 
-from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
@@ -22,6 +21,7 @@ from app.advance_payments.repositories.turnover_lookup_repository import (
 )
 from app.advance_payments.schemas.advance_payment import MonthBatchSummary
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

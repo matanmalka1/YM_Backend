@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from datetime import datetime
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,

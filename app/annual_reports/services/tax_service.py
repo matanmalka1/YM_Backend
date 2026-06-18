@@ -1,6 +1,5 @@
 """Annual report tax calculation service."""
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -38,6 +37,7 @@ from app.annual_reports.services.messages import (
 from app.annual_reports.services.ni_engine import calculate_national_insurance
 from app.annual_reports.services.tax_engine import calculate_tax
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,

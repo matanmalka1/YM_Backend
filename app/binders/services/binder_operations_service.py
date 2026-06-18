@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -7,6 +6,7 @@ from app.binders.models.binder import Binder
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_list_service import BinderListService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

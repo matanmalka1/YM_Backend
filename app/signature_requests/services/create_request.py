@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 import hashlib
 import secrets
 from datetime import timedelta
@@ -12,6 +10,7 @@ from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequest,

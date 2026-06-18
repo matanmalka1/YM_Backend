@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from sqlalchemy.orm import Session
 
 from app.annual_reports.repositories.annual_report_repository import (
@@ -22,6 +20,7 @@ from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

@@ -1,7 +1,7 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.notes.models.entity_note import EntityNote
 from app.notes.repositories.entity_note_repository import EntityNoteRepository
@@ -20,7 +20,9 @@ class EntityNoteService:
 
     def _assert_client_exists(self, client_id: int) -> None:
         if not self.client_repo.get_by_id(client_id):
-            raise NotFoundError(f"רשומת לקוח {client_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND)
+            raise NotFoundError(
+                f"רשומת לקוח {client_id} לא נמצאה", ErrorCode.CLIENT_RECORD_NOT_FOUND
+            )
 
     def _attach_created_by_names(self, notes: list[EntityNote]) -> list[EntityNote]:
         user_ids = sorted({note.created_by for note in notes if note.created_by is not None})

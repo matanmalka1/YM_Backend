@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 import re
 from datetime import date
 
@@ -11,6 +9,7 @@ from sqlalchemy.orm import Session
 
 from app.common.enums import DeadlineRuleType as DRT
 from app.common.enums import ObligationType
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.repositories.deadline_rule_repository import DeadlineRuleRepository
@@ -180,7 +179,9 @@ class TaxCalendarMaterializationService:
         obligation_type = TaxCalendarMaterializationService._obligation(obligation_type)
         rule_type = _PERIODIC_RULES.get((obligation_type, months))
         if rule_type is None:
-            raise AppError("תקופת החובה אינה נתמכת", ErrorCode.TAX_CALENDAR_INVALID_PERIOD_FREQUENCY)
+            raise AppError(
+                "תקופת החובה אינה נתמכת", ErrorCode.TAX_CALENDAR_INVALID_PERIOD_FREQUENCY
+            )
         return rule_type
 
     @staticmethod
@@ -188,7 +189,9 @@ class TaxCalendarMaterializationService:
         try:
             return value if isinstance(value, ObligationType) else ObligationType(value)
         except ValueError as exc:
-            raise AppError("סוג החובה אינו נתמך", ErrorCode.TAX_CALENDAR_INVALID_OBLIGATION_TYPE) from exc
+            raise AppError(
+                "סוג החובה אינו נתמך", ErrorCode.TAX_CALENDAR_INVALID_OBLIGATION_TYPE
+            ) from exc
 
     @staticmethod
     def _parse_period(period: str) -> tuple[int, int]:
@@ -221,4 +224,6 @@ class TaxCalendarMaterializationService:
             entity.tax_calendar_entry_id = entry.id
             return
         if int(current) != int(entry.id):
-            raise ConflictError("רשומת יומן המס אינה תואמת לחובה", ErrorCode.TAX_CALENDAR_LINK_CONFLICT)
+            raise ConflictError(
+                "רשומת יומן המס אינה תואמת לחובה", ErrorCode.TAX_CALENDAR_LINK_CONFLICT
+            )

@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import datetime
 
 from app.annual_reports.models.annual_report_enums import (
@@ -16,6 +15,7 @@ from app.audit.constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
 

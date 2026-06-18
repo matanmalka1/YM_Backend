@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.audit.constants import ENTITY_CLIENT
@@ -13,6 +12,7 @@ from app.clients.services.messages import (
     CLIENT_NOT_DELETED,
     CLIENT_NOT_FOUND,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, NotFoundError
 
 
@@ -25,14 +25,18 @@ class ClientLifecycleService:
     def delete_client(self, client_id: int, actor_id: int) -> None:
         client = self.record_repo.get_by_id_including_deleted(client_id)
         if not client or client.deleted_at is not None:
-            raise NotFoundError(CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND)
+            raise NotFoundError(
+                CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
+            )
         self.record_repo.soft_delete(client_id, deleted_by=actor_id)
         self._audit.record_delete(ENTITY_CLIENT, client_id, actor_id)
 
     def restore_client(self, client_id: int, actor_id: int):
         client = self.record_repo.get_by_id_including_deleted(client_id)
         if not client:
-            raise NotFoundError(CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND)
+            raise NotFoundError(
+                CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
+            )
         if client.deleted_at is None:
             raise ConflictError(CLIENT_NOT_DELETED, ErrorCode.CLIENT_NOT_DELETED)
         full_client = get_full_record_including_deleted(self.db, client_id)
@@ -45,6 +49,8 @@ class ClientLifecycleService:
         restored_record = self.record_repo.restore(client_id, restored_by=actor_id)
         restored = get_full_record(self.db, restored_record.id) if restored_record else None
         if not restored:
-            raise NotFoundError(CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND)
+            raise NotFoundError(
+                CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
+            )
         self._audit.record_restore(ENTITY_CLIENT, client_id, actor_id)
         return restored

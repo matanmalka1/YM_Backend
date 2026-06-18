@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
@@ -14,6 +13,7 @@ from app.businesses.services.business_guards import (
 from app.businesses.services.business_lifecycle_service import BusinessLifecycleService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
@@ -160,7 +160,9 @@ class BusinessService:
         new_status = fields.get("status")
         if new_status in (BusinessStatus.FROZEN, BusinessStatus.CLOSED):
             if user_role != UserRole.ADVISOR:
-                raise ForbiddenError("רק יועצים יכולים להקפיא או לסגור עסקים", ErrorCode.BUSINESS_FORBIDDEN)
+                raise ForbiddenError(
+                    "רק יועצים יכולים להקפיא או לסגור עסקים", ErrorCode.BUSINESS_FORBIDDEN
+                )
         if new_status == BusinessStatus.CLOSED:
             fields.setdefault("closed_at", israel_today())
         if new_status == BusinessStatus.ACTIVE:

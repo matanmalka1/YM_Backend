@@ -3,7 +3,6 @@
 Charges are informational only — they do not block report submission.
 """
 
-from app.core.error_codes import ErrorCode
 from sqlalchemy.orm import Session
 
 from app.annual_reports.repositories.report_repository import (
@@ -13,6 +12,7 @@ from app.annual_reports.services.messages import ANNUAL_REPORT_NOT_FOUND
 from app.charges.repositories.charge_annual_report_repository import (
     ChargeAnnualReportRepository,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
 

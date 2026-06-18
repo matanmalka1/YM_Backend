@@ -133,9 +133,7 @@ def error_response(
 
 
 class AppError(Exception):
-    def __init__(
-        self, message: str, code: ErrorCode, status_code: int = 400, details: Any = None
-    ):
+    def __init__(self, message: str, code: ErrorCode, status_code: int = 400, details: Any = None):
         super().__init__(message)
         self.message = message
         self.code = code

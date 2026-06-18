@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 import io
 import mimetypes
 from typing import BinaryIO
@@ -15,6 +14,7 @@ from app.businesses.services.business_guards import (
 from app.businesses.services.signals_service import SignalsService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_service import get_client_or_raise
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.documents.permanent_documents.models.permanent_document import (
     CLIENT_SCOPE_TYPES,
@@ -181,7 +181,9 @@ class PermanentDocumentService:
             self.storage.upload(storage_key, io.BytesIO(file_bytes), resolved_mime)
         except Exception as exc:
             self.db.rollback()
-            raise AppError(UPLOAD_FAILED_ERROR, ErrorCode.DOCUMENT_UPLOAD_FAILED, status_code=500) from exc
+            raise AppError(
+                UPLOAD_FAILED_ERROR, ErrorCode.DOCUMENT_UPLOAD_FAILED, status_code=500
+            ) from exc
 
         if existing:
             existing.superseded_by = document.id
@@ -226,7 +228,9 @@ class PermanentDocumentService:
         page_size: int = 20,
     ) -> tuple[list[PermanentDocument], int]:
         if not BinderRepository(self.db).get_by_id(binder_id):
-            raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
+            raise NotFoundError(
+                BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND
+            )
         return self.document_repo.list_by_binder_page(binder_id, page=page, page_size=page_size)
 
     def get_download_url(
@@ -274,9 +278,7 @@ class PermanentDocumentService:
         self, business_id: int, required: list[str] | None = None
     ) -> list[str]:
         business = get_business_or_raise(self.db, business_id)
-        client_record = self.client_repo.get_by_legal_entity_id(
-            business.legal_entity_id
-        )
+        client_record = self.client_repo.get_by_legal_entity_id(business.legal_entity_id)
         if not client_record:
             raise NotFoundError(
                 f"רשומת לקוח לעסק {business_id} לא נמצאה",

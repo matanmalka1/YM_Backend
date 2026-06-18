@@ -1,6 +1,6 @@
-from app.core.error_codes import ErrorCode
 from fastapi import APIRouter, Depends, status
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import (
     bad_request_response,

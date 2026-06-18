@@ -1,9 +1,9 @@
-from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 
 import bcrypt
 from sqlalchemy.orm import Session
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
 from app.users.models.user import User

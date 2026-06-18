@@ -1,6 +1,5 @@
 """Pure Israeli income tax calculation engine — multi-year brackets."""
 
-from app.core.error_codes import ErrorCode
 from dataclasses import dataclass
 
 from tax_rules.statutory import (
@@ -17,6 +16,7 @@ from app.annual_reports.integrations.tax_rules_registry import (
     get_supported_tax_years,
 )
 from app.annual_reports.services.messages import UNSUPPORTED_TAX_YEAR_ERROR
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.utils.time_utils import israel_today
 

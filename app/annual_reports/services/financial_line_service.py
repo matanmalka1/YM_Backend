@@ -1,6 +1,5 @@
 """Annual report income and expense line mutation service."""
 
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -45,6 +44,7 @@ from app.audit.constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
 

@@ -3,9 +3,9 @@ Pure calculation functions for advance payment suggestions.
 No DB access — all inputs are passed as arguments.
 """
 
-from app.core.error_codes import ErrorCode
 from decimal import ROUND_HALF_UP, Decimal
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 
 

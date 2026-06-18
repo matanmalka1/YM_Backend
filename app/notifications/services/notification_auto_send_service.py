@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 import hashlib
 import json
 
@@ -9,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
 from app.config import settings
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.core.logging_config import get_logger
 from app.infrastructure.notifications import EmailChannel
@@ -110,7 +109,8 @@ class NotificationAutoSendService:
             )
         if not idempotency_key.strip():
             raise AppError(
-                "idempotency_key נדרש לשליחה אוטומטית", ErrorCode.NOTIFICATION_MISSING_IDEMPOTENCY_KEY
+                "idempotency_key נדרש לשליחה אוטומטית",
+                ErrorCode.NOTIFICATION_MISSING_IDEMPOTENCY_KEY,
             )
         req_hash = _hash_auto(
             trigger.value,

@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from sqlalchemy import asc, case, desc, func, select
 from sqlalchemy.orm import Session
 
@@ -10,6 +8,7 @@ from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
 from app.common.repositories.base_repository import BaseRepository
 from app.core.api_types import SortOrder
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person

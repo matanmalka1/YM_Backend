@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -12,6 +11,7 @@ from app.binders.services.messages import BINDER_RECEIVED
 from app.businesses.models.business import Business
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.pagination import paginate_sequence
 from app.invoices.repositories.invoice_repository import InvoiceRepository

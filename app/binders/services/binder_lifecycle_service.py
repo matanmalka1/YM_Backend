@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from datetime import date
 
 from sqlalchemy.orm import Session
@@ -22,6 +20,7 @@ from app.binders.services.messages import (
     BINDER_NOT_FOUND,
     BINDER_RECEIVED,
 )
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.notifications.models.notification import NotificationTrigger
 from app.notifications.schemas.notification_schemas import NotificationResult
@@ -92,7 +91,9 @@ class BinderLifecycleService:
             and binder.capacity_status == BinderCapacityStatus.FULL
         )
         if not eligible:
-            raise AppError("לא ניתן לקלוט חומר לקלסר במצב הנוכחי", ErrorCode.BINDER_NOT_INTAKE_ELIGIBLE)
+            raise AppError(
+                "לא ניתן לקלוט חומר לקלסר במצב הנוכחי", ErrorCode.BINDER_NOT_INTAKE_ELIGIBLE
+            )
         self._append_log(
             binder,
             "capacity_status",
@@ -281,7 +282,9 @@ class BinderLifecycleService:
     def _get_for_update(self, binder_id: int) -> Binder:
         binder = self.binder_repo.get_by_id_for_update(binder_id)
         if not binder:
-            raise NotFoundError(BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND)
+            raise NotFoundError(
+                BINDER_NOT_FOUND.format(binder_id=binder_id), ErrorCode.BINDER_NOT_FOUND
+            )
         return binder
 
     @staticmethod

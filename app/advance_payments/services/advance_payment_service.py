@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 from typing import Literal
@@ -24,6 +23,7 @@ from app.clients.enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationType
 from app.common.period_utils import parse_period_month
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.tax_calendar.services.materialization_service import (
@@ -62,7 +62,9 @@ class AdvancePaymentService:
             return 2
         if freq == AdvancePaymentFrequency.MONTHLY:
             return 1
-        raise NotFoundError("תדירות מקדמות לא מוגדרת ללקוח", ErrorCode.ADVANCE_PAYMENT_FREQUENCY_NOT_SET)
+        raise NotFoundError(
+            "תדירות מקדמות לא מוגדרת ללקוח", ErrorCode.ADVANCE_PAYMENT_FREQUENCY_NOT_SET
+        )
 
     def _validate_period_months_count(self, period: str, period_months_count: int) -> None:
         if period_months_count not in SUPPORTED_PERIOD_MONTH_COUNTS:

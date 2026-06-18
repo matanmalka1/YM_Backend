@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 from decimal import Decimal
 
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
@@ -22,6 +21,8 @@ from app.annual_reports.services.financial_summary_service import (
 from app.annual_reports.services.tax_service import (
     AnnualReportTaxService,
 )
+from app.core.error_codes import ErrorCode
+
 from .base import AnnualReportBaseService
 
 

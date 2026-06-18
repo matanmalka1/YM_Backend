@@ -1,4 +1,3 @@
-from app.core.error_codes import ErrorCode
 import hashlib
 import html as html_lib
 import secrets
@@ -7,6 +6,7 @@ from datetime import timedelta
 from sqlalchemy.orm import Session
 
 from app.config import settings
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
 from app.infrastructure.notifications import EmailChannel

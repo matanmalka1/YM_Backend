@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 from typing import Any
 
 from sqlalchemy import select
@@ -13,6 +11,7 @@ from app.binders.models.binder import Binder
 from app.charges.models.charge import Charge
 from app.common.services.base_service import BaseService
 from app.common.source_types import WorkQueueSourceType, normalize_source_domain
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository

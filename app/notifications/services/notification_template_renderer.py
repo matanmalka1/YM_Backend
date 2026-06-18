@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from app.core.error_codes import ErrorCode
-
 import re
 
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
 from app.notifications.models.notification import NotificationTrigger
