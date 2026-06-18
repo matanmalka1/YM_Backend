@@ -89,8 +89,8 @@ MANUAL_BINARY_SUCCESS_OVERRIDES: dict[tuple[str, str], dict[str, Any]] = {
 }
 
 MANUAL_SUCCESS_OVERRIDES: dict[tuple[str, str], Any] = {
-    ("GET", "/"): {"service": "binder-billing-crm", "status": "running"},
-    ("GET", "/info"): {"app": "Binder Billing CRM", "env": "development"},
+    ("GET", "/"): {"service": "YM Tax CRM", "status": "running"},
+    ("GET", "/info"): {"app": "YM Tax CRM", "env": "development"},
     ("GET", "/health"): {"status": "healthy", "database": "connected"},
     ("POST", "/api/v1/clients/import"): {
         "created": 3,

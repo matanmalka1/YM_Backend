@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "Binder & Billing CRM",
+    "title": "YM Tax CRM",
     "version": "1.0.0"
   },
   "paths": {
@@ -22750,7 +22750,7 @@
         "properties": {
           "app": {
             "type": "string",
-            "const": "Binder Billing CRM",
+            "const": "YM Tax CRM",
             "title": "App"
           },
           "env": {
@@ -30432,7 +30432,7 @@
         "properties": {
           "service": {
             "type": "string",
-            "const": "binder-billing-crm",
+            "const": "YM Tax CRM",
             "title": "Service"
           },
           "status": {

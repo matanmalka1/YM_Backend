@@ -25,7 +25,7 @@ if settings.APP_ENV == "development":
 
 _is_production = settings.APP_ENV == "production"
 app = FastAPI(
-    title="Binder & Billing CRM",
+    title="YM Tax CRM",
     version="1.0.0",
     lifespan=lifespan,
     openapi_url=None if _is_production else "/openapi.json",
@@ -35,28 +35,27 @@ app = FastAPI(
 
 
 class RootResponse(BaseModel):
-    service: Literal["binder-billing-crm"]
+    service: Literal["YM Tax CRM"]
     status: Literal["running"]
 
 
 class AppInfoResponse(BaseModel):
-    app: Literal["Binder Billing CRM"]
+    app: Literal["YM Tax CRM"]
     env: Literal["development", "test", "staging", "production"]
 
 
 @app.get("/", response_model=RootResponse)
 def root():
-    return {"service": "binder-billing-crm", "status": "running"}
+    return {"service": "YM Tax CRM", "status": "running"}
 
 
 @app.get("/info", response_model=AppInfoResponse)
 def info():
-    return {"app": "Binder Billing CRM", "env": settings.APP_ENV}
+    return {"app": "YM Tax CRM", "env": settings.APP_ENV}
 
 
 setup_exception_handlers(app)
 setup_rate_limiting(app)
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.CORS_ALLOWED_ORIGINS,
