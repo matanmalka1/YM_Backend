@@ -113,7 +113,7 @@ class RequestIDMiddleware(BaseHTTPMiddleware):
 
                 log_request_summary(
                     logger,
-                    service="binder-billing-crm",
+                    service="YM-Tax-CRM-crm",
                     env=settings.APP_ENV,
                     slow_request_ms=settings.LOG_SLOW_REQUEST_MS,
                     slow_query_ms=settings.LOG_SLOW_QUERY_MS,

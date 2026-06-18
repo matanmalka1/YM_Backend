@@ -27,7 +27,7 @@ def test_request_summary_event_keeps_normal_request_compact():
 
     event = build_request_summary_event(
         stats,
-        service="binder-billing-crm",
+        service="YM-Tax-CRM",
         env="production",
         slow_request_ms=500,
         slow_query_ms=250,
@@ -83,7 +83,7 @@ def test_request_summary_event_expands_when_thresholds_trip():
 
     event = build_request_summary_event(
         stats,
-        service="binder-billing-crm",
+        service="YM-Tax-CRM-crm",
         env="production",
         slow_request_ms=500,
         slow_query_ms=250,
@@ -109,7 +109,7 @@ def test_possible_n_plus_one_tolerates_non_select_queries():
 
     event = build_request_summary_event(
         stats,
-        service="binder-billing-crm",
+        service="YM-Tax-CRM-crm",
         env="production",
         slow_request_ms=500,
         slow_query_ms=250,
@@ -169,7 +169,7 @@ def test_request_summary_error_excludes_stack():
 
     event = build_request_summary_event(
         stats,
-        service="binder-billing-crm",
+        service="YM-Tax-CRM-crm",
         env="production",
         slow_request_ms=500,
         slow_query_ms=250,

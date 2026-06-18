@@ -340,7 +340,7 @@ def build_request_summary_event(
 def log_request_summary(
     logger: logging.Logger,
     *,
-    service: str = "binder-billing-crm",
+    service: str = "YM-Tax-CRM",
     env: str = "development",
     slow_request_ms: int = 500,
     slow_query_ms: int = 250,
