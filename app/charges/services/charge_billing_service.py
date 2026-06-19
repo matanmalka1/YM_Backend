@@ -42,7 +42,7 @@ class BillingService:
         business_id: int | None,
         legal_entity_id: int | None = None,
     ) -> int | None:
-        client_record = get_client_or_raise(self.db, client_record_id)
+        get_client_or_raise(self.db, client_record_id)
         if business_id is None:
             return None
         business = validate_business_for_create(self.db, business_id)

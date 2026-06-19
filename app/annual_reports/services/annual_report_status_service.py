@@ -10,6 +10,9 @@ from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportDetailResponse,
     AnnualReportResponse,
 )
+from app.annual_reports.services.annual_report_readiness_service import (
+    AnnualReportReadinessService,
+)
 from app.audit.audit_constants import (
     ACTION_ANNUAL_REPORT_DEADLINE_UPDATED,
     ENTITY_ANNUAL_REPORT,
@@ -70,7 +73,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
 
     def _assert_filing_readiness(self, report_id: int) -> None:
         """Raise AppError listing all blocking issues before SUBMITTED transition."""
-        svc = readiness_service.AnnualReportReadinessService(self.db)
+        svc = AnnualReportReadinessService(self.db)
         result = svc.get_readiness_check(report_id)
         if not result.is_ready:
             issues_str = "; ".join(result.issues)
