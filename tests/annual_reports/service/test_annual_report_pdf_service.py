@@ -2,7 +2,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.annual_reports.services import annual_report_pdf_builder as pdf_builder
+import app.annual_reports.annual_report_pdf_builder as pdf_builder
 from app.annual_reports.services import annual_report_pdf_service as pdf_mod
 from app.core.exceptions import NotFoundError
 

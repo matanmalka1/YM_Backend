@@ -2,12 +2,12 @@ from datetime import date, datetime
 from types import SimpleNamespace
 
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.timeline.services.timeline_binder_event_builders import (
+from app.timeline.timeline_binder_event_builders import (
     binder_handed_over_event,
     binder_lifecycle_change_event,
     binder_received_event,
 )
-from app.timeline.services.timeline_charge_event_builders import (
+from app.timeline.timeline_charge_event_builders import (
     charge_created_event,
     charge_paid_event,
     invoice_attached_event,

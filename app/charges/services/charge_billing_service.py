@@ -14,7 +14,7 @@ from app.businesses.services.business_guards import (
 from app.charges.models.charge import Charge, ChargeStatus
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.charges.services.charge_billing_audit import record_charge_status_audit
-from app.charges.services.charge_messages import (
+from app.charges.charge_messages import (
     AMOUNT_MUST_BE_POSITIVE,
     CHARGE_ALREADY_CANCELED,
     CHARGE_CANNOT_CANCEL_PAID,

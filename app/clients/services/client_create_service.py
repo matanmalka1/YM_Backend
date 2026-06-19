@@ -29,7 +29,7 @@ from app.clients.services.client_onboarding_orchestrator import (
 )
 from app.clients.services.client_query_service import ClientQueryService
 from app.clients.services.client_impact_preview_service import compute_creation_impact
-from app.clients.services.client_messages import (
+from app.clients.client_messages import (
     CLIENT_ID_NUMBER_DELETED,
     CLIENT_ID_NUMBER_EXISTS,
 )

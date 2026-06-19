@@ -22,7 +22,7 @@ from app.utils.time_utils import utcnow
 from . import annual_report_readiness_service
 from ..annual_report_constants import STAGE_TO_STATUS, VALID_TRANSITIONS
 from .annual_report_deadlines import extended_deadline, standard_deadline
-from .annual_report_messages import (
+from ..annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     CUSTOM_DEADLINE_LABEL,
     DEADLINE_UPDATED_NOTE,
@@ -35,7 +35,7 @@ from .annual_report_messages import (
     REPORT_NOT_READY_FOR_SUBMISSION,
     STATUS_CHANGE_CANCEL_SIGNATURE_REASON,
 )
-from .annual_report_status_signature_helper import AnnualReportSignatureHelper
+from ..annual_report_status_signature_helper import AnnualReportSignatureHelper
 
 
 def _deadline_note(deadline_type, filing_deadline, custom_deadline_note):

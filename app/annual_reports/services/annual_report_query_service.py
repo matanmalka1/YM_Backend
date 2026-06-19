@@ -38,7 +38,7 @@ class AnnualReportQueryService(AnnualReportBaseService):
     ) -> tuple[list[AnnualReportListItem], int]:
         from app.core.exceptions import NotFoundError
 
-        from .annual_report_messages import ANNUAL_REPORT_CLIENT_NOT_FOUND
+        from ..annual_report_messages import ANNUAL_REPORT_CLIENT_NOT_FOUND
 
         client_record = self.client_repo.get_by_id(client_record_id)
         if client_record is None:

@@ -15,7 +15,7 @@ from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
 from .annual_report_base import AnnualReportBaseService
-from .annual_report_messages import ANNEX_LINE_NOT_FOUND, ANNEX_VALIDATION_ERROR
+from ..annual_report_messages import ANNEX_LINE_NOT_FOUND, ANNEX_VALIDATION_ERROR
 
 
 class AnnualReportAnnexService(AnnualReportBaseService):

@@ -5,7 +5,7 @@ from app.clients.repositories.client_record_repository import ClientRecordReposi
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
-from app.vat.services.vat_messages import VAT_CLIENT_NOT_FOUND
+from app.vat.vat_messages import VAT_CLIENT_NOT_FOUND
 
 
 class VatClientContextService:

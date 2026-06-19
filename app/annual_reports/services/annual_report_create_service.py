@@ -19,7 +19,7 @@ from app.users.services.user_management_service import get_user_or_raise
 from .annual_report_base import AnnualReportBaseService
 from ..annual_report_constants import FORM_MAP
 from .annual_report_deadlines import extended_deadline, standard_deadline
-from .annual_report_messages import (
+from ..annual_report_messages import (
     ANNUAL_REPORT_ALREADY_EXISTS,
     ANNUAL_REPORT_CLIENT_NOT_FOUND,
     ANNUAL_REPORT_CREATED_NOTE,

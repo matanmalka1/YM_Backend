@@ -15,7 +15,7 @@ from app.annual_reports.integrations.tax_rules_registry import (
     get_income_tax_brackets_for_year,
     get_supported_tax_years,
 )
-from app.annual_reports.services.annual_report_messages import UNSUPPORTED_TAX_YEAR_ERROR
+from app.annual_reports.annual_report_messages import UNSUPPORTED_TAX_YEAR_ERROR
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.utils.time_utils import israel_today

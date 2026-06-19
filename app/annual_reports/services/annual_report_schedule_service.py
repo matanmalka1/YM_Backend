@@ -6,7 +6,7 @@ from app.core.exceptions import AppError, NotFoundError
 
 from .annual_report_base import AnnualReportBaseService
 from ..annual_report_constants import SCHEDULE_FLAGS
-from .annual_report_messages import INVALID_SCHEDULE_ERROR, SCHEDULE_NOT_FOUND
+from ..annual_report_messages import INVALID_SCHEDULE_ERROR, SCHEDULE_NOT_FOUND
 
 
 class AnnualReportScheduleService(AnnualReportBaseService):

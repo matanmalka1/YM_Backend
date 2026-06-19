@@ -9,7 +9,7 @@ from app.utils.time_utils import israel_today
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.services.vat_messages import VAT_CLIENT_EXEMPT, VAT_CLIENT_NOT_FOUND
+from app.vat.vat_messages import VAT_CLIENT_EXEMPT, VAT_CLIENT_NOT_FOUND
 from app.vat.services.vat_type_resolver import resolve_effective_vat_type
 
 

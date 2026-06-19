@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
-from app.annual_reports.services.annual_report_pdf_builder import build_pdf
+from app.annual_reports.annual_report_pdf_builder import build_pdf
 from app.annual_reports.services.annual_report_detail_service import AnnualReportDetailService
 from app.annual_reports.services.annual_report_financial_summary_service import (
     AnnualReportFinancialSummaryService,
 )
-from app.annual_reports.services.annual_report_messages import (
+from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     CLIENT_FALLBACK_NAME,
 )

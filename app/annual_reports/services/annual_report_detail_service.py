@@ -10,7 +10,7 @@ from app.annual_reports.repositories.annual_report_repository import (
 from app.annual_reports.repositories.annual_report_detail_repository import (
     AnnualReportDetailRepository,
 )
-from app.annual_reports.services.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
+from app.annual_reports.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from app.audit.audit_constants import (
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
     ENTITY_ANNUAL_REPORT,

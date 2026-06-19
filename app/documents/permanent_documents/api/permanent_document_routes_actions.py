@@ -9,7 +9,7 @@ from app.documents.permanent_documents.permanent_document_constants import DOCUM
 from app.documents.permanent_documents.services.permanent_document_action_service import (
     PermanentDocumentActionService,
 )
-from app.documents.permanent_documents.services.permanent_document_response_builder import (
+from app.documents.permanent_documents.permanent_document_response_builder import (
     PermanentDocumentResponseBuilder,
 )
 from app.users.api.user_deps import CurrentUser, DBSession, require_role

@@ -24,7 +24,7 @@ from app.documents.permanent_documents.schemas.permanent_document import (
 from app.documents.permanent_documents.services.permanent_document_service import (
     PermanentDocumentService,
 )
-from app.documents.permanent_documents.services.permanent_document_response_builder import (
+from app.documents.permanent_documents.permanent_document_response_builder import (
     PermanentDocumentResponseBuilder,
 )
 from app.users.api.user_deps import CurrentUser, DBSession, require_role

@@ -22,7 +22,7 @@ from app.signature_requests.services import (
     signature_request_create_request as create_request,
     signature_request_signer_actions as signer_actions,
 )
-from app.signature_requests.services.signature_request_messages import (
+from app.signature_requests.signature_request_messages import (
     ANNUAL_REPORT_SIGNED_NOTE,
     AUTO_ADVANCE_ANNUAL_REPORT_ERROR,
     AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,

@@ -7,7 +7,6 @@ BINDER_CAPACITY_REOPENED = "הקלסר נפתח לקליטת חומר"
 BINDER_RECEIVED = "קלסר התקבל"
 BINDER_CLIENT_LOCKED = "לא ניתן לקלוט קלסר ללקוח מוקפא או סגור"
 
-# T31 additions
 BINDER_OLD_PERIOD_NOTE_REQUIRED = (
     "חומר לתקופת דיווח ישנה מוכנס לקלסר נוכחי — יש להוסיף הערה המסבירה את הסיבה"
 )

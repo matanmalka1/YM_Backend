@@ -19,7 +19,7 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services.signature_request_messages import (
+from app.signature_requests.signature_request_messages import (
     BUSINESS_NOT_FOUND,
     INVALID_REQUEST_TYPE,
     SIGNATURE_REQUEST_CREATED_NOTE,

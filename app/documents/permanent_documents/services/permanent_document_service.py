@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.binders.repositories.binder_repository import BinderRepository
-from app.binders.services.binder_messages import BINDER_NOT_FOUND
+from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
     get_business_or_raise,
@@ -33,7 +33,7 @@ from app.documents.permanent_documents.permanent_document_constants import (
     ALLOWED_MIME_TYPES,
     MAX_FILE_SIZE_BYTES,
 )
-from app.documents.permanent_documents.services.permanent_document_messages import (
+from app.documents.permanent_documents.permanent_document_messages import (
     BUSINESS_NOT_FOUND_ERROR,
     CLIENT_SCOPE_VIOLATION_ERROR,
     DOCUMENT_NOT_FOUND_ERROR,

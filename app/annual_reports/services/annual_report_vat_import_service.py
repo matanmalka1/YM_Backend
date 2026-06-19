@@ -22,12 +22,12 @@ from app.annual_reports.repositories.annual_report_income_repository import (
 from app.annual_reports.repositories.annual_report_report_repository import (
     AnnualReportRootRepository,
 )
-from app.annual_reports.services.annual_report_financial_line_helpers import (
+from app.annual_reports.annual_report_financial_line_helpers import (
     assert_client_allows_financial_mutation,
     expense_line_snapshot,
     income_line_snapshot,
 )
-from app.annual_reports.services.annual_report_messages import (
+from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     AUTOPOPULATE_AUDIT_ACTOR_REQUIRED,
     AUTOPOPULATE_INVALID_STATUS,

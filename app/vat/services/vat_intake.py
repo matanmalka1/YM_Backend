@@ -19,7 +19,7 @@ from app.vat.vat_constants import (
     ACTION_STATUS_CHANGED,
     ACTION_WORK_ITEM_CREATED_PENDING,
 )
-from app.vat.services.vat_messages import (
+from app.vat.vat_messages import (
     VAT_CLIENT_CLOSED_CREATE_ITEM,
     VAT_CLIENT_EXEMPT,
     VAT_CLIENT_FROZEN_CREATE_ITEM,

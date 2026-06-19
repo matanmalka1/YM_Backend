@@ -33,7 +33,7 @@ from app.vat.services.vat_data_entry_common import (
     recalculate_totals,
     resolve_invoice_derived_fields,
 )
-from app.vat.services.vat_messages import (
+from app.vat.vat_messages import (
     VAT_ADD_INVOICE_INVALID_STATUS,
     VAT_AUTO_STATUS_CHANGE_ON_FIRST_INVOICE,
     VAT_BUSINESS_ACTIVITY_WRONG_CLIENT,

@@ -7,7 +7,7 @@ from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
 )
-from app.timeline.services.timeline_client_builders import (
+from app.timeline.timeline_client_builders import (
     client_created_event,
     document_uploaded_event,
     signature_request_lifecycle_event,

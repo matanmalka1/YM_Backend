@@ -9,7 +9,7 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services.signature_request_messages import (
+from app.signature_requests.signature_request_messages import (
     INVALID_SIGNING_TOKEN,
     REQUEST_NOT_ACTIONABLE_IN_STATUS,
     SIGNATURE_REQUEST_NOT_FOUND,

@@ -19,7 +19,7 @@ from app.vat.vat_constants import (
     OSEK_PATUR_CEILING_WARNING_RATE,
     VALID_TRANSITIONS,
 )
-from app.vat.services.vat_messages import (
+from app.vat.vat_messages import (
     VAT_EXPENSE_CATEGORY_REQUIRED,
     VAT_FILED_ITEM_IMMUTABLE,
     VAT_INVALID_TRANSITION,

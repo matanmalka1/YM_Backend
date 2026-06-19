@@ -12,7 +12,7 @@ from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportResponse,
 )
 from app.annual_reports.annual_report_constants import VALID_TRANSITIONS
-from app.annual_reports.services.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
+from app.annual_reports.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.legal_entities.models.legal_entity import LegalEntity

@@ -14,7 +14,7 @@ from app.annual_reports.models.annual_report_income_line import (
     IncomeSourceType,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.annual_report_financial_line_helpers import audit_scalar
+from app.annual_reports.annual_report_financial_line_helpers import audit_scalar
 from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
 from app.audit.audit_constants import (
     ACTION_EXPENSE_ADDED,

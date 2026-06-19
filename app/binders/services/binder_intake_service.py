@@ -11,7 +11,7 @@ from app.binders.repositories.binder_intake_material_repository import (
 from app.binders.repositories.binder_intake_repository import BinderIntakeRepository
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
-from app.binders.services.binder_messages import (
+from app.binders.binder_messages import (
     BINDER_CLIENT_LOCKED,
     BINDER_RECEIVED,
 )
@@ -62,7 +62,7 @@ class BinderIntakeService:
 
         Returns (binder, intake, is_new_binder).
         """
-        from app.binders.services.binder_messages import BINDER_OFFICE_NUMBER_MISSING
+        from app.binders.binder_messages import BINDER_OFFICE_NUMBER_MISSING
 
         client_record = self.client_repo.get_by_id(client_record_id)
         assert_client_record_is_active(client_record)
@@ -297,7 +297,7 @@ class BinderIntakeService:
 
         Raises AppError if the condition is violated.
         """
-        from app.binders.services.binder_messages import BINDER_OLD_PERIOD_NOTE_REQUIRED
+        from app.binders.binder_messages import BINDER_OLD_PERIOD_NOTE_REQUIRED
 
         if not materials or binder.period_start is None:
             return

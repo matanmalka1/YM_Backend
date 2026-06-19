@@ -20,13 +20,13 @@ from app.annual_reports.schemas.annual_report_financials import (
     ExpenseLineResponse,
     IncomeLineResponse,
 )
-from app.annual_reports.services.annual_report_financial_line_helpers import (
+from app.annual_reports.annual_report_financial_line_helpers import (
     assert_client_allows_financial_mutation,
     audit_scalar,
     expense_line_snapshot,
     income_line_snapshot,
 )
-from app.annual_reports.services.annual_report_messages import (
+from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     EXPENSE_LINE_NOT_FOUND,
     INCOME_LINE_NOT_FOUND,

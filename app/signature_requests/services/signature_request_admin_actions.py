@@ -9,7 +9,7 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services.signature_request_messages import (
+from app.signature_requests.signature_request_messages import (
     CANCELED_BY_ADVISOR_NOTE,
     SIGNATURE_REQUEST_EXPIRED_NOTE,
     SIGNATURE_REQUEST_NOT_FOUND,

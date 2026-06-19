@@ -18,7 +18,7 @@ from app.charges.schemas.charge import (
 from app.charges.services.charge_billing_service import BillingService
 from app.charges.services.charge_bulk_billing_service import BulkBillingService
 from app.charges.services.charge_query_service import ChargeQueryService
-from app.charges.services.charge_response_builder import ChargeResponseBuilder
+from app.charges.charge_response_builder import ChargeResponseBuilder
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId

@@ -11,7 +11,7 @@ from app.binders.repositories.binder_intake_material_repository import (
 )
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
 from app.binders.repositories.binder_repository import BinderRepository
-from app.binders.services.binder_messages import (
+from app.binders.binder_messages import (
     BINDER_CAPACITY_REOPENED,
     BINDER_HANDED_OVER,
     BINDER_HANDOVER_REVERTED,

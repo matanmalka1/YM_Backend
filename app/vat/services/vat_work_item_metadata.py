@@ -12,7 +12,7 @@ from app.vat.vat_constants import (
     ACTION_METADATA_UPDATED,
     ACTION_WORK_ITEM_DELETED,
 )
-from app.vat.services.vat_messages import (
+from app.vat.vat_messages import (
     VAT_FILED_ITEM_IMMUTABLE,
     VAT_ITEM_NOT_FOUND,
 )

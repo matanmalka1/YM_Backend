@@ -21,7 +21,7 @@ from app.vat.services.vat_data_entry_common import (
     audit_invoice_snapshot,
     recalculate_totals,
 )
-from app.vat.services.vat_messages import (
+from app.vat.vat_messages import (
     VAT_BUSINESS_ACTIVITY_NOT_FOUND,
     VAT_INVOICE_NOT_FOUND_IN_WORK_ITEM,
     VAT_INVOICE_NUMBER_CONFLICT,

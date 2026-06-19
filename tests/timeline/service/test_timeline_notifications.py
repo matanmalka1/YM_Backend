@@ -8,7 +8,7 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
-from app.timeline.services.timeline_notification_event_builders import (
+from app.timeline.timeline_notification_event_builders import (
     notification_failed_event,
     notification_sent_event,
 )

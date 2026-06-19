@@ -2,7 +2,7 @@ from datetime import datetime
 from types import SimpleNamespace
 
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.timeline.services.timeline_charge_event_builders import charge_issued_event
+from app.timeline.timeline_charge_event_builders import charge_issued_event
 
 
 def test_charge_issued_event_is_information_only():

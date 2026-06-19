@@ -15,7 +15,7 @@ from app.signature_requests.schemas.signature_request import (
     SignatureRequestListResponse,
     SignatureRequestWithAuditResponse,
 )
-from app.signature_requests.services.signature_request_response_builder import (
+from app.signature_requests.signature_request_response_builder import (
     SignatureRequestResponseBuilder,
 )
 from app.signature_requests.services.signature_request_service import (

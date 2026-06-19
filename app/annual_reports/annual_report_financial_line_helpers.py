@@ -5,7 +5,7 @@ from enum import Enum
 
 from sqlalchemy.orm import Session
 
-from app.annual_reports.services.annual_report_messages import (
+from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_CLIENT_NOT_FOUND,
     CLIENT_CLOSED_FINANCIAL_MUTATION_ERROR,
     CLIENT_FROZEN_FINANCIAL_MUTATION_ERROR,

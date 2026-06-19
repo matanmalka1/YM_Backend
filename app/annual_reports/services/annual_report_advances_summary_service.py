@@ -13,7 +13,7 @@ from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
 from app.annual_reports.schemas.annual_report_financials import AdvancesSummary
-from app.annual_reports.services.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
+from app.annual_reports.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from app.annual_reports.services.annual_report_tax_service import (
     AnnualReportTaxService,
 )

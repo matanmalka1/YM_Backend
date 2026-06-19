@@ -15,7 +15,7 @@ from app.vat.schemas.vat_client_summary_schema import (
     VatClientSummaryResponse,
     VatPeriodRow,
 )
-from app.vat.services.vat_messages import VAT_CLIENT_NOT_FOUND
+from app.vat.vat_messages import VAT_CLIENT_NOT_FOUND
 from app.vat.services.vat_report_queries import get_vat_deadline_fields
 
 

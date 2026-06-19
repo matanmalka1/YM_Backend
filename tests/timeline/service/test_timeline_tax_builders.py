@@ -5,7 +5,7 @@ from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     PrimaryAnnualReportForm,
 )
-from app.timeline.services.timeline_tax_builders import (
+from app.timeline.timeline_tax_builders import (
     annual_report_status_changed_event,
 )
 

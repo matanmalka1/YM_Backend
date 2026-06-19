@@ -7,7 +7,7 @@ from app.clients.repositories.client_record_read_repository import (
     get_full_record_including_deleted,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.services.client_messages import (
+from app.clients.client_messages import (
     CLIENT_ID_NUMBER_ACTIVE_EXISTS,
     CLIENT_NOT_DELETED,
     CLIENT_NOT_FOUND,
