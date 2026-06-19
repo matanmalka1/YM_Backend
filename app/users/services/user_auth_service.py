@@ -137,22 +137,39 @@ class AuthService:
 
     def refresh_access_token(self, refresh_token: str | None) -> str:
         if not refresh_token:
+            logger.warning("Refresh rejected [reason=no_cookie]: missing refresh cookie")
             raise InvalidRefreshTokenError()
 
         payload = decode_refresh_token(refresh_token)
         if not payload:
+            logger.warning(
+                "Refresh rejected [reason=decode_failed]: invalid or expired refresh token"
+            )
             raise InvalidRefreshTokenError()
 
         try:
             user_id = int(payload["sub"])
             token_version = int(payload["tv"])
         except (ValueError, KeyError) as exc:
+            logger.warning("Refresh rejected [reason=bad_claims]: malformed token claims")
             raise InvalidRefreshTokenError() from exc
 
         user = self.user_repo.get_by_id(user_id)
-        if not user or not user.is_active or user.token_version != token_version:
+        if user is None:
+            logger.warning(f"Refresh rejected [reason=user_missing] user_id={user_id}")
+            raise InvalidRefreshTokenError()
+        if not user.is_active:
+            logger.warning(f"Refresh rejected [reason=inactive] user_id={user_id}")
+            raise InvalidRefreshTokenError()
+        if user.token_version != token_version:
+            logger.warning(
+                f"Refresh rejected [reason=token_version_mismatch] user_id={user_id} "
+                f"token_tv={token_version} user_tv={user.token_version} — session invalidated "
+                "elsewhere (logout/password-reset/admin-reset/deactivate)"
+            )
             raise InvalidRefreshTokenError()
 
+        logger.info(f"Refresh succeeded user_id={user_id}")
         return generate_access_token(user)
 
     def logout_by_refresh_token(self, refresh_token: str | None) -> None:
