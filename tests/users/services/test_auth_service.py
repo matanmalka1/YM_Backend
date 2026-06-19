@@ -1,4 +1,4 @@
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 
 
 def test_verify_password_accepts_correct_secret():

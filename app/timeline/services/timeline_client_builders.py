@@ -1,4 +1,4 @@
-from app.timeline.labels import (
+from app.timeline.timeline_labels import (
     DOCUMENT_TYPE_HE,
     SIGNATURE_REQUEST_TYPE_HE,
 )

@@ -3,7 +3,7 @@ from __future__ import annotations
 from sqlalchemy import asc, case, desc, func, select
 from sqlalchemy.orm import Session
 
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
 from app.common.repositories.base_repository import BaseRepository

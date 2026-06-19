@@ -39,10 +39,10 @@ from app.annual_reports.models.annual_report_status_history import (
     AnnualReportStatusHistory,
 )
 from app.annual_reports.domain.expense_rules import default_recognition_rate
-from app.annual_reports.services.constants import VALID_TRANSITIONS
-from app.annual_reports.services.deadlines import extended_deadline, standard_deadline
+from app.annual_reports.annual_report_constants import VALID_TRANSITIONS
+from app.annual_reports.services.annual_report_deadlines import extended_deadline, standard_deadline
 from app.common.enums import EntityType
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import UserRole

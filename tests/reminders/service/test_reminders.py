@@ -5,7 +5,7 @@ import pytest
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.core.exceptions import AppError, NotFoundError
 from app.reminders.models.reminder import ReminderActionType, ReminderStatus
-from app.reminders.schemas.reminders import ReminderCreateRequest
+from app.reminders.schemas.reminder import ReminderCreateRequest
 from app.reminders.services.reminder_service import ReminderService
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow

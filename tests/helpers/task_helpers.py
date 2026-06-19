@@ -7,7 +7,7 @@ from itertools import count
 
 from app.businesses.models.business import Business, BusinessStatus
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType, VatType
 from app.legal_entities.models.legal_entity import LegalEntity

@@ -4,9 +4,9 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 
-from app.audit.constants import ACTION_STATUS_CHANGED, ACTION_UPDATED, ENTITY_CLIENT
-from app.audit.models.entity_audit_log import EntityAuditLog
-from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.audit.audit_constants import ACTION_STATUS_CHANGED, ACTION_UPDATED, ENTITY_CLIENT
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
 from app.common.enums import EntityType
 
 

@@ -6,7 +6,7 @@ from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
 from app.notifications.models.notification import NotificationTrigger
-from app.notifications.services.messages import FALLBACK_CLIENT_NAME, TEMPLATES
+from app.notifications.services.notification_messages import FALLBACK_CLIENT_NAME, TEMPLATES
 
 logger = get_logger(__name__)
 

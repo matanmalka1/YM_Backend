@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
 
-from app.clients.constants import (
+from app.clients.client_constants import (
     CLIENT_EXCEL_FREEZE_PANES,
     CLIENT_EXCEL_SHEET_TITLE,
     CLIENT_EXPORT_COLUMNS,
@@ -17,12 +17,12 @@ from app.clients.constants import (
     CLIENT_TEMPLATE_SAMPLE_ROW,
     MAX_CLIENT_IMPORT_UPLOAD_SIZE,
 )
-from app.clients.create_policy import derive_id_number_type
+from app.clients.client_create_policy import derive_id_number_type
 from app.common.enums import AdvancePaymentFrequency, EntityType, VatType
 from app.utils.excel import adjust_column_widths, save_workbook_to_temp
 
 if TYPE_CHECKING:
-    from app.clients.services.create_client_service import CreateClientService
+    from app.clients.services.client_create_service import CreateClientService
 
 
 class ClientExcelImportError(ValueError):

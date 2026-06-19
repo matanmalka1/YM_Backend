@@ -1,4 +1,4 @@
-from app.timeline.labels import CHARGE_TYPE_HE
+from app.timeline.timeline_labels import CHARGE_TYPE_HE
 
 
 def charge_created_event(charge) -> dict:

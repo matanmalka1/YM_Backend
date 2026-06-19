@@ -4,7 +4,7 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
+from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 from app.signature_requests.models.signature_request import (
     SignatureRequest,

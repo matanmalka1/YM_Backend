@@ -7,11 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus as _ARS
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
 from app.notifications.models.notification import NotificationStatus, NotificationTrigger
-from app.notifications.services.constants import (
+from app.notifications.notification_constants import (
     ANNUAL_REMINDER_COOLDOWN_DAYS,
     PAYMENT_REMINDER_WARNING_DAYS,
     VAT_REMINDER_WINDOW_DAYS,

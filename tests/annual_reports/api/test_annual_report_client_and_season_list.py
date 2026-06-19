@@ -59,7 +59,7 @@ def test_active_season_endpoints_use_backend_tax_year(
     client, test_db, advisor_headers, test_user, monkeypatch
 ):
     monkeypatch.setattr(
-        "app.annual_reports.api.annual_report_season.get_active_annual_report_tax_year",
+        "app.annual_reports.api.annual_report_routes_season.get_active_annual_report_tax_year",
         lambda: 2025,
     )
     service = AnnualReportService(test_db)

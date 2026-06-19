@@ -1,13 +1,13 @@
 from sqlalchemy import select
 
-from app.tax_calendar.models.deadline_rule import DeadlineRule
+from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.tax_calendar.services.bootstrap import (
+from app.tax_calendar.services.tax_calendar_bootstrap import (
     DEFAULT_DEADLINE_RULES,
     bootstrap_tax_calendar,
     seed_default_deadline_rules,
 )
-from app.tax_calendar.services.settings_calendar_service import (
+from app.tax_calendar.services.tax_calendar_settings_calendar_service import (
     get_summary,
     list_entries,
     list_rules,
@@ -74,7 +74,7 @@ def test_get_summary_2026_no_fallback_warning(test_db):
 
 def test_get_summary_reports_registry_fallback_warning(test_db, monkeypatch):
     monkeypatch.setattr(
-        "app.tax_calendar.services.settings_calendar_service.missing_registry_years",
+        "app.tax_calendar.services.tax_calendar_settings_calendar_service.missing_registry_years",
         lambda start_year, end_year: [2027],
     )
     bootstrap_tax_calendar(test_db, start_year=2027, end_year=2027)

@@ -9,7 +9,7 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
     advance_payment_start_month_expr,
     advance_payment_year_range_filter,
 )
-from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
+from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 
 

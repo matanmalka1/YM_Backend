@@ -4,8 +4,8 @@ from typing import Literal
 from pydantic import BaseModel
 
 from app.businesses.schemas.business_schemas import BusinessResponse
-from app.clients.enums import ClientStatus
-from app.clients.schemas.impact import ClientCreationImpactResponse
+from app.clients.client_enums import ClientStatus
+from app.clients.schemas.client_impact import ClientCreationImpactResponse
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 

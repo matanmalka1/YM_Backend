@@ -1,6 +1,6 @@
 from app.common.enums import VatType
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository

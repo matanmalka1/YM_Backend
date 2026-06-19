@@ -16,7 +16,7 @@ from app.annual_reports.models.annual_report_enums import (
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.businesses.services.status_card_service import StatusCardService
+from app.businesses.services.business_status_card_service import StatusCardService
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import NotFoundError

@@ -1,11 +1,11 @@
 from types import SimpleNamespace
 
-from app.audit.constants import (
+from app.audit.audit_constants import (
     ACTION_INCOME_ADDED,
     ACTION_INCOME_DELETED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.dashboard.services.recent_activity_service import RecentActivityService
+from app.dashboard.services.dashboard_recent_activity_service import RecentActivityService
 
 
 def _label_for(action: str, note: str | None) -> str:

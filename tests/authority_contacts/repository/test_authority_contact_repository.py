@@ -3,7 +3,7 @@ from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from tests.helpers.identity import seed_client_identity
 
 

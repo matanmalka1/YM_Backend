@@ -5,8 +5,8 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import select
 
-from app.audit.constants import ACTION_RESTORED, ENTITY_BUSINESS
-from app.audit.models.entity_audit_log import EntityAuditLog
+from app.audit.audit_constants import ACTION_RESTORED, ENTITY_BUSINESS
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.services.business_service import BusinessService
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError

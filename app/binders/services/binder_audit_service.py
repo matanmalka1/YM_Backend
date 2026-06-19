@@ -13,7 +13,7 @@ from app.binders.schemas.binder import (
     BinderIntakeMaterialResponse,
     BinderIntakeResponse,
 )
-from app.binders.services.messages import BINDER_NOT_FOUND
+from app.binders.services.binder_messages import BINDER_NOT_FOUND
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.users.repositories.user_repository import UserRepository

@@ -13,11 +13,11 @@ from app.advance_payments.repositories.advance_payment_repository import (
 )
 from app.businesses.models.business import Business
 from app.common.enums import VatType
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_client_summary_repository import (

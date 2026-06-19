@@ -4,7 +4,7 @@ from datetime import UTC, datetime
 
 from app.common.enums import VatType
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_grouped_repository import (
     list_by_due_date_paginated,

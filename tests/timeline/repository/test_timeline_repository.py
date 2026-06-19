@@ -4,7 +4,7 @@ from itertools import count
 from app.binders.models.binder import Binder
 from app.binders.repositories.binder_repository import BinderRepository
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from tests.helpers.identity import SeededClient, seed_client_identity
 
 _client_seq = count(1)

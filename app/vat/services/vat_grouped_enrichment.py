@@ -5,7 +5,7 @@ from datetime import date
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType
 from app.users.models.user import UserRole
-from app.vat.api.serializers import serialize_enriched_work_item_list
+from app.vat.api.vat_serializers import serialize_enriched_work_item_list
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories import (
     vat_work_item_grouped_repository as grouped_repo,

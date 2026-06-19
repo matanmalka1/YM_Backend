@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import event
 
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocument,

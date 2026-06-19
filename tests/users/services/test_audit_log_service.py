@@ -2,8 +2,8 @@ from datetime import UTC, datetime, timedelta
 
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
-from app.users.services.audit_log_service import AuditLogService
-from app.users.services.auth_service import AuthService
+from app.users.services.user_audit_log_service import AuditLogService
+from app.users.services.user_auth_service import AuthService
 
 
 def _user(test_db, *, email: str) -> User:

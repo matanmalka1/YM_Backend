@@ -6,7 +6,7 @@ from itertools import count
 
 from app.businesses.models.business import Business
 from app.common.enums import AdvancePaymentFrequency, VatType
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus

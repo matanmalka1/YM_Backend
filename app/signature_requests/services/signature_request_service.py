@@ -18,11 +18,11 @@ from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
 from app.signature_requests.services import (
-    admin_actions,
-    create_request,
-    signer_actions,
+    signature_request_admin_actions as admin_actions,
+    signature_request_create_request as create_request,
+    signature_request_signer_actions as signer_actions,
 )
-from app.signature_requests.services.messages import (
+from app.signature_requests.services.signature_request_messages import (
     ANNUAL_REPORT_SIGNED_NOTE,
     AUTO_ADVANCE_ANNUAL_REPORT_ERROR,
     AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,
@@ -87,7 +87,7 @@ class SignatureRequestService:
     def _auto_advance_annual_report(self, annual_report_id: int, now) -> None:
         try:
             from app.annual_reports.models.annual_report_enums import AnnualReportStatus
-            from app.annual_reports.repositories.detail_repository import (
+            from app.annual_reports.repositories.annual_report_detail_repository import (
                 AnnualReportDetailRepository,
             )
             from app.annual_reports.services.annual_report_service import (

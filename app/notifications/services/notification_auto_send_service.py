@@ -18,7 +18,7 @@ from app.notifications.models.notification import (
 )
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import NotificationResult
-from app.notifications.services.constants import NOTIFICATION_IDEMPOTENCY_TTL_HOURS
+from app.notifications.notification_constants import NOTIFICATION_IDEMPOTENCY_TTL_HOURS
 from app.notifications.services.notification_context_resolver import (
     NotificationContextResolver,
 )

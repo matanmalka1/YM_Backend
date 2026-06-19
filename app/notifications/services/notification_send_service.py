@@ -24,7 +24,7 @@ from app.notifications.schemas.notification_schemas import (
     NotificationResult,
     NotificationSendRequest,
 )
-from app.notifications.services.constants import (
+from app.notifications.notification_constants import (
     BODY_MAX_LENGTH,
     NOTIFICATION_IDEMPOTENCY_TTL_HOURS,
     SUBJECT_MAX_LENGTH,

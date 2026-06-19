@@ -5,7 +5,7 @@ import uuid
 from app.tasks.schemas.task import TaskCreateRequest
 from app.tasks.services.task_service import TaskService
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 
 
 def _task(db, **kwargs):

@@ -5,7 +5,7 @@ from itertools import count
 import pytest
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import AdvancePaymentFrequency
 from app.core.exceptions import ForbiddenError, NotFoundError

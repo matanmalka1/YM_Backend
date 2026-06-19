@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 import jwt
 
 from app.config import settings
-from app.users.services.token_service import decode_access_token, generate_access_token
+from app.users.services.user_token_service import decode_access_token, generate_access_token
 
 
 def test_jwt_has_expiration(test_user):

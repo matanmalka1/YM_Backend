@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.dashboard.services.dashboard_attention_service import DashboardAttentionService
-from app.dashboard.services.recent_activity_service import RecentActivityService
-from app.dashboard.services.tax_status_stats_service import TaxStatusStatsService
+from app.dashboard.services.dashboard_recent_activity_service import RecentActivityService
+from app.dashboard.services.dashboard_tax_status_stats_service import TaxStatusStatsService
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
 

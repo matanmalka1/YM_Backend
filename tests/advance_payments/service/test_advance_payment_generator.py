@@ -10,7 +10,7 @@ from app.advance_payments.repositories.advance_payment_repository import (
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.businesses.models.business import Business
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.common.enums import AdvancePaymentFrequency, VatType
 from app.core.exceptions import ForbiddenError, NotFoundError
 from tests.helpers.identity import seed_client_identity

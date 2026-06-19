@@ -6,7 +6,7 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.advance_payments.repositories.turnover_lookup_repository import (
+from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
@@ -14,7 +14,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
 )
 from app.businesses.models.business import Business
 from app.common.enums import VatType
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus

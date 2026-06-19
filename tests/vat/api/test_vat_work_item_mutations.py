@@ -2,7 +2,7 @@ from sqlalchemy import select
 
 from app.vat.models.vat_audit_log import VatAuditLog
 from app.vat.models.vat_work_item import VatWorkItem
-from app.vat.services.constants import (
+from app.vat.vat_constants import (
     ACTION_METADATA_UPDATED,
     ACTION_WORK_ITEM_DELETED,
 )

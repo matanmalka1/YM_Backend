@@ -1,5 +1,5 @@
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.services.create_client_service import create_client_identity_only
+from app.clients.services.client_create_service import create_client_identity_only
 from app.common.enums import EntityType, IdNumberType
 
 

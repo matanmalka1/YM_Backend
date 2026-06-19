@@ -7,7 +7,7 @@ from app.core.pagination import MAX_PAGE_SIZE
 from app.tasks.models.task import Task, TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.schemas.work_queue import WorkQueueSourceType
-from app.work_queue.services.common import source_route
+from app.work_queue.services.work_queue_common import source_route
 from app.work_queue.services.work_queue_service import WorkQueueService
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.task_helpers import create_business

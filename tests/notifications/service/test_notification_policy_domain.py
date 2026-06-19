@@ -19,7 +19,7 @@ from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
 )
-from app.tax_calendar.models.deadline_rule import DeadlineRule
+from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus

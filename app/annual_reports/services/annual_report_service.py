@@ -3,12 +3,12 @@ from sqlalchemy.orm import Session
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.annual_reports.repositories.annex_data_repository import AnnexDataRepository
+from app.annual_reports.repositories.annual_report_annex_data_repository import AnnexDataRepository
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
-from app.audit.constants import ENTITY_ANNUAL_REPORT
-from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
+from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
@@ -18,13 +18,13 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 
-from .annex_service import AnnualReportAnnexService
-from .create_service import AnnualReportCreateService
-from .messages import ANNUAL_REPORT_DELETED_REASON, ANNUAL_REPORT_NOT_FOUND
-from .query_service import AnnualReportQueryService
-from .schedule_service import AnnualReportScheduleService
-from .season_service import AnnualReportSeasonService
-from .status_service import AnnualReportStatusService
+from .annual_report_annex_service import AnnualReportAnnexService
+from .annual_report_create_service import AnnualReportCreateService
+from .annual_report_messages import ANNUAL_REPORT_DELETED_REASON, ANNUAL_REPORT_NOT_FOUND
+from .annual_report_query_service import AnnualReportQueryService
+from .annual_report_schedule_service import AnnualReportScheduleService
+from .annual_report_season_service import AnnualReportSeasonService
+from .annual_report_status_service import AnnualReportStatusService
 
 
 class AnnualReportService(

@@ -21,18 +21,18 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueUrgency,
     WorkQueueWarning,
 )
-from app.work_queue.services.actions import source_actions, task_actions
-from app.work_queue.services.billing_items import advance_payment_items, charge_items
-from app.work_queue.services.binder_items import binder_items
-from app.work_queue.services.common import (
+from app.work_queue.services.work_queue_actions import source_actions, task_actions
+from app.work_queue.services.work_queue_billing_items import advance_payment_items, charge_items
+from app.work_queue.services.work_queue_binder_items import binder_items
+from app.work_queue.services.work_queue_common import (
     WorkQueueContext,
     normalize_source_domain,
     source_key,
     urgency,
 )
-from app.work_queue.services.source_lookup import load_source_states
-from app.work_queue.services.task_items import task_item, task_summary
-from app.work_queue.services.tax_items import annual_report_items, vat_work_item_items
+from app.work_queue.services.work_queue_source_lookup import load_source_states
+from app.work_queue.services.work_queue_task_items import task_item, task_summary
+from app.work_queue.services.work_queue_tax_items import annual_report_items, vat_work_item_items
 
 _FAR_FUTURE = date(9999, 12, 31)
 _URGENCY_SORT = {

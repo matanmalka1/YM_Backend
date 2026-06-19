@@ -9,7 +9,7 @@ from app.advance_payments.repositories.advance_payment_repository import (
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.binders.repositories.binder_repository import BinderRepository
-from app.binders.services.client_onboarding_service import create_initial_binder
+from app.binders.services.binder_client_onboarding_service import create_initial_binder
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import ObligationType
 from app.common.obligation_plan import (
@@ -19,14 +19,14 @@ from app.common.obligation_plan import (
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.utils.time_utils import israel_today
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.services.intake import create_work_item
+from app.vat.services.vat_intake import create_work_item
 
 
 @dataclass(slots=True)

@@ -7,9 +7,9 @@ from sqlalchemy import select
 
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
-from app.clients.services.create_client_service import CreateClientService
+from app.clients.services.client_create_service import CreateClientService
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
-from app.notes.models.entity_note import EntityNote
+from app.notes.models.note_entity_note import EntityNote
 
 from ..data.business_names import seed_business_name
 from ..data.demo_catalog import (

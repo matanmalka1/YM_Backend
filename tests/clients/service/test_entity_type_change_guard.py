@@ -5,12 +5,12 @@ from itertools import count
 import pytest
 from sqlalchemy import select
 
-from app.audit.constants import (
+from app.audit.audit_constants import (
     ACTION_ENTITY_TYPE_CHANGED,
     ACTION_UPDATED,
     ENTITY_CLIENT,
 )
-from app.audit.models.entity_audit_log import EntityAuditLog
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
 from app.clients.services.client_update_service import ClientUpdateService
@@ -18,7 +18,7 @@ from app.common.enums import EntityType, IdNumberType, VatType
 from app.core.exceptions import ForbiddenError
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)

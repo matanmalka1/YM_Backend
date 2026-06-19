@@ -1,5 +1,5 @@
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 
 
 def _make_user(test_db, email: str, role: UserRole = UserRole.SECRETARY) -> User:

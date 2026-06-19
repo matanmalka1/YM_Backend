@@ -6,9 +6,9 @@ from types import SimpleNamespace
 from sqlalchemy import event
 
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.reports.services.advance_payment_report import AdvancePaymentReportService
-from app.reports.services.export_service import ExportService
-from app.reports.services.reports_service import AgingReportService
+from app.reports.services.report_advance_payment_report import AdvancePaymentReportService
+from app.reports.services.report_export_service import ExportService
+from app.reports.services.report_service import AgingReportService
 from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 

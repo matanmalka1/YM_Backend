@@ -4,8 +4,8 @@ import jwt
 
 from app.config import settings
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
-from app.users.services.token_service import generate_access_token
+from app.users.services.user_auth_service import AuthService
+from app.users.services.user_token_service import generate_access_token
 
 
 def test_users_endpoint_requires_token(client):

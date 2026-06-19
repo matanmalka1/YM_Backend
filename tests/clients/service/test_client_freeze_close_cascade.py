@@ -18,7 +18,7 @@ from app.annual_reports.models.annual_report_enums import (
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_update_service import ClientUpdateService
 from app.common.enums import EntityType, IdNumberType, VatType

@@ -6,13 +6,13 @@ from typing import Any
 
 from sqlalchemy import func, select
 
-from app.audit.constants import (
+from app.audit.audit_constants import (
     ACTION_CREATED,
     ACTION_UPDATED,
     ENTITY_BUSINESS,
     ENTITY_CLIENT,
 )
-from app.audit.models.entity_audit_log import EntityAuditLog
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus, UserAuditLog

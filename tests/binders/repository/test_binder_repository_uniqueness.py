@@ -6,7 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from app.binders.models.binder import BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from tests.helpers.identity import seed_client_identity
 
 

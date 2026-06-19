@@ -2,8 +2,8 @@ from decimal import Decimal
 
 from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
-from app.annual_reports.repositories.expense_repository import AnnualReportExpenseRepository
-from app.annual_reports.repositories.income_repository import AnnualReportIncomeRepository
+from app.annual_reports.repositories.annual_report_expense_repository import AnnualReportExpenseRepository
+from app.annual_reports.repositories.annual_report_income_repository import AnnualReportIncomeRepository
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from tests.helpers.identity import seed_client_identity
 

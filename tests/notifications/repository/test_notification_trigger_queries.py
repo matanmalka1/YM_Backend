@@ -8,7 +8,7 @@ from app.notifications.models.notification import (
 )
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from tests.helpers.identity import seed_client_identity
 

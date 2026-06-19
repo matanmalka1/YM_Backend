@@ -1,5 +1,5 @@
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from tests.vat.api.test_vat_reports_utils import create_work_item
 
 

@@ -3,9 +3,9 @@
 from datetime import date
 
 from app.common.enums import DeadlineRuleType, ObligationType, VatType
-from app.vat.api.serializers import serialize_enriched_work_item
+from app.vat.api.vat_serializers import serialize_enriched_work_item
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from app.vat.services.intake import create_work_item
+from app.vat.services.vat_intake import create_work_item
 from tests.tax_calendar.service.linking_helpers import make_entry, vat_client
 
 

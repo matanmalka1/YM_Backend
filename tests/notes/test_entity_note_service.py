@@ -1,7 +1,7 @@
 import pytest
 
 from app.core.exceptions import NotFoundError
-from app.notes.services.entity_note_service import EntityNoteService
+from app.notes.services.note_entity_note_service import EntityNoteService
 from tests.helpers.identity import seed_client_identity
 
 

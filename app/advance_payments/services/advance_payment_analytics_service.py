@@ -16,7 +16,7 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
 from app.advance_payments.repositories.advance_payment_batch_repository import (
     AdvancePaymentBatchRepository,
 )
-from app.advance_payments.repositories.turnover_lookup_repository import (
+from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
 )
 from app.advance_payments.schemas.advance_payment import MonthBatchSummary

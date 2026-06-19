@@ -126,7 +126,7 @@ class NotificationContextResolver:
 
     def resolve_client_name(self, client_record_id: int) -> str:
         """Return display name: Person.full_name → LegalEntity.official_name → fallback."""
-        from app.notifications.services.messages import FALLBACK_CLIENT_NAME
+        from app.notifications.services.notification_messages import FALLBACK_CLIENT_NAME
 
         person = self.resolve_person(client_record_id)
         if person and person.full_name:

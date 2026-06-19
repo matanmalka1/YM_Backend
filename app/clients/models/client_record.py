@@ -5,7 +5,7 @@ from datetime import datetime
 from sqlalchemy import ForeignKey, Index, Sequence, Text, column, event, func, select, text
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.common.soft_delete import SoftDeletableMixin
 from app.database import Base
 from app.utils.enum_utils import pg_enum

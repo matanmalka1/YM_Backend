@@ -11,8 +11,8 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.services.actions import source_actions
-from app.work_queue.services.common import normalize_source_domain, source_route
+from app.work_queue.services.work_queue_actions import source_actions
+from app.work_queue.services.work_queue_common import normalize_source_domain, source_route
 from app.work_queue.services.work_queue_service import WorkQueueService
 from tests.helpers.task_helpers import create_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment

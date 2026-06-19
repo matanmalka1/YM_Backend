@@ -8,7 +8,7 @@ from app.clients.services.client_lifecycle_service import ClientLifecycleService
 from app.clients.services.client_query_service import ClientQueryService
 from app.clients.services.client_service import get_client_or_raise
 from app.clients.services.client_update_service import ClientUpdateService
-from app.clients.services.create_client_service import (
+from app.clients.services.client_create_service import (
     CreateClientService,
     create_client_identity_only,
 )

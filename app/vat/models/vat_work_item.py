@@ -175,4 +175,4 @@ class VatWorkItem(Base):
         )
 
 
-import_module("app.vat.models.due_date_snapshot_events")
+import_module("app.vat.models.vat_due_date_snapshot_events")

@@ -2,7 +2,7 @@ from datetime import date
 from types import SimpleNamespace
 
 from app.common.enums import VatType
-from app.dashboard.services.tax_status_stats_service import TaxStatusStatsService
+from app.dashboard.services.dashboard_tax_status_stats_service import TaxStatusStatsService
 
 
 def _service(test_db, required: int, submitted: int) -> TaxStatusStatsService:

@@ -8,8 +8,8 @@ from app.database import SessionLocal
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services.admin_actions import expire_overdue_requests
-from app.tax_calendar.services.bootstrap import bootstrap_tax_calendar
+from app.signature_requests.services.signature_request_admin_actions import expire_overdue_requests
+from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
 
 logger = get_logger(__name__)
 

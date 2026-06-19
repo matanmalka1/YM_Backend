@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.timeline.labels import BINDER_LIFECYCLE_HE
+from app.timeline.timeline_labels import BINDER_LIFECYCLE_HE
 
 
 def binder_received_event(binder) -> dict:

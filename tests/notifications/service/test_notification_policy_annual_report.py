@@ -14,7 +14,7 @@ from app.notifications.services.notification_policy_service import (
 
 
 def _make_client(client_record_id: int = 10):
-    from app.clients.enums import ClientStatus
+    from app.clients.client_enums import ClientStatus
 
     return SimpleNamespace(id=client_record_id, status=ClientStatus.ACTIVE)
 

@@ -2,7 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
-from app.annual_reports.repositories.schedule_repository import (
+from app.annual_reports.repositories.annual_report_schedule_repository import (
     AnnualReportScheduleRepository,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService

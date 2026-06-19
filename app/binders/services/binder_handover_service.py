@@ -7,7 +7,7 @@ from app.binders.models.binder_handover import BinderHandover
 from app.binders.repositories.binder_handover_repository import BinderHandoverRepository
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
-from app.binders.services.messages import BINDER_HANDOVER_INVALID_BINDERS
+from app.binders.services.binder_messages import BINDER_HANDOVER_INVALID_BINDERS
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 

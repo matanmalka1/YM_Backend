@@ -11,7 +11,7 @@ from app.binders.models.binder import Binder
 from app.clients.models.client_record import ClientRecord
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import EntityType
-from app.tax_calendar.services.link_diagnostics import (
+from app.tax_calendar.services.tax_calendar_link_diagnostics import (
     find_active_null_tax_calendar_links,
 )
 from app.vat.models.vat_work_item import VatWorkItem

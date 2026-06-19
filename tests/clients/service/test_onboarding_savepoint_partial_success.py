@@ -14,7 +14,7 @@ from sqlalchemy import select
 
 from app.actions.services.obligation_orchestrator import generate_client_obligations_result
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.services.create_service import AnnualReportCreateService
+from app.annual_reports.services.annual_report_create_service import AnnualReportCreateService
 from app.common.enums import EntityType, IdNumberType
 from tests.helpers.identity import seed_client_identity
 

@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import BusinessStatus
 from app.common.enums import ObligationType, VatType
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import UserRole

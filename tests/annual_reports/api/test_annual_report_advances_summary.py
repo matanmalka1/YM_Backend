@@ -6,10 +6,10 @@ from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.ni_engine import (
+from app.annual_reports.services.annual_report_ni_engine import (
     calculate_national_insurance as _calculate_ni,
 )
-from app.annual_reports.services.tax_engine import calculate_tax as _calculate_tax
+from app.annual_reports.services.annual_report_tax_engine import calculate_tax as _calculate_tax
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
@@ -30,13 +30,13 @@ def _create_report(db):
 
 def _patch_decimal_tax_input(monkeypatch):
     monkeypatch.setattr(
-        "app.annual_reports.services.tax_service.calculate_tax",
+        "app.annual_reports.services.annual_report_tax_service.calculate_tax",
         lambda taxable_income, *args, **kwargs: _calculate_tax(
             float(taxable_income), *args, **kwargs
         ),
     )
     monkeypatch.setattr(
-        "app.annual_reports.services.tax_service.calculate_national_insurance",
+        "app.annual_reports.services.annual_report_tax_service.calculate_national_insurance",
         lambda income, *args, **kwargs: _calculate_ni(float(income), *args, **kwargs),
     )
 

@@ -5,9 +5,9 @@ from sqlalchemy import delete, func, select
 from app.tax_calendar.integrations.tax_rules_registry import (
     registry_periodic_calendar_available,
 )
-from app.tax_calendar.models.deadline_rule import DeadlineRule
+from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.tax_calendar.services.bootstrap import (
+from app.tax_calendar.services.tax_calendar_bootstrap import (
     DEFAULT_DEADLINE_RULES,
     DEFAULT_EFFECTIVE_FROM,
     EXPECTED_ENTRIES_PER_YEAR,

@@ -5,8 +5,8 @@ from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoun
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
 from app.users.repositories.user_repository import UserRepository
-from app.users.services.audit_log_service import AuditLogService
-from app.users.services.auth_service import AuthService
+from app.users.services.user_audit_log_service import AuditLogService
+from app.users.services.user_auth_service import AuthService
 from app.users.services.user_management_policies import (
     ensure_advisor,
     validate_password,

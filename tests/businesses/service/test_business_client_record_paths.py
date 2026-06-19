@@ -4,8 +4,8 @@ import pytest
 
 from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.services.business_service import BusinessService
-from app.businesses.services.client_business_service import ClientBusinessService
-from app.businesses.services.status_card_service import StatusCardService
+from app.businesses.services.business_client_business_service import ClientBusinessService
+from app.businesses.services.business_status_card_service import StatusCardService
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType
 from app.core.exceptions import NotFoundError

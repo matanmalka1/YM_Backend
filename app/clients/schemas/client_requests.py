@@ -1,8 +1,8 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from app.businesses.schemas.business_schemas import ClientBusinessCreateRequest
-from app.clients.enums import ClientStatus
-from app.clients.schemas.create_validation import (
+from app.clients.client_enums import ClientStatus
+from app.clients.schemas.client_create_validation import (
     validate_create_entity_rules,
     validate_preview_entity_rules,
     validate_update_entity_rules,

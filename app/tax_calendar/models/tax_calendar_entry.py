@@ -36,7 +36,7 @@ from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.common.enums import DeadlineRuleType, ObligationType
 from app.database import Base
-from app.tax_calendar.models.deadline_rule import DeadlineRule
+from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 

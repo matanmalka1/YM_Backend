@@ -3,7 +3,7 @@
 import pytest
 from sqlalchemy.orm import Session
 
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType
 from app.legal_entities.models.legal_entity import LegalEntity

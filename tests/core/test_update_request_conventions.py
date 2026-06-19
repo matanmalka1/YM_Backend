@@ -20,7 +20,7 @@ from app.binders.schemas.binder import BinderIntakeUpdateRequest
 from app.businesses.schemas.business_schemas import BusinessUpdateRequest
 from app.clients.schemas.client_requests import ClientUpdateRequest
 from app.communications.schemas.correspondence import CorrespondenceUpdateRequest
-from app.notes.schemas.entity_note import EntityNoteUpdateRequest
+from app.notes.schemas.note_entity_note import EntityNoteUpdateRequest
 from app.tasks.schemas.task import TaskUpdateRequest
 from app.users.schemas.user_management import UserUpdateRequest
 from app.vat.schemas.vat_invoice_update import VatInvoiceUpdateRequest

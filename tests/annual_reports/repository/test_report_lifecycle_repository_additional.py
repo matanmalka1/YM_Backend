@@ -2,7 +2,7 @@ from datetime import timedelta
 from itertools import count
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
-from app.annual_reports.repositories.report_lifecycle_repository import (
+from app.annual_reports.repositories.annual_report_report_lifecycle_repository import (
     AnnualReportLifecycleRepository,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService

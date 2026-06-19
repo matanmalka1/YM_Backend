@@ -176,4 +176,4 @@ class AdvancePayment(SoftDeletableMixin, Base):
         )
 
 
-import_module("app.advance_payments.models.due_date_snapshot_events")
+import_module("app.advance_payments.models.advance_payment_due_date_snapshot_events")

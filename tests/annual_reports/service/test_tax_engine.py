@@ -1,6 +1,6 @@
 import pytest
 
-from app.annual_reports.services.tax_engine import calculate_tax
+from app.annual_reports.services.annual_report_tax_engine import calculate_tax
 from app.core.exceptions import AppError
 
 

@@ -1,7 +1,7 @@
 from datetime import timedelta
 
-from app.audit.constants import ENTITY_CLIENT
-from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.audit.audit_constants import ENTITY_CLIENT
+from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
 from app.core.pagination import MAX_PAGE_SIZE
 
 

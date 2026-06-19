@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
-from app.audit.constants import (
+from app.audit.audit_constants import (
     ALLOWED_READ_ENTITY_TYPES,
     ENTITY_ANNUAL_REPORT,
     ENTITY_BUSINESS,
@@ -16,8 +16,8 @@ from app.audit.constants import (
     ENTITY_NOT_FOUND_ERROR,
     INVALID_ENTITY_TYPE_ERROR,
 )
-from app.audit.repositories.entity_audit_log_repository import EntityAuditLogRepository
-from app.audit.schemas.entity_audit_log import (
+from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
+from app.audit.schemas.audit_entity_audit_log import (
     EntityAuditLogResponse,
     EntityAuditTrailResponse,
 )

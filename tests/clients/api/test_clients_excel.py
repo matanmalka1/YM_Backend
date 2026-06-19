@@ -3,7 +3,7 @@ import io
 from openpyxl import Workbook
 from sqlalchemy import func, select
 
-from app.clients.api import clients_excel as clients_excel_api
+from app.clients.api import client_routes_excel as clients_excel_api
 from app.clients.models.client_record import ClientRecord
 
 IDEMPOTENCY_HEADER = {"X-Idempotency-Key": "clients-import-test-key"}

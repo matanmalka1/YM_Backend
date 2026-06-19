@@ -1,7 +1,7 @@
 from sqlalchemy import select
 
 from app.clients.models.client_record import ClientRecord
-from app.clients.services.create_client_service import create_client_identity_only
+from app.clients.services.client_create_service import create_client_identity_only
 from app.common.enums import EntityType, IdNumberType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person

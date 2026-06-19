@@ -10,18 +10,18 @@ from app.annual_reports.services.annual_report_service import AnnualReportServic
 from app.common.enums import DeadlineRuleType, ObligationType, VatType
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.tax_calendar.services.bootstrap import bootstrap_tax_calendar
-from app.tax_calendar.services.grouped_service import list_groups_paginated
-from app.tax_calendar.services.link_diagnostics import (
+from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
+from app.tax_calendar.services.tax_calendar_grouped_service import list_groups_paginated
+from app.tax_calendar.services.tax_calendar_link_diagnostics import (
     find_active_null_tax_calendar_links,
 )
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from app.vat.services.intake import create_work_item
+from app.vat.services.vat_intake import create_work_item
 from tests.tax_calendar.service.linking_helpers import (
     advance_client,
     annual_client,

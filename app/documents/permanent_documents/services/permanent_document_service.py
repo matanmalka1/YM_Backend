@@ -6,12 +6,12 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.binders.repositories.binder_repository import BinderRepository
-from app.binders.services.messages import BINDER_NOT_FOUND
+from app.binders.services.binder_messages import BINDER_NOT_FOUND
 from app.businesses.services.business_guards import (
     assert_business_belongs_to_legal_entity,
     get_business_or_raise,
 )
-from app.businesses.services.signals_service import SignalsService
+from app.businesses.services.business_signals_service import SignalsService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_service import get_client_or_raise
 from app.core.error_codes import ErrorCode
@@ -29,11 +29,11 @@ from app.documents.permanent_documents.repositories.permanent_document_query_rep
 from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
-from app.documents.permanent_documents.services.constants import (
+from app.documents.permanent_documents.permanent_document_constants import (
     ALLOWED_MIME_TYPES,
     MAX_FILE_SIZE_BYTES,
 )
-from app.documents.permanent_documents.services.messages import (
+from app.documents.permanent_documents.services.permanent_document_messages import (
     BUSINESS_NOT_FOUND_ERROR,
     CLIENT_SCOPE_VIOLATION_ERROR,
     DOCUMENT_NOT_FOUND_ERROR,

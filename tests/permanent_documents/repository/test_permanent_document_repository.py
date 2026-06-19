@@ -12,7 +12,7 @@ from app.documents.permanent_documents.repositories.permanent_document_repositor
     PermanentDocumentRepository,
 )
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from tests.helpers.identity import seed_client_with_business
 
 

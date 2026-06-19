@@ -1,6 +1,6 @@
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 
 
 def _create_target_user(test_db) -> User:

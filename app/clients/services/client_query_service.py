@@ -1,6 +1,6 @@
 from sqlalchemy.orm import Session
 
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_read_repository import (
     get_full_record,
     get_full_record_including_deleted,

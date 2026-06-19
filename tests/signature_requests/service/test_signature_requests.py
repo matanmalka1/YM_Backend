@@ -12,9 +12,9 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services import create_request as create_request_module
+from app.signature_requests.services import signature_request_create_request as create_request_module
 from app.signature_requests.services import signature_request_validations as validations
-from app.signature_requests.services.admin_actions import expire_overdue_requests
+from app.signature_requests.services.signature_request_admin_actions import expire_overdue_requests
 from app.signature_requests.services.signature_request_service import (
     SignatureRequestService,
 )
@@ -168,7 +168,7 @@ def test_create_request_raises_when_business_missing():
     business_repo = SimpleNamespace(get_by_id=lambda _business_id: None)
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "app.signature_requests.services.create_request.get_client_or_raise",
+            "app.signature_requests.services.signature_request_create_request.get_client_or_raise",
             lambda _db, _client_record_id: SimpleNamespace(id=123, legal_entity_id=1),
         )
         with pytest.raises(NotFoundError) as exc_info:
@@ -202,11 +202,11 @@ def test_create_request_raises_on_invalid_type():
     )
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "app.signature_requests.services.create_request.get_client_or_raise",
+            "app.signature_requests.services.signature_request_create_request.get_client_or_raise",
             lambda _db, _client_record_id: SimpleNamespace(id=1, legal_entity_id=1),
         )
         mp.setattr(
-            "app.signature_requests.services.create_request.BusinessContactService",
+            "app.signature_requests.services.signature_request_create_request.BusinessContactService",
             lambda _db: SimpleNamespace(
                 contact_email=lambda _business: None,
                 contact_phone=lambda _business: None,
@@ -252,11 +252,11 @@ def test_create_request_falls_back_to_business_contact_details():
     )
     with pytest.MonkeyPatch.context() as mp:
         mp.setattr(
-            "app.signature_requests.services.create_request.get_client_or_raise",
+            "app.signature_requests.services.signature_request_create_request.get_client_or_raise",
             lambda _db, _client_record_id: SimpleNamespace(id=7, legal_entity_id=9),
         )
         mp.setattr(
-            "app.signature_requests.services.create_request.BusinessContactService",
+            "app.signature_requests.services.signature_request_create_request.BusinessContactService",
             lambda _db: SimpleNamespace(
                 contact_email=lambda _business: "biz@example.com",
                 contact_phone=lambda _business: "050-1111111",

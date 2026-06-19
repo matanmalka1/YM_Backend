@@ -14,9 +14,9 @@ from app.annual_reports.models.annual_report_income_line import (
     IncomeSourceType,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.financial_line_helpers import audit_scalar
-from app.annual_reports.services.financial_line_service import AnnualReportFinancialLineService
-from app.audit.constants import (
+from app.annual_reports.services.annual_report_financial_line_helpers import audit_scalar
+from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
+from app.audit.audit_constants import (
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,
     ACTION_EXPENSE_UPDATED,
@@ -25,7 +25,7 @@ from app.audit.constants import (
     ACTION_INCOME_UPDATED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.audit.models.entity_audit_log import EntityAuditLog
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.exceptions import NotFoundError
 from tests.helpers.identity import seed_client_identity

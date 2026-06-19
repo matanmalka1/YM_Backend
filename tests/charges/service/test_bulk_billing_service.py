@@ -1,4 +1,4 @@
-from app.charges.services.bulk_billing_service import BulkBillingService
+from app.charges.services.charge_bulk_billing_service import BulkBillingService
 from app.core.exceptions import AppError
 
 

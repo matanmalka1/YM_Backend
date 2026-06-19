@@ -3,7 +3,7 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.charges.services.constants import MONTHS_COVERED_MAX
+from app.charges.charge_constants import MONTHS_COVERED_MAX
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 

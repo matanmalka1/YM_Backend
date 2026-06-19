@@ -14,7 +14,7 @@ from app.core.logging_config import set_idempotency_context
 from app.database import get_db
 from app.infrastructure.idempotency.model import IdempotencyStatus
 from app.infrastructure.idempotency.repository import IdempotencyKeyRepository
-from app.users.api.deps import get_current_user
+from app.users.api.user_deps import get_current_user
 from app.users.repositories.user_repository import AuthSubject
 
 IDEMPOTENCY_KEY_HEADER_NAME = "X-Idempotency-Key"

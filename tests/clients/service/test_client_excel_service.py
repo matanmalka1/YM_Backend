@@ -6,7 +6,7 @@ from sqlalchemy import func, select
 from app.clients.models.client_record import ClientRecord
 from app.clients.services.client_excel_service import ClientExcelService
 from app.clients.services.client_query_service import ClientQueryService
-from app.clients.services.create_client_service import create_client_identity_only
+from app.clients.services.client_create_service import create_client_identity_only
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 
 

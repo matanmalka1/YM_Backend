@@ -6,17 +6,17 @@ import pytest
 from sqlalchemy import select
 
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.financial_line_service import AnnualReportFinancialLineService
-from app.annual_reports.services.vat_import_service import VatImportService
-from app.audit.constants import (
+from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
+from app.annual_reports.services.annual_report_vat_import_service import VatImportService
+from app.audit.audit_constants import (
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,
     ACTION_INCOME_ADDED,
     ACTION_INCOME_DELETED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.audit.models.entity_audit_log import EntityAuditLog
-from app.clients.enums import ClientStatus
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType

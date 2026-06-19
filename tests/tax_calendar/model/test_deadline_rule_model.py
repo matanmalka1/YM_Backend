@@ -5,8 +5,8 @@ from sqlalchemy import delete
 from sqlalchemy.exc import IntegrityError
 
 from app.common.enums import DeadlineRuleType
-from app.tax_calendar.models.deadline_rule import DeadlineRule
-from app.tax_calendar.services.deadline_rule_service import has_overlapping_rule
+from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
+from app.tax_calendar.services.tax_calendar_deadline_rule_service import has_overlapping_rule
 
 
 @pytest.fixture(autouse=True)

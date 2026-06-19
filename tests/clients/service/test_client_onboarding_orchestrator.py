@@ -7,9 +7,9 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.services.client_onboarding_orchestrator import (
     ClientOnboardingOrchestrator,
 )
-from app.clients.services.create_client_service import create_client_identity_only
+from app.clients.services.client_create_service import create_client_identity_only
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
-from app.tax_calendar.services.bootstrap import bootstrap_tax_calendar
+from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
 from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_client_identity
 
@@ -97,7 +97,7 @@ def test_onboarding_does_not_create_empty_setup_placeholders(test_db):
 
     from app.authority_contacts.models.authority_contact import AuthorityContact
     from app.documents.permanent_documents.models.permanent_document import PermanentDocument
-    from app.notes.models.entity_note import EntityNote
+    from app.notes.models.note_entity_note import EntityNote
 
     assert test_db.scalar(select(func.count(AuthorityContact.id))) == 0
     assert test_db.scalar(select(func.count(PermanentDocument.id))) == 0

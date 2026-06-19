@@ -21,7 +21,7 @@ from app.binders.repositories.binder_intake_material_repository import (
 )
 from app.binders.repositories.binder_intake_repository import BinderIntakeRepository
 from app.binders.repositories.binder_repository import BinderRepository
-from app.binders.services.messages import (
+from app.binders.services.binder_messages import (
     BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED,
     BINDER_INTAKE_NOT_FOUND,
     BINDER_NOT_FOUND,

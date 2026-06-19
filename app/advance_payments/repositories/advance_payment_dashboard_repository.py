@@ -5,7 +5,7 @@ from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
 )
-from app.clients.repositories.active_client_scope import scope_to_active_clients_stmt
+from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 
 

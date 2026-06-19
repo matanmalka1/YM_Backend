@@ -9,7 +9,7 @@ from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from tests.helpers.identity import seed_client_with_business
 

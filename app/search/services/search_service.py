@@ -3,14 +3,14 @@ from sqlalchemy.orm import Session
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import EntityType
 from app.core.pagination import paginate_sequence
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.search.schemas.search import DocumentSearchResult
-from app.search.services.document_search_service import DocumentSearchService
+from app.search.services.search_document_search_service import DocumentSearchService
 
 # Safety ceiling for mixed searches that must be resolved in memory.
 # Pure client-only searches already use DB-level pagination and are not affected.

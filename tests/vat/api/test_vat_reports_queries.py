@@ -5,7 +5,7 @@ from sqlalchemy import select
 from app.businesses.models.business import BusinessStatus
 from app.common.enums import IdNumberType, VatType
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_business, seed_client_identity

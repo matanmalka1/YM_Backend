@@ -13,7 +13,7 @@ from fastapi.dependencies.models import Dependant
 
 from app.core.public_endpoints import PUBLIC_ENDPOINTS
 from app.main import app
-from app.users.api.deps import get_current_user
+from app.users.api.user_deps import get_current_user
 
 _HTTP_METHODS = {"GET", "POST", "PUT", "PATCH", "DELETE"}
 

@@ -1,11 +1,11 @@
 import pytest
 
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.common.enums import EntityType, VatType
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from app.vat.services import intake
+from app.vat.services import vat_intake as intake
 from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.vat_reports import make_item
 

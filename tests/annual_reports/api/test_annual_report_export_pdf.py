@@ -1,4 +1,4 @@
-from app.annual_reports.api import routes_export as export_api
+from app.annual_reports.api import annual_report_routes_export as export_api
 
 
 class _FakePdfService:

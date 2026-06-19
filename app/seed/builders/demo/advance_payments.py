@@ -15,7 +15,7 @@ from app.clients.models.client_record import ClientRecord
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import EntityType, ObligationType
 from app.common.obligation_plan import advance_payment_obligation_plan
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus

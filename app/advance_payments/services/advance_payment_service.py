@@ -11,22 +11,22 @@ from app.advance_payments.models.advance_payment import (
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.advance_payments.repositories.turnover_lookup_repository import (
+from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
 )
-from app.advance_payments.services.constants import (
+from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
     SUPPORTED_PERIOD_MONTH_COUNTS,
     get_period_start_months,
 )
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationType
 from app.common.period_utils import parse_period_month
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.utils.time_utils import israel_today, utcnow

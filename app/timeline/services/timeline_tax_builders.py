@@ -1,4 +1,4 @@
-from app.timeline.labels import ANNUAL_REPORT_STATUS_HE
+from app.timeline.timeline_labels import ANNUAL_REPORT_STATUS_HE
 
 
 def annual_report_status_changed_event(report, history) -> dict:

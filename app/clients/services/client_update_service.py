@@ -6,13 +6,13 @@ from app.actions.services.obligation_orchestrator import (
     generate_client_obligations,
     obligation_fields_changed,
 )
-from app.annual_reports.services.client_status_service import (
+from app.annual_reports.services.annual_report_client_status_service import (
     AnnualReportClientStatusService,
 )
-from app.audit.constants import ACTION_ENTITY_TYPE_CHANGED, ENTITY_CLIENT
-from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.audit.audit_constants import ACTION_ENTITY_TYPE_CHANGED, ENTITY_CLIENT
+from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
 from app.binders.repositories.binder_repository import BinderRepository
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_graph_writer import apply_graph_update
 from app.clients.repositories.client_record_read_repository import (
     get_full_record,
@@ -22,7 +22,7 @@ from app.core.error_codes import ErrorCode
 from app.core.exceptions import ForbiddenError, NotFoundError
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
-from app.vat.services.client_status_service import (
+from app.vat.services.vat_client_status_service import (
     VatWorkItemClientStatusService,
 )
 

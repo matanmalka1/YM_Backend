@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import ClientAnnualFilingType
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.clients.constants import (
+from app.clients.client_constants import (
     CLIENT_OBLIGATION_NEXT_YEAR_START_MONTH,
     CLIENT_OBLIGATION_TRIGGER_FIELDS,
     ENTITY_TYPE_TO_REPORT_CLIENT_TYPE,

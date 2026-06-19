@@ -7,10 +7,10 @@ from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType, VatType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_audit_log import VatAuditLog
-from app.vat.services.constants import (
+from app.vat.vat_constants import (
     ACTION_METADATA_UPDATED,
     ACTION_WORK_ITEM_DELETED,
 )

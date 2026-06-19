@@ -8,7 +8,7 @@ from app.advance_payments.models.advance_payment import (
     AdvancePaymentStatus,
     PaymentMethod,
 )
-from app.advance_payments.services.constants import (
+from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
     SUPPORTED_PERIOD_MONTH_COUNTS,
 )

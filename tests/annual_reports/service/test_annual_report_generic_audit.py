@@ -5,8 +5,8 @@ from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.detail_service import AnnualReportDetailService
-from app.audit.constants import (
+from app.annual_reports.services.annual_report_detail_service import AnnualReportDetailService
+from app.audit.audit_constants import (
     ACTION_ANNEX_LINE_ADDED,
     ACTION_ANNEX_LINE_DELETED,
     ACTION_ANNEX_LINE_UPDATED,
@@ -14,7 +14,7 @@ from app.audit.constants import (
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.audit.models.entity_audit_log import EntityAuditLog
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)

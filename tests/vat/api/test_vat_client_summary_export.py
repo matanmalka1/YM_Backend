@@ -6,7 +6,7 @@ import openpyxl
 import pytest
 
 from app.common.enums import VatType
-from app.tax_calendar.services.materialization_service import (
+from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
@@ -124,7 +124,7 @@ def test_vat_client_export_pdf_service_error_returns_500(
     client, advisor_headers, vat_client, monkeypatch
 ):
     monkeypatch.setattr(
-        "app.vat.api.routes_client_summary.export",
+        "app.vat.api.vat_routes_client_summary.export",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(RuntimeError("fail")),
     )
 
@@ -139,7 +139,7 @@ def test_vat_client_export_import_error_returns_detail(
     client, advisor_headers, vat_client, monkeypatch
 ):
     monkeypatch.setattr(
-        "app.vat.api.routes_client_summary.export",
+        "app.vat.api.vat_routes_client_summary.export",
         lambda *_args, **_kwargs: (_ for _ in ()).throw(ImportError("openpyxl missing")),
     )
 

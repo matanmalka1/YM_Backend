@@ -4,7 +4,7 @@ from itertools import count
 from sqlalchemy import select
 
 from app.businesses.models.business import Business
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.common.enums import (
     AdvancePaymentFrequency,
     DeadlineRuleType,
@@ -12,7 +12,7 @@ from app.common.enums import (
     ObligationType,
     VatType,
 )
-from app.tax_calendar.models.deadline_rule import DeadlineRule
+from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from tests.helpers.identity import seed_business, seed_client_identity
 

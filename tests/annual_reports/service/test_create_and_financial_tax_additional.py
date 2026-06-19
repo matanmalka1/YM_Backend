@@ -11,14 +11,14 @@ from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
 )
 from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
-from app.annual_reports.repositories.detail_repository import AnnualReportDetailRepository
+from app.annual_reports.repositories.annual_report_detail_repository import AnnualReportDetailRepository
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.financial_line_service import AnnualReportFinancialLineService
-from app.annual_reports.services.financial_summary_service import (
+from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
+from app.annual_reports.services.annual_report_financial_summary_service import (
     AnnualReportFinancialSummaryService,
 )
-from app.annual_reports.services.readiness_service import AnnualReportReadinessService
-from app.annual_reports.services.tax_service import AnnualReportTaxService
+from app.annual_reports.services.annual_report_readiness_service import AnnualReportReadinessService
+from app.annual_reports.services.annual_report_tax_service import AnnualReportTaxService
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from tests.helpers.identity import seed_client_identity
 

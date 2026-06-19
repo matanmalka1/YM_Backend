@@ -10,7 +10,7 @@ import app.annual_reports.models.annual_report_income_line  # noqa: F401
 import app.annual_reports.models.annual_report_model  # noqa: F401
 import app.annual_reports.models.annual_report_schedule_entry  # noqa: F401
 import app.annual_reports.models.annual_report_status_history  # noqa: F401
-import app.audit.models.entity_audit_log  # noqa: F401
+import app.audit.models.audit_entity_audit_log  # noqa: F401
 import app.authority_contacts.models.authority_contact  # noqa: F401
 import app.binders.models.binder  # noqa: F401
 import app.binders.models.binder_handover  # noqa: F401
@@ -28,14 +28,14 @@ import app.invoices.models.invoice  # noqa: F401
 import app.legal_entities.models.legal_entity  # noqa: F401
 import app.legal_entities.models.person  # noqa: F401
 import app.legal_entities.models.person_legal_entity_link  # noqa: F401
-import app.notes.models.entity_note  # noqa: F401
+import app.notes.models.note_entity_note  # noqa: F401
 import app.notifications.models.notification  # noqa: F401
 import app.reminders.models.reminder  # noqa: F401
 import app.signature_requests.models.signature_request  # noqa: F401
 import app.tasks.models.task  # noqa: F401
-import app.tax_calendar.models.deadline_rule  # noqa: F401
+import app.tax_calendar.models.tax_calendar_deadline_rule  # noqa: F401
 import app.tax_calendar.models.tax_calendar_entry  # noqa: F401
-import app.users.models.password_reset_token  # noqa: F401
+import app.users.models.user_password_reset_token  # noqa: F401
 import app.users.models.user  # noqa: F401
 import app.users.models.user_audit_log  # noqa: F401
 import app.vat.models.vat_audit_log  # noqa: F401

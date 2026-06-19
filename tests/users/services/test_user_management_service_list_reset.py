@@ -5,7 +5,7 @@ from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
 from app.users.repositories.user_audit_log_repository import UserAuditLogRepository
 from app.users.repositories.user_repository import UserRepository
-from app.users.services.auth_service import AuthService
+from app.users.services.user_auth_service import AuthService
 from app.users.services.user_management_service import UserManagementService
 
 

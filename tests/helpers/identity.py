@@ -6,7 +6,7 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.businesses.models.business import Business, BusinessStatus
-from app.clients.enums import ClientStatus
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.legal_entities.models.legal_entity import LegalEntity

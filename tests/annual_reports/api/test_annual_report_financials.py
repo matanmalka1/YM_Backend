@@ -1,6 +1,6 @@
 from itertools import count
 
-from app.annual_reports.api import annual_report_financials as financials_api
+from app.annual_reports.api import annual_report_routes_financials as financials_api
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from tests.helpers.identity import seed_client_identity
 

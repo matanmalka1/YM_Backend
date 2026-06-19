@@ -2,13 +2,13 @@
 
 from datetime import timedelta
 
-from app.audit.constants import (
+from app.audit.audit_constants import (
     ACTION_CREATED,
     ACTION_DELETED,
     ACTION_UPDATED,
     ENTITY_CLIENT,
 )
-from app.audit.services.entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
 
 
 def _seed_mixed_entries(test_db, user_a, user_b, client_record):
