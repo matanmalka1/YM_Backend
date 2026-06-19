@@ -39,7 +39,7 @@ def _seed_charges(db):
     return client
 
 
-def test_aging_report_export_excel(client, test_db, advisor_headers):
+def test_aging_excel_exporter(client, test_db, advisor_headers):
     crm_client = _seed_charges(test_db)
 
     resp = client.get("/api/v1/reports/aging/export?format=excel", headers=advisor_headers)
@@ -57,7 +57,7 @@ def test_aging_report_export_excel(client, test_db, advisor_headers):
     assert crm_client.full_name in client_names
 
 
-def test_aging_report_export_pdf(client, test_db, advisor_headers):
+def test_aging_pdf_exporter(client, test_db, advisor_headers):
     _seed_charges(test_db)
 
     resp = client.get("/api/v1/reports/aging/export?format=pdf", headers=advisor_headers)

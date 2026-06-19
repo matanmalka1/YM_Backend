@@ -8,7 +8,7 @@ REMINDER_TYPE_HE = {
     "binder_idle": "תיק לא פעיל",
     "unpaid_charge": "חיוב שלא שולם",
     "custom": "תזכורת מותאמת",
-    "vat_filing": "מועד דוח מע״מ",
+    "vat_filing_service": "מועד דוח מע״מ",
     "advance_payment_due": "תשלום מקדמה",
     "annual_report_deadline": "מועד הגשת דוח שנתי",
     "document_missing": "מסמך חסר",

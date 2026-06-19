@@ -15,7 +15,7 @@ from app.users.repositories.user_password_reset_token_repository import (
 )
 from app.users.repositories.user_repository import UserRepository
 from app.users.services.user_auth_service import AuthService
-from app.users.services.user_management_policies import validate_password
+from app.users.user_management_policies import validate_password
 from app.utils.time_utils import utcnow
 
 logger = get_logger(__name__)

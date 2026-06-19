@@ -1,7 +1,7 @@
 """Audit helpers for charge lifecycle events."""
 
 from app.audit.audit_constants import ENTITY_CHARGE
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 
 
 def record_charge_status_audit(

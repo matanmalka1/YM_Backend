@@ -11,7 +11,7 @@ from app.businesses.models.business import BusinessStatus
 from app.common.enums import IdNumberType
 from app.core.exceptions import AppError
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.services.vat_data_entry_invoice_update import update_invoice
+from app.vat.services.vat_data_entry_invoice_update_service import update_invoice
 from tests.helpers.identity import seed_business, seed_client_identity
 from tests.vat.api.test_vat_reports_utils import (
     create_work_item,

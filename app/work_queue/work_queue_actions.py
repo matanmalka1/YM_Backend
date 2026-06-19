@@ -6,7 +6,7 @@ from app.core.action_builders import mutation_action as _mutation
 from app.core.action_schemas import ActionDescriptor
 from app.tasks.models.task import TaskStatus
 from app.work_queue.schemas.work_queue import WorkQueueSourceType
-from app.work_queue.services.work_queue_common import source_route
+from app.work_queue.items.common import source_route
 
 
 def _disabled(action: ActionDescriptor, reason: str) -> ActionDescriptor:

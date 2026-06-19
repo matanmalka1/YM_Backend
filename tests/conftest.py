@@ -30,7 +30,7 @@ from app.legal_entities.models.legal_entity import LegalEntity  # noqa: F401
 from app.legal_entities.models.person import Person  # noqa: F401
 from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityLink  # noqa: F401
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
-from app.tax_calendar.services.tax_calendar_bootstrap import seed_default_deadline_rules
+from app.tax_calendar.services.tax_calendar_bootstrap_service import seed_default_deadline_rules
 from app.users.models.user import User, UserRole
 from app.users.services.user_auth_service import AuthService
 from app.users.services.user_token_service import generate_access_token

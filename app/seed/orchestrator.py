@@ -8,7 +8,7 @@ from sqlalchemy import func, inspect, select, text
 
 from app.clients.repositories.client_record_repository import OFFICE_CLIENT_NUMBER_START
 from app.database import Base, SessionLocal, engine
-from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
+from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 
 from .config import SeedConfig
 from .tax_calendar_range import tax_calendar_year_range_for_seed

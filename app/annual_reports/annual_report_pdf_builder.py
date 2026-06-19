@@ -6,16 +6,16 @@ import io
 import os
 from datetime import datetime
 
-from app.annual_reports.services.annual_report_labels import (
+from app.annual_reports.annual_report_labels import (
     CLIENT_TYPE_LABELS as _CLIENT_TYPE_LABELS,
 )
-from app.annual_reports.services.annual_report_labels import (
+from app.annual_reports.annual_report_labels import (
     EXPENSE_LABELS as _EXPENSE_LABELS,
 )
-from app.annual_reports.services.annual_report_labels import (
+from app.annual_reports.annual_report_labels import (
     INCOME_LABELS as _INCOME_LABELS,
 )
-from app.annual_reports.services.annual_report_labels import (
+from app.annual_reports.annual_report_labels import (
     STATUS_LABELS as _STATUS_LABELS,
 )
 

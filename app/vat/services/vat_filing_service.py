@@ -10,7 +10,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.vat_constants import ACTION_FILED, ACTION_OVERRIDE
-from app.vat.services.vat_data_entry_common import assert_transition_allowed
+from app.vat.vat_data_entry_common import assert_transition_allowed
 from app.vat.vat_messages import (
     AMENDED_ITEM_NOT_FILED,
     AMENDED_ITEM_NOT_FOUND,

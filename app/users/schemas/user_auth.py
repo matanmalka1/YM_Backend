@@ -1,7 +1,7 @@
 from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.users.models.user import UserRole
-from app.users.services.user_management_policies import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH
+from app.users.user_management_policies import MAX_PASSWORD_LENGTH, MIN_PASSWORD_LENGTH
 
 
 class LoginRequest(BaseModel):

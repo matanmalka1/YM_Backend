@@ -10,7 +10,7 @@ from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories import (
     vat_work_item_grouped_repository as grouped_repo,
 )
-from app.vat.services.vat_report_enrichment import _build_client_maps
+from app.vat.vat_report_enrichment import _build_client_maps
 
 
 def get_groups(

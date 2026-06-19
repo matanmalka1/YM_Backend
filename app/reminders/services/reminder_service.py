@@ -10,7 +10,7 @@ from app.reminders.models.reminder import Reminder, ReminderStatus
 from app.reminders.repositories.reminder_repository import ReminderRepository
 from app.reminders.schemas.reminder import ReminderCreateRequest, ReminderResponse
 from app.tasks.repositories.task_repository import TaskRepository
-from app.work_queue.services.work_queue_source_lookup import load_source_states
+from app.work_queue.work_queue_source_lookup import load_source_states
 
 
 class ReminderService:

@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.businesses.services.business_guards import (
+from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository

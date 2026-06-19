@@ -8,7 +8,7 @@ from app.common.enums import EntityType
 from app.core.exceptions import AppError
 from app.vat.models.vat_enums import InvoiceType, VatWorkItemStatus
 from app.vat.vat_constants import OSEK_PATUR_CEILING_WARNING_RATE
-from app.vat.services.vat_data_entry_common import (
+from app.vat.vat_data_entry_common import (
     assert_transition_allowed,
     check_osek_patur_ceiling,
     resolve_invoice_derived_fields,

@@ -23,7 +23,7 @@ from app.annual_reports.services.annual_report_tax_service import (
 )
 from app.core.error_codes import ErrorCode
 
-from .annual_report_base import AnnualReportBaseService
+from .annual_report_base_service import AnnualReportBaseService
 
 
 class AnnualReportQueryService(AnnualReportBaseService):

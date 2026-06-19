@@ -7,7 +7,7 @@ from app.annual_reports.models.annual_report_enums import (
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError
@@ -16,9 +16,9 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
 )
 from app.users.services.user_management_service import get_user_or_raise
 
-from .annual_report_base import AnnualReportBaseService
+from .annual_report_base_service import AnnualReportBaseService
 from ..annual_report_constants import FORM_MAP
-from .annual_report_deadlines import extended_deadline, standard_deadline
+from ..annual_report_deadlines import extended_deadline, standard_deadline
 from ..annual_report_messages import (
     ANNUAL_REPORT_ALREADY_EXISTS,
     ANNUAL_REPORT_CLIENT_NOT_FOUND,

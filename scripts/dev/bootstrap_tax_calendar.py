@@ -26,7 +26,7 @@ def _parse_args() -> argparse.Namespace:
 
 def main() -> None:
     from app.database import SessionLocal
-    from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
+    from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 
     args = _parse_args()
     db = SessionLocal()

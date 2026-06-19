@@ -8,7 +8,7 @@ from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
 from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode

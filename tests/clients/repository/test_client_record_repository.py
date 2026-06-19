@@ -5,7 +5,7 @@ from datetime import date
 import pytest
 
 from app.businesses.models.business import Business, BusinessStatus
-from app.businesses.services.business_guards import (
+from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
 from app.clients.models.client_record import ClientRecord

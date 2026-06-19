@@ -9,7 +9,7 @@ from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.repositories.tax_calendar_settings_repository import (
     TaxCalendarSettingsRepository,
 )
-from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
+from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 
 # (obligation_type, period_months_count) → expected count per year
 # None for period_months_count = annual (no period)

@@ -10,7 +10,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.vat_messages import VAT_CLIENT_EXEMPT, VAT_CLIENT_NOT_FOUND
-from app.vat.services.vat_type_resolver import resolve_effective_vat_type
+from app.vat.vat_type_resolver import resolve_effective_vat_type
 
 
 def _period_label(period_type: VatType, year: int, month: int) -> str:

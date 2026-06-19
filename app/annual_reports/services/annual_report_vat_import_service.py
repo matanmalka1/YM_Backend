@@ -43,7 +43,7 @@ from app.audit.audit_constants import (
     ACTION_INCOME_DELETED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat.repositories.vat_invoice_aggregation_repository import (

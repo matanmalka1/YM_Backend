@@ -2,7 +2,7 @@ import pytest
 
 from app.core.exceptions import AppError, ForbiddenError
 from app.users.models.user import UserRole
-from app.users.services.user_management_policies import (
+from app.users.user_management_policies import (
     ensure_advisor,
     validate_password,
 )

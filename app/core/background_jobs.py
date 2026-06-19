@@ -8,8 +8,8 @@ from app.database import SessionLocal
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services.signature_request_admin_actions import expire_overdue_requests
-from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
+from app.signature_requests.services.signature_request_admin_service import expire_overdue_requests
+from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ def run_startup_expiry() -> None:
         db.close()
 
 
-def run_development_tax_calendar_bootstrap() -> None:
+def run_development_tax_calendar_bootstrap_service() -> None:
     if settings.APP_ENV != "development":
         return
     if "PYTEST_CURRENT_TEST" in os.environ:

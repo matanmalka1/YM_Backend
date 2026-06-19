@@ -24,7 +24,7 @@ from app.database import SessionLocal  # noqa: E402
 from app.users.models.user import UserRole  # noqa: E402
 from app.users.repositories.user_repository import UserRepository  # noqa: E402
 from app.users.services.user_auth_service import AuthService  # noqa: E402
-from app.users.services.user_management_policies import validate_password  # noqa: E402
+from app.users.user_management_policies import validate_password  # noqa: E402
 
 
 def parse_args() -> argparse.Namespace:

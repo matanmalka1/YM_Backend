@@ -4,7 +4,7 @@ from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.users.models.user import UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
-from app.users.services.user_management_policies import (
+from app.users.user_management_policies import (
     MAX_PASSWORD_LENGTH,
     MIN_PASSWORD_LENGTH,
 )

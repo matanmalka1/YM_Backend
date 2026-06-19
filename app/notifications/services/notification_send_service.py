@@ -29,7 +29,7 @@ from app.notifications.notification_constants import (
     NOTIFICATION_IDEMPOTENCY_TTL_HOURS,
     SUBJECT_MAX_LENGTH,
 )
-from app.notifications.services.notification_context_resolver import (
+from app.notifications.notification_context_resolver import (
     NotificationContextResolver,
 )
 from app.notifications.services.notification_delivery_service import (
@@ -38,7 +38,7 @@ from app.notifications.services.notification_delivery_service import (
 from app.notifications.services.notification_policy_service import (
     NotificationPolicyService,
 )
-from app.notifications.services.notification_template_renderer import (
+from app.notifications.notification_template_renderer import (
     NotificationTemplateRenderer,
 )
 

@@ -1,4 +1,4 @@
-from app.tax_calendar.services.tax_calendar_bootstrap import (
+from app.tax_calendar.services.tax_calendar_bootstrap_service import (
     DEFAULT_DEADLINE_RULES,
     bootstrap_tax_calendar,
     seed_default_deadline_rules,

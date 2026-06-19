@@ -3,7 +3,7 @@ from datetime import date
 from sqlalchemy import select
 
 from app.advance_payments.models.advance_payment import AdvancePayment
-from app.clients.services.client_onboarding_orchestrator import (
+from app.clients.services.client_onboarding_service import (
     ClientOnboardingOrchestrator,
 )
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType

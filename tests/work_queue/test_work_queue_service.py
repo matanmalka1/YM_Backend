@@ -11,8 +11,8 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.services.work_queue_actions import source_actions
-from app.work_queue.services.work_queue_common import normalize_source_domain, source_route
+from app.work_queue.work_queue_actions import source_actions
+from app.work_queue.items.common import normalize_source_domain, source_route
 from app.work_queue.services.work_queue_service import WorkQueueService
 from tests.helpers.task_helpers import create_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
@@ -225,7 +225,7 @@ def test_work_queue_source_type_contract_has_no_legacy_aliases():
         "binder",
         "task",
     }
-    assert normalize_source_domain("vat_filing") is None
+    assert normalize_source_domain("vat_filing_service") is None
     assert normalize_source_domain("unpaid_charge") is None
     assert normalize_source_domain("stale_binder") is None
 

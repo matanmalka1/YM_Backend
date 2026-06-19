@@ -12,18 +12,20 @@ from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.services import (
-    vat_filing as filing,
-    vat_intake as intake,
+from app.vat import (
     vat_period_options as period_options,
     vat_report_enrichment,
     vat_report_queries,
     vat_work_item_metadata as work_item_metadata,
 )
-from app.vat.services.vat_data_entry_invoice_delete import delete_invoice
-from app.vat.services.vat_data_entry_invoice_update import update_invoice
-from app.vat.services.vat_data_entry_invoices import add_invoice
-from app.vat.services.vat_data_entry_status import (
+from app.vat.services import (
+    vat_filing_service as filing,
+    vat_intake_service as intake,
+)
+from app.vat.services.vat_data_entry_invoice_delete_service import delete_invoice
+from app.vat.services.vat_data_entry_invoice_update_service import update_invoice
+from app.vat.services.vat_data_entry_invoices_service import add_invoice
+from app.vat.services.vat_data_entry_status_service import (
     mark_ready_for_review,
     send_back_for_correction,
 )

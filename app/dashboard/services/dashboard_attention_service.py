@@ -11,7 +11,7 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.services.work_queue_common import load_client_profiles
+from app.work_queue.items.common import load_client_profiles
 from app.work_queue.services.work_queue_service import WorkQueueService
 
 _ATTENTION_URGENCIES = frozenset(

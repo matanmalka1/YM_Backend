@@ -6,10 +6,10 @@ from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.annual_report_ni_engine import (
+from app.annual_reports.annual_report_ni_engine import (
     calculate_national_insurance as _calculate_ni,
 )
-from app.annual_reports.services.annual_report_tax_engine import calculate_tax as _calculate_tax
+from app.annual_reports.annual_report_tax_engine import calculate_tax as _calculate_tax
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 

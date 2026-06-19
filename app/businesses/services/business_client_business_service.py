@@ -8,7 +8,7 @@ from app.businesses.schemas.business_schemas import (
     BusinessResponse,
     ClientBusinessesResponse,
 )
-from app.businesses.services.business_guards import (
+from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
 from app.businesses.services.business_service import BusinessService

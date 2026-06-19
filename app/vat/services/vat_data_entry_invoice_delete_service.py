@@ -7,7 +7,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.vat_constants import ACTION_INVOICE_DELETED
-from app.vat.services.vat_data_entry_common import (
+from app.vat.vat_data_entry_common import (
     assert_editable,
     audit_invoice_snapshot,
     recalculate_totals,

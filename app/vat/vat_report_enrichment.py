@@ -6,7 +6,7 @@ from app.users.repositories.user_repository import UserRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.services.vat_report_queries import (
+from app.vat.vat_report_queries import (
     count_audit_trail,
     get_audit_trail,
     get_work_item,

@@ -17,7 +17,7 @@ from app.signature_requests.signature_request_messages import (
     SIGNATURE_REQUEST_EXPIRED_ERROR,
     SIGNATURE_REQUEST_EXPIRED_NOTE,
 )
-from app.signature_requests.services.signature_request_validations import (
+from app.signature_requests.signature_request_validations import (
     assert_pending,
     check_not_expired,
     get_by_token_or_raise,

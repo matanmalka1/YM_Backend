@@ -10,8 +10,8 @@ from app.vat.repositories.vat_compliance_repository import (
     VatComplianceRepository,
 )
 from app.work_queue.schemas.work_queue import WorkQueueItem, WorkQueueSourceType
-from app.work_queue.services.work_queue_common import UPCOMING_WINDOW_DAYS, WorkQueueContext
-from app.work_queue.services.work_queue_metadata import (
+from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
+from app.work_queue.work_queue_metadata import (
     annual_report_metadata,
     vat_work_item_metadata,
 )

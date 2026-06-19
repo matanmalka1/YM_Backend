@@ -5,7 +5,7 @@ Consumers
 ---------
 - app/clients/services/client_excel_service.py
 - app/reports/services/export_excel.py
-- app/vat_reports/services/vat_export_excel.py
+- app/vat_reports/services/excel_exporter.py
 """
 
 from __future__ import annotations

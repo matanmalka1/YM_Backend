@@ -29,7 +29,7 @@ from app.vat.vat_messages import (
     VAT_PENDING_MATERIALS_NOTE_REQUIRED,
     VAT_WORK_ITEM_CONFLICT,
 )
-from app.vat.services.vat_type_resolver import resolve_effective_vat_type
+from app.vat.vat_type_resolver import resolve_effective_vat_type
 
 _VAT_PERIOD_MONTHS_COUNT = {VatType.MONTHLY: 1, VatType.BIMONTHLY: 2}
 

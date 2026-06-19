@@ -6,14 +6,14 @@ from app.audit.audit_constants import (
     ACTION_PAID,
     ENTITY_CHARGE,
 )
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
-from app.businesses.services.business_guards import (
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
     validate_business_for_create,
 )
 from app.charges.models.charge import Charge, ChargeStatus
 from app.charges.repositories.charge_repository import ChargeRepository
-from app.charges.services.charge_billing_audit import record_charge_status_audit
+from app.charges.charge_billing_audit import record_charge_status_audit
 from app.charges.charge_messages import (
     AMOUNT_MUST_BE_POSITIVE,
     CHARGE_ALREADY_CANCELED,

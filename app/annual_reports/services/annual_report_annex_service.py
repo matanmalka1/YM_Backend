@@ -10,11 +10,11 @@ from app.audit.audit_constants import (
     ACTION_ANNEX_LINE_UPDATED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
-from .annual_report_base import AnnualReportBaseService
+from .annual_report_base_service import AnnualReportBaseService
 from ..annual_report_messages import ANNEX_LINE_NOT_FOUND, ANNEX_VALIDATION_ERROR
 
 

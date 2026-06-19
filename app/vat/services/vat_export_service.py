@@ -17,9 +17,9 @@ from app.vat.repositories.vat_client_summary_repository import (
 )
 from app.vat.schemas.vat_client_summary_schema import VatPeriodRow
 from app.vat.vat_messages import VAT_CLIENT_NOT_FOUND
-from app.vat.services.vat_export_excel import export_vat_to_excel
-from app.vat.services.vat_export_pdf import export_vat_to_pdf
-from app.vat.services.vat_report_queries import get_vat_deadline_fields
+from app.vat.exporters.excel_exporter import export_vat_to_excel
+from app.vat.exporters.pdf_exporter import export_vat_to_pdf
+from app.vat.vat_report_queries import get_vat_deadline_fields
 
 
 def _get_export_dir() -> str:

@@ -27,7 +27,7 @@ from app.vat.vat_constants import (
     ACTION_STATUS_CHANGED,
     CATEGORY_LABELS_SERVER,
 )
-from app.vat.services.vat_data_entry_common import (
+from app.vat.vat_data_entry_common import (
     assert_editable,
     check_osek_patur_ceiling,
     recalculate_totals,
@@ -44,7 +44,7 @@ from app.vat.vat_messages import (
     VAT_NET_AMOUNT_POSITIVE_REQUIRED,
     VAT_UNKNOWN_COUNTERPARTY_NAME,
 )
-from app.vat.services.vat_amounts import split_gross_amount
+from app.vat.vat_amounts import split_gross_amount
 
 
 def add_invoice(

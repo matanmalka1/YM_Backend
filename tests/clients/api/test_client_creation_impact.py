@@ -10,7 +10,7 @@ from app.binders.models.binder import Binder
 from app.clients.services.client_create_service import create_client_identity_only
 from app.clients.services.client_impact_preview_service import compute_creation_impact
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
-from app.tax_calendar.services.tax_calendar_bootstrap import bootstrap_tax_calendar
+from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 from app.vat.models.vat_work_item import VatWorkItem
 
 

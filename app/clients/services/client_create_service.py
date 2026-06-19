@@ -4,7 +4,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import ENTITY_CLIENT
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.models.business import Business
 from app.businesses.services.business_service import BusinessService
 from app.businesses.services.business_client_business_service import ClientBusinessService
@@ -24,7 +24,7 @@ from app.clients.schemas.client import (
     ClientOnboardingRequest,
 )
 from app.clients.schemas.client_record_response import CreateClientRecordResponse
-from app.clients.services.client_onboarding_orchestrator import (
+from app.clients.services.client_onboarding_service import (
     ClientOnboardingOrchestrator,
 )
 from app.clients.services.client_query_service import ClientQueryService

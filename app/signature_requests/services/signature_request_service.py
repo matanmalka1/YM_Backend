@@ -18,9 +18,9 @@ from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
 from app.signature_requests.services import (
-    signature_request_admin_actions as admin_actions,
-    signature_request_create_request as create_request,
-    signature_request_signer_actions as signer_actions,
+    signature_request_admin_service as admin_actions,
+    signature_request_creation_service as create_request,
+    signature_request_signer_service as signer_actions,
 )
 from app.signature_requests.signature_request_messages import (
     ANNUAL_REPORT_SIGNED_NOTE,
@@ -29,7 +29,7 @@ from app.signature_requests.signature_request_messages import (
     INVALID_FILTER_STATUS,
     SYSTEM_USER_NAME,
 )
-from app.signature_requests.services.signature_request_validations import get_or_raise
+from app.signature_requests.signature_request_validations import get_or_raise
 
 _log = logging.getLogger(__name__)
 

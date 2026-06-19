@@ -6,7 +6,7 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.services.work_queue_common import WorkQueueContext
+from app.work_queue.items.common import WorkQueueContext
 
 _STALE_HANDOVER_THRESHOLD_DAYS = 30
 

@@ -10,7 +10,7 @@ from app.annual_reports.services.annual_report_client_status_service import (
     AnnualReportClientStatusService,
 )
 from app.audit.audit_constants import ACTION_ENTITY_TYPE_CHANGED, ENTITY_CLIENT
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.binders.repositories.binder_repository import BinderRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_graph_writer import apply_graph_update

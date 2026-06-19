@@ -4,7 +4,7 @@ from types import SimpleNamespace
 import pytest
 
 from app.common.enums import SubmissionMethod
-from app.vat.services.vat_report_queries import (
+from app.vat.vat_report_queries import (
     deadline_fields_from_snapshot,
     get_vat_deadline_fields,
 )

@@ -3,7 +3,7 @@
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import ENTITY_BUSINESS
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.models.business import Business
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.core.error_codes import ErrorCode

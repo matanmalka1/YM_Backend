@@ -13,13 +13,13 @@ from app.reports.report_schemas import (
     AnnualReportStatusReportResponse,
     VatComplianceReportResponse,
 )
-from app.reports.services.report_advance_payment_report import AdvancePaymentReportService
-from app.reports.services.report_annual_report_status_report import (
+from app.reports.advance_payment_report import AdvancePaymentReportService
+from app.reports.annual_report_status_report import (
     AnnualReportStatusReportService,
 )
 from app.reports.services.report_reports_export_service import ReportsExportService
 from app.reports.services.report_service import AgingReportService
-from app.reports.services.report_vat_compliance_report import VatComplianceReportService
+from app.reports.vat_compliance_report import VatComplianceReportService
 from app.users.api.user_deps import DBSession, require_role
 from app.users.models.user import UserRole
 

@@ -16,8 +16,8 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.services.work_queue_common import UPCOMING_WINDOW_DAYS, WorkQueueContext
-from app.work_queue.services.work_queue_metadata import (
+from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
+from app.work_queue.work_queue_metadata import (
     advance_payment_metadata,
     charge_metadata,
 )

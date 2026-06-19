@@ -6,7 +6,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.utils.time_utils import israel_today
 
-from .annual_report_base import AnnualReportBaseService
+from .annual_report_base_service import AnnualReportBaseService
 
 
 def get_active_annual_report_tax_year(today=None) -> int:

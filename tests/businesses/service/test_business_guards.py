@@ -1,7 +1,7 @@
 import pytest
 
 from app.businesses.models.business import Business, BusinessStatus
-from app.businesses.services.business_guards import (
+from app.businesses.business_guards import (
     assert_business_allows_create,
     validate_business_for_create,
 )

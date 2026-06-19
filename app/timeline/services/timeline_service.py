@@ -28,7 +28,7 @@ from app.timeline.timeline_charge_event_builders import (
     charge_paid_event,
     invoice_attached_event,
 )
-from app.timeline.services.timeline_client_aggregator import build_client_events
+from app.timeline.timeline_client_aggregator import build_client_events
 from app.timeline.timeline_notification_event_builders import (
     notification_failed_event,
     notification_sent_event,

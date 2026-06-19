@@ -6,8 +6,8 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.services.work_queue_actions import task_actions
-from app.work_queue.services.work_queue_common import (
+from app.work_queue.work_queue_actions import task_actions
+from app.work_queue.items.common import (
     SOURCE_TYPE_LABELS,
     WorkQueueContext,
     display_status_label,

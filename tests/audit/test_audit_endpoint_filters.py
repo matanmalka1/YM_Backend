@@ -8,7 +8,7 @@ from app.audit.audit_constants import (
     ACTION_UPDATED,
     ENTITY_CLIENT,
 )
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 
 
 def _seed_mixed_entries(test_db, user_a, user_b, client_record):

@@ -21,7 +21,7 @@ from app.tasks.schemas.task import (
     TaskCreateRequest,
     TaskUpdateRequest,
 )
-from app.tasks.services.task_source_validator import source_exists
+from app.tasks.task_source_validator import source_exists
 from app.users.models.user import UserRole
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_work_item import VatWorkItem

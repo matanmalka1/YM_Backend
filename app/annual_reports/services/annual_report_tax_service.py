@@ -34,8 +34,8 @@ from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     TAX_CONFLICT_ERROR,
 )
-from app.annual_reports.services.annual_report_ni_engine import calculate_national_insurance
-from app.annual_reports.services.annual_report_tax_engine import calculate_tax
+from app.annual_reports.annual_report_ni_engine import calculate_national_insurance
+from app.annual_reports.annual_report_tax_engine import calculate_tax
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError

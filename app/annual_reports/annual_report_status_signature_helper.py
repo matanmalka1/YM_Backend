@@ -1,6 +1,6 @@
 """Signature request helpers for annual report status transitions."""
 
-from app.annual_reports.services.annual_report_base import AnnualReportBaseService
+from app.annual_reports.services.annual_report_base_service import AnnualReportBaseService
 from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_APPROVAL_TITLE,
     ANNUAL_REPORT_CLIENT_NOT_FOUND,

@@ -12,7 +12,7 @@ from app.vat.schemas.vat_report import (
     VatWorkItemGroupsResponse,
     VatWorkItemGroupSummary,
 )
-from app.vat.services import vat_grouped_enrichment
+from app.vat import vat_grouped_enrichment
 
 router = APIRouter(prefix="/vat", tags=["vat-reports"])
 

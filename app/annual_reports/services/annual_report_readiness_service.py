@@ -15,7 +15,7 @@ from app.annual_reports.repositories.annual_report_income_repository import (
     AnnualReportIncomeRepository,
 )
 from app.annual_reports.schemas.annual_report_financials import ReadinessCheckResponse
-from app.annual_reports.services.annual_report_labels import SCHEDULE_LABELS
+from app.annual_reports.annual_report_labels import SCHEDULE_LABELS
 from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     CLIENT_NOT_APPROVED_REPORT_ISSUE,

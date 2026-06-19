@@ -2,7 +2,7 @@ from sqlalchemy import select
 
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.tax_calendar.services.tax_calendar_bootstrap import (
+from app.tax_calendar.services.tax_calendar_bootstrap_service import (
     DEFAULT_DEADLINE_RULES,
     bootstrap_tax_calendar,
     seed_default_deadline_rules,

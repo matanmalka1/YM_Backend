@@ -26,7 +26,7 @@ from app.utils.time_utils import israel_today
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.services.vat_intake import create_work_item
+from app.vat.services.vat_intake_service import create_work_item
 
 
 @dataclass(slots=True)

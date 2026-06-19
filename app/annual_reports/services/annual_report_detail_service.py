@@ -15,7 +15,7 @@ from app.audit.audit_constants import (
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
     ENTITY_ANNUAL_REPORT,
 )
-from app.audit.services.audit_entity_audit_writer import EntityAuditWriter
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 

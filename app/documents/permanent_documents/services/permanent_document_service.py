@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.binder_messages import BINDER_NOT_FOUND
-from app.businesses.services.business_guards import (
+from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
     get_business_or_raise,
 )

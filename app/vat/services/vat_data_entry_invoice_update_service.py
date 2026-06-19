@@ -16,7 +16,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
 )
 from app.vat.schemas.vat_invoice_schema import validate_counterparty_pair
 from app.vat.vat_constants import ACTION_INVOICE_UPDATED
-from app.vat.services.vat_data_entry_common import (
+from app.vat.vat_data_entry_common import (
     assert_editable,
     audit_invoice_snapshot,
     recalculate_totals,
@@ -28,7 +28,7 @@ from app.vat.vat_messages import (
     VAT_ITEM_NOT_FOUND,
     VAT_NET_AMOUNT_POSITIVE_REQUIRED,
 )
-from app.vat.services.vat_amounts import split_gross_amount
+from app.vat.vat_amounts import split_gross_amount
 
 
 def update_invoice(
