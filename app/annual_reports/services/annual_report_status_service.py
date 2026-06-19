@@ -19,7 +19,6 @@ from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
 
-from . import annual_report_readiness_service
 from ..annual_report_constants import STAGE_TO_STATUS, VALID_TRANSITIONS
 from ..annual_report_deadlines import extended_deadline, standard_deadline
 from ..annual_report_messages import (

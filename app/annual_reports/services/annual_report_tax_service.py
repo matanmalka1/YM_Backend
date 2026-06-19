@@ -7,19 +7,25 @@ from sqlalchemy.orm import Session
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     AdvancePaymentAggregationRepository,
 )
+from app.annual_reports.annual_report_messages import (
+    ANNUAL_REPORT_NOT_FOUND,
+    TAX_CONFLICT_ERROR,
+)
+from app.annual_reports.annual_report_ni_engine import calculate_national_insurance
+from app.annual_reports.annual_report_tax_engine import calculate_tax
 from app.annual_reports.integrations.tax_rules_registry import (
     get_default_resident_credit_points,
 )
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.repositories.annual_report_repository import (
-    AnnualReportRepository,
-)
 from app.annual_reports.repositories.annual_report_credit_point_repository import (
     AnnualReportCreditPointRepository,
 )
 from app.annual_reports.repositories.annual_report_detail_repository import (
     AnnualReportDetailRepository,
+)
+from app.annual_reports.repositories.annual_report_repository import (
+    AnnualReportRepository,
 )
 from app.annual_reports.schemas.annual_report_financials import (
     BracketBreakdownItem,
@@ -30,12 +36,6 @@ from app.annual_reports.schemas.annual_report_financials import (
 from app.annual_reports.services.annual_report_financial_summary_service import (
     AnnualReportFinancialSummaryService,
 )
-from app.annual_reports.annual_report_messages import (
-    ANNUAL_REPORT_NOT_FOUND,
-    TAX_CONFLICT_ERROR,
-)
-from app.annual_reports.annual_report_ni_engine import calculate_national_insurance
-from app.annual_reports.annual_report_tax_engine import calculate_tax
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError

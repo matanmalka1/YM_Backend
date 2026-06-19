@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from app.work_queue.items.common import (
+    SOURCE_TYPE_LABELS,
+    WorkQueueContext,
+    display_status_label,
+    urgency,
+)
 from app.work_queue.schemas.work_queue import (
     LinkedTaskSummary,
     WorkQueueItem,
@@ -7,12 +13,6 @@ from app.work_queue.schemas.work_queue import (
     WorkQueueUrgency,
 )
 from app.work_queue.work_queue_actions import task_actions
-from app.work_queue.items.common import (
-    SOURCE_TYPE_LABELS,
-    WorkQueueContext,
-    display_status_label,
-    urgency,
-)
 
 
 def task_summary(task) -> LinkedTaskSummary:

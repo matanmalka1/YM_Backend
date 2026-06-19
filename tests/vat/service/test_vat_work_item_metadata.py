@@ -10,11 +10,11 @@ from app.users.models.user import User, UserRole
 from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_audit_log import VatAuditLog
+from app.vat.services.vat_report_service import VatReportService
 from app.vat.vat_constants import (
     ACTION_METADATA_UPDATED,
     ACTION_WORK_ITEM_DELETED,
 )
-from app.vat.services.vat_report_service import VatReportService
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 

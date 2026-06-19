@@ -6,14 +6,14 @@ from app.clients.models.client_record import ClientRecord
 from app.reminders.models.reminder import Reminder, ReminderActionType, ReminderStatus
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
+from app.work_queue.items.common import normalize_source_domain, source_route
 from app.work_queue.schemas.work_queue import (
     WorkQueueItem,
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.work_queue_actions import source_actions
-from app.work_queue.items.common import normalize_source_domain, source_route
 from app.work_queue.services.work_queue_service import WorkQueueService
+from app.work_queue.work_queue_actions import source_actions
 from tests.helpers.task_helpers import create_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 

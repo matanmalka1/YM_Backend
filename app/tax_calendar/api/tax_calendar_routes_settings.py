@@ -8,7 +8,9 @@ from app.tax_calendar.schemas.tax_calendar_settings import (
     TaxCalendarEntryResponse,
     TaxCalendarSummaryResponse,
 )
-from app.tax_calendar.services import tax_calendar_settings_calendar_service as settings_calendar_service
+from app.tax_calendar.services import (
+    tax_calendar_settings_calendar_service as settings_calendar_service,
+)
 from app.users.api.user_deps import DBSession, require_role
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today

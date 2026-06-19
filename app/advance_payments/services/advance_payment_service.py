@@ -4,6 +4,11 @@ from typing import Literal
 
 from sqlalchemy.orm import Session
 
+from app.advance_payments.advance_payment_constants import (
+    BIMONTHLY_START_MONTHS,
+    SUPPORTED_PERIOD_MONTH_COUNTS,
+    get_period_start_months,
+)
 from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
@@ -13,11 +18,6 @@ from app.advance_payments.repositories.advance_payment_repository import (
 )
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
-)
-from app.advance_payments.advance_payment_constants import (
-    BIMONTHLY_START_MONTHS,
-    SUPPORTED_PERIOD_MONTH_COUNTS,
-    get_period_start_months,
 )
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository

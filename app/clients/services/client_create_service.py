@@ -6,8 +6,8 @@ from sqlalchemy.orm import Session
 from app.audit.audit_constants import ENTITY_CLIENT
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.models.business import Business
-from app.businesses.services.business_service import BusinessService
 from app.businesses.services.business_client_business_service import ClientBusinessService
+from app.businesses.services.business_service import BusinessService
 from app.clients.client_constants import (
     COMPANY_CORPORATION_ID_ERROR,
     UNSUPPORTED_EMPLOYEE_CREATE_ERROR,
@@ -18,21 +18,21 @@ from app.clients.client_create_policy import (
     normalize_vat_reporting_frequency,
     preview_vat_reporting_frequency,
 )
+from app.clients.client_messages import (
+    CLIENT_ID_NUMBER_DELETED,
+    CLIENT_ID_NUMBER_EXISTS,
+)
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.schemas.client import (
     ClientOnboardingRequest,
 )
 from app.clients.schemas.client_record_response import CreateClientRecordResponse
+from app.clients.services.client_impact_preview_service import compute_creation_impact
 from app.clients.services.client_onboarding_service import (
     ClientOnboardingOrchestrator,
 )
 from app.clients.services.client_query_service import ClientQueryService
-from app.clients.services.client_impact_preview_service import compute_creation_impact
-from app.clients.client_messages import (
-    CLIENT_ID_NUMBER_DELETED,
-    CLIENT_ID_NUMBER_EXISTS,
-)
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError

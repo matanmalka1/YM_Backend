@@ -1,10 +1,10 @@
 import pytest
 
-from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.business_guards import (
     assert_business_allows_create,
     validate_business_for_create,
 )
+from app.businesses.models.business import Business, BusinessStatus
 from app.core.exceptions import ForbiddenError, NotFoundError
 from tests.helpers.identity import seed_client_identity
 

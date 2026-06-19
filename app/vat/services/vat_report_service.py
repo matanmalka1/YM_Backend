@@ -8,18 +8,24 @@ from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.users.repositories.user_repository import UserRepository
+from app.vat import (
+    vat_period_options as period_options,
+)
+from app.vat import (
+    vat_report_enrichment,
+    vat_report_queries,
+)
+from app.vat import (
+    vat_work_item_metadata as work_item_metadata,
+)
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat import (
-    vat_period_options as period_options,
-    vat_report_enrichment,
-    vat_report_queries,
-    vat_work_item_metadata as work_item_metadata,
-)
 from app.vat.services import (
     vat_filing_service as filing,
+)
+from app.vat.services import (
     vat_intake_service as intake,
 )
 from app.vat.services.vat_data_entry_invoice_delete_service import delete_invoice

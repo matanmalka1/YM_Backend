@@ -29,8 +29,13 @@ from app.common.enums import DeadlineRuleType, ObligationType
 from app.tax_calendar.integrations.tax_rules_registry import get_registry_due_date
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import DeadlineRuleRepository
-from app.tax_calendar.repositories.tax_calendar_entry_repository import EntryKey, TaxCalendarEntryRepository
+from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import (
+    DeadlineRuleRepository,
+)
+from app.tax_calendar.repositories.tax_calendar_entry_repository import (
+    EntryKey,
+    TaxCalendarEntryRepository,
+)
 
 
 class MissingDeadlineRuleError(LookupError):

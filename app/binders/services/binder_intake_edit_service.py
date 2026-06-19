@@ -11,6 +11,11 @@ from sqlalchemy.orm import Session
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
+from app.binders.binder_messages import (
+    BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED,
+    BINDER_INTAKE_NOT_FOUND,
+    BINDER_NOT_FOUND,
+)
 from app.binders.models.binder_intake import BinderIntake
 from app.binders.models.binder_intake_material import BinderIntakeMaterial
 from app.binders.repositories.binder_intake_edit_log_repository import (
@@ -21,11 +26,6 @@ from app.binders.repositories.binder_intake_material_repository import (
 )
 from app.binders.repositories.binder_intake_repository import BinderIntakeRepository
 from app.binders.repositories.binder_repository import BinderRepository
-from app.binders.binder_messages import (
-    BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED,
-    BINDER_INTAKE_NOT_FOUND,
-    BINDER_NOT_FOUND,
-)
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode

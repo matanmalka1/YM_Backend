@@ -4,14 +4,14 @@ from sqlalchemy.exc import IntegrityError
 from app.binders.repositories.binder_repository import BinderRepository
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.clients.services.client_lifecycle_service import ClientLifecycleService
-from app.clients.services.client_query_service import ClientQueryService
-from app.clients.services.client_service import get_client_or_raise
-from app.clients.services.client_update_service import ClientUpdateService
 from app.clients.services.client_create_service import (
     CreateClientService,
     create_client_identity_only,
 )
+from app.clients.services.client_lifecycle_service import ClientLifecycleService
+from app.clients.services.client_query_service import ClientQueryService
+from app.clients.services.client_service import get_client_or_raise
+from app.clients.services.client_update_service import ClientUpdateService
 from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow

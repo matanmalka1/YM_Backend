@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from app.binders.repositories.binder_repository import BinderRepository
+from app.work_queue.items.common import WorkQueueContext
 from app.work_queue.schemas.work_queue import (
     WorkQueueItem,
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.items.common import WorkQueueContext
 
 _STALE_HANDOVER_THRESHOLD_DAYS = 30
 

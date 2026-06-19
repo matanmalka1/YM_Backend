@@ -5,11 +5,11 @@ from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import ENTITY_BUSINESS
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.businesses.models.business import Business, BusinessStatus
-from app.businesses.repositories.business_repository import BusinessRepository
 from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
+from app.businesses.models.business import Business, BusinessStatus
+from app.businesses.repositories.business_repository import BusinessRepository
 from app.businesses.services.business_lifecycle_service import BusinessLifecycleService
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_service import get_client_or_raise

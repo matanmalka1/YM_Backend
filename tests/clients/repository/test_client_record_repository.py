@@ -4,10 +4,10 @@ from datetime import date
 
 import pytest
 
-from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
+from app.businesses.models.business import Business, BusinessStatus
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import IdNumberType

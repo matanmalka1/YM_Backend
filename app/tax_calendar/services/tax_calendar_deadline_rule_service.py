@@ -12,7 +12,9 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.common.enums import DeadlineRuleType
-from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import DeadlineRuleRepository
+from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import (
+    DeadlineRuleRepository,
+)
 
 
 def has_overlapping_rule(

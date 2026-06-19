@@ -9,8 +9,8 @@ from app.clients.repositories.client_active_scope import scope_to_active_clients
 from app.vat.repositories.vat_compliance_repository import (
     VatComplianceRepository,
 )
-from app.work_queue.schemas.work_queue import WorkQueueItem, WorkQueueSourceType
 from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
+from app.work_queue.schemas.work_queue import WorkQueueItem, WorkQueueSourceType
 from app.work_queue.work_queue_metadata import (
     annual_report_metadata,
     vat_work_item_metadata,

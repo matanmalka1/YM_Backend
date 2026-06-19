@@ -22,6 +22,7 @@ from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
+from app.vat.vat_amounts import split_gross_amount
 from app.vat.vat_constants import (
     ACTION_INVOICE_ADDED,
     ACTION_STATUS_CHANGED,
@@ -44,7 +45,6 @@ from app.vat.vat_messages import (
     VAT_NET_AMOUNT_POSITIVE_REQUIRED,
     VAT_UNKNOWN_COUNTERPARTY_NAME,
 )
-from app.vat.vat_amounts import split_gross_amount
 
 
 def add_invoice(

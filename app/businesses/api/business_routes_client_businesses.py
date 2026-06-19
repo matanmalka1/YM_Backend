@@ -11,8 +11,8 @@ from app.businesses.schemas.business_schemas import (
     BusinessUpdateRequest,
     ClientBusinessesResponse,
 )
-from app.businesses.services.business_service import BusinessService
 from app.businesses.services.business_client_business_service import ClientBusinessService
+from app.businesses.services.business_service import BusinessService
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId

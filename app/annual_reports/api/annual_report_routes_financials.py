@@ -2,6 +2,7 @@
 
 from fastapi import APIRouter, Depends, Query, status
 
+from app.annual_reports.annual_report_tax_engine import calculate_tax
 from app.annual_reports.api.annual_report_responses import (
     REPORT_LINE_WRITE_RESPONSES,
     REPORT_UPDATE_RESPONSES,
@@ -24,12 +25,13 @@ from app.annual_reports.schemas.annual_report_financials import (
 from app.annual_reports.services.annual_report_advances_summary_service import (
     AnnualReportAdvancesSummaryService,
 )
-from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
+from app.annual_reports.services.annual_report_financial_line_service import (
+    AnnualReportFinancialLineService,
+)
 from app.annual_reports.services.annual_report_financial_summary_service import (
     AnnualReportFinancialSummaryService,
 )
 from app.annual_reports.services.annual_report_readiness_service import AnnualReportReadinessService
-from app.annual_reports.annual_report_tax_engine import calculate_tax
 from app.annual_reports.services.annual_report_tax_service import (
     AnnualReportTaxService,
 )

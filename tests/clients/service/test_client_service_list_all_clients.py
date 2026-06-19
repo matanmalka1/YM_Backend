@@ -1,6 +1,6 @@
+from app.clients.services.client_create_service import create_client_identity_only
 from app.clients.services.client_lifecycle_service import ClientLifecycleService
 from app.clients.services.client_query_service import ClientQueryService
-from app.clients.services.client_create_service import create_client_identity_only
 from app.common.enums import EntityType, IdNumberType
 
 

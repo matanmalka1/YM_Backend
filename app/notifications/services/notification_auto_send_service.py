@@ -16,20 +16,20 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notifications.repositories.notification_repository import NotificationRepository
-from app.notifications.schemas.notification_schemas import NotificationResult
 from app.notifications.notification_constants import NOTIFICATION_IDEMPOTENCY_TTL_HOURS
 from app.notifications.notification_context_resolver import (
     NotificationContextResolver,
 )
+from app.notifications.notification_template_renderer import (
+    NotificationTemplateRenderer,
+)
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import NotificationResult
 from app.notifications.services.notification_delivery_service import (
     NotificationDeliveryService,
 )
 from app.notifications.services.notification_policy_service import (
     NotificationPolicyService,
-)
-from app.notifications.notification_template_renderer import (
-    NotificationTemplateRenderer,
 )
 
 _AUTO_SEND_ALLOWED_TRIGGERS = {NotificationTrigger.BINDER_READY_FOR_HANDOVER}

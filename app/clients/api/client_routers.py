@@ -2,9 +2,9 @@
 
 from fastapi import APIRouter
 
-from app.clients.api.client_routes_tasks import router as client_tasks_router
 from app.clients.api.client_routes import router as clients_router
 from app.clients.api.client_routes_excel import router as clients_excel_router
+from app.clients.api.client_routes_tasks import router as client_tasks_router
 
 router = APIRouter()
 router.include_router(clients_excel_router)

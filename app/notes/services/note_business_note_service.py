@@ -2,10 +2,10 @@
 
 from sqlalchemy.orm import Session
 
-from app.businesses.repositories.business_repository import BusinessRepository
 from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
 )
+from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError

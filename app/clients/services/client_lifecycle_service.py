@@ -2,16 +2,16 @@ from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import ENTITY_CLIENT
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.clients.repositories.client_record_read_repository import (
-    get_full_record,
-    get_full_record_including_deleted,
-)
-from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.client_messages import (
     CLIENT_ID_NUMBER_ACTIVE_EXISTS,
     CLIENT_NOT_DELETED,
     CLIENT_NOT_FOUND,
 )
+from app.clients.repositories.client_record_read_repository import (
+    get_full_record,
+    get_full_record_including_deleted,
+)
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, NotFoundError
 

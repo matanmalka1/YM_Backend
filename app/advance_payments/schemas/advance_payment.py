@@ -4,13 +4,13 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, computed_field, model_validator
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePaymentStatus,
-    PaymentMethod,
-)
 from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
     SUPPORTED_PERIOD_MONTH_COUNTS,
+)
+from app.advance_payments.models.advance_payment import (
+    AdvancePaymentStatus,
+    PaymentMethod,
 )
 from app.common.period_utils import parse_period_month
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr

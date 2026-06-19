@@ -2,15 +2,17 @@ from fastapi import APIRouter, Depends, Query
 
 from app.core.openapi_responses import not_found_response
 from app.core.path_params import PathId
-from app.documents.permanent_documents.schemas.permanent_document import (
-    DocumentVersionsResponse,
-)
-from app.documents.permanent_documents.permanent_document_constants import DOCUMENT_VERSIONS_DEFAULT_LIMIT
-from app.documents.permanent_documents.services.permanent_document_action_service import (
-    PermanentDocumentActionService,
+from app.documents.permanent_documents.permanent_document_constants import (
+    DOCUMENT_VERSIONS_DEFAULT_LIMIT,
 )
 from app.documents.permanent_documents.permanent_document_response_builder import (
     PermanentDocumentResponseBuilder,
+)
+from app.documents.permanent_documents.schemas.permanent_document import (
+    DocumentVersionsResponse,
+)
+from app.documents.permanent_documents.services.permanent_document_action_service import (
+    PermanentDocumentActionService,
 )
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole

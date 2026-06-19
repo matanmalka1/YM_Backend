@@ -2,14 +2,14 @@
 
 from sqlalchemy.orm import Session
 
+from app.businesses.business_guards import (
+    assert_business_belongs_to_legal_entity,
+)
 from app.businesses.models.business import Business
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.businesses.schemas.business_schemas import (
     BusinessResponse,
     ClientBusinessesResponse,
-)
-from app.businesses.business_guards import (
-    assert_business_belongs_to_legal_entity,
 )
 from app.businesses.services.business_service import BusinessService
 from app.clients.services.client_service import get_client_or_raise

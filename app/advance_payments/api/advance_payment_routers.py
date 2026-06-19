@@ -2,8 +2,8 @@
 
 from fastapi import APIRouter
 
-from app.advance_payments.api.advance_payment_routes_generate import router as generate_router
 from app.advance_payments.api.advance_payment_routes import router as payments_router
+from app.advance_payments.api.advance_payment_routes_generate import router as generate_router
 from app.advance_payments.api.advance_payment_routes_overview import overview_router
 
 router = APIRouter()

@@ -3,6 +3,7 @@ from types import SimpleNamespace
 
 import pytest
 
+import app.signature_requests.signature_request_validations as validations
 from app.businesses.models.business import Business
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
@@ -12,8 +13,9 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.signature_requests.services import signature_request_creation_service as create_request_module
-import app.signature_requests.signature_request_validations as validations
+from app.signature_requests.services import (
+    signature_request_creation_service as create_request_module,
+)
 from app.signature_requests.services.signature_request_admin_service import expire_overdue_requests
 from app.signature_requests.services.signature_request_service import (
     SignatureRequestService,

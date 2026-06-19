@@ -11,7 +11,9 @@ from app.charges.api.charge_routers import router as charge_router
 from app.clients.api.client_routers import router as clients_router
 from app.communications.api.correspondence_routers import router as correspondence_router
 from app.dashboard.api.dashboard_routers import router as dashboard_router
-from app.documents.permanent_documents.api.permanent_document_routers import router as permanent_documents_router
+from app.documents.permanent_documents.api.permanent_document_routers import (
+    router as permanent_documents_router,
+)
 from app.health.api.health_routers import router as health_router
 from app.invoices.api.invoice_routers import router as invoice_router
 from app.notes.api.note_routers import router as notes_router

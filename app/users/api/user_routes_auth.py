@@ -6,7 +6,6 @@ from app.config import settings
 from app.core.openapi_responses import bad_request_response, error_responses, unauthorized_response
 from app.middleware.rate_limiting import get_email_key, limiter
 from app.users.api.user_auth_cookies import clear_refresh_cookie, set_refresh_cookie
-from app.users.user_constants import REFRESH_COOKIE_NAME
 from app.users.api.user_deps import CurrentUser, DBSession
 from app.users.schemas.user_auth import (
     AuthTokenResponse,
@@ -15,6 +14,7 @@ from app.users.schemas.user_auth import (
     UserResponse,
 )
 from app.users.services.user_auth_service import AuthService
+from app.users.user_constants import REFRESH_COOKIE_NAME
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 

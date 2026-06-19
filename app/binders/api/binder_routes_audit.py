@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.binders.api.binder_responses import BINDER_INTAKE_UPDATE_RESPONSES
+from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.binders.schemas.binder import (
     BinderAuditResponse,
     BinderIntakeListResponse,
@@ -9,7 +10,6 @@ from app.binders.schemas.binder import (
 )
 from app.binders.services.binder_audit_service import BinderAuditService
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
-from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.core.path_params import PathId

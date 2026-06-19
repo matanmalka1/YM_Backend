@@ -3,6 +3,10 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.binders.binder_messages import (
+    BINDER_CLIENT_LOCKED,
+    BINDER_RECEIVED,
+)
 from app.binders.models.binder import Binder, BinderLocationStatus
 from app.binders.models.binder_intake import BinderIntake
 from app.binders.repositories.binder_intake_material_repository import (
@@ -11,10 +15,6 @@ from app.binders.repositories.binder_intake_material_repository import (
 from app.binders.repositories.binder_intake_repository import BinderIntakeRepository
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
-from app.binders.binder_messages import (
-    BINDER_CLIENT_LOCKED,
-    BINDER_RECEIVED,
-)
 from app.businesses.models.business import BusinessStatus
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.guards.client_record_guards import assert_client_record_is_active

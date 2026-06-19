@@ -5,8 +5,10 @@ from decimal import Decimal
 import pytest
 from sqlalchemy import select
 
+from app.annual_reports.services.annual_report_financial_line_service import (
+    AnnualReportFinancialLineService,
+)
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
 from app.annual_reports.services.annual_report_vat_import_service import VatImportService
 from app.audit.audit_constants import (
     ACTION_EXPENSE_ADDED,

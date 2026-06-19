@@ -5,8 +5,8 @@ from app.annual_reports.schemas.annual_report_detail import (
     AnnualReportDetailUpdateRequest,
     ReportDetailResponse,
 )
-from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.annual_report_detail_service import AnnualReportDetailService
+from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.openapi_responses import not_found_response
 from app.core.path_params import PathId
 from app.users.api.user_deps import CurrentUser, DBSession, require_role

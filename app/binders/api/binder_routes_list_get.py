@@ -2,10 +2,10 @@ from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Response, status
 
+from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.binders.schemas.binder import BinderListResponse, BinderResponse
 from app.binders.services.binder_list_service import BinderListService
 from app.binders.services.binder_service import BinderService
-from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response

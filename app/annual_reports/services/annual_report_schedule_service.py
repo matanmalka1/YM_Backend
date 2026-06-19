@@ -4,9 +4,9 @@ from app.annual_reports.models.annual_report_schedule_entry import AnnualReportS
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
-from .annual_report_base_service import AnnualReportBaseService
 from ..annual_report_constants import SCHEDULE_FLAGS
 from ..annual_report_messages import INVALID_SCHEDULE_ERROR, SCHEDULE_NOT_FOUND
+from .annual_report_base_service import AnnualReportBaseService
 
 
 class AnnualReportScheduleService(AnnualReportBaseService):

@@ -14,18 +14,18 @@ from app.clients.schemas.client import (
     ClientOnboardingRequest,
     ClientUpdateRequest,
 )
+from app.clients.schemas.client_impact import ClientCreationImpactResponse
 from app.clients.schemas.client_record_response import (
     ClientRecordListResponse,
     ClientRecordResponse,
     ClientSidebarListResponse,
     CreateClientRecordResponse,
 )
-from app.clients.schemas.client_impact import ClientCreationImpactResponse
+from app.clients.services.client_create_service import CreateClientService
+from app.clients.services.client_impact_preview_service import compute_creation_impact
 from app.clients.services.client_lifecycle_service import ClientLifecycleService
 from app.clients.services.client_query_service import ClientQueryService
 from app.clients.services.client_update_service import ClientUpdateService
-from app.clients.services.client_create_service import CreateClientService
-from app.clients.services.client_impact_preview_service import compute_creation_impact
 from app.common.enums import EntityType
 from app.core.api_types import SortOrder
 from app.core.openapi_responses import not_found_response

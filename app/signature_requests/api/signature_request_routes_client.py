@@ -13,9 +13,11 @@ from app.signature_requests.schemas.signature_request import (
     SignatureRequestListResponse,
     SignatureRequestResponse,
 )
-from app.signature_requests.signature_request_response_builder import SignatureRequestResponseBuilder
 from app.signature_requests.services.signature_request_service import (
     SignatureRequestService,
+)
+from app.signature_requests.signature_request_response_builder import (
+    SignatureRequestResponseBuilder,
 )
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole

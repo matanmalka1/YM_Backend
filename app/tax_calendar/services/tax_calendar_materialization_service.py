@@ -12,7 +12,9 @@ from app.common.enums import ObligationType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
-from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import DeadlineRuleRepository
+from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import (
+    DeadlineRuleRepository,
+)
 from app.tax_calendar.services.tax_calendar_entry_service import (
     _resolve_rule,
     annual_due_date,

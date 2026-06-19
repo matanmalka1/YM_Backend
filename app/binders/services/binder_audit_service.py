@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.binders.models.binder import Binder
 from app.binders.models.binder_lifecycle_log import BinderLifecycleLog
 from app.binders.repositories.binder_intake_material_repository import (
@@ -13,7 +14,6 @@ from app.binders.schemas.binder import (
     BinderIntakeMaterialResponse,
     BinderIntakeResponse,
 )
-from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.users.repositories.user_repository import UserRepository

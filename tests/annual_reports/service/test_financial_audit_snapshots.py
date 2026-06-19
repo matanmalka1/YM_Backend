@@ -5,6 +5,7 @@ from itertools import count
 import pytest
 from sqlalchemy import select
 
+from app.annual_reports.annual_report_financial_line_helpers import audit_scalar
 from app.annual_reports.models.annual_report_expense_line import (
     AnnualReportExpenseLine,
     ExpenseCategoryType,
@@ -13,9 +14,10 @@ from app.annual_reports.models.annual_report_income_line import (
     AnnualReportIncomeLine,
     IncomeSourceType,
 )
+from app.annual_reports.services.annual_report_financial_line_service import (
+    AnnualReportFinancialLineService,
+)
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.annual_report_financial_line_helpers import audit_scalar
-from app.annual_reports.services.annual_report_financial_line_service import AnnualReportFinancialLineService
 from app.audit.audit_constants import (
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,

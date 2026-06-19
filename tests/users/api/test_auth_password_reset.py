@@ -3,8 +3,8 @@ from datetime import timedelta
 
 from sqlalchemy import func, select
 
-from app.users.models.user_password_reset_token import PasswordResetToken
 from app.users.models.user import User, UserRole
+from app.users.models.user_password_reset_token import PasswordResetToken
 from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 

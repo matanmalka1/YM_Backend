@@ -4,13 +4,6 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.binders.models.binder_intake_material import BinderIntakeMaterial
-from app.binders.repositories.binder_intake_material_repository import (
-    BinderIntakeMaterialRepository,
-)
-from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
-from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.binder_messages import (
     BINDER_CAPACITY_REOPENED,
     BINDER_HANDED_OVER,
@@ -20,6 +13,13 @@ from app.binders.binder_messages import (
     BINDER_NOT_FOUND,
     BINDER_RECEIVED,
 )
+from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder_intake_material import BinderIntakeMaterial
+from app.binders.repositories.binder_intake_material_repository import (
+    BinderIntakeMaterialRepository,
+)
+from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
+from app.binders.repositories.binder_repository import BinderRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.notifications.models.notification import NotificationTrigger

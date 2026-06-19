@@ -6,12 +6,12 @@ from sqlalchemy.orm import Session
 
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
+from app.work_queue.items.common import load_client_profiles
 from app.work_queue.schemas.work_queue import (
     WorkQueueItem,
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.items.common import load_client_profiles
 from app.work_queue.services.work_queue_service import WorkQueueService
 
 _ATTENTION_URGENCIES = frozenset(

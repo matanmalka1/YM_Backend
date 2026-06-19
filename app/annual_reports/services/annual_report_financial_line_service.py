@@ -4,22 +4,6 @@ from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
-from app.annual_reports.domain.expense_rules import default_recognition_rate
-from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
-from app.annual_reports.models.annual_report_income_line import IncomeSourceType
-from app.annual_reports.repositories.annual_report_repository import (
-    AnnualReportRepository,
-)
-from app.annual_reports.repositories.annual_report_expense_repository import (
-    AnnualReportExpenseRepository,
-)
-from app.annual_reports.repositories.annual_report_income_repository import (
-    AnnualReportIncomeRepository,
-)
-from app.annual_reports.schemas.annual_report_financials import (
-    ExpenseLineResponse,
-    IncomeLineResponse,
-)
 from app.annual_reports.annual_report_financial_line_helpers import (
     assert_client_allows_financial_mutation,
     audit_scalar,
@@ -32,6 +16,22 @@ from app.annual_reports.annual_report_messages import (
     INCOME_LINE_NOT_FOUND,
     INVALID_EXPENSE_CATEGORY_ERROR,
     INVALID_INCOME_SOURCE_ERROR,
+)
+from app.annual_reports.domain.expense_rules import default_recognition_rate
+from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
+from app.annual_reports.models.annual_report_income_line import IncomeSourceType
+from app.annual_reports.repositories.annual_report_expense_repository import (
+    AnnualReportExpenseRepository,
+)
+from app.annual_reports.repositories.annual_report_income_repository import (
+    AnnualReportIncomeRepository,
+)
+from app.annual_reports.repositories.annual_report_repository import (
+    AnnualReportRepository,
+)
+from app.annual_reports.schemas.annual_report_financials import (
+    ExpenseLineResponse,
+    IncomeLineResponse,
 )
 from app.annual_reports.services.annual_report_tax_service import AnnualReportTaxService
 from app.audit.audit_constants import (

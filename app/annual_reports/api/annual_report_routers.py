@@ -9,6 +9,7 @@ from app.annual_reports.api.annual_report_routes_create_read import (
     router as create_read_router,
 )
 from app.annual_reports.api.annual_report_routes_detail import router as detail_router
+from app.annual_reports.api.annual_report_routes_export import router as export_router
 from app.annual_reports.api.annual_report_routes_financials import router as financials_router
 from app.annual_reports.api.annual_report_routes_schedule import router as schedule_router
 from app.annual_reports.api.annual_report_routes_season import season_router
@@ -17,7 +18,6 @@ from app.annual_reports.api.annual_report_routes_stage_transition import (
 )
 from app.annual_reports.api.annual_report_routes_status import router as status_router
 from app.annual_reports.api.annual_report_routes_tax import router as tax_router
-from app.annual_reports.api.annual_report_routes_export import router as export_router
 
 router = APIRouter()
 router.include_router(annex_router)

@@ -17,13 +17,6 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notifications.repositories.notification_repository import NotificationRepository
-from app.notifications.schemas.notification_schemas import (
-    NotificationPreviewRequest,
-    NotificationPreviewResponse,
-    NotificationResult,
-    NotificationSendRequest,
-)
 from app.notifications.notification_constants import (
     BODY_MAX_LENGTH,
     NOTIFICATION_IDEMPOTENCY_TTL_HOURS,
@@ -32,14 +25,21 @@ from app.notifications.notification_constants import (
 from app.notifications.notification_context_resolver import (
     NotificationContextResolver,
 )
+from app.notifications.notification_template_renderer import (
+    NotificationTemplateRenderer,
+)
+from app.notifications.repositories.notification_repository import NotificationRepository
+from app.notifications.schemas.notification_schemas import (
+    NotificationPreviewRequest,
+    NotificationPreviewResponse,
+    NotificationResult,
+    NotificationSendRequest,
+)
 from app.notifications.services.notification_delivery_service import (
     NotificationDeliveryService,
 )
 from app.notifications.services.notification_policy_service import (
     NotificationPolicyService,
-)
-from app.notifications.notification_template_renderer import (
-    NotificationTemplateRenderer,
 )
 
 # Triggers that are auto-only and must never reach the manual send path.

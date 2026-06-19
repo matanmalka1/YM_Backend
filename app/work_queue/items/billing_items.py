@@ -8,15 +8,15 @@ from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
 )
-from app.charges.models.charge import Charge, ChargeStatus
 from app.charges.charge_constants import UNPAID_CHARGE_TASK_THRESHOLD_DAYS
+from app.charges.models.charge import Charge, ChargeStatus
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
 from app.work_queue.schemas.work_queue import (
     WorkQueueItem,
     WorkQueueSourceType,
     WorkQueueUrgency,
 )
-from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
 from app.work_queue.work_queue_metadata import (
     advance_payment_metadata,
     charge_metadata,

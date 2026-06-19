@@ -12,11 +12,11 @@ from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 from app.tax_calendar.services.tax_calendar_grouped_service import list_groups_paginated
-from app.tax_calendar.tax_calendar_link_diagnostics import (
-    find_active_null_tax_calendar_links,
-)
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
+)
+from app.tax_calendar.tax_calendar_link_diagnostics import (
+    find_active_null_tax_calendar_links,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem

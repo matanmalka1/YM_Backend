@@ -6,8 +6,10 @@ from app.annual_reports.schemas.annual_report_responses import (
     DefaultTaxYearResponse,
     SeasonSummaryResponse,
 )
+from app.annual_reports.services.annual_report_season_service import (
+    get_active_annual_report_tax_year,
+)
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.annual_reports.services.annual_report_season_service import get_active_annual_report_tax_year
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PositiveIntPath
 from app.users.api.user_deps import CurrentUser, DBSession, require_role

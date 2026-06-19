@@ -5,8 +5,8 @@ from typing import BinaryIO
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.binder_messages import BINDER_NOT_FOUND
+from app.binders.repositories.binder_repository import BinderRepository
 from app.businesses.business_guards import (
     assert_business_belongs_to_legal_entity,
     get_business_or_raise,
@@ -23,12 +23,6 @@ from app.documents.permanent_documents.models.permanent_document import (
     PermanentDocument,
     PermanentDocumentType,
 )
-from app.documents.permanent_documents.repositories.permanent_document_query_repository import (
-    PermanentDocumentQueryRepository,
-)
-from app.documents.permanent_documents.repositories.permanent_document_repository import (
-    PermanentDocumentRepository,
-)
 from app.documents.permanent_documents.permanent_document_constants import (
     ALLOWED_MIME_TYPES,
     MAX_FILE_SIZE_BYTES,
@@ -41,6 +35,12 @@ from app.documents.permanent_documents.permanent_document_messages import (
     INVALID_FILE_TYPE_ERROR,
     UPLOAD_FAILED_ERROR,
     VERSION_CONFLICT_ERROR,
+)
+from app.documents.permanent_documents.repositories.permanent_document_query_repository import (
+    PermanentDocumentQueryRepository,
+)
+from app.documents.permanent_documents.repositories.permanent_document_repository import (
+    PermanentDocumentRepository,
 )
 from app.infrastructure.storage import StorageProvider, get_storage_provider
 from app.utils.time_utils import utcnow

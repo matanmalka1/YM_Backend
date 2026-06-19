@@ -12,7 +12,9 @@ from app.tax_calendar.integrations.tax_rules_registry import (
     registry_periodic_calendar_available,
 )
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
-from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import DeadlineRuleRepository
+from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import (
+    DeadlineRuleRepository,
+)
 from app.tax_calendar.repositories.tax_calendar_entry_repository import TaxCalendarEntryRepository
 from app.tax_calendar.services.tax_calendar_entry_service import generate_for_year_range
 from app.utils.time_utils import israel_today

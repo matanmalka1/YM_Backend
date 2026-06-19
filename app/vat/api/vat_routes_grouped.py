@@ -6,13 +6,13 @@ from app.common.enums import VatType
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
+from app.vat import vat_grouped_enrichment
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.schemas.vat_report import (
     VatWorkItemGroupItemsResponse,
     VatWorkItemGroupsResponse,
     VatWorkItemGroupSummary,
 )
-from app.vat import vat_grouped_enrichment
 
 router = APIRouter(prefix="/vat", tags=["vat-reports"])
 

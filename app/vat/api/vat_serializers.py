@@ -3,8 +3,8 @@
 from app.actions.services.vat_report_actions import get_vat_work_item_actions
 from app.users.models.user import UserRole
 from app.vat.schemas.vat_report import VatWorkItemListItem, VatWorkItemResponse
-from app.vat.vat_report_queries import get_vat_deadline_fields
 from app.vat.services.vat_report_service import VatReportService
+from app.vat.vat_report_queries import get_vat_deadline_fields
 
 
 def serialize_enriched_work_item(
