@@ -5,7 +5,7 @@ import json
 
 from sqlalchemy.orm import Session
 
-from app.clients.models.client_record import ClientRecord
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.config import settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
@@ -76,6 +76,7 @@ class NotificationAutoSendService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = NotificationRepository(db)
+        self.client_repo = ClientRecordRepository(db)
         self.policy = NotificationPolicyService()
         self.renderer = NotificationTemplateRenderer()
         self.resolver = NotificationContextResolver(db)
@@ -140,7 +141,7 @@ class NotificationAutoSendService:
                 reason="כבר נשלח (idempotency)",
             )
 
-        client_record = self.db.get(ClientRecord, client_record_id)
+        client_record = self.client_repo.get_by_id(client_record_id)
         if client_record is None:
             raise NotFoundError("הלקוח לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 

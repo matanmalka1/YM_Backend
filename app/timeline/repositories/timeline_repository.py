@@ -1,6 +1,8 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.annual_reports.models.annual_report_model import AnnualReport
+from app.annual_reports.models.annual_report_status_history import AnnualReportStatusHistory
 from app.clients.models.client_record import ClientRecord
 from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.signature_requests.models.signature_request import (
@@ -57,3 +59,21 @@ class TimelineRepository:
             .limit(_BULK_LIMIT)
         ).all()
         return [(sig, audit) for sig, audit in rows]
+
+    def list_annual_report_status_events(
+        self, client_record_id: int | None
+    ) -> list[tuple[AnnualReport, AnnualReportStatusHistory]]:
+        stmt = (
+            select(AnnualReport, AnnualReportStatusHistory)
+            .join(
+                AnnualReportStatusHistory,
+                AnnualReportStatusHistory.annual_report_id == AnnualReport.id,
+            )
+            .where(AnnualReport.deleted_at.is_(None))
+        )
+        if client_record_id is not None:
+            stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
+        rows = self.db.execute(
+            stmt.order_by(AnnualReportStatusHistory.occurred_at.desc()).limit(_BULK_LIMIT)
+        ).all()
+        return [(report, history) for report, history in rows]

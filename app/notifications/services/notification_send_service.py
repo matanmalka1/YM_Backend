@@ -6,7 +6,7 @@ import re
 
 from sqlalchemy.orm import Session
 
-from app.clients.models.client_record import ClientRecord
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.config import settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
@@ -40,6 +40,9 @@ from app.notifications.services.notification_delivery_service import (
 )
 from app.notifications.services.notification_policy_service import (
     NotificationPolicyService,
+)
+from app.signature_requests.repositories.signature_request_repository import (
+    SignatureRequestRepository,
 )
 
 # Triggers that are auto-only and must never reach the manual send path.
@@ -95,6 +98,8 @@ class NotificationSendService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = NotificationRepository(db)
+        self.client_repo = ClientRecordRepository(db)
+        self.signature_request_repo = SignatureRequestRepository(db)
         self.policy = NotificationPolicyService()
         self.renderer = NotificationTemplateRenderer()
         self.resolver = NotificationContextResolver(db)
@@ -129,7 +134,7 @@ class NotificationSendService:
                 "חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
             )
 
-        client_record = self.db.get(ClientRecord, request.client_record_id)
+        client_record = self.client_repo.get_by_id(request.client_record_id)
         if client_record is None:
             raise NotFoundError("הלקוח לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 
@@ -213,7 +218,7 @@ class NotificationSendService:
                 "חובה לספק מזהה ישות לסוג הודעה זה", ErrorCode.NOTIFICATION_MISSING_ENTITY_ID
             )
 
-        client_record = self.db.get(ClientRecord, request.client_record_id)
+        client_record = self.client_repo.get_by_id(request.client_record_id)
         if client_record is None:
             raise NotFoundError("הלקוח לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
 
@@ -428,7 +433,5 @@ class NotificationSendService:
     def _resolve_signer_email(self, signature_request_id: int | None) -> str | None:
         if signature_request_id is None:
             return None
-        from app.signature_requests.models.signature_request import SignatureRequest
-
-        sig = self.db.get(SignatureRequest, signature_request_id)
+        sig = self.signature_request_repo.get_by_id(signature_request_id)
         return sig.signer_email if sig else None

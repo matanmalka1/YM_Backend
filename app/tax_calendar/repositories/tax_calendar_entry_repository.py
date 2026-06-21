@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from sqlalchemy import func, select
+from sqlalchemy import func, select, tuple_
 from sqlalchemy.orm import Session
 
 from app.common.enums import ObligationType
@@ -39,6 +39,31 @@ class TaxCalendarEntryRepository:
                 TaxCalendarEntry.tax_year == tax_year,
             )
         )
+
+    def find_annual(self, tax_year: int) -> TaxCalendarEntry | None:
+        return self.db.scalars(
+            select(TaxCalendarEntry).where(
+                TaxCalendarEntry.obligation_type == ObligationType.ANNUAL_REPORT.value,
+                TaxCalendarEntry.tax_year == tax_year,
+            )
+        ).one_or_none()
+
+    def list_periodic(
+        self, obligation_type: ObligationType | str, periods: list[tuple[str, int]]
+    ) -> list[TaxCalendarEntry]:
+        if not periods:
+            return []
+        value = (
+            obligation_type.value
+            if isinstance(obligation_type, ObligationType)
+            else obligation_type
+        )
+        return self.db.scalars(
+            select(TaxCalendarEntry).where(
+                TaxCalendarEntry.obligation_type == value,
+                tuple_(TaxCalendarEntry.period, TaxCalendarEntry.period_months_count).in_(periods),
+            )
+        ).all()
 
     def count_in_year_range(self, start_year: int, end_year: int) -> int:
         return (

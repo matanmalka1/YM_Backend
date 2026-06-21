@@ -3,20 +3,27 @@ from __future__ import annotations
 import datetime as _dt
 from dataclasses import dataclass, field
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus as _ARS
+from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
+from app.binders.repositories.binder_repository import BinderRepository
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.notifications.models.notification import NotificationStatus, NotificationTrigger
 from app.notifications.notification_constants import (
     ANNUAL_REMINDER_COOLDOWN_DAYS,
     PAYMENT_REMINDER_WARNING_DAYS,
     VAT_REMINDER_WINDOW_DAYS,
 )
+from app.signature_requests.repositories.signature_request_repository import (
+    SignatureRequestRepository,
+)
 from app.utils.time_utils import israel_today
+from app.vat.repositories.vat_work_item_query_repository import VatWorkItemQueryRepository
 
 # Triggers allowed even for FROZEN/CLOSED clients
 _FROZEN_CLOSED_ALLOWED = {
@@ -101,7 +108,10 @@ class NotificationPolicyService:
             if db is None or entity_id is None:
                 return PolicyResult(blocked=True, reason="חסר מזהה פריט מע״מ לאימות")
             result = self._check_vat_documents_reminder(
-                db, entity_id, client_record_id=client_record_id
+                db,
+                entity_id,
+                client_record_id=client_record_id,
+                legal_entity_id=client_record.legal_entity_id,
             )
             if result is not None:
                 return result
@@ -138,9 +148,9 @@ class NotificationPolicyService:
         return PolicyResult(blocked=False)
 
     def _check_binder_ready_for_handover(self, db: Session, binder_id: int) -> PolicyResult | None:
-        from app.binders.models.binder import Binder, BinderLocationStatus
+        from app.binders.models.binder import BinderLocationStatus
 
-        binder = db.get(Binder, binder_id)
+        binder = BinderRepository(db).get_by_id(binder_id)
         if binder is None or binder.location_status != BinderLocationStatus.READY_FOR_HANDOVER:
             return PolicyResult(
                 blocked=True,
@@ -152,10 +162,9 @@ class NotificationPolicyService:
         self, db: Session, annual_report_id: int, client_record_id: int | None = None
     ) -> PolicyResult | None:
         from app.annual_reports.models.annual_report_enums import AnnualReportStatus
-        from app.annual_reports.models.annual_report_model import AnnualReport
         from app.notifications.repositories.notification_repository import NotificationRepository
 
-        report = db.get(AnnualReport, annual_report_id)
+        report = AnnualReportRepository(db).get_by_id(annual_report_id)
         if report is None:
             return PolicyResult(blocked=True, reason="הדוח השנתי לא נמצא")
         if client_record_id is not None and report.client_record_id != client_record_id:
@@ -185,9 +194,7 @@ class NotificationPolicyService:
     def _check_annual_report_documents_request(
         self, db: Session, annual_report_id: int, client_record_id: int | None = None
     ) -> PolicyResult | None:
-        from app.annual_reports.models.annual_report_model import AnnualReport
-
-        report = db.get(AnnualReport, annual_report_id)
+        report = AnnualReportRepository(db).get_by_id(annual_report_id)
         if report is None:
             return PolicyResult(blocked=True, reason="הדוח השנתי לא נמצא")
         if client_record_id is not None and report.client_record_id != client_record_id:
@@ -200,22 +207,20 @@ class NotificationPolicyService:
         return None
 
     def _check_vat_documents_reminder(
-        self, db: Session, vat_work_item_id: int, client_record_id: int
+        self,
+        db: Session,
+        vat_work_item_id: int,
+        client_record_id: int,
+        legal_entity_id: int,
     ) -> PolicyResult | None:
-        from app.legal_entities.models.legal_entity import LegalEntity
         from app.vat.models.vat_enums import VatWorkItemStatus
-        from app.vat.models.vat_work_item import VatWorkItem
 
-        item = db.get(VatWorkItem, vat_work_item_id)
+        item = VatWorkItemQueryRepository(db).get_by_id(vat_work_item_id)
         if item is None or item.client_record_id != client_record_id:
             return PolicyResult(blocked=True, reason='פריט מע"מ לא נמצא')
 
-        entity_type = db.scalar(
-            select(LegalEntity.entity_type)
-            .join(ClientRecord, ClientRecord.legal_entity_id == LegalEntity.id)
-            .where(ClientRecord.id == client_record_id)
-        )
-        if entity_type == EntityType.OSEK_PATUR:
+        legal_entity = LegalEntityRepository(db).get_by_id(legal_entity_id)
+        if legal_entity is not None and legal_entity.entity_type == EntityType.OSEK_PATUR:
             return PolicyResult(blocked=True, reason='לקוח עוסק פטור אינו חייב בדיווח מע"מ')
 
         if item.status in (VatWorkItemStatus.FILED, VatWorkItemStatus.CANCELED):
@@ -241,10 +246,10 @@ class NotificationPolicyService:
         client_record_id: int,
         confirm_recent_duplicate: bool,
     ) -> PolicyResult | None:
-        from app.charges.models.charge import Charge, ChargeStatus
+        from app.charges.models.charge import ChargeStatus
         from app.notifications.repositories.notification_repository import NotificationRepository
 
-        charge = db.get(Charge, charge_id)
+        charge = ChargeRepository(db).get_by_id(charge_id)
         if charge is None or charge.client_record_id != client_record_id:
             return PolicyResult(blocked=True, reason="החיוב לא נמצא")
         if charge.status != ChargeStatus.ISSUED:
@@ -270,9 +275,9 @@ class NotificationPolicyService:
     def _check_invoice_issued(
         self, db: Session, charge_id: int, client_record_id: int
     ) -> PolicyResult | None:
-        from app.charges.models.charge import Charge, ChargeStatus
+        from app.charges.models.charge import ChargeStatus
 
-        charge = db.get(Charge, charge_id)
+        charge = ChargeRepository(db).get_by_id(charge_id)
         if charge is None or charge.client_record_id != client_record_id:
             return PolicyResult(blocked=True, reason="החיוב לא נמצא")
         if charge.status not in (ChargeStatus.ISSUED, ChargeStatus.PAID):
@@ -282,12 +287,9 @@ class NotificationPolicyService:
     def _check_signature_request(
         self, db: Session, signature_request_id: int, client_record_id: int
     ) -> PolicyResult | None:
-        from app.signature_requests.models.signature_request import (
-            SignatureRequest,
-            SignatureRequestStatus,
-        )
+        from app.signature_requests.models.signature_request import SignatureRequestStatus
 
-        sig = db.get(SignatureRequest, signature_request_id)
+        sig = SignatureRequestRepository(db).get_by_id(signature_request_id)
         if sig is None or sig.client_record_id != client_record_id:
             return PolicyResult(blocked=True, reason="בקשת החתימה לא נמצאה")
         if sig.status != SignatureRequestStatus.PENDING_SIGNATURE:

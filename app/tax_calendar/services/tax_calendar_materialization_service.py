@@ -3,7 +3,6 @@ from __future__ import annotations
 import re
 from datetime import date
 
-from sqlalchemy import select, tuple_
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
@@ -15,6 +14,7 @@ from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.repositories.tax_calendar_deadline_rule_repository import (
     DeadlineRuleRepository,
 )
+from app.tax_calendar.repositories.tax_calendar_entry_repository import TaxCalendarEntryRepository
 from app.tax_calendar.services.tax_calendar_entry_service import (
     _resolve_rule,
     annual_due_date,
@@ -33,6 +33,7 @@ _PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 class TaxCalendarMaterializationService:
     def __init__(self, db: Session):
         self.db = db
+        self.entry_repo = TaxCalendarEntryRepository(db)
 
     def ensure_periodic_entry(
         self, obligation_type, period: str, period_months_count: int
@@ -77,12 +78,7 @@ class TaxCalendarMaterializationService:
             _year, month = self._parse_period(period)
             self._periodic_rule_type(obligation_type, months)
             self._validate_period_alignment(month, months)
-        rows = self.db.scalars(
-            select(TaxCalendarEntry).where(
-                TaxCalendarEntry.obligation_type == obligation_type.value,
-                tuple_(TaxCalendarEntry.period, TaxCalendarEntry.period_months_count).in_(periods),
-            )
-        ).all()
+        rows = self.entry_repo.list_periodic(obligation_type, periods)
         return {(row.period, row.period_months_count): row for row in rows}
 
     def ensure_annual_entry(self, tax_year: int) -> TaxCalendarEntry:
@@ -147,8 +143,8 @@ class TaxCalendarMaterializationService:
     def _insert_or_refetch(self, entity, refetch):
         savepoint = self.db.begin_nested()
         try:
-            self.db.add(entity)
-            self.db.flush()
+            self.entry_repo.add(entity)
+            self.entry_repo.flush()
             savepoint.commit()
             return entity
         except IntegrityError:
@@ -160,21 +156,10 @@ class TaxCalendarMaterializationService:
 
     def _find_periodic(self, obligation_type, period, months):
         obligation_type = self._obligation(obligation_type)
-        return self.db.scalars(
-            select(TaxCalendarEntry).where(
-                TaxCalendarEntry.obligation_type == obligation_type.value,
-                TaxCalendarEntry.period == period,
-                TaxCalendarEntry.period_months_count == months,
-            )
-        ).one_or_none()
+        return self.entry_repo.find_periodic(obligation_type, period, months)
 
     def _find_annual(self, tax_year: int):
-        return self.db.scalars(
-            select(TaxCalendarEntry).where(
-                TaxCalendarEntry.obligation_type == ObligationType.ANNUAL_REPORT.value,
-                TaxCalendarEntry.tax_year == tax_year,
-            )
-        ).one_or_none()
+        return self.entry_repo.find_annual(tax_year)
 
     @staticmethod
     def _periodic_rule_type(obligation_type, months):

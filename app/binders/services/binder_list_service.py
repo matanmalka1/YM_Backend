@@ -1,6 +1,5 @@
 from datetime import date
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.actions.services.action_registry import get_binder_actions, get_binder_actions_for_state
@@ -8,7 +7,7 @@ from app.binders.models.binder import Binder
 from app.binders.repositories.binder_repository import BinderListRow, BinderRepository
 from app.binders.schemas.binder import BinderResponse
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.models.legal_entity import LegalEntity
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.utils.time_utils import israel_today
 
 _ALLOWED_SORT_COLS = {
@@ -28,6 +27,7 @@ class BinderListService:
         self.db = db
         self.binder_repo = BinderRepository(db)
         self.client_record_repo = ClientRecordRepository(db)
+        self.legal_entity_repo = LegalEntityRepository(db)
 
     def _build_client_context_maps(
         self, client_record_ids: list[int]
@@ -36,16 +36,9 @@ class BinderListService:
             self.client_record_repo.list_by_ids(client_record_ids) if client_record_ids else []
         )
         legal_entity_ids = list({record.legal_entity_id for record in client_records})
-        legal_entity_by_id = (
-            {
-                entity.id: entity
-                for entity in self.db.scalars(
-                    select(LegalEntity).where(LegalEntity.id.in_(legal_entity_ids))
-                ).all()
-            }
-            if legal_entity_ids
-            else {}
-        )
+        legal_entity_by_id = {
+            entity.id: entity for entity in self.legal_entity_repo.list_by_ids(legal_entity_ids)
+        }
         return (
             {record.id: record.office_client_number for record in client_records},
             {

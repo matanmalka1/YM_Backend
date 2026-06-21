@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.models.client_record import ClientRecord
+from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -70,6 +68,7 @@ class NotificationService:
         self.db = db
         self.repo = NotificationRepository(db)
         self.business_repo = BusinessRepository(db)
+        self.client_record_repo = ClientRecordRepository(db)
         self._send_svc = NotificationSendService(db)
 
     # ── Preview / Send (delegates to NotificationSendService) ─────────────────
@@ -151,14 +150,7 @@ class NotificationService:
 
     def _build_client_name_map(self, notifications: list) -> dict[int, str]:
         ids = list({n.client_record_id for n in notifications})  # type: ignore[attr-defined]
-        if not ids:
-            return {}
-        rows = self.db.execute(
-            select(ClientRecord.id, LegalEntity.official_name)
-            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
-            .where(ClientRecord.id.in_(ids))
-        ).all()
-        return {row[0]: row[1] for row in rows}
+        return self.client_record_repo.get_official_names_by_ids(ids)
 
     def _build_business_name_map(self, notifications: list) -> dict[int, str]:
         ids = [n.business_id for n in notifications if n.business_id is not None]  # type: ignore[attr-defined]

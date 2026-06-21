@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.annual_reports.annual_report_constants import VALID_TRANSITIONS
@@ -15,7 +14,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 )
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
-from app.legal_entities.models.legal_entity import LegalEntity
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 
 if TYPE_CHECKING:
     from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -53,16 +52,10 @@ class AnnualReportBaseService:
             else {}
         )
         legal_entity_ids = {record.legal_entity_id for record in records.values()}
-        legal_entities = (
-            {
-                entity.id: entity
-                for entity in self.db.scalars(
-                    select(LegalEntity).where(LegalEntity.id.in_(legal_entity_ids))
-                ).all()
-            }
-            if legal_entity_ids
-            else {}
-        )
+        legal_entities = {
+            entity.id: entity
+            for entity in LegalEntityRepository(self.db).list_by_ids(list(legal_entity_ids))
+        }
         return records, legal_entities
 
     def _to_responses(self, reports: list[AnnualReport]) -> list[AnnualReportResponse]:

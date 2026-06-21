@@ -2,11 +2,10 @@
 
 from decimal import ROUND_HALF_UP, Decimal
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.models.legal_entity import LegalEntity
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.reports.report_constants import VAT_STALE_PENDING_DAYS
 from app.utils.time_utils import utcnow
 from app.vat.repositories.vat_compliance_repository import (
@@ -19,6 +18,7 @@ class VatComplianceReportService:
         self.db = db
         self.repo = VatComplianceRepository(db)
         self.client_repo = ClientRecordRepository(db)
+        self.legal_entity_repo = LegalEntityRepository(db)
 
     def get_vat_compliance_report(self, year: int, page: int = 1, page_size: int = 50) -> dict:
         rows, total = self.repo.get_compliance_aggregates_paginated(
@@ -109,11 +109,7 @@ class VatComplianceReportService:
     def _client_name_map(self, client_record_ids: list[int]) -> dict[int, str]:
         records = self.client_repo.list_by_ids(list(set(client_record_ids)))
         legal_entity_ids = list({record.legal_entity_id for record in records})
-        entities = (
-            self.db.scalars(select(LegalEntity).where(LegalEntity.id.in_(legal_entity_ids))).all()
-            if legal_entity_ids
-            else []
-        )
+        entities = self.legal_entity_repo.list_by_ids(legal_entity_ids)
         entity_map = {entity.id: entity.official_name for entity in entities}
         return {
             record.id: entity_map[record.legal_entity_id]
