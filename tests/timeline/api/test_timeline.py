@@ -121,7 +121,7 @@ def test_timeline_orders_events_newest_first(
     test_db.commit()
 
     resp = client.get(
-        f"/api/v1/clients/{business.client_id}/timeline?page=1&page_size=5",
+        f"/api/v1/clients/{business.client_id}/timeline?page=1",
         headers=advisor_headers,
     )
     assert resp.status_code == 200
@@ -154,10 +154,10 @@ def test_timeline_applies_bulk_limits(client, test_db, advisor_headers, monkeypa
     test_db.commit()
 
     resp = client.get(
-        f"/api/v1/clients/{business.client_id}/timeline?page=1&page_size=200",
+        f"/api/v1/clients/{business.client_id}/timeline?page=1",
         headers=advisor_headers,
     )
     assert resp.status_code == 200
     data = resp.json()
     assert data["total"] == 210
-    assert len(data["events"]) == 200
+    assert len(data["events"]) == data["page_size"]

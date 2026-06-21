@@ -40,6 +40,9 @@ from app.timeline.timeline_tax_builders import (
 # Safety ceiling for per-entity bulk fetches — per-client, not global.
 _TIMELINE_BULK_LIMIT = 500
 
+# Fixed page size — timeline has no user-facing page-size control.
+DEFAULT_TIMELINE_PAGE_SIZE = 20
+
 
 class TimelineService:
     """Unified client timeline aggregation."""
@@ -57,7 +60,7 @@ class TimelineService:
         self,
         client_record_id: int,
         page: int = 1,
-        page_size: int = 20,
+        page_size: int = DEFAULT_TIMELINE_PAGE_SIZE,
         search: str | None = None,
         event_types: list[str] | None = None,
         important_only: bool = False,
