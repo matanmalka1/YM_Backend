@@ -164,9 +164,9 @@ class ClientRecordRepository:
         if not client_record_ids:
             return {}
         rows = self.db.execute(
-            select(ClientRecord.id, LegalEntity.official_name).join(
-                LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id
-            ).where(ClientRecord.id.in_(client_record_ids))
+            select(ClientRecord.id, LegalEntity.official_name)
+            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
+            .where(ClientRecord.id.in_(client_record_ids))
         ).all()
         return {row[0]: row[1] for row in rows}
 
