@@ -1,14 +1,9 @@
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.models.annual_report_status_history import (
-    AnnualReportStatusHistory,
-)
 from app.binders.binder_messages import BINDER_RECEIVED
 from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
 from app.binders.repositories.binder_repository import BinderRepository
-from app.businesses.models.business import Business
+from app.businesses.repositories.business_repository import BusinessRepository
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
@@ -17,6 +12,7 @@ from app.core.pagination import paginate_sequence
 from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.notifications.models.notification import NotificationStatus
 from app.notifications.repositories.notification_repository import NotificationRepository
+from app.timeline.repositories.timeline_repository import TimelineRepository
 from app.timeline.timeline_binder_event_builders import (
     binder_handed_over_event,
     binder_lifecycle_change_event,
@@ -40,6 +36,9 @@ from app.timeline.timeline_tax_builders import (
 # Safety ceiling for per-entity bulk fetches — per-client, not global.
 _TIMELINE_BULK_LIMIT = 500
 
+# Fixed page size — timeline has no user-facing page-size control.
+DEFAULT_TIMELINE_PAGE_SIZE = 20
+
 
 class TimelineService:
     """Unified client timeline aggregation."""
@@ -48,16 +47,18 @@ class TimelineService:
         self.db = db
         self.binder_repo = BinderRepository(db)
         self.lifecycle_log_repo = BinderLifecycleLogRepository(db)
+        self.business_repo = BusinessRepository(db)
         self.charge_repo = ChargeRepository(db)
         self.invoice_repo = InvoiceRepository(db)
         self.client_record_repo = ClientRecordRepository(db)
         self.notification_repo = NotificationRepository(db)
+        self.timeline_repo = TimelineRepository(db)
 
     def get_client_timeline(
         self,
         client_record_id: int,
         page: int = 1,
-        page_size: int = 20,
+        page_size: int = DEFAULT_TIMELINE_PAGE_SIZE,
         search: str | None = None,
         event_types: list[str] | None = None,
         important_only: bool = False,
@@ -65,12 +66,7 @@ class TimelineService:
         client_record = self.client_record_repo.get_by_id(client_record_id)
         if not client_record:
             raise NotFoundError(message="לקוח לא נמצא", code=ErrorCode.TIMELINE_CLIENT_NOT_FOUND)
-        businesses = self.db.scalars(
-            select(Business).where(
-                Business.legal_entity_id == client_record.legal_entity_id,
-                Business.deleted_at.is_(None),
-            )
-        ).all()
+        businesses = self.business_repo.list_by_legal_entity_ids([client_record.legal_entity_id])
         business_ids = [business.id for business in businesses]
         client_record_id = int(client_record.id)
 
@@ -173,18 +169,5 @@ class TimelineService:
         return events
 
     def _build_annual_report_events(self, client_record_id: int | None) -> list[dict]:
-        stmt = (
-            select(AnnualReport, AnnualReportStatusHistory)
-            .join(
-                AnnualReportStatusHistory,
-                AnnualReportStatusHistory.annual_report_id == AnnualReport.id,
-            )
-            .where(AnnualReport.deleted_at.is_(None))
-        )
-        if client_record_id is not None:
-            stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
-        stmt = stmt.order_by(AnnualReportStatusHistory.occurred_at.desc()).limit(
-            _TIMELINE_BULK_LIMIT
-        )
-        rows = self.db.execute(stmt).all()
+        rows = self.timeline_repo.list_annual_report_status_events(client_record_id)
         return [annual_report_status_changed_event(report, history) for report, history in rows]

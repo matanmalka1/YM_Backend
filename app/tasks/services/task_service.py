@@ -2,29 +2,23 @@ from __future__ import annotations
 
 from typing import Any
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import AdvancePayment
-from app.annual_reports.models.annual_report_model import AnnualReport
-from app.binders.models.binder import Binder
-from app.charges.models.charge import Charge
 from app.common.services.base_service import BaseService
 from app.common.source_types import WorkQueueSourceType, normalize_source_domain
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository
+from app.tasks.repositories.task_source_repository import TaskSourceRepository
 from app.tasks.schemas.task import (
     TaskBulkActionResponse,
     TaskBulkFailure,
     TaskCreateRequest,
     TaskUpdateRequest,
 )
-from app.tasks.task_source_validator import source_exists
 from app.users.models.user import UserRole
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_work_item import VatWorkItem
 
 _TERMINAL = {TaskStatus.DONE, TaskStatus.CANCELED}
 
@@ -34,19 +28,12 @@ _INVALID_SOURCE = ErrorCode.TASK_INVALID_SOURCE
 _INVALID_ASSIGNEE = ErrorCode.TASK_INVALID_ASSIGNEE
 _CLIENT_SOURCE_MISMATCH = ErrorCode.TASK_CLIENT_SOURCE_MISMATCH
 
-_SOURCE_CLIENT_MAP: dict[WorkQueueSourceType, type] = {
-    WorkQueueSourceType.VAT_WORK_ITEM: VatWorkItem,
-    WorkQueueSourceType.ANNUAL_REPORT: AnnualReport,
-    WorkQueueSourceType.ADVANCE_PAYMENT: AdvancePayment,
-    WorkQueueSourceType.CHARGE: Charge,
-    WorkQueueSourceType.BINDER: Binder,
-}
-
 
 class TaskService(BaseService):
     def __init__(self, db: Session):
         super().__init__(db)
         self.repo = TaskRepository(db)
+        self.source_repo = TaskSourceRepository(db)
 
     def create(self, data: TaskCreateRequest, created_by_user_id: int | None) -> Task:
         self._validate_source(data.source_domain, data.source_id)
@@ -317,7 +304,7 @@ class TaskService(BaseService):
         source_type = normalize_source_domain(source_domain)
         if source_type is None:
             raise AppError("סוג המקור של המשימה אינו נתמך", _INVALID_SOURCE)
-        if not source_exists(self.db, source_type, source_id):
+        if not self.source_repo.exists(source_type, source_id):
             raise NotFoundError("הפריט המקושר למשימה לא נמצא", _NOT_FOUND)
 
     def _resolve_client_from_source(
@@ -328,15 +315,7 @@ class TaskService(BaseService):
         source_type = normalize_source_domain(source_domain)
         if source_type is None:
             return None
-        Model = _SOURCE_CLIENT_MAP.get(source_type)  # type: ignore[arg-type]
-        if Model is None:
-            return None
-        return self.db.scalar(
-            select(Model.client_record_id).where(  # type: ignore[attr-defined]
-                Model.id == source_id,
-                Model.deleted_at.is_(None),  # type: ignore[attr-defined]
-            )
-        )
+        return self.source_repo.get_client_record_id(source_type, source_id)
 
     def _validate_client_exists(self, client_record_id: int) -> None:
         from app.clients.services.client_service import get_client_or_raise

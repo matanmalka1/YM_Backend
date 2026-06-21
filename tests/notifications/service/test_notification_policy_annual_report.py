@@ -30,6 +30,32 @@ def _make_last_notification(days_ago: int, status: NotificationStatus = Notifica
     )
 
 
+class _FakeScalarResult:
+    """Minimal stand-in for a SQLAlchemy ScalarResult."""
+
+    def __init__(self, value):
+        self._value = value
+
+    def first(self):
+        return self._value
+
+    def all(self):
+        return [self._value] if self._value is not None else []
+
+
+def _fake_db(report):
+    """db double whose repository lookups (``db.scalars(...).first()``) resolve to ``report``.
+
+    The policy service now fetches the annual report via
+    ``AnnualReportRepository(db).get_by_id(...)`` (repository pattern) instead of
+    ``db.get(...)``, so the double exposes ``scalars`` rather than only ``get``.
+    """
+    return SimpleNamespace(
+        get=lambda model, _pk: report,
+        scalars=lambda _stmt: _FakeScalarResult(report),
+    )
+
+
 def _db(report, last_notification=None):
     """
     Build a fake db object that satisfies both db.get(Model, pk) and the lazy import of
@@ -97,6 +123,9 @@ class _FakeDB:
 
     def get(self, model, _pk):
         return self._report
+
+    def scalars(self, _stmt):
+        return _FakeScalarResult(self._report)
 
 
 # ── ANNUAL_REPORT_CLIENT_REMINDER ─────────────────────────────────────────────
@@ -212,7 +241,7 @@ def test_annual_report_client_reminder_blocked_when_wrong_client():
 )
 def test_annual_report_documents_request_allowed_for_valid_statuses(status):
     report = _make_report(status)
-    db = SimpleNamespace(get=lambda model, _pk: report)
+    db = _fake_db(report)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),
@@ -234,7 +263,7 @@ def test_annual_report_documents_request_allowed_for_valid_statuses(status):
 )
 def test_annual_report_documents_request_blocked_for_invalid_statuses(status):
     report = _make_report(status)
-    db = SimpleNamespace(get=lambda model, _pk: report)
+    db = _fake_db(report)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),
@@ -246,7 +275,7 @@ def test_annual_report_documents_request_blocked_for_invalid_statuses(status):
 
 
 def test_annual_report_documents_request_blocked_when_report_not_found():
-    db = SimpleNamespace(get=lambda model, _pk: None)
+    db = _fake_db(None)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),
@@ -259,7 +288,7 @@ def test_annual_report_documents_request_blocked_when_report_not_found():
 
 def test_annual_report_documents_request_blocked_when_no_annual_report_id():
     """Missing annual_report_id must block even when db is present."""
-    db = SimpleNamespace(get=lambda model, _pk: None)
+    db = _fake_db(None)
     policy = NotificationPolicyService()
     result = policy.can_send(
         _make_client(),

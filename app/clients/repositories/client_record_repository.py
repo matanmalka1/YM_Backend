@@ -155,6 +155,21 @@ class ClientRecordRepository:
             )
         ).all()
 
+    def get_official_names_by_ids(self, client_record_ids: list[int]) -> dict[int, str]:
+        """Map client_record_id -> legal entity official name.
+
+        Includes soft-deleted clients so historical references (e.g. notification
+        rows for a since-deleted client) still resolve a display name.
+        """
+        if not client_record_ids:
+            return {}
+        rows = self.db.execute(
+            select(ClientRecord.id, LegalEntity.official_name).join(
+                LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id
+            ).where(ClientRecord.id.in_(client_record_ids))
+        ).all()
+        return {row[0]: row[1] for row in rows}
+
     # ── list / count / search (join LegalEntity for name/id_number filters) ──
 
     _SORTABLE_FIELDS = {

@@ -11872,18 +11872,6 @@
             }
           },
           {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "default": 20,
-              "title": "Page Size"
-            }
-          },
-          {
             "name": "search",
             "in": "query",
             "required": false,
