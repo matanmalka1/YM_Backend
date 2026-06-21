@@ -33,11 +33,12 @@ class ClientQueryService:
         self.record_repo = ClientRecordRepository(db)
 
     def get_client_stats(self) -> ClientRecordListStats:
-        counts = self.record_repo.count_by_status()
+        counts = self.record_repo.count_by_entity_type()
         return ClientRecordListStats(
-            active=counts.get(ClientStatus.ACTIVE, 0),
-            frozen=counts.get(ClientStatus.FROZEN, 0),
-            closed=counts.get(ClientStatus.CLOSED, 0),
+            osek_patur=counts.get(EntityType.OSEK_PATUR, 0),
+            osek_murshe=counts.get(EntityType.OSEK_MURSHE, 0),
+            company_ltd=counts.get(EntityType.COMPANY_LTD, 0),
+            employee=counts.get(EntityType.EMPLOYEE, 0),
         )
 
     def list_all_clients(self) -> list[ClientRecordResponse]:
@@ -120,15 +121,16 @@ class ClientQueryService:
         ]
         full_items = ClientEnrichmentService(self.db).enrich_list_binders(full_items)
         items = [ClientRecordListItem.model_validate(item) for item in full_items]
-        counts = self.record_repo.count_by_status(
+        counts = self.record_repo.count_by_entity_type(
             search=search,
+            status=status,
             accountant_id=accountant_id,
-            entity_type=entity_type,
         )
         stats = ClientRecordListStats(
-            active=counts.get(ClientStatus.ACTIVE, 0),
-            frozen=counts.get(ClientStatus.FROZEN, 0),
-            closed=counts.get(ClientStatus.CLOSED, 0),
+            osek_patur=counts.get(EntityType.OSEK_PATUR, 0),
+            osek_murshe=counts.get(EntityType.OSEK_MURSHE, 0),
+            company_ltd=counts.get(EntityType.COMPANY_LTD, 0),
+            employee=counts.get(EntityType.EMPLOYEE, 0),
         )
         return ClientRecordListResponse(
             items=items,

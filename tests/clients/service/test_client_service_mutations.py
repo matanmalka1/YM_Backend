@@ -2,6 +2,7 @@ import pytest
 from sqlalchemy.exc import IntegrityError
 
 from app.binders.repositories.binder_repository import BinderRepository
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_create_service import (
@@ -267,6 +268,56 @@ def test_list_clients_and_conflict_info(test_db):
     info_deleted = query_service.get_conflict_info("670000017")
     assert len(info_deleted.active_clients) == 0
     assert len(info_deleted.deleted_clients) == 1
+
+
+def test_list_clients_entity_type_stats_respect_non_type_filters(test_db):
+    seed_client_identity(
+        test_db,
+        full_name="פטור",
+        id_number="700000001",
+        id_number_type=IdNumberType.INDIVIDUAL,
+        entity_type=EntityType.OSEK_PATUR,
+        status=ClientStatus.ACTIVE,
+    )
+    seed_client_identity(
+        test_db,
+        full_name="מורשה",
+        id_number="700000002",
+        id_number_type=IdNumberType.INDIVIDUAL,
+        entity_type=EntityType.OSEK_MURSHE,
+        status=ClientStatus.FROZEN,
+    )
+    seed_client_identity(
+        test_db,
+        full_name="חברה",
+        id_number="700000003",
+        id_number_type=IdNumberType.CORPORATION,
+        entity_type=EntityType.COMPANY_LTD,
+        status=ClientStatus.ACTIVE,
+    )
+    seed_client_identity(
+        test_db,
+        full_name="שכיר",
+        id_number="700000004",
+        id_number_type=IdNumberType.INDIVIDUAL,
+        entity_type=EntityType.EMPLOYEE,
+        status=ClientStatus.ACTIVE,
+    )
+
+    result = ClientQueryService(test_db).list_full_clients(
+        status=ClientStatus.ACTIVE,
+        entity_type=EntityType.COMPANY_LTD,
+        page=1,
+        page_size=10,
+    )
+
+    assert result.total == 1
+    assert result.stats.model_dump() == {
+        "osek_patur": 1,
+        "osek_murshe": 0,
+        "company_ltd": 1,
+        "employee": 1,
+    }
 
 
 def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch):
