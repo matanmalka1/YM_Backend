@@ -65,12 +65,17 @@ class SignatureRequestCrudMixin:
         self.db.flush()
         return req
 
-    def get_by_id(self, request_id: int) -> SignatureRequest | None:
-        stmt = select(SignatureRequest).where(
-            SignatureRequest.id == request_id,
-            SignatureRequest.deleted_at.is_(None),
-        )
-        return self.db.scalars(stmt).first()
+    def get_by_id(
+        self, request_id: int, *, include_deleted: bool = False
+    ) -> SignatureRequest | None:
+        # Session.get() is identity-map-aware (no SQL on a request that already loaded the
+        # entity); apply the soft-delete filter in Python to match BaseRepository.get().
+        req = self.db.get(SignatureRequest, request_id)
+        if req is None:
+            return None
+        if not include_deleted and req.deleted_at is not None:
+            return None
+        return req
 
     def get_by_token(self, token: str) -> SignatureRequest | None:
         stmt = select(SignatureRequest).where(

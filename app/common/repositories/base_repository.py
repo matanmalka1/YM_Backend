@@ -42,17 +42,28 @@ class BaseRepository(Generic[ModelType]):
         return stmt if include_deleted else _apply_not_deleted(stmt, self.model)
 
     def get(self, entity_id: int, /, *, include_deleted: bool = False) -> ModelType | None:
-        stmt = self.select_base(include_deleted=include_deleted).where(self.model.id == entity_id)
-        return self.db.scalars(stmt).first()
+        # Session.get() is identity-map-aware: it emits no SQL when the entity was already
+        # loaded earlier in the request. Apply the soft-delete filter in Python so callers
+        # that preload an entity do not pay an extra SELECT here.
+        entity = self.db.get(self.model, entity_id)
+        if entity is None:
+            return None
+        if not include_deleted and getattr(entity, "deleted_at", None) is not None:
+            return None
+        return entity
 
     def get_by_id(self, entity_id: int, /) -> ModelType | None:
         return self.get(entity_id)
 
-    def get_by_ids(self, entity_ids: set[int] | list[int], /) -> dict[int, ModelType]:
+    def get_by_ids(
+        self, entity_ids: set[int] | list[int], /, *, include_deleted: bool = False
+    ) -> dict[int, ModelType]:
         ids = set(entity_ids)
         if not ids:
             return {}
-        rows = self.db.scalars(self.select_base().where(self.model.id.in_(ids))).all()
+        rows = self.db.scalars(
+            self.select_base(include_deleted=include_deleted).where(self.model.id.in_(ids))
+        ).all()
         return {row.id: row for row in rows}
 
     def get_by_id_for_update(self, entity_id: int, /) -> ModelType | None:
