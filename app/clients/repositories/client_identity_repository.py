@@ -9,6 +9,11 @@ from sqlalchemy.orm import Session
 from app.clients.models.client_record import ClientRecord
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
+from app.legal_entities.models.person import Person
+from app.legal_entities.models.person_legal_entity_link import (
+    PersonLegalEntityLink,
+    PersonLegalEntityRole,
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -44,3 +49,29 @@ class ClientIdentityRepository(BaseRepository[ClientRecord]):
             )
             for row in rows
         }
+
+    def get_owner_person(self, client_record_id: int) -> Person | None:
+        """Return the OWNER Person for the client record, or None.
+
+        First-row-wins on duplicate OWNER links (``.scalar()``), matching prior behavior.
+        """
+        return self.db.execute(
+            select(Person)
+            .select_from(ClientRecord)
+            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
+            .outerjoin(
+                PersonLegalEntityLink,
+                (PersonLegalEntityLink.legal_entity_id == LegalEntity.id)
+                & (PersonLegalEntityLink.role == PersonLegalEntityRole.OWNER),
+            )
+            .outerjoin(Person, Person.id == PersonLegalEntityLink.person_id)
+            .where(ClientRecord.id == client_record_id)
+        ).scalar()
+
+    def get_official_name(self, client_record_id: int) -> str | None:
+        """Return the client's LegalEntity.official_name, or None."""
+        return self.db.execute(
+            select(LegalEntity.official_name)
+            .join(ClientRecord, ClientRecord.legal_entity_id == LegalEntity.id)
+            .where(ClientRecord.id == client_record_id)
+        ).scalar()

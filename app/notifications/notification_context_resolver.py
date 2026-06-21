@@ -7,22 +7,25 @@ template context.
 
 from __future__ import annotations
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.clients.models.client_record import ClientRecord
+from app.annual_reports.repositories.annual_report_report_repository import (
+    AnnualReportRootRepository,
+)
+from app.binders.repositories.binder_repository import BinderRepository
+from app.charges.repositories.charge_repository import ChargeRepository
+from app.clients.repositories.client_identity_repository import ClientIdentityRepository
 from app.config import settings
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.logging_config import get_logger
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.legal_entities.models.person import Person
-from app.legal_entities.models.person_legal_entity_link import (
-    PersonLegalEntityLink,
-    PersonLegalEntityRole,
-)
 from app.notifications.models.notification import NotificationTrigger
-from app.users.models.user import User
+from app.signature_requests.repositories.signature_request_repository import (
+    SignatureRequestRepository,
+)
+from app.users.repositories.user_repository import UserRepository
+from app.vat.repositories.vat_work_item_query_repository import VatWorkItemQueryRepository
 
 logger = get_logger(__name__)
 
@@ -51,6 +54,13 @@ _SIGNATURE_TRIGGERS = {
 class NotificationContextResolver:
     def __init__(self, db: Session):
         self.db = db
+        self.client_identity_repo = ClientIdentityRepository(db)
+        self.user_repo = UserRepository(db)
+        self.binder_repo = BinderRepository(db)
+        self.annual_report_repo = AnnualReportRootRepository(db)
+        self.charge_repo = ChargeRepository(db)
+        self.vat_repo = VatWorkItemQueryRepository(db)
+        self.signature_repo = SignatureRequestRepository(db)
 
     def resolve(
         self,
@@ -111,18 +121,7 @@ class NotificationContextResolver:
 
     def resolve_person(self, client_record_id: int) -> Person | None:
         """Return the OWNER Person for the client record, or None."""
-        return self.db.execute(
-            select(Person)
-            .select_from(ClientRecord)
-            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
-            .outerjoin(
-                PersonLegalEntityLink,
-                (PersonLegalEntityLink.legal_entity_id == LegalEntity.id)
-                & (PersonLegalEntityLink.role == PersonLegalEntityRole.OWNER),
-            )
-            .outerjoin(Person, Person.id == PersonLegalEntityLink.person_id)
-            .where(ClientRecord.id == client_record_id)
-        ).scalar()
+        return self.client_identity_repo.get_owner_person(client_record_id)
 
     def resolve_client_name(self, client_record_id: int) -> str:
         """Return display name: Person.full_name → LegalEntity.official_name → fallback."""
@@ -132,43 +131,32 @@ class NotificationContextResolver:
         if person and person.full_name:
             return person.full_name
 
-        row = self.db.execute(
-            select(LegalEntity.official_name)
-            .join(ClientRecord, ClientRecord.legal_entity_id == LegalEntity.id)
-            .where(ClientRecord.id == client_record_id)
-        ).scalar()
-        return row or FALLBACK_CLIENT_NAME
+        return self.client_identity_repo.get_official_name(client_record_id) or FALLBACK_CLIENT_NAME
 
     # ── Private helpers ───────────────────────────────────────────────────────
 
     def _resolve_sender_name(self, user_id: int | None) -> str:
         if user_id is None:
             return "צוות המשרד"
-        user = self.db.get(User, user_id)
+        user = self.user_repo.get(user_id, include_deleted=True)
         if user and user.full_name:
             return user.full_name
         return "צוות המשרד"
 
     def _resolve_binder_number(self, binder_id: int, client_record_id: int) -> str:
-        from app.binders.models.binder import Binder
-
-        binder = self.db.get(Binder, binder_id)
+        binder = self.binder_repo.get(binder_id, include_deleted=True)
         if binder is None or binder.client_record_id != client_record_id:
             raise NotFoundError("הקלסר לא נמצא", ErrorCode.BINDER_NOT_FOUND)
         return binder.binder_number
 
     def _resolve_annual_report_tax_year(self, annual_report_id: int, client_record_id: int) -> int:
-        from app.annual_reports.models.annual_report_model import AnnualReport
-
-        report = self.db.get(AnnualReport, annual_report_id)
+        report = self.annual_report_repo.get(annual_report_id, include_deleted=True)
         if report is None or report.client_record_id != client_record_id:
             raise NotFoundError("הדוח השנתי לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
         return report.tax_year
 
     def _resolve_charge_context(self, charge_id: int, client_record_id: int) -> dict:
-        from app.charges.models.charge import Charge
-
-        charge = self.db.get(Charge, charge_id)
+        charge = self.charge_repo.get(charge_id, include_deleted=True)
         if charge is None or charge.client_record_id != client_record_id:
             raise NotFoundError("החיוב לא נמצא", ErrorCode.CHARGE_NOT_FOUND)
         amount = int(charge.amount) if charge.amount == int(charge.amount) else float(charge.amount)
@@ -180,9 +168,8 @@ class NotificationContextResolver:
 
     def _resolve_vat_context(self, vat_work_item_id: int, client_record_id: int) -> dict:
         from app.utils.time_utils import israel_today
-        from app.vat.models.vat_work_item import VatWorkItem
 
-        item = self.db.get(VatWorkItem, vat_work_item_id)
+        item = self.vat_repo.get(vat_work_item_id, include_deleted=True)
         if item is None or item.client_record_id != client_record_id:
             raise NotFoundError('פריט מע"מ לא נמצא', ErrorCode.VAT_NOT_FOUND)
         deadline = item.due_date_effective
@@ -197,9 +184,7 @@ class NotificationContextResolver:
         }
 
     def _resolve_signature_context(self, signature_request_id: int, client_record_id: int) -> dict:
-        from app.signature_requests.models.signature_request import SignatureRequest
-
-        sig = self.db.get(SignatureRequest, signature_request_id)
+        sig = self.signature_repo.get_by_id(signature_request_id, include_deleted=True)
         if sig is None or sig.client_record_id != client_record_id:
             raise NotFoundError("בקשת חתימה לא נמצאה", ErrorCode.SIGNATURE_REQUEST_NOT_FOUND)
         signature_link = (
