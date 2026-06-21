@@ -393,3 +393,22 @@ class ClientRecordRepository:
         )
         rows = self.db.execute(stmt).all()
         return {status: count for status, count in rows}
+
+    def count_by_entity_type(
+        self,
+        search: str | None = None,
+        status: ClientStatus | None = None,
+        accountant_id: int | None = None,
+    ) -> dict[EntityType, int]:
+        """Active ClientRecords grouped by legal-entity type, respecting non-type filters."""
+        stmt = self._apply_list_filters(
+            select(LegalEntity.entity_type, func.count(ClientRecord.id))
+            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
+            .where(ClientRecord.deleted_at.is_(None))
+            .group_by(LegalEntity.entity_type),
+            search=search,
+            status=status,
+            accountant_id=accountant_id,
+        )
+        rows = self.db.execute(stmt).all()
+        return {entity_type: count for entity_type, count in rows if entity_type is not None}

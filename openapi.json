@@ -25925,19 +25925,24 @@
       },
       "ClientRecordListStats": {
         "properties": {
-          "active": {
+          "osek_patur": {
             "type": "integer",
-            "title": "Active",
+            "title": "Osek Patur",
             "default": 0
           },
-          "frozen": {
+          "osek_murshe": {
             "type": "integer",
-            "title": "Frozen",
+            "title": "Osek Murshe",
             "default": 0
           },
-          "closed": {
+          "company_ltd": {
             "type": "integer",
-            "title": "Closed",
+            "title": "Company Ltd",
+            "default": 0
+          },
+          "employee": {
+            "type": "integer",
+            "title": "Employee",
             "default": 0
           }
         },

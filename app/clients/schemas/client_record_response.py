@@ -79,9 +79,10 @@ class ClientRecordListItem(BaseModel):
 
 
 class ClientRecordListStats(BaseModel):
-    active: int = 0
-    frozen: int = 0
-    closed: int = 0
+    osek_patur: int = 0
+    osek_murshe: int = 0
+    company_ltd: int = 0
+    employee: int = 0
 
 
 class ClientRecordListResponse(PaginatedResponse[ClientRecordListItem]):
