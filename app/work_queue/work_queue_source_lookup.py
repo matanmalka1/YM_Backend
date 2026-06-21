@@ -3,20 +3,25 @@ from __future__ import annotations
 from collections.abc import Iterable
 from dataclasses import dataclass
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
+from app.advance_payments.models.advance_payment import AdvancePaymentStatus
+from app.advance_payments.repositories.advance_payment_repository import (
+    AdvancePaymentRepository,
 )
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
-from app.annual_reports.models.annual_report_model import AnnualReport
-from app.binders.models.binder import Binder, BinderLocationStatus
-from app.charges.models.charge import Charge, ChargeStatus
+from app.annual_reports.repositories.annual_report_report_repository import (
+    AnnualReportRootRepository,
+)
+from app.binders.models.binder import BinderLocationStatus
+from app.binders.repositories.binder_repository import BinderRepository
+from app.charges.models.charge import ChargeStatus
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.common.source_types import WorkQueueSourceType, source_route
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.models.vat_work_item import VatWorkItem
+from app.vat.repositories.vat_work_item_query_repository import (
+    VatWorkItemQueryRepository,
+)
 
 
 @dataclass(frozen=True)
@@ -68,7 +73,7 @@ def load_source_states(
 
     ids = grouped.get(WorkQueueSourceType.VAT_WORK_ITEM, set())
     if ids:
-        rows = db.scalars(select(VatWorkItem).where(VatWorkItem.id.in_(ids))).all()
+        rows = VatWorkItemQueryRepository(db).get_by_ids(ids, include_deleted=True).values()
         for row in rows:
             states[(WorkQueueSourceType.VAT_WORK_ITEM.value, row.id)] = _state(
                 WorkQueueSourceType.VAT_WORK_ITEM,
@@ -87,7 +92,7 @@ def load_source_states(
 
     ids = grouped.get(WorkQueueSourceType.ANNUAL_REPORT, set())
     if ids:
-        rows = db.scalars(select(AnnualReport).where(AnnualReport.id.in_(ids))).all()
+        rows = AnnualReportRootRepository(db).get_by_ids(ids, include_deleted=True).values()
         for row in rows:
             states[(WorkQueueSourceType.ANNUAL_REPORT.value, row.id)] = _state(
                 WorkQueueSourceType.ANNUAL_REPORT,
@@ -107,7 +112,7 @@ def load_source_states(
 
     ids = grouped.get(WorkQueueSourceType.ADVANCE_PAYMENT, set())
     if ids:
-        rows = db.scalars(select(AdvancePayment).where(AdvancePayment.id.in_(ids))).all()
+        rows = AdvancePaymentRepository(db).get_by_ids(ids, include_deleted=True).values()
         for row in rows:
             states[(WorkQueueSourceType.ADVANCE_PAYMENT.value, row.id)] = _state(
                 WorkQueueSourceType.ADVANCE_PAYMENT,
@@ -122,7 +127,7 @@ def load_source_states(
 
     ids = grouped.get(WorkQueueSourceType.CHARGE, set())
     if ids:
-        rows = db.scalars(select(Charge).where(Charge.id.in_(ids))).all()
+        rows = ChargeRepository(db).get_by_ids(ids, include_deleted=True).values()
         for row in rows:
             states[(WorkQueueSourceType.CHARGE.value, row.id)] = _state(
                 WorkQueueSourceType.CHARGE,
@@ -137,7 +142,7 @@ def load_source_states(
 
     ids = grouped.get(WorkQueueSourceType.BINDER, set())
     if ids:
-        rows = db.scalars(select(Binder).where(Binder.id.in_(ids))).all()
+        rows = BinderRepository(db).get_by_ids(ids, include_deleted=True).values()
         for row in rows:
             states[(WorkQueueSourceType.BINDER.value, row.id)] = _state(
                 WorkQueueSourceType.BINDER,

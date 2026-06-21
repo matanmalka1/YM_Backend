@@ -37,6 +37,26 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
     def _active_client_stmt(self):
         return scope_to_active_clients_stmt(select(AnnualReport), AnnualReport)
 
+    def list_due_for_work_queue(
+        self, cutoff, client_record_id: int | None = None
+    ) -> list[AnnualReport]:
+        """Active-client reports with a filing deadline on or before ``cutoff`` that are
+        not yet in a terminal (submitted/closed/canceled) status."""
+        done_statuses = [
+            AnnualReportStatus.SUBMITTED.value,
+            AnnualReportStatus.CLOSED.value,
+            AnnualReportStatus.CANCELED.value,
+        ]
+        stmt = scope_to_active_clients_stmt(select(AnnualReport), AnnualReport).where(
+            AnnualReport.deleted_at.is_(None),
+            AnnualReport.filing_deadline.isnot(None),
+            AnnualReport.filing_deadline <= cutoff,
+            AnnualReport.status.notin_(done_statuses),
+        )
+        if client_record_id is not None:
+            stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
+        return list(self.db.scalars(stmt).all())
+
     def list_by_client_record(
         self, client_record_id: int, page: int = 1, page_size: int = 20
     ) -> list[AnnualReport]:

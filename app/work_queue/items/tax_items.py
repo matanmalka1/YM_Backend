@@ -2,10 +2,9 @@ from __future__ import annotations
 
 from datetime import date, timedelta
 
-from sqlalchemy import select
-
-from app.annual_reports import models as annual_report_models
-from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.annual_reports.repositories.annual_report_report_repository import (
+    AnnualReportRootRepository,
+)
 from app.vat.repositories.vat_compliance_repository import (
     VatComplianceRepository,
 )
@@ -15,12 +14,6 @@ from app.work_queue.work_queue_metadata import (
     annual_report_metadata,
     vat_work_item_metadata,
 )
-
-_DONE_ANNUAL_STATUSES = {
-    annual_report_models.AnnualReportStatus.SUBMITTED,
-    annual_report_models.AnnualReportStatus.CLOSED,
-    annual_report_models.AnnualReportStatus.CANCELED,
-}
 
 
 def _vat_due_date(item) -> date:
@@ -64,16 +57,7 @@ def vat_work_item_items(ctx: WorkQueueContext, client_record_id: int | None) -> 
 
 def annual_report_items(ctx: WorkQueueContext, client_record_id: int | None) -> list[WorkQueueItem]:
     cutoff = ctx.today + timedelta(days=UPCOMING_WINDOW_DAYS)
-    annual_report = annual_report_models.AnnualReport
-    stmt = scope_to_active_clients_stmt(select(annual_report), annual_report).where(
-        annual_report.deleted_at.is_(None),
-        annual_report.filing_deadline.isnot(None),
-        annual_report.filing_deadline <= cutoff,
-        annual_report.status.notin_([s.value for s in _DONE_ANNUAL_STATUSES]),
-    )
-    if client_record_id is not None:
-        stmt = stmt.where(annual_report.client_record_id == client_record_id)
-    reports = list(ctx.db.scalars(stmt))
+    reports = AnnualReportRootRepository(ctx.db).list_due_for_work_queue(cutoff, client_record_id)
     ctx.preload_client_identities(report.client_record_id for report in reports)
     return [_annual_report_item(ctx, report) for report in reports]
 

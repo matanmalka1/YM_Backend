@@ -2,15 +2,11 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from sqlalchemy import select
-
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
+from app.advance_payments.repositories.advance_payment_repository import (
+    AdvancePaymentRepository,
 )
 from app.charges.charge_constants import UNPAID_CHARGE_TASK_THRESHOLD_DAYS
-from app.charges.models.charge import Charge, ChargeStatus
-from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.charges.repositories.charge_repository import ChargeRepository
 from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
 from app.work_queue.schemas.work_queue import (
     WorkQueueItem,
@@ -27,15 +23,7 @@ def advance_payment_items(
     ctx: WorkQueueContext, client_record_id: int | None
 ) -> list[WorkQueueItem]:
     cutoff = ctx.today + timedelta(days=UPCOMING_WINDOW_DAYS)
-    stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
-        AdvancePayment.deleted_at.is_(None),
-        AdvancePayment.status.in_([AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PARTIAL]),
-        (AdvancePayment.due_date_effective <= cutoff)
-        | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
-    )
-    if client_record_id is not None:
-        stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
-    payments = list(ctx.db.scalars(stmt))
+    payments = AdvancePaymentRepository(ctx.db).list_due_for_work_queue(cutoff, client_record_id)
     ctx.preload_client_identities(payment.client_record_id for payment in payments)
     items: list[WorkQueueItem] = []
     for payment in payments:
@@ -63,17 +51,9 @@ def charge_items(
     business_id: int | None,
 ) -> list[WorkQueueItem]:
     threshold = ctx.today - timedelta(days=UNPAID_CHARGE_TASK_THRESHOLD_DAYS)
-    stmt = scope_to_active_clients_stmt(select(Charge), Charge).where(
-        Charge.deleted_at.is_(None),
-        Charge.status == ChargeStatus.ISSUED,
-        Charge.issued_at.isnot(None),
-        Charge.issued_at <= threshold,
+    charges = ChargeRepository(ctx.db).list_unpaid_for_work_queue(
+        threshold, client_record_id, business_id
     )
-    if client_record_id is not None:
-        stmt = stmt.where(Charge.client_record_id == client_record_id)
-    if business_id is not None:
-        stmt = stmt.where(Charge.business_id == business_id)
-    charges = list(ctx.db.scalars(stmt))
     ctx.preload_client_identities(charge.client_record_id for charge in charges)
     return [_charge_item(ctx, charge) for charge in charges]
 

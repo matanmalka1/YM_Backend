@@ -192,6 +192,25 @@ class ChargeRepository(BaseRepository[Charge]):
             issued_before=issued_before,
         )
 
+    def list_unpaid_for_work_queue(
+        self,
+        threshold: date,
+        client_record_id: int | None = None,
+        business_id: int | None = None,
+    ) -> list[Charge]:
+        """Active-client issued charges whose ``issued_at`` is on or before ``threshold``."""
+        stmt = scope_to_active_clients_stmt(select(Charge), Charge).where(
+            Charge.deleted_at.is_(None),
+            Charge.status == ChargeStatus.ISSUED,
+            Charge.issued_at.isnot(None),
+            Charge.issued_at <= threshold,
+        )
+        if client_record_id is not None:
+            stmt = stmt.where(Charge.client_record_id == client_record_id)
+        if business_id is not None:
+            stmt = stmt.where(Charge.business_id == business_id)
+        return list(self.db.scalars(stmt).all())
+
     def sum_open_charges_amount(self) -> Decimal | None:
         """Sum all issued (open) charges for active clients. Returns None if no open charges."""
         stmt = scope_to_active_clients_stmt(select(func.sum(Charge.amount)), Charge).where(

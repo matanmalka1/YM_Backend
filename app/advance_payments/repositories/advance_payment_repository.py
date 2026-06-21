@@ -12,6 +12,7 @@ from app.advance_payments.models.advance_payment import (
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     advance_payment_year_range_filter,
 )
+from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 
 
@@ -89,6 +90,23 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         stmt = self.apply_pagination(stmt, page, page_size)
         items = list(self.db.scalars(stmt).all())
         return items, total
+
+    def list_due_for_work_queue(
+        self, cutoff: date, client_record_id: int | None = None
+    ) -> list[AdvancePayment]:
+        """Active-client pending/partial advance payments due on or before ``cutoff``.
+
+        Uses ``due_date_effective`` when set, otherwise the snapshot ``due_date``.
+        """
+        stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
+            AdvancePayment.deleted_at.is_(None),
+            AdvancePayment.status.in_([AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PARTIAL]),
+            (AdvancePayment.due_date_effective <= cutoff)
+            | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
+        )
+        if client_record_id is not None:
+            stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
+        return list(self.db.scalars(stmt).all())
 
     def exists_for_period(self, client_record_id: int, period: str) -> bool:
         return self.db.scalar(
