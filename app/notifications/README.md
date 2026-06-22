@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/notifications -q
+./.venv/bin/python -m pytest tests/notifications -q
 ```

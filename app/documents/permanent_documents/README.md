@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/permanent_documents -q
+./.venv/bin/python -m pytest tests/permanent_documents -q
 ```

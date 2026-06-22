@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/binders -q
+./.venv/bin/python -m pytest tests/binders -q
 ```

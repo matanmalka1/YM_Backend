@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/invoices -q
+./.venv/bin/python -m pytest tests/invoices -q
 ```

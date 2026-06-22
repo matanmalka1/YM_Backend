@@ -15,7 +15,7 @@ Source of truth: reference
 
 Canonical project-wide rules:
 
-- `../docs/architecture/backend.md`
+- `../docs/backend/architecture.md`
 - `../docs/workflow/verification.md`
 
 Related reference:
@@ -26,7 +26,7 @@ Related reference:
 
 Backend-local implementation patterns for new backend work and incremental
 refactors. Layer responsibilities, repository/service rules, the raw-SQL ban, and
-the domain vertical slice are canonical in `../docs/architecture/backend.md`;
+the domain vertical slice are canonical in `../docs/backend/architecture.md`;
 this file only records concrete patterns that the canonical rules do not specify.
 
 ## BaseService and transactions

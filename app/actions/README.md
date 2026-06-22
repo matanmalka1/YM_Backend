@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/actions -q
+./.venv/bin/python -m pytest tests/actions -q
 ```

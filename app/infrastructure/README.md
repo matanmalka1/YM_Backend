@@ -109,5 +109,5 @@ Infrastructure behavior is covered indirectly through domain tests, including:
 Run related integration tests:
 
 ```bash
-pytest tests/notifications tests/permanent_documents -q
+./.venv/bin/python -m pytest tests/notifications tests/permanent_documents -q
 ```

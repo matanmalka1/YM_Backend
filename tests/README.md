@@ -23,38 +23,38 @@ Source of truth: reference
 
 ## Run Commands
 
-- Generic domain run: `pytest tests/<domain> -q`
-- API-only inside a domain: `pytest tests/<domain>/api -q`
-- Service-only inside a domain: `pytest tests/<domain>/service -q`
-- Repository-only inside a domain: `pytest tests/<domain>/repository -q`
+- Generic domain run: `./.venv/bin/python -m pytest tests/<domain> -q`
+- API-only inside a domain: `./.venv/bin/python -m pytest tests/<domain>/api -q`
+- Service-only inside a domain: `./.venv/bin/python -m pytest tests/<domain>/service -q`
+- Repository-only inside a domain: `./.venv/bin/python -m pytest tests/<domain>/repository -q`
 
 ## Domain Commands
 
-- `actions`: `pytest tests/actions -q`
-- `advance_payments`: `pytest tests/advance_payments -q`
-- `annual_reports`: `pytest tests/annual_reports -q`
-- `auth`: `pytest tests/auth -q`
-- `authority_contact`: `pytest tests/authority_contact -q`
-- `binders`: `pytest tests/binders -q`
-- `businesses`: `pytest tests/businesses -q`
-- `charge`: `pytest tests/charge -q`
-- `clients`: `pytest tests/clients -q`
-- `core`: `pytest tests/core -q`
-- `correspondence`: `pytest tests/correspondence -q`
-- `dashboard`: `pytest tests/dashboard -q`
-- `documents`: `pytest tests/documents -q`
-- `health`: `pytest tests/health -q`
-- `infrastructure`: `pytest tests/infrastructure -q`
-- `invoice`: `pytest tests/invoice -q`
-- `notification`: `pytest tests/notification -q`
-- `permanent_documents`: `pytest tests/permanent_documents -q`
-- `regression`: `pytest tests/regression -q`
-- `reminders`: `pytest tests/reminders -q`
-- `reports`: `pytest tests/reports -q`
-- `search`: `pytest tests/search -q`
-- `signature_requests`: `pytest tests/signature_requests -q`
-- `tax_calendar`: `pytest tests/tax_calendar -q`
-- `timeline`: `pytest tests/timeline -q`
-- `users`: `pytest tests/users -q`
-- `utils`: `pytest tests/utils -q`
-- `vat_reports`: `pytest tests/vat_reports -q`
+- `actions`: `./.venv/bin/python -m pytest tests/actions -q`
+- `advance_payments`: `./.venv/bin/python -m pytest tests/advance_payments -q`
+- `annual_reports`: `./.venv/bin/python -m pytest tests/annual_reports -q`
+- `auth`: `./.venv/bin/python -m pytest tests/auth -q`
+- `authority_contact`: `./.venv/bin/python -m pytest tests/authority_contact -q`
+- `binders`: `./.venv/bin/python -m pytest tests/binders -q`
+- `businesses`: `./.venv/bin/python -m pytest tests/businesses -q`
+- `charge`: `./.venv/bin/python -m pytest tests/charge -q`
+- `clients`: `./.venv/bin/python -m pytest tests/clients -q`
+- `core`: `./.venv/bin/python -m pytest tests/core -q`
+- `correspondence`: `./.venv/bin/python -m pytest tests/correspondence -q`
+- `dashboard`: `./.venv/bin/python -m pytest tests/dashboard -q`
+- `documents`: `./.venv/bin/python -m pytest tests/documents -q`
+- `health`: `./.venv/bin/python -m pytest tests/health -q`
+- `infrastructure`: `./.venv/bin/python -m pytest tests/infrastructure -q`
+- `invoice`: `./.venv/bin/python -m pytest tests/invoice -q`
+- `notification`: `./.venv/bin/python -m pytest tests/notification -q`
+- `permanent_documents`: `./.venv/bin/python -m pytest tests/permanent_documents -q`
+- `regression`: `./.venv/bin/python -m pytest tests/regression -q`
+- `reminders`: `./.venv/bin/python -m pytest tests/reminders -q`
+- `reports`: `./.venv/bin/python -m pytest tests/reports -q`
+- `search`: `./.venv/bin/python -m pytest tests/search -q`
+- `signature_requests`: `./.venv/bin/python -m pytest tests/signature_requests -q`
+- `tax_calendar`: `./.venv/bin/python -m pytest tests/tax_calendar -q`
+- `timeline`: `./.venv/bin/python -m pytest tests/timeline -q`
+- `users`: `./.venv/bin/python -m pytest tests/users -q`
+- `utils`: `./.venv/bin/python -m pytest tests/utils -q`
+- `vat_reports`: `./.venv/bin/python -m pytest tests/vat_reports -q`

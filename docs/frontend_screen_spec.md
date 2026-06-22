@@ -1,3 +1,7 @@
+> **Legacy unverified frontend screen spec. Not source of truth.**
+> Use `../docs/frontend/` for frontend rules, `../docs/domains/` for product/domain behavior, and current frontend code for implemented UI state.
+> This file remains in `backend/docs` only as historical/reference screen inventory.
+
 ## Scope
 This file owns only:
 - Draft screen specifications whose relationship to the current frontend implementation is not yet verified.

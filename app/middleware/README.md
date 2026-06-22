@@ -85,5 +85,5 @@ For every HTTP request:
 Middleware behavior is covered by middleware unit tests and API/integration tests.
 
 ```bash
-JWT_SECRET=test-secret pytest -q tests/middleware tests/<relevant_api_suite>
+JWT_SECRET=test-secret ./.venv/bin/python -m pytest -q tests/middleware tests/<relevant_api_suite>
 ```

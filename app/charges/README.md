@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-JWT_SECRET=test-secret pytest -q tests/charges tests/regression/test_core_regressions_binders_charges_notifications.py
+JWT_SECRET=test-secret ./.venv/bin/python -m pytest -q tests/charges tests/regression/test_core_regressions_binders_charges_notifications.py
 ```

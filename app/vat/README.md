@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-JWT_SECRET=test-secret pytest -q tests/vat
+JWT_SECRET=test-secret ./.venv/bin/python -m pytest -q tests/vat
 ```

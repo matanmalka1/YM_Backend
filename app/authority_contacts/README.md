@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/authority_contacts -q
+./.venv/bin/python -m pytest tests/authority_contacts -q
 ```

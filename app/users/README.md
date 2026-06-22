@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-JWT_SECRET=test-secret pytest -q tests/auth tests/users tests/middleware/test_rate_limiting.py tests/core/test_config_additional.py
+JWT_SECRET=test-secret ./.venv/bin/python -m pytest -q tests/auth tests/users tests/middleware/test_rate_limiting.py tests/core/test_config_additional.py
 ```

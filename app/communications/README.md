@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/communications -q
+./.venv/bin/python -m pytest tests/communications -q
 ```

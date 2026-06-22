@@ -22,7 +22,7 @@ Source of truth: mandatory
 ## Tests
 
 ```bash
-JWT_SECRET=test-secret pytest -q tests/annual_reports
+JWT_SECRET=test-secret ./.venv/bin/python -m pytest -q tests/annual_reports
 ```
 
 ## Open Tasks

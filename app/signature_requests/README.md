@@ -11,5 +11,5 @@ Source of truth: reference
 ## Tests
 
 ```bash
-pytest tests/signature_requests -q
+./.venv/bin/python -m pytest tests/signature_requests -q
 ```
