@@ -68,58 +68,6 @@ def test_open_standalone_task_can_be_filtered_with_many_system_rows(test_db):
     assert match.metadata["source_id"] is None
 
 
-def test_done_task_appears_in_work_queue_history(test_db):
-    task = _add_task(test_db, status=TaskStatus.DONE)
-    items = WorkQueueService(test_db).list_items(
-        include_task_history=True,
-        task_status=TaskStatus.DONE,
-    )
-    task_items = [i for i in items if i.source_type == WorkQueueSourceType.TASK]
-    assert any(i.source_id == task.id for i in task_items)
-    task_row = next(i for i in task_items if i.source_id == task.id)
-    actions = {action.key: action for action in task_row.available_actions}
-    assert actions["edit_task"].disabled is True
-    assert actions["complete_task"].disabled is True
-    assert actions["cancel_task"].disabled is True
-    assert actions["complete_task"].disabled_reason == "המשימה כבר הושלמה"
-
-
-def test_canceled_task_appears_in_work_queue_history(test_db):
-    task = _add_task(test_db, status=TaskStatus.CANCELED)
-    items = WorkQueueService(test_db).list_items(include_task_history=True)
-    task_items = [i for i in items if i.source_type == WorkQueueSourceType.TASK]
-    assert any(i.source_id == task.id for i in task_items)
-
-
-def test_done_linked_task_appears_as_task_row_in_history(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
-        client_record_id=biz.client_id,
-        business_id=biz.id,
-        amount=100,
-        charge_type=ChargeType.OTHER,
-        status=ChargeStatus.ISSUED,
-        issued_at=utcnow().date() - timedelta(days=31),
-    )
-    test_db.add(charge)
-    test_db.flush()
-    task = _add_task(
-        test_db,
-        status=TaskStatus.DONE,
-        source_domain="charge",
-        source_id=charge.id,
-    )
-
-    items = WorkQueueService(test_db).list_items(include_task_history=True)
-    task_row = next(
-        i for i in items if i.source_type == WorkQueueSourceType.TASK and i.source_id == task.id
-    )
-
-    assert task_row.source_summary is not None
-    assert task_row.source_summary.source_type == "charge"
-    assert task_row.source_summary.source_id == charge.id
-
-
 # ── Null due_date ─────────────────────────────────────────────────────────────
 
 

@@ -43,8 +43,6 @@ _URGENCY_SORT = {
 }
 _PRIORITY_SORT = {"urgent": 0, "high": 1, "normal": 2, "low": 3}
 _TASK_STATUS_SORT = {"open": 0}
-_HISTORY_TASK_STATUSES = {TaskStatus.DONE.value, TaskStatus.CANCELED.value}
-_ACTIVE_TASK_STATUSES = {TaskStatus.OPEN.value}
 
 
 @dataclass(frozen=True)
@@ -63,18 +61,6 @@ def _task_status(item: WorkQueueItem) -> str | None:
         return None
     status = item.metadata.get("status")
     return str(status) if status is not None else None
-
-
-def _is_history_task_row(item: WorkQueueItem) -> bool:
-    return item.source_type == WorkQueueSourceType.TASK and (
-        _task_status(item) in _HISTORY_TASK_STATUSES
-    )
-
-
-def _is_active_task_row(item: WorkQueueItem) -> bool:
-    return item.source_type == WorkQueueSourceType.TASK and (
-        _task_status(item) in _ACTIVE_TASK_STATUSES
-    )
 
 
 def _search_text(item: WorkQueueItem) -> str:
@@ -188,7 +174,6 @@ class WorkQueueService:
         client_record_id: int | None = None,
         business_id: int | None = None,
         exclude_source_types: list[WorkQueueSourceType] | None = None,
-        include_task_history: bool = False,
         search: str | None = None,
         source_type: WorkQueueSourceType | None = None,
         urgency: WorkQueueUrgency | None = None,
@@ -206,7 +191,6 @@ class WorkQueueService:
             client_record_id=client_record_id,
             business_id=business_id,
             exclude_source_types=exclude_source_types,
-            include_task_history=include_task_history,
             filters=WorkQueueFilters(
                 search=search,
                 source_type=source_type,
@@ -225,7 +209,6 @@ class WorkQueueService:
         client_record_id: int | None = None,
         business_id: int | None = None,
         exclude_source_types: list[WorkQueueSourceType] | None = None,
-        include_task_history: bool = False,
         search: str | None = None,
         source_type: WorkQueueSourceType | None = None,
         urgency: WorkQueueUrgency | None = None,
@@ -241,7 +224,6 @@ class WorkQueueService:
             client_record_id=client_record_id,
             business_id=business_id,
             exclude_source_types=exclude_source_types,
-            include_task_history=include_task_history,
             filters=WorkQueueFilters(
                 search=search,
                 source_type=source_type,
@@ -268,7 +250,6 @@ class WorkQueueService:
         client_record_id: int | None,
         business_id: int | None,
         exclude_source_types: list[WorkQueueSourceType] | None,
-        include_task_history: bool,
         filters: WorkQueueFilters,
     ) -> list[WorkQueueItem]:
         items = self._build_items(
@@ -276,9 +257,7 @@ class WorkQueueService:
             client_record_id=client_record_id,
             business_id=business_id,
             exclude_source_types=exclude_source_types,
-            include_task_history=include_task_history,
         )
-        items = self._apply_mode(items, include_task_history=include_task_history)
         return apply_work_queue_filters(items, filters)
 
     def _build_items(
@@ -288,7 +267,6 @@ class WorkQueueService:
         client_record_id: int | None,
         business_id: int | None,
         exclude_source_types: list[WorkQueueSourceType] | None,
-        include_task_history: bool,
     ) -> list[WorkQueueItem]:
         excluded = set(exclude_source_types or [])
         system_items: list[WorkQueueItem] = []
@@ -324,24 +302,8 @@ class WorkQueueService:
             excluded=excluded,
             client_record_id=client_record_id,
             business_id=business_id,
-            include_task_history=include_task_history,
         )
         return items
-
-    def _apply_mode(
-        self, items: list[WorkQueueItem], *, include_task_history: bool
-    ) -> list[WorkQueueItem]:
-        if include_task_history:
-            return [
-                item
-                for item in items
-                if item.source_type != WorkQueueSourceType.TASK or _is_history_task_row(item)
-            ]
-        return [
-            item
-            for item in items
-            if item.source_type != WorkQueueSourceType.TASK or _is_active_task_row(item)
-        ]
 
     def _merge_tasks(
         self,
@@ -351,7 +313,6 @@ class WorkQueueService:
         excluded: set[WorkQueueSourceType],
         client_record_id: int | None,
         business_id: int | None,
-        include_task_history: bool,
     ) -> list[WorkQueueItem]:
         if WorkQueueSourceType.TASK in excluded:
             return system_items
@@ -359,7 +320,7 @@ class WorkQueueService:
         system_by_key = {
             source_key(item.source_type, item.source_id): item for item in system_items
         }
-        tasks = self.task_repo.list_for_work_queue(include_history=include_task_history)
+        tasks = self.task_repo.list_for_work_queue()
         linked_keys = {
             (source_type, task.source_id)
             for task in tasks

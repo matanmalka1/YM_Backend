@@ -24,7 +24,6 @@ class WorkQueueFilterParams:
         client_record_id: int | None = Query(None),
         business_id: int | None = Query(None),
         exclude_source_types: list[WorkQueueSourceType] | None = Query(None),
-        include_task_history: bool = Query(False),
         search: str | None = Query(None),
         source_type: WorkQueueSourceType | None = Query(None),
         urgency: WorkQueueUrgency | None = Query(None),
@@ -35,7 +34,6 @@ class WorkQueueFilterParams:
         self.client_record_id = client_record_id
         self.business_id = business_id
         self.exclude_source_types = exclude_source_types
-        self.include_task_history = include_task_history
         self.search = search
         self.source_type = source_type
         self.urgency = urgency
@@ -59,7 +57,6 @@ def list_work_queue(
         client_record_id=filters.client_record_id,
         business_id=filters.business_id,
         exclude_source_types=filters.exclude_source_types,
-        include_task_history=filters.include_task_history,
         search=filters.search,
         source_type=filters.source_type,
         urgency=filters.urgency,

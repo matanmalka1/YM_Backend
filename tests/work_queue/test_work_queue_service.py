@@ -580,16 +580,6 @@ def test_task_status_open_finds_linked_source_rows(test_db):
     assert items[0].linked_tasks[0].status == TaskStatus.OPEN.value
 
 
-def test_history_task_status_done_finds_completed_task_rows(test_db):
-    task = _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.DONE)
-
-    items = WorkQueueService(test_db).list_items(
-        include_task_history=True, task_status=TaskStatus.DONE
-    )
-
-    assert {item.source_id for item in items} == {task.id}
-
-
 def test_active_mode_hides_done_and_canceled_task_rows(test_db):
     _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.DONE)
     _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.CANCELED)
@@ -629,21 +619,6 @@ def test_summary_is_computed_before_pagination_and_respects_filters(test_db):
     assert searched.total == 1
     assert searched.by_source_type[WorkQueueSourceType.TASK] == 1
     assert manual.id is not None
-
-
-def test_summary_respects_history_mode(test_db):
-    _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.OPEN)
-    _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.DONE)
-    _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.CANCELED)
-
-    active = WorkQueueService(test_db).list_items_with_total().summary
-    history = WorkQueueService(test_db).list_items_with_total(include_task_history=True).summary
-
-    assert active.total == 1
-    assert active.by_task_status[TaskStatus.OPEN.value] == 1
-    assert history.total == 2
-    assert history.by_task_status[TaskStatus.DONE.value] == 1
-    assert history.by_task_status[TaskStatus.CANCELED.value] == 1
 
 
 def test_linked_task_merges_into_source_row(test_db):
@@ -830,7 +805,7 @@ def test_done_task_does_not_hide_open_source(test_db):
     assert charge_row.linked_tasks_count == 0
 
 
-def test_done_linked_task_history_does_not_override_source_actions(test_db):
+def test_done_linked_task_is_hidden_from_work_queue(test_db):
     biz = create_business(test_db)
     charge = Charge(
         client_record_id=biz.client_id,
@@ -849,22 +824,17 @@ def test_done_linked_task_history_does_not_override_source_actions(test_db):
         status=TaskStatus.DONE,
     )
 
-    items = WorkQueueService(test_db).list_items(
-        client_record_id=biz.client_id,
-        include_task_history=True,
-    )
+    items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     charge_row = next(i for i in items if i.source_type == WorkQueueSourceType.CHARGE)
-    task_row = next(
-        i for i in items if i.source_type == WorkQueueSourceType.TASK and i.source_id == task.id
-    )
 
+    assert not any(
+        i.source_type == WorkQueueSourceType.TASK and i.source_id == task.id for i in items
+    )
     assert charge_row.linked_tasks_count == 0
     assert [a.key for a in charge_row.available_actions] == [
         "open_charge_context",
         "create_linked_task",
     ]
-    assert task_row.source_summary is not None
-    assert task_row.source_summary.source_type == "charge"
 
 
 def test_charge_item_exposes_only_safe_link_actions(test_db):

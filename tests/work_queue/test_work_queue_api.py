@@ -99,7 +99,13 @@ def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers
     test_db.add_all(
         [
             Task(
-                title="Open task",
+                title="Open task A",
+                status=TaskStatus.OPEN,
+                created_at=utcnow(),
+                updated_at=utcnow(),
+            ),
+            Task(
+                title="Open task B",
                 status=TaskStatus.OPEN,
                 created_at=utcnow(),
                 updated_at=utcnow(),
@@ -115,20 +121,16 @@ def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers
     test_db.commit()
 
     active = client.get("/api/v1/work-queue?page_size=1", headers=advisor_headers)
-    history = client.get(
-        "/api/v1/work-queue?include_task_history=true&page_size=1",
-        headers=advisor_headers,
-    )
 
     assert active.status_code == 200
-    assert active.json()["total"] == 1
-    assert active.json()["summary"]["total"] == 1
-    assert active.json()["summary"]["manual_tasks"] == 1
-    assert active.json()["summary"]["by_task_status"]["open"] == 1
-    assert history.status_code == 200
-    assert history.json()["total"] == 1
-    assert history.json()["summary"]["total"] == 1
-    assert history.json()["summary"]["by_task_status"]["done"] == 1
+    # Page returns a single row, but the summary reflects the full filtered set.
+    assert len(active.json()["items"]) == 1
+    assert active.json()["total"] == 2
+    assert active.json()["summary"]["total"] == 2
+    assert active.json()["summary"]["manual_tasks"] == 2
+    # Done tasks are excluded from the work queue entirely.
+    assert active.json()["summary"]["by_task_status"]["open"] == 2
+    assert active.json()["summary"]["by_task_status"]["done"] == 0
 
 
 def test_annual_report_work_queue_route_targets_existing_detail_api(

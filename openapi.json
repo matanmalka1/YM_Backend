@@ -19457,16 +19457,6 @@
             }
           },
           {
-            "name": "include_task_history",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "boolean",
-              "default": false,
-              "title": "Include Task History"
-            }
-          },
-          {
             "name": "search",
             "in": "query",
             "required": false,
