@@ -180,19 +180,19 @@ ENUM_SYNC_MAP: dict[str, str] = {
     "EntityType": "features/clients/constants.ts:ENTITY_TYPES",
     "IdNumberType": "features/clients/constants.ts:CLIENT_ID_NUMBER_TYPES",
     "VatType": "features/clients/constants.ts:VAT_TYPES",
-    "VatWorkItemStatus": "features/vatReports/constants.ts:VAT_WORK_ITEM_STATUS_VALUES",
-    "VatRateType": "features/vatReports/constants.ts:VAT_RATE_TYPES",
+    "VatWorkItemStatus": "features/vatReports/constants/vatConstants.ts:VAT_WORK_ITEM_STATUS_VALUES",
+    "VatRateType": "features/vatReports/constants/vatConstants.ts:VAT_RATE_TYPES",
     # DocumentType exists in two Python modules with different values.
     # Use module-qualified keys: "module.ClassName"
-    "app.vat.models.vat_enums.DocumentType": "features/vatReports/constants.ts:DOCUMENT_TYPES",
-    "app.documents.permanent_documents.models.permanent_document.PermanentDocumentType": "features/documents/documents.constants.ts:DOCUMENT_TYPES",
+    "app.vat.models.vat_enums.DocumentType": "features/vatReports/constants/vatConstants.ts:DOCUMENT_TYPES",
+    "app.documents.permanent_documents.models.permanent_document.PermanentDocumentType": "features/documents/constants.ts:DOCUMENT_TYPES",
     "ChargeStatus": "features/charges/constants.ts:CHARGE_STATUS_VALUES",
     "ChargeType": "features/charges/constants.ts:CHARGE_TYPE_VALUES",
     "UserRole": "features/users/constants.ts:USER_ROLE_VALUES",
     "SignatureRequestStatus": "features/signatureRequests/constants.ts:SIGNATURE_REQUEST_STATUS_VALUES",
     "SignatureRequestType": "features/signatureRequests/constants.ts:SIGNATURE_REQUEST_TYPE_VALUES",
     "ContactType": "features/authorityContacts/api/contracts.ts:AUTHORITY_CONTACT_TYPE_VALUES",
-    "SubmissionMethod": "features/annualReports/report.constants.ts:REPORT_SUBMISSION_METHODS",
+    "SubmissionMethod": "features/annualReports/constants/reportConstants.ts:REPORT_SUBMISSION_METHODS",
     "NotificationTrigger": "features/notifications/api/contracts.ts:NOTIFICATION_TRIGGER_VALUES",
 }
 

@@ -68,7 +68,7 @@ def _setup_env() -> None:
 
 _ENUM_FILES = [
     "app/common/enums.py",
-    "app/clients/enums.py",
+    "app/clients/client_enums.py",
     "app/vat/models/vat_enums.py",
     "app/users/models/user.py",
     "app/tasks/models/task.py",
