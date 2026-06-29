@@ -15,6 +15,7 @@ from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.notifications.models.notification import NotificationStatus
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.timeline.repositories.timeline_repository import TimelineRepository
+from app.timeline.timeline_audit_aggregator import build_entity_audit_events
 from app.timeline.timeline_binder_event_builders import (
     binder_handed_over_event,
     binder_lifecycle_change_event,
@@ -26,7 +27,6 @@ from app.timeline.timeline_charge_event_builders import (
     charge_paid_event,
     invoice_attached_event,
 )
-from app.timeline.timeline_audit_aggregator import build_entity_audit_events
 from app.timeline.timeline_client_aggregator import build_client_events
 from app.timeline.timeline_notification_event_builders import (
     notification_failed_event,

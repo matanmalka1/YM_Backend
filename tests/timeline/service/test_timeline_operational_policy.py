@@ -7,6 +7,9 @@ from app.annual_reports.models.annual_report_enums import (
     PrimaryAnnualReportForm,
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
+from app.annual_reports.models.annual_report_status_history import (
+    AnnualReportStatusHistory,
+)
 from app.audit.audit_constants import (
     ACTION_CREATED,
     ACTION_STATUS_CHANGED,
@@ -16,9 +19,6 @@ from app.audit.audit_constants import (
 )
 from app.audit.repositories.audit_entity_audit_log_repository import (
     EntityAuditLogRepository,
-)
-from app.annual_reports.models.annual_report_status_history import (
-    AnnualReportStatusHistory,
 )
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.notifications.models.notification import (
