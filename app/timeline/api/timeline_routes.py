@@ -1,3 +1,5 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 
 from app.core.openapi_responses import not_found_response
@@ -26,6 +28,8 @@ def get_client_timeline(
     search: str | None = Query(None),
     event_type: list[str] | None = Query(None),
     important_only: bool = Query(False),
+    date_from: date | None = Query(None),
+    date_to: date | None = Query(None),
 ):
     """Get unified client timeline."""
     service = TimelineService(db)
@@ -35,6 +39,8 @@ def get_client_timeline(
         search=search,
         event_types=event_type,
         important_only=important_only,
+        date_from=date_from,
+        date_to=date_to,
     )
 
     return ClientTimelineResponse(

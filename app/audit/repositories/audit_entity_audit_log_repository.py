@@ -115,6 +115,24 @@ class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
         )
         return self.db.scalar(select(func.count(EntityAuditLog.id)).where(*filters))
 
+    def list_all_by_entities(
+        self, entity_type: str, entity_ids: list[int]
+    ) -> list[EntityAuditLog]:
+        """Every audit row for a set of entities, newest first — unpaginated.
+
+        Used by the timeline aggregator, which paginates the merged event list itself.
+        """
+        if not entity_ids:
+            return []
+        return self.db.scalars(
+            select(EntityAuditLog)
+            .where(
+                EntityAuditLog.entity_type == entity_type,
+                EntityAuditLog.entity_id.in_(entity_ids),
+            )
+            .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
+        ).all()
+
     def list_recent(self, limit: int = 5) -> list[EntityAuditLog]:
         return self.db.scalars(
             select(EntityAuditLog)

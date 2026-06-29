@@ -77,3 +77,14 @@ class TimelineRepository:
             stmt.order_by(AnnualReportStatusHistory.occurred_at.desc()).limit(_BULK_LIMIT)
         ).all()
         return [(report, history) for report, history in rows]
+
+    def list_annual_report_ids(self, client_record_id: int) -> list[int]:
+        """All (non-deleted) annual-report ids for a client — for audit lookup."""
+        return list(
+            self.db.scalars(
+                select(AnnualReport.id).where(
+                    AnnualReport.client_record_id == client_record_id,
+                    AnnualReport.deleted_at.is_(None),
+                )
+            ).all()
+        )

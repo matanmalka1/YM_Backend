@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy.orm import Session
 
 from app.binders.binder_messages import BINDER_RECEIVED
@@ -24,6 +26,7 @@ from app.timeline.timeline_charge_event_builders import (
     charge_paid_event,
     invoice_attached_event,
 )
+from app.timeline.timeline_audit_aggregator import build_entity_audit_events
 from app.timeline.timeline_client_aggregator import build_client_events
 from app.timeline.timeline_notification_event_builders import (
     notification_failed_event,
@@ -62,6 +65,8 @@ class TimelineService:
         search: str | None = None,
         event_types: list[str] | None = None,
         important_only: bool = False,
+        date_from: date | None = None,
+        date_to: date | None = None,
     ) -> tuple[list[dict], int]:
         client_record = self.client_record_repo.get_by_id(client_record_id)
         if not client_record:
@@ -103,7 +108,17 @@ class TimelineService:
         events.extend(self._build_annual_report_events(client_record.id if client_record else None))
         events.extend(build_client_events(self.db, client_record_id, business_ids))
         events.extend(self._build_notification_events(client_record_id))
+        events.extend(
+            build_entity_audit_events(
+                self.db,
+                client_record_id=client_record_id,
+                business_ids=business_ids,
+                charge_ids=[charge.id for charge in charges],
+                report_ids=self.timeline_repo.list_annual_report_ids(client_record_id),
+            )
+        )
 
+        events = self._filter_by_date_range(events, date_from, date_to)
         events.sort(key=lambda e: e["timestamp"], reverse=True)
 
         if search:
@@ -134,6 +149,25 @@ class TimelineService:
 
         total = len(events)
         return paginate_sequence(events, page, page_size), total
+
+    @staticmethod
+    def _filter_by_date_range(
+        events: list[dict], date_from: date | None, date_to: date | None
+    ) -> list[dict]:
+        """Keep events whose timestamp date falls within [date_from, date_to]."""
+        if date_from is None and date_to is None:
+            return events
+
+        def in_range(event: dict) -> bool:
+            timestamp = event["timestamp"]
+            event_date = timestamp.date() if hasattr(timestamp, "date") else timestamp
+            if date_from is not None and event_date < date_from:
+                return False
+            if date_to is not None and event_date > date_to:
+                return False
+            return True
+
+        return [event for event in events if in_range(event)]
 
     @staticmethod
     def _status_str(value) -> str | None:
