@@ -27361,7 +27361,14 @@
             "title": "Entity Id"
           },
           "performed_by": {
-            "type": "integer",
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Performed By"
           },
           "performed_by_name": {
@@ -27375,6 +27382,21 @@
             ],
             "title": "Performed By Name"
           },
+          "actor_type": {
+            "type": "string",
+            "title": "Actor Type"
+          },
+          "actor_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Display Name"
+          },
           "action": {
             "type": "string",
             "title": "Action"
@@ -27382,7 +27404,12 @@
           "old_value": {
             "anyOf": [
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
               },
               {
                 "type": "null"
@@ -27393,13 +27420,34 @@
           "new_value": {
             "anyOf": [
               {
-                "type": "string"
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
               },
               {
                 "type": "null"
               }
             ],
             "title": "New Value"
+          },
+          "metadata_json": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "items": {},
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Metadata Json"
           },
           "note": {
             "anyOf": [
@@ -27426,7 +27474,7 @@
           "id",
           "entity_type",
           "entity_id",
-          "performed_by",
+          "actor_type",
           "action",
           "performed_at"
         ],
@@ -33698,6 +33746,17 @@
             ],
             "title": "Actor User Id"
           },
+          "actor_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actor Display Name"
+          },
           "target_user_id": {
             "anyOf": [
               {
@@ -33708,6 +33767,17 @@
               }
             ],
             "title": "Target User Id"
+          },
+          "target_display_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Display Name"
           },
           "email": {
             "anyOf": [

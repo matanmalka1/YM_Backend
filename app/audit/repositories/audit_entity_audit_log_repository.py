@@ -1,6 +1,7 @@
 """Repository for EntityAuditLog entities."""
 
 from datetime import datetime
+from typing import Any
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
@@ -17,19 +18,26 @@ class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
         self,
         entity_type: str,
         entity_id: int,
-        performed_by: int,
+        performed_by: int | None,
         action: str,
-        old_value: str | None = None,
-        new_value: str | None = None,
+        old_value: Any = None,
+        new_value: Any = None,
         note: str | None = None,
+        *,
+        actor_type: str = "user",
+        actor_display_name: str | None = None,
+        metadata_json: Any = None,
     ) -> EntityAuditLog:
         entry = EntityAuditLog(
             entity_type=entity_type,
             entity_id=entity_id,
             performed_by=performed_by,
+            actor_type=actor_type,
+            actor_display_name=actor_display_name,
             action=action,
             old_value=old_value,
             new_value=new_value,
+            metadata_json=metadata_json,
             note=note,
         )
         self.db.add(entry)

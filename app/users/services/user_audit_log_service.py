@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from sqlalchemy.orm import Session
@@ -22,6 +21,8 @@ class AuditLogService:
         email: str | None = None,
         reason: str | None = None,
         metadata: dict | None = None,
+        actor_display_name: str | None = None,
+        target_display_name: str | None = None,
     ) -> None:
         """Intentional pass-through to keep an anti-corruption boundary.
 
@@ -36,6 +37,8 @@ class AuditLogService:
             email=email,
             reason=reason,
             metadata=metadata,
+            actor_display_name=actor_display_name,
+            target_display_name=target_display_name,
         )
 
     def list_logs(
@@ -71,15 +74,20 @@ class AuditLogService:
 
     @staticmethod
     def _to_dict(log: UserAuditLog) -> dict:
-        """Deserialize audit log ORM row into a plain dict for schema consumption."""
+        """Map an audit log ORM row into a plain dict for schema consumption.
+
+        ``metadata_json`` is a JSONB object (dict) — no ``json.loads`` needed.
+        """
         return {
             "id": log.id,
             "action": log.action,
             "actor_user_id": log.actor_user_id,
+            "actor_display_name": log.actor_display_name,
             "target_user_id": log.target_user_id,
+            "target_display_name": log.target_display_name,
             "email": log.email,
             "status": log.status,
             "reason": log.reason,
-            "metadata": json.loads(log.metadata_json) if log.metadata_json else None,
+            "metadata": log.metadata_json,
             "created_at": log.created_at,
         }

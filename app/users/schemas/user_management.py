@@ -59,7 +59,9 @@ class UserAuditLogResponse(BaseModel):
     id: int
     action: AuditAction
     actor_user_id: int | None = None
+    actor_display_name: str | None = None
     target_user_id: int | None = None
+    target_display_name: str | None = None
     email: str | None = None
     status: AuditStatus
     reason: str | None = None

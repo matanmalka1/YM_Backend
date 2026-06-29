@@ -2,8 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum as PyEnum
+from typing import Any
 
-from sqlalchemy import ForeignKey, String, Text
+from sqlalchemy import JSON, ForeignKey, String
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -41,5 +43,11 @@ class UserAuditLog(Base):
     email: Mapped[str | None] = mapped_column(String, nullable=True, index=True)
     status: Mapped[AuditStatus] = mapped_column(pg_enum(AuditStatus), nullable=False, index=True)
     reason: Mapped[str | None] = mapped_column(String, nullable=True)
-    metadata_json: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # Immutable actor/target name snapshots (§5) so renames don't rewrite admin history.
+    actor_display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    target_display_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    # Structured context stored as JSONB on PostgreSQL (JSON on SQLite) — dict, not a string.
+    metadata_json: Mapped[Any | None] = mapped_column(
+        JSON().with_variant(JSONB, "postgresql"), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False, index=True)

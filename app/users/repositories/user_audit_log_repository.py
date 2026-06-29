@@ -1,4 +1,3 @@
-import json
 from datetime import datetime
 
 from sqlalchemy import func, select
@@ -23,6 +22,8 @@ class UserAuditLogRepository(BaseRepository):
         email: str | None = None,
         reason: str | None = None,
         metadata: dict | None = None,
+        actor_display_name: str | None = None,
+        target_display_name: str | None = None,
     ) -> UserAuditLog:
         log = UserAuditLog(
             action=action,
@@ -31,7 +32,9 @@ class UserAuditLogRepository(BaseRepository):
             target_user_id=target_user_id,
             email=email,
             reason=reason,
-            metadata_json=json.dumps(metadata) if metadata is not None else None,
+            actor_display_name=actor_display_name,
+            target_display_name=target_display_name,
+            metadata_json=metadata,
         )
         self.db.add(log)
         self.db.flush()

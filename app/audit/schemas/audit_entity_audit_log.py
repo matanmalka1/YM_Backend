@@ -9,11 +9,14 @@ class EntityAuditLogResponse(BaseModel):
     id: int
     entity_type: str
     entity_id: int
-    performed_by: int
+    performed_by: int | None = None
     performed_by_name: str | None = None
+    actor_type: str
+    actor_display_name: str | None = None
     action: str
-    old_value: str | None = None
-    new_value: str | None = None
+    old_value: dict | list | None = None
+    new_value: dict | list | None = None
+    metadata_json: dict | list | None = None
     note: str | None = None
     performed_at: ApiDateTime
 

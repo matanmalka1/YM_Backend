@@ -81,7 +81,7 @@ class AuditTrailService:
             entity_type, entity_id, page=page, page_size=page_size, **filters
         )
         total = self.audit_repo.count_audit_trail(entity_type, entity_id, **filters)
-        user_ids = list({entry.performed_by for entry in entries})
+        user_ids = list({entry.performed_by for entry in entries if entry.performed_by is not None})
         users = self.user_repo.list_by_ids(user_ids) if user_ids else []
         user_map = {user.id: user.full_name for user in users}
 

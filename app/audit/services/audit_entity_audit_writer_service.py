@@ -1,6 +1,5 @@
 """Write abstraction for generic business entity audit events."""
 
-import json
 from datetime import date, datetime
 from decimal import Decimal
 from enum import Enum
@@ -33,6 +32,9 @@ class EntityAuditWriter:
         old_value: Any = None,
         new_value: Any = None,
         note: str | None = None,
+        actor_type: str = "user",
+        actor_display_name: str | None = None,
+        metadata_json: Any = None,
     ) -> EntityAuditLog | None:
         if actor_id is None:
             return None
@@ -44,6 +46,9 @@ class EntityAuditWriter:
             old_value=self._serialize_value(old_value),
             new_value=self._serialize_value(new_value),
             note=note,
+            actor_type=actor_type,
+            actor_display_name=actor_display_name,
+            metadata_json=self._serialize_value(metadata_json),
         )
 
     def record_create(
@@ -53,6 +58,8 @@ class EntityAuditWriter:
         actor_id: int | None,
         new_value: Any = None,
         note: str | None = None,
+        *,
+        actor_display_name: str | None = None,
     ) -> EntityAuditLog | None:
         return self.append(
             entity_type=entity_type,
@@ -61,6 +68,7 @@ class EntityAuditWriter:
             action=ACTION_CREATED,
             new_value=new_value,
             note=note,
+            actor_display_name=actor_display_name,
         )
 
     def record_update(
@@ -71,6 +79,8 @@ class EntityAuditWriter:
         old_value: Any = None,
         new_value: Any = None,
         note: str | None = None,
+        *,
+        actor_display_name: str | None = None,
     ) -> EntityAuditLog | None:
         return self.append(
             entity_type=entity_type,
@@ -80,6 +90,7 @@ class EntityAuditWriter:
             old_value=old_value,
             new_value=new_value,
             note=note,
+            actor_display_name=actor_display_name,
         )
 
     def record_delete(
@@ -89,6 +100,8 @@ class EntityAuditWriter:
         actor_id: int | None,
         old_value: Any = None,
         note: str | None = None,
+        *,
+        actor_display_name: str | None = None,
     ) -> EntityAuditLog | None:
         return self.append(
             entity_type=entity_type,
@@ -97,6 +110,7 @@ class EntityAuditWriter:
             action=ACTION_DELETED,
             old_value=old_value,
             note=note,
+            actor_display_name=actor_display_name,
         )
 
     def record_restore(
@@ -106,6 +120,8 @@ class EntityAuditWriter:
         actor_id: int | None,
         new_value: Any = None,
         note: str | None = None,
+        *,
+        actor_display_name: str | None = None,
     ) -> EntityAuditLog | None:
         return self.append(
             entity_type=entity_type,
@@ -114,6 +130,7 @@ class EntityAuditWriter:
             action=ACTION_RESTORED,
             new_value=new_value,
             note=note,
+            actor_display_name=actor_display_name,
         )
 
     def record_status_change(
@@ -124,6 +141,8 @@ class EntityAuditWriter:
         old_status: Any,
         new_status: Any,
         note: str | None = None,
+        *,
+        actor_display_name: str | None = None,
     ) -> EntityAuditLog | None:
         return self.append(
             entity_type=entity_type,
@@ -133,14 +152,21 @@ class EntityAuditWriter:
             old_value={"status": self._status_value(old_status)},
             new_value={"status": self._status_value(new_status)},
             note=note,
+            actor_display_name=actor_display_name,
         )
 
-    def _serialize_value(self, value: Any) -> str | None:
+    def _serialize_value(self, value: Any) -> Any:
+        """Normalize a value to a JSON-safe object for the JSONB column.
+
+        Returns the dict/list/scalar directly (no ``json.dumps``); the column
+        stores the object. Bare strings are wrapped as ``{"value": ...}`` to keep
+        a uniform object shape, matching the historical serializer behavior.
+        """
         if value is None:
             return None
         if isinstance(value, str):
             value = {"value": value}
-        return json.dumps(self._normalize_value(value), default=str, ensure_ascii=False)
+        return self._normalize_value(value)
 
     def _normalize_value(self, value: Any) -> Any:
         if isinstance(value, Enum):
