@@ -1,4 +1,3 @@
-import json
 from itertools import count
 
 from sqlalchemy import select
@@ -33,8 +32,8 @@ def test_issue_charge_audit_preserves_issued_action(test_db, test_user):
     service.issue_charge(charge.id, actor_id=test_user.id)
 
     entry = _audit_entry(test_db, charge.id, ACTION_ISSUED)
-    assert json.loads(entry.old_value) == {"status": ChargeStatus.DRAFT.value}
-    assert json.loads(entry.new_value) == {"status": ChargeStatus.ISSUED.value}
+    assert entry.old_value == {"status": ChargeStatus.DRAFT.value}
+    assert entry.new_value == {"status": ChargeStatus.ISSUED.value}
     assert entry.note is None
 
 
@@ -47,8 +46,8 @@ def test_paid_charge_audit_preserves_paid_action(test_db, test_user):
     service.mark_charge_paid(charge.id, actor_id=test_user.id)
 
     entry = _audit_entry(test_db, charge.id, ACTION_PAID)
-    assert json.loads(entry.old_value) == {"status": ChargeStatus.ISSUED.value}
-    assert json.loads(entry.new_value) == {"status": ChargeStatus.PAID.value}
+    assert entry.old_value == {"status": ChargeStatus.ISSUED.value}
+    assert entry.new_value == {"status": ChargeStatus.PAID.value}
     assert entry.note is None
 
 
@@ -61,8 +60,8 @@ def test_cancel_charge_audit_preserves_canceled_action(test_db, test_user):
     service.cancel_charge(charge.id, actor_id=test_user.id, reason="Duplicate")
 
     entry = _audit_entry(test_db, charge.id, ACTION_CANCELED)
-    assert json.loads(entry.old_value) == {"status": ChargeStatus.ISSUED.value}
-    assert json.loads(entry.new_value) == {"status": ChargeStatus.CANCELED.value}
+    assert entry.old_value == {"status": ChargeStatus.ISSUED.value}
+    assert entry.new_value == {"status": ChargeStatus.CANCELED.value}
     assert entry.note == "Duplicate"
 
 

@@ -1,4 +1,3 @@
-import json
 from datetime import date
 from decimal import Decimal
 
@@ -10,7 +9,7 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.common.enums import EntityType
 
 
-def test_writer_serializes_dict_as_valid_json(test_db, test_user):
+def test_writer_stores_dict_as_json_object(test_db, test_user):
     EntityAuditWriter(test_db).record_update(
         ENTITY_CLIENT,
         10,
@@ -21,8 +20,10 @@ def test_writer_serializes_dict_as_valid_json(test_db, test_user):
 
     entry = test_db.scalars(select(EntityAuditLog)).one()
     assert entry.action == ACTION_UPDATED
-    assert json.loads(entry.old_value) == {"full_name": "ישן"}
-    assert json.loads(entry.new_value) == {"full_name": "חדש"}
+    # Stored as a JSON object (dict), not a json.dumps string.
+    assert entry.old_value == {"full_name": "ישן"}
+    assert entry.new_value == {"full_name": "חדש"}
+    assert entry.actor_type == "user"
 
 
 def test_writer_wraps_plain_string(test_db, test_user):
@@ -35,8 +36,22 @@ def test_writer_wraps_plain_string(test_db, test_user):
     )
 
     entry = test_db.scalars(select(EntityAuditLog)).one()
-    assert json.loads(entry.old_value) == {"value": "old"}
-    assert json.loads(entry.new_value) == {"value": "new"}
+    assert entry.old_value == {"value": "old"}
+    assert entry.new_value == {"value": "new"}
+
+
+def test_writer_records_actor_display_name_snapshot(test_db, test_user):
+    EntityAuditWriter(test_db).record_create(
+        ENTITY_CLIENT,
+        10,
+        test_user.id,
+        new_value={"full_name": "חדש"},
+        actor_display_name="פלוני אלמוני",
+    )
+
+    entry = test_db.scalars(select(EntityAuditLog)).one()
+    assert entry.actor_type == "user"
+    assert entry.actor_display_name == "פלוני אלמוני"
 
 
 def test_writer_serializes_enum_inside_dict_as_value(test_db, test_user):
@@ -51,7 +66,7 @@ def test_writer_serializes_enum_inside_dict_as_value(test_db, test_user):
     )
 
     entry = test_db.scalars(select(EntityAuditLog)).one()
-    assert json.loads(entry.new_value) == {
+    assert entry.new_value == {
         "entity_type": EntityType.COMPANY_LTD.value,
         "items": [EntityType.OSEK_MURSHE.value],
     }
@@ -66,7 +81,7 @@ def test_writer_serializes_date_and_decimal_inside_dict(test_db, test_user):
     )
 
     entry = test_db.scalars(select(EntityAuditLog)).one()
-    assert json.loads(entry.new_value) == {"opened_at": "2026-05-08", "amount": "12.30"}
+    assert entry.new_value == {"opened_at": "2026-05-08", "amount": "12.30"}
 
 
 def test_writer_skips_when_actor_is_none(test_db):
@@ -87,5 +102,5 @@ def test_record_status_change_stores_status_payload(test_db, test_user):
 
     entry = test_db.scalars(select(EntityAuditLog)).one()
     assert entry.action == ACTION_STATUS_CHANGED
-    assert json.loads(entry.old_value) == {"status": "draft"}
-    assert json.loads(entry.new_value) == {"status": "active"}
+    assert entry.old_value == {"status": "draft"}
+    assert entry.new_value == {"status": "active"}

@@ -8,19 +8,19 @@ class _FakeBilling:
         self.calls = []
         self.app_error_ids = set()
 
-    def issue_charge(self, charge_id, actor_id=None):
+    def issue_charge(self, charge_id, actor_id=None, actor_name=None):
         self.calls.append(("issue", charge_id, actor_id, None))
         if charge_id in self.app_error_ids:
             raise AppError("invalid transition", "CHARGE.INVALID_STATUS")
         if charge_id in self.failures:
             raise RuntimeError("issue failed")
 
-    def mark_charge_paid(self, charge_id, actor_id=None):
+    def mark_charge_paid(self, charge_id, actor_id=None, actor_name=None):
         self.calls.append(("mark-paid", charge_id, actor_id, None))
         if charge_id in self.failures:
             raise RuntimeError("paid failed")
 
-    def cancel_charge(self, charge_id, actor_id=None, reason=None):
+    def cancel_charge(self, charge_id, actor_id=None, reason=None, actor_name=None):
         self.calls.append(("cancel", charge_id, actor_id, reason))
         if charge_id in self.failures:
             raise RuntimeError("cancel failed")

@@ -1,4 +1,3 @@
-import json
 from datetime import date
 from itertools import count
 
@@ -122,5 +121,5 @@ def test_entity_type_change_logs_audit_entry(test_db):
     assert entry.old_value is not None
     assert entry.new_value is not None
     assert entry.old_value != entry.new_value
-    assert json.loads(entry.old_value) == {"entity_type": EntityType.OSEK_MURSHE.value}
-    assert json.loads(entry.new_value) == {"entity_type": EntityType.COMPANY_LTD.value}
+    assert entry.old_value == {"entity_type": EntityType.OSEK_MURSHE.value}
+    assert entry.new_value == {"entity_type": EntityType.COMPANY_LTD.value}

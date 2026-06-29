@@ -1,4 +1,3 @@
-import json
 from datetime import date
 from decimal import Decimal
 
@@ -54,7 +53,7 @@ def _audit_payloads(db, report_id: int, action: str, field: str) -> list[dict]:
         .where(EntityAuditLog.action == action)
         .order_by(EntityAuditLog.id.asc())
     ).all()
-    return [json.loads(getattr(row, field)) for row in rows if getattr(row, field)]
+    return [getattr(row, field) for row in rows if getattr(row, field)]
 
 
 def test_vat_auto_populate_writes_audit_and_source_breakdown(test_db, test_user, monkeypatch):

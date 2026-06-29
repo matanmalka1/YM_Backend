@@ -26,6 +26,34 @@ def _seed_three_audit_entries(test_db, test_user, client_record):
     return first, second, third
 
 
+def test_actor_display_name_snapshot_survives_user_rename(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    """The immutable actor_display_name snapshot must not change when the user is
+    renamed; only the live-join performed_by_name reflects the new name."""
+    client_record, _business = create_client_with_business(id_number="AUDIT-RENAME")
+    original_name = test_user.full_name
+    EntityAuditWriter(test_db).record_update(
+        ENTITY_CLIENT,
+        client_record.id,
+        test_user.id,
+        new_value={"x": 1},
+        actor_display_name=original_name,
+    )
+    test_db.commit()
+
+    test_user.full_name = "שם חדש לגמרי"
+    test_db.commit()
+
+    response = client.get(f"/api/v1/audit/client/{client_record.id}", headers=advisor_headers)
+    assert response.status_code == 200
+    item = response.json()["items"][0]
+    # Snapshot is frozen at write time...
+    assert item["actor_display_name"] == original_name
+    # ...while the live-join performed_by_name reflects the renamed user.
+    assert item["performed_by_name"] == "שם חדש לגמרי"
+
+
 def test_audit_endpoint_page_one_returns_newest_records(
     client, test_db, advisor_headers, test_user, create_client_with_business
 ):

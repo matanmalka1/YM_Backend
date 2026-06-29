@@ -1,4 +1,3 @@
-import json
 from decimal import Decimal
 from itertools import count
 
@@ -75,7 +74,7 @@ def test_income_delete_stores_old_value_snapshot(test_db, test_user):
         .filter(EntityAuditLog.entity_id == report.id)
         .filter(EntityAuditLog.action == ACTION_INCOME_DELETED)
     ).one()
-    assert json.loads(entry.old_value) == {
+    assert entry.old_value == {
         "line_id": line.id,
         "source_type": "salary",
         "amount": "123.45",
@@ -118,7 +117,7 @@ def test_expense_delete_stores_old_value_snapshot(test_db, test_user):
         .filter(EntityAuditLog.entity_id == report.id)
         .filter(EntityAuditLog.action == ACTION_EXPENSE_DELETED)
     ).one()
-    assert json.loads(entry.old_value) == {
+    assert entry.old_value == {
         "line_id": line.id,
         "category": "office_rent",
         "amount": "456.78",
@@ -142,7 +141,7 @@ def test_income_add_stores_snapshot_payload(test_db, test_user):
 
     entry = _audit_entries(test_db, report.id, ACTION_INCOME_ADDED)[0]
 
-    assert json.loads(entry.new_value) == {
+    assert entry.new_value == {
         "line_id": line.id,
         "source_type": "salary",
         "amount": "123.45",
@@ -165,7 +164,7 @@ def test_expense_add_stores_full_snapshot_payload(test_db, test_user):
 
     entry = _audit_entries(test_db, report.id, ACTION_EXPENSE_ADDED)[0]
 
-    assert json.loads(entry.new_value) == {
+    assert entry.new_value == {
         "line_id": line.id,
         "category": "office_rent",
         "amount": "456.78",
@@ -196,7 +195,7 @@ def test_income_update_audit_records_only_sent_fields(test_db, test_user):
     )
 
     entry = _audit_entries(test_db, report.id, ACTION_INCOME_UPDATED)[0]
-    assert json.loads(entry.new_value) == {"amount": "600.00"}
+    assert entry.new_value == {"amount": "600.00"}
 
 
 def test_income_update_explicit_null_clears_nullable_description(test_db, test_user):
@@ -221,7 +220,7 @@ def test_income_update_explicit_null_clears_nullable_description(test_db, test_u
     refreshed = test_db.get(AnnualReportIncomeLine, line.id)
     assert refreshed.description is None
     entry = _audit_entries(test_db, report.id, ACTION_INCOME_UPDATED)[0]
-    assert json.loads(entry.new_value) == {"description": None}
+    assert entry.new_value == {"description": None}
 
 
 def test_expense_update_audit_stores_full_old_snapshot_and_sent_fields(test_db, test_user):
@@ -247,7 +246,7 @@ def test_expense_update_audit_stores_full_old_snapshot_and_sent_fields(test_db, 
     )
 
     entry = _audit_entries(test_db, report.id, ACTION_EXPENSE_UPDATED)[0]
-    assert json.loads(entry.old_value) == {
+    assert entry.old_value == {
         "line_id": line.id,
         "category": "office_rent",
         "amount": "500.00",
@@ -256,7 +255,7 @@ def test_expense_update_audit_stores_full_old_snapshot_and_sent_fields(test_db, 
         "supporting_document_id": None,
         "description": "Rent",
     }
-    assert json.loads(entry.new_value) == {"recognition_rate": "0.75", "description": None}
+    assert entry.new_value == {"recognition_rate": "0.75", "description": None}
     refreshed = test_db.get(AnnualReportExpenseLine, line.id)
     assert refreshed.description is None
 
