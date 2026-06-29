@@ -22,16 +22,16 @@ class ClientLifecycleService:
         self.record_repo = ClientRecordRepository(db)
         self._audit = EntityAuditWriter(db)
 
-    def delete_client(self, client_id: int, actor_id: int) -> None:
+    def delete_client(self, client_id: int, actor_id: int, actor_name: str | None = None) -> None:
         client = self.record_repo.get_by_id_including_deleted(client_id)
         if not client or client.deleted_at is not None:
             raise NotFoundError(
                 CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
         self.record_repo.soft_delete(client_id, deleted_by=actor_id)
-        self._audit.record_delete(ENTITY_CLIENT, client_id, actor_id)
+        self._audit.record_delete(ENTITY_CLIENT, client_id, actor_id, actor_display_name=actor_name)
 
-    def restore_client(self, client_id: int, actor_id: int):
+    def restore_client(self, client_id: int, actor_id: int, actor_name: str | None = None):
         client = self.record_repo.get_by_id_including_deleted(client_id)
         if not client:
             raise NotFoundError(
@@ -52,5 +52,7 @@ class ClientLifecycleService:
             raise NotFoundError(
                 CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
-        self._audit.record_restore(ENTITY_CLIENT, client_id, actor_id)
+        self._audit.record_restore(
+            ENTITY_CLIENT, client_id, actor_id, actor_display_name=actor_name
+        )
         return restored

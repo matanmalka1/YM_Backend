@@ -47,5 +47,7 @@ def update_annual_report_detail(
     AnnualReportService(db).assert_report_exists(report_id)
     service = AnnualReportDetailService(db)
     update_data = request.model_dump(exclude_unset=True)
-    detail = service.update_detail(report_id, actor_id=user.id, **update_data)
+    detail = service.update_detail(
+        report_id, actor_id=user.id, actor_name=user.full_name, **update_data
+    )
     return ReportDetailResponse.model_validate(detail)

@@ -30,7 +30,7 @@ class AnnualReportDetailService:
         return self.repo.get_by_report_id(report_id)
 
     def update_detail(
-        self, report_id: int, actor_id: int | None = None, **fields
+        self, report_id: int, actor_id: int | None = None, actor_name: str | None = None, **fields
     ) -> AnnualReportDetail:
         report = self.report_repo.get_by_id(report_id)
         if not report:
@@ -54,6 +54,7 @@ class AnnualReportDetailService:
                 action=ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
                 old_value=old_value,
                 new_value=changes,
+                actor_display_name=actor_name,
             )
         return detail
 

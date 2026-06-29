@@ -101,6 +101,7 @@ async def import_clients_from_excel(
                 contents,
                 create_client_service,
                 actor_id=user.id,
+                actor_name=user.full_name,
                 content_length=parsed_content_length,
                 max_upload_size=MAX_UPLOAD_SIZE,
             )

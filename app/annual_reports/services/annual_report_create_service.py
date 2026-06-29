@@ -151,6 +151,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
             ENTITY_ANNUAL_REPORT,
             linked_report.id,
             created_by,
+            actor_display_name=created_by_name,
             new_value={
                 "tax_year": tax_year,
                 "client_type": client_type,

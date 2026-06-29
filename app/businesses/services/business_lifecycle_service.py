@@ -17,13 +17,19 @@ class BusinessLifecycleService:
         self.business_repo = BusinessRepository(db)
         self._audit = EntityAuditWriter(db)
 
-    def delete_business(self, business_id: int, actor_id: int) -> None:
+    def delete_business(
+        self, business_id: int, actor_id: int, actor_name: str | None = None
+    ) -> None:
         if not self.business_repo.get_by_id(business_id):
             raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
         self.business_repo.soft_delete(business_id, deleted_by=actor_id)
-        self._audit.record_delete(ENTITY_BUSINESS, business_id, actor_id)
+        self._audit.record_delete(
+            ENTITY_BUSINESS, business_id, actor_id, actor_display_name=actor_name
+        )
 
-    def restore_business(self, business_id: int, actor_id: int, actor_role: UserRole) -> Business:
+    def restore_business(
+        self, business_id: int, actor_id: int, actor_role: UserRole, actor_name: str | None = None
+    ) -> Business:
         if actor_role != UserRole.ADVISOR:
             raise ForbiddenError("רק יועצים יכולים לשחזר עסקים", ErrorCode.BUSINESS_FORBIDDEN)
         business = self.business_repo.get_by_id_including_deleted(business_id)
@@ -34,5 +40,7 @@ class BusinessLifecycleService:
         restored = self.business_repo.restore(business_id, restored_by=actor_id)
         if not restored:
             raise NotFoundError(f"עסק {business_id} לא נמצא", ErrorCode.BUSINESS_NOT_FOUND)
-        self._audit.record_restore(ENTITY_BUSINESS, business_id, actor_id)
+        self._audit.record_restore(
+            ENTITY_BUSINESS, business_id, actor_id, actor_display_name=actor_name
+        )
         return restored

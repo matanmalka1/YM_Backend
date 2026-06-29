@@ -77,6 +77,7 @@ class AuthService:
                 action=AuditAction.LOGIN_FAILURE,
                 status=AuditStatus.FAILURE,
                 target_user_id=user.id,
+                target_display_name=user.full_name,
                 email=normalized_email,
                 reason="inactive_user",
             )
@@ -88,6 +89,7 @@ class AuthService:
                 action=AuditAction.LOGIN_FAILURE,
                 status=AuditStatus.FAILURE,
                 target_user_id=user.id,
+                target_display_name=user.full_name,
                 email=normalized_email,
                 reason="invalid_password",
             )
@@ -98,7 +100,9 @@ class AuthService:
             action=AuditAction.LOGIN_SUCCESS,
             status=AuditStatus.SUCCESS,
             actor_user_id=user.id,
+            actor_display_name=user.full_name,
             target_user_id=user.id,
+            target_display_name=user.full_name,
             email=user.email,
         )
         logger.info(f"Successful login for user: {normalized_email}")
@@ -110,7 +114,7 @@ class AuthService:
             return None
         return self.issue_auth_bundle(user)
 
-    def logout_user(self, *, user_id: int, email: str) -> None:
+    def logout_user(self, *, user_id: int, email: str, full_name: str | None = None) -> None:
         """
         Invalidate all active tokens for the user by bumping token_version.
 
@@ -122,7 +126,9 @@ class AuthService:
             action=AuditAction.LOGOUT,
             status=AuditStatus.SUCCESS,
             actor_user_id=user_id,
+            actor_display_name=full_name,
             target_user_id=user_id,
+            target_display_name=full_name,
             email=email,
         )
         logger.info(f"User logged out and token invalidated: {email}")
@@ -188,4 +194,4 @@ class AuthService:
         user = self.user_repo.get_by_id(user_id)
         if not user:
             return
-        self.logout_user(user_id=user.id, email=user.email)
+        self.logout_user(user_id=user.id, email=user.email, full_name=user.full_name)

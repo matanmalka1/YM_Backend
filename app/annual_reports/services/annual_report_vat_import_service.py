@@ -123,7 +123,11 @@ class VatImportService:
         self.vat_agg_repo = VatInvoiceAggregationRepository(db)
 
     def auto_populate(
-        self, report_id: int, force: bool = False, actor_id: int | None = None
+        self,
+        report_id: int,
+        force: bool = False,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> dict:
         """Import VAT income/expense data into annual report lines.
 
@@ -174,6 +178,7 @@ class VatImportService:
                     entity_type=ENTITY_ANNUAL_REPORT,
                     entity_id=report_id,
                     actor_id=actor_id,
+                    actor_display_name=actor_name,
                     action=ACTION_INCOME_DELETED,
                     old_value=old_value,
                     note=(
@@ -192,6 +197,7 @@ class VatImportService:
                     entity_type=ENTITY_ANNUAL_REPORT,
                     entity_id=report_id,
                     actor_id=actor_id,
+                    actor_display_name=actor_name,
                     action=ACTION_EXPENSE_DELETED,
                     old_value=old_value,
                     note=(
@@ -228,6 +234,7 @@ class VatImportService:
                 entity_type=ENTITY_ANNUAL_REPORT,
                 entity_id=report_id,
                 actor_id=actor_id,
+                actor_display_name=actor_name,
                 action=ACTION_INCOME_ADDED,
                 new_value=income_line_snapshot(line)
                 | {
@@ -325,6 +332,7 @@ class VatImportService:
                 entity_type=ENTITY_ANNUAL_REPORT,
                 entity_id=report_id,
                 actor_id=actor_id,
+                actor_display_name=actor_name,
                 action=ACTION_EXPENSE_ADDED,
                 new_value=expense_line_snapshot(line)
                 | {

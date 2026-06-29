@@ -52,6 +52,7 @@ def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser
         period=request.period,
         months_covered=request.months_covered,
         actor_id=user.id,
+        actor_name=user.full_name,
     )
     return _response_builder(db).build(charge, user.role)
 
@@ -63,7 +64,7 @@ def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
 def issue_charge(charge_id: PathId, db: DBSession, user: CurrentUser):
-    charge = BillingService(db).issue_charge(charge_id, actor_id=user.id)
+    charge = BillingService(db).issue_charge(charge_id, actor_id=user.id, actor_name=user.full_name)
     return _response_builder(db).build(charge, user.role)
 
 
@@ -74,7 +75,9 @@ def issue_charge(charge_id: PathId, db: DBSession, user: CurrentUser):
     responses=not_found_response(description="החיוב המבוקש לא נמצא"),
 )
 def mark_charge_paid(charge_id: PathId, db: DBSession, user: CurrentUser):
-    charge = BillingService(db).mark_charge_paid(charge_id, actor_id=user.id)
+    charge = BillingService(db).mark_charge_paid(
+        charge_id, actor_id=user.id, actor_name=user.full_name
+    )
     return _response_builder(db).build(charge, user.role)
 
 
@@ -90,7 +93,9 @@ def cancel_charge(
     user: CurrentUser,
     request: ChargeCancelRequest = Body(default_factory=ChargeCancelRequest),
 ):
-    charge = BillingService(db).cancel_charge(charge_id, actor_id=user.id, reason=request.reason)
+    charge = BillingService(db).cancel_charge(
+        charge_id, actor_id=user.id, reason=request.reason, actor_name=user.full_name
+    )
     return _response_builder(db).build(charge, user.role)
 
 
@@ -156,6 +161,7 @@ def bulk_charge_action(
             action=request.action,
             actor_id=user.id,
             cancellation_reason=request.cancellation_reason,
+            actor_name=user.full_name,
         )
         return BulkChargeActionResponse(succeeded=succeeded, failed=failed)
 
@@ -170,5 +176,5 @@ def bulk_charge_action(
 )
 def delete_charge(charge_id: PathId, db: DBSession, user: CurrentUser):
     service = BillingService(db)
-    service.delete_charge(charge_id, actor_id=user.id)
+    service.delete_charge(charge_id, actor_id=user.id, actor_name=user.full_name)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

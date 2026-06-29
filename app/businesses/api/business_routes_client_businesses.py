@@ -43,6 +43,7 @@ def create_business(
         business_name=request.business_name,
         notes=request.notes,
         actor_id=user.id,
+        actor_name=user.full_name,
     )
     return ClientBusinessService(db).to_response(business, client_id=client_record_id)
 
@@ -94,6 +95,7 @@ def update_business(
         client_id=client_record_id,
         user_role=user.role,
         actor_id=user.id,
+        actor_name=user.full_name,
         **request.model_dump(exclude_unset=True),
     )
     return ClientBusinessService(db).to_response(business, client_id=client_record_id)
@@ -108,7 +110,9 @@ def update_business(
 def delete_business(
     client_record_id: PathId, business_id: PathId, db: DBSession, user: CurrentUser
 ):
-    ClientBusinessService(db).delete_for_client(client_record_id, business_id, actor_id=user.id)
+    ClientBusinessService(db).delete_for_client(
+        client_record_id, business_id, actor_id=user.id, actor_name=user.full_name
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -127,5 +131,6 @@ def restore_business(
         business_id,
         actor_id=user.id,
         actor_role=user.role,
+        actor_name=user.full_name,
     )
     return service.to_response(business, client_id=client_record_id)

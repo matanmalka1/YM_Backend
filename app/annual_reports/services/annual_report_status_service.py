@@ -164,6 +164,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             changed_by,
             old_status,
             ns,
+            actor_display_name=changed_by_name,
         )
 
         if (
@@ -206,6 +207,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             changed_by,
             custom_deadline_note,
             custom_deadline_note_provided,
+            changed_by_name=changed_by_name,
         )
         return self._to_responses([updated])[0]
 
@@ -216,6 +218,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         changed_by: int,
         custom_deadline_note=None,
         custom_deadline_note_provided: bool = True,
+        changed_by_name: str | None = None,
     ):
         report = self._get_or_raise_for_update(report_id)
         old_value = _deadline_snapshot(report)
@@ -268,6 +271,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             action=ACTION_ANNUAL_REPORT_DEADLINE_UPDATED,
             old_value=old_value,
             new_value=_deadline_snapshot(updated),
+            actor_display_name=changed_by_name,
         )
         return updated
 

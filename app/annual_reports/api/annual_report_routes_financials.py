@@ -138,7 +138,12 @@ def add_income_line(
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.add_income(
-        report_id, body.source_type, body.amount, body.description, actor_id=user.id
+        report_id,
+        body.source_type,
+        body.amount,
+        body.description,
+        actor_id=user.id,
+        actor_name=user.full_name,
     )
 
 
@@ -157,7 +162,11 @@ def update_income_line(
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.update_income(
-        report_id, line_id, actor_id=user.id, **body.model_dump(exclude_unset=True)
+        report_id,
+        line_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+        **body.model_dump(exclude_unset=True),
     )
 
 
@@ -169,7 +178,7 @@ def update_income_line(
 )
 def delete_income_line(report_id: PathId, line_id: PathId, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
-    svc.delete_income(report_id, line_id, actor_id=user.id)
+    svc.delete_income(report_id, line_id, actor_id=user.id, actor_name=user.full_name)
 
 
 # ── Expense lines ─────────────────────────────────────────────────────────────
@@ -194,6 +203,7 @@ def add_expense_line(
         body.external_document_reference,
         body.supporting_document_id,
         actor_id=user.id,
+        actor_name=user.full_name,
     )
 
 
@@ -212,7 +222,11 @@ def update_expense_line(
 ):
     svc = AnnualReportFinancialLineService(db)
     return svc.update_expense(
-        report_id, line_id, actor_id=user.id, **body.model_dump(exclude_unset=True)
+        report_id,
+        line_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+        **body.model_dump(exclude_unset=True),
     )
 
 
@@ -224,7 +238,7 @@ def update_expense_line(
 )
 def delete_expense_line(report_id: PathId, line_id: PathId, db: DBSession, user: CurrentUser):
     svc = AnnualReportFinancialLineService(db)
-    svc.delete_expense(report_id, line_id, actor_id=user.id)
+    svc.delete_expense(report_id, line_id, actor_id=user.id, actor_name=user.full_name)
 
 
 # ── VAT auto-populate ─────────────────────────────────────────────────────────
@@ -244,5 +258,5 @@ def auto_populate_from_vat(
 ):
     """מילוי אוטומטי של שורות הכנסה/הוצאה מנתוני מע\"מ של העסק לשנת המס."""
     svc = VatImportService(db)
-    result = svc.auto_populate(report_id, force=force, actor_id=user.id)
+    result = svc.auto_populate(report_id, force=force, actor_id=user.id, actor_name=user.full_name)
     return VatAutoPopulateResponse(**result)

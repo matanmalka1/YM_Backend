@@ -49,6 +49,7 @@ class UserManagementService:
         role: UserRole,
         password: str,
         phone: str | None = None,
+        actor_name: str | None = None,
     ) -> User:
         ensure_advisor(actor_role)
         validate_password(password)
@@ -67,7 +68,9 @@ class UserManagementService:
             action=AuditAction.USER_CREATED,
             status=AuditStatus.SUCCESS,
             actor_user_id=actor_user_id,
+            actor_display_name=actor_name,
             target_user_id=user.id,
+            target_display_name=user.full_name,
         )
         return user
 
@@ -98,6 +101,7 @@ class UserManagementService:
         actor_user_id: int,
         actor_role: UserRole,
         user_id: int,
+        actor_name: str | None = None,
         **fields,
     ) -> User:
         ensure_advisor(actor_role)
@@ -126,12 +130,20 @@ class UserManagementService:
             action=AuditAction.USER_UPDATED,
             status=AuditStatus.SUCCESS,
             actor_user_id=actor_user_id,
+            actor_display_name=actor_name,
             target_user_id=user.id,
+            target_display_name=user.full_name,
             metadata={"updated_fields": sorted(fields.keys())},
         )
         return user
 
-    def activate_user(self, actor_user_id: int, actor_role: UserRole, user_id: int) -> User:
+    def activate_user(
+        self,
+        actor_user_id: int,
+        actor_role: UserRole,
+        user_id: int,
+        actor_name: str | None = None,
+    ) -> User:
         ensure_advisor(actor_role)
         get_user_or_raise(self.user_repo, user_id)
         user = self.user_repo.activate(user_id)
@@ -139,7 +151,9 @@ class UserManagementService:
             action=AuditAction.USER_ACTIVATED,
             status=AuditStatus.SUCCESS,
             actor_user_id=actor_user_id,
+            actor_display_name=actor_name,
             target_user_id=user.id,
+            target_display_name=user.full_name,
         )
         return user
 
@@ -148,6 +162,7 @@ class UserManagementService:
         actor_user_id: int,
         actor_role: UserRole,
         target_user_id: int,
+        actor_name: str | None = None,
     ) -> User:
         ensure_advisor(actor_role)
         if actor_user_id == target_user_id:
@@ -160,7 +175,9 @@ class UserManagementService:
             action=AuditAction.USER_DEACTIVATED,
             status=AuditStatus.SUCCESS,
             actor_user_id=actor_user_id,
+            actor_display_name=actor_name,
             target_user_id=user.id,
+            target_display_name=user.full_name,
         )
         return user
 
@@ -170,6 +187,7 @@ class UserManagementService:
         actor_role: UserRole,
         target_user_id: int,
         new_password: str,
+        actor_name: str | None = None,
     ) -> User:
         ensure_advisor(actor_role)
         validate_password(new_password)
@@ -182,6 +200,8 @@ class UserManagementService:
             action=AuditAction.PASSWORD_RESET,
             status=AuditStatus.SUCCESS,
             actor_user_id=actor_user_id,
+            actor_display_name=actor_name,
             target_user_id=user.id,
+            target_display_name=user.full_name,
         )
         return user

@@ -87,6 +87,7 @@ class ClientExcelService:
         workbook,
         create_client_service: CreateClientService,
         actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> tuple[int, list[dict]]:
         """Parse workbook and create clients with their first business."""
         worksheet = workbook.active
@@ -139,6 +140,7 @@ class ClientExcelService:
                     phone=values["phone"] or None,
                     email=values["email"] or None,
                     actor_id=actor_id,
+                    actor_name=actor_name,
                 )
                 savepoint.commit()
                 created += 1
@@ -153,6 +155,7 @@ class ClientExcelService:
         contents: bytes,
         create_client_service: CreateClientService,
         actor_id: int | None = None,
+        actor_name: str | None = None,
         content_length: int | None = None,
         max_upload_size: int = MAX_CLIENT_IMPORT_UPLOAD_SIZE,
     ) -> dict:
@@ -179,6 +182,7 @@ class ClientExcelService:
             workbook,
             create_client_service,
             actor_id=actor_id,
+            actor_name=actor_name,
         )
         return {"created": created, "total_rows": total_rows, "errors": errors}
 

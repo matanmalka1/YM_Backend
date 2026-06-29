@@ -44,6 +44,7 @@ def create_user(request: UserCreateRequest, db: DBSession, user: CurrentUser):
         role=request.role,
         password=request.password,
         phone=request.phone,
+        actor_name=user.full_name,
     )
 
 
@@ -89,6 +90,7 @@ def update_user(user_id: PathId, request: UserUpdateRequest, db: DBSession, user
         actor_user_id=user.id,
         actor_role=user.role,
         user_id=user_id,
+        actor_name=user.full_name,
         **update_data,
     )
 
@@ -104,6 +106,7 @@ def activate_user(user_id: PathId, db: DBSession, user: CurrentUser):
         actor_user_id=user.id,
         actor_role=user.role,
         user_id=user_id,
+        actor_name=user.full_name,
     )
 
 
@@ -118,6 +121,7 @@ def deactivate_user(user_id: PathId, db: DBSession, user: CurrentUser):
         actor_user_id=user.id,
         actor_role=user.role,
         target_user_id=user_id,
+        actor_name=user.full_name,
     )
 
 
@@ -135,4 +139,5 @@ def reset_password(
         actor_role=user.role,
         target_user_id=user_id,
         new_password=request.new_password,
+        actor_name=user.full_name,
     )

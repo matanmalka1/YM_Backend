@@ -85,5 +85,7 @@ def logout(
     current_user: CurrentUser,
 ):
     auth_service = AuthService(db)
-    auth_service.logout_user(user_id=current_user.id, email=current_user.email)
+    auth_service.logout_user(
+        user_id=current_user.id, email=current_user.email, full_name=current_user.full_name
+    )
     clear_refresh_cookie(response)

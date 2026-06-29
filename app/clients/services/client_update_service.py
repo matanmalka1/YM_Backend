@@ -35,7 +35,14 @@ class ClientUpdateService:
         self.record_repo = ClientRecordRepository(db)
         self._audit = EntityAuditWriter(db)
 
-    def update_client(self, client_id: int, actor_id: int | None = None, actor_role=None, **fields):
+    def update_client(
+        self,
+        client_id: int,
+        actor_id: int | None = None,
+        actor_role=None,
+        actor_name: str | None = None,
+        **fields,
+    ):
         existing = get_full_record(self.db, client_id)
         if not existing:
             raise NotFoundError(f"לקוח {client_id} לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
@@ -53,7 +60,7 @@ class ClientUpdateService:
                     ErrorCode.CLIENT_ENTITY_TYPE_CHANGE_FORBIDDEN,
                 )
             self._cancel_deadlines_on_entity_type_change(
-                client_id, old_entity_type, new_entity_type, actor_id
+                client_id, old_entity_type, new_entity_type, actor_id, actor_name
             )
         old_snapshot = {k: existing.get(k) for k in fields if k in existing}
         updated = self._update_client_record_graph(client_id, **fields)
@@ -73,6 +80,7 @@ class ClientUpdateService:
             actor_id,
             old_value=old_snapshot,
             new_value={k: updated.get(k) for k in fields},
+            actor_display_name=actor_name,
         )
         return updated
 
@@ -90,7 +98,7 @@ class ClientUpdateService:
             BinderRepository(self.db).close_in_office_by_client_record(record.id)
 
     def _cancel_deadlines_on_entity_type_change(
-        self, client_id: int, old_entity_type, new_entity_type, actor_id
+        self, client_id: int, old_entity_type, new_entity_type, actor_id, actor_name=None
     ):
         record = self.record_repo.get_by_id(client_id)
         if not record:
@@ -109,4 +117,5 @@ class ClientUpdateService:
             old_value={"entity_type": old_entity_type},
             new_value={"entity_type": new_entity_type},
             note=ACTION_ENTITY_TYPE_CHANGED,
+            actor_display_name=actor_name,
         )

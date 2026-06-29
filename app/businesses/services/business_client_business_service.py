@@ -55,9 +55,11 @@ class ClientBusinessService:
         self._assert_business_belongs_to_client(business, client_id)
         return business
 
-    def delete_for_client(self, client_id: int, business_id: int, actor_id: int) -> None:
+    def delete_for_client(
+        self, client_id: int, business_id: int, actor_id: int, actor_name: str | None = None
+    ) -> None:
         self.get_for_client(client_id, business_id)
-        self.business_service.delete_business(business_id, actor_id=actor_id)
+        self.business_service.delete_business(business_id, actor_id=actor_id, actor_name=actor_name)
 
     def restore_for_client(
         self,
@@ -66,6 +68,7 @@ class ClientBusinessService:
         *,
         actor_id: int,
         actor_role: UserRole,
+        actor_name: str | None = None,
     ) -> Business:
         business = self.business_repo.get_by_id_including_deleted(business_id)
         if not business:
@@ -75,6 +78,7 @@ class ClientBusinessService:
             business_id,
             actor_id=actor_id,
             actor_role=actor_role,
+            actor_name=actor_name,
         )
 
     def _assert_business_belongs_to_client(self, business: Business, client_id: int) -> None:

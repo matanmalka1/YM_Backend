@@ -102,6 +102,13 @@ class SignatureRequestService:
             report = svc.repo.get_by_id(annual_report_id)
             if report is None or report.status != AnnualReportStatus.PENDING_CLIENT:
                 return
+            # DEFERRED (Phase 2/6): this is a SYSTEM-initiated transition. The
+            # correct EntityAuditLog representation is actor_type="system" with
+            # performed_by=NULL + a system actor_display_name, which requires the
+            # system/external-signer writer API (§5a) introduced in Phase 2 (and
+            # exercised for signatures in Phase 6). Until then it keeps the
+            # pre-existing _SYSTEM_USER_ID sentinel; Phase 1 only made performed_by
+            # nullable to enable that future fix, it did not change this path.
             svc.transition_status(
                 report_id=annual_report_id,
                 new_status=AnnualReportStatus.SUBMITTED.value,

@@ -56,6 +56,7 @@ class BillingService:
         charge_type: str,
         business_id: int | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
         period: str | None = None,
         months_covered: int = 1,
     ) -> Charge:
@@ -79,6 +80,7 @@ class BillingService:
             ENTITY_CHARGE,
             charge.id,
             actor_id,
+            actor_display_name=actor_name,
             new_value={
                 "amount": str(amount),
                 "charge_type": charge_type,
@@ -86,7 +88,9 @@ class BillingService:
         )
         return charge
 
-    def issue_charge(self, charge_id: int, actor_id: int | None = None) -> Charge:
+    def issue_charge(
+        self, charge_id: int, actor_id: int | None = None, actor_name: str | None = None
+    ) -> Charge:
         charge = self.charge_repo.get_by_id_for_update(charge_id)
         if not charge:
             raise NotFoundError(
@@ -111,10 +115,13 @@ class BillingService:
             ACTION_ISSUED,
             ChargeStatus.DRAFT,
             ChargeStatus.ISSUED,
+            actor_display_name=actor_name,
         )
         return issued
 
-    def mark_charge_paid(self, charge_id: int, actor_id: int | None = None) -> Charge:
+    def mark_charge_paid(
+        self, charge_id: int, actor_id: int | None = None, actor_name: str | None = None
+    ) -> Charge:
         charge = self.charge_repo.get_by_id_for_update(charge_id)
         if not charge:
             raise NotFoundError(
@@ -139,6 +146,7 @@ class BillingService:
             ACTION_PAID,
             ChargeStatus.ISSUED,
             ChargeStatus.PAID,
+            actor_display_name=actor_name,
         )
         return paid
 
@@ -147,6 +155,7 @@ class BillingService:
         charge_id: int,
         actor_id: int | None = None,
         reason: str | None = None,
+        actor_name: str | None = None,
     ) -> Charge:
         charge = self.charge_repo.get_by_id_for_update(charge_id)
         if not charge:
@@ -174,10 +183,13 @@ class BillingService:
             old_status,
             ChargeStatus.CANCELED,
             note=reason,
+            actor_display_name=actor_name,
         )
         return canceled
 
-    def delete_charge(self, charge_id: int, actor_id: int | None = None) -> bool:
+    def delete_charge(
+        self, charge_id: int, actor_id: int | None = None, actor_name: str | None = None
+    ) -> bool:
         charge = self.charge_repo.get_by_id(charge_id)
         if not charge:
             raise NotFoundError(
@@ -190,7 +202,9 @@ class BillingService:
             )
         result = self.charge_repo.soft_delete(charge_id, deleted_by=actor_id)
         if result:
-            self._audit.record_delete(ENTITY_CHARGE, charge_id, actor_id)
+            self._audit.record_delete(
+                ENTITY_CHARGE, charge_id, actor_id, actor_display_name=actor_name
+            )
         return result
 
     def get_charge(self, charge_id: int) -> Charge:

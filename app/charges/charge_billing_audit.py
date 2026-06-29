@@ -12,6 +12,8 @@ def record_charge_status_audit(
     old_status,
     new_status,
     note: str | None = None,
+    *,
+    actor_display_name: str | None = None,
 ) -> None:
     writer.append(
         entity_type=ENTITY_CHARGE,
@@ -21,4 +23,5 @@ def record_charge_status_audit(
         old_value={"status": old_status},
         new_value={"status": new_status},
         note=note,
+        actor_display_name=actor_display_name,
     )

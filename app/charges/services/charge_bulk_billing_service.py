@@ -18,6 +18,7 @@ class BulkBillingService:
         action: str,
         actor_id: int | None = None,
         cancellation_reason: str | None = None,
+        actor_name: str | None = None,
     ) -> tuple[list[int], list[BulkChargeFailedItem]]:
         """
         Apply action to multiple charges.
@@ -30,14 +31,17 @@ class BulkBillingService:
         for charge_id in charge_ids:
             try:
                 if action == "issue":
-                    self.billing.issue_charge(charge_id, actor_id=actor_id)
+                    self.billing.issue_charge(charge_id, actor_id=actor_id, actor_name=actor_name)
                 elif action == "mark-paid":
-                    self.billing.mark_charge_paid(charge_id, actor_id=actor_id)
+                    self.billing.mark_charge_paid(
+                        charge_id, actor_id=actor_id, actor_name=actor_name
+                    )
                 elif action == "cancel":
                     self.billing.cancel_charge(
                         charge_id,
                         actor_id=actor_id,
                         reason=cancellation_reason,
+                        actor_name=actor_name,
                     )
                 succeeded.append(charge_id)
             except AppError as exc:

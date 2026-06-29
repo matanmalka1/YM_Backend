@@ -76,6 +76,7 @@ class CreateClientService:
         business_opened_at: date | None = None,
         business_notes: str | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
         reference_date: date | None = None,
     ) -> tuple[ClientRecord, Business]:
         """
@@ -107,6 +108,7 @@ class CreateClientService:
                 advance_rate=advance_rate,
                 accountant_id=accountant_id,
                 actor_id=actor_id,
+                actor_name=actor_name,
                 reference_date=reference_date,
             )
         except ConflictError as exc:
@@ -125,6 +127,7 @@ class CreateClientService:
             business_name=normalized_business_name,
             notes=business_notes,
             actor_id=actor_id,
+            actor_name=actor_name,
         )
         return client_record, business
 
@@ -148,6 +151,7 @@ class CreateClientService:
         advance_rate=None,
         accountant_id: int | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
         reference_date: date | None = None,
     ) -> ClientRecord:
         if entity_type == EntityType.EMPLOYEE:
@@ -217,6 +221,7 @@ class CreateClientService:
             ENTITY_CLIENT,
             client_record.id,
             actor_id,
+            actor_display_name=actor_name,
             new_value={
                 "full_name": full_name,
                 "id_number": id_number,
@@ -232,6 +237,7 @@ class CreateClientService:
         *,
         actor_id: int,
         actor_role: UserRole,
+        actor_name: str | None = None,
     ) -> CreateClientRecordResponse:
         client_record, business = self.create_client(
             full_name=request.client.full_name,
@@ -254,6 +260,7 @@ class CreateClientService:
             business_opened_at=request.business.opened_at,
             business_notes=request.business.notes,
             actor_id=actor_id,
+            actor_name=actor_name,
         )
         impact = compute_creation_impact(
             self.db,

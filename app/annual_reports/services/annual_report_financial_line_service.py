@@ -79,6 +79,7 @@ class AnnualReportFinancialLineService:
         amount: Decimal,
         description: str | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> IncomeLineResponse:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
@@ -95,6 +96,7 @@ class AnnualReportFinancialLineService:
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
+            actor_display_name=actor_name,
             action=ACTION_INCOME_ADDED,
             new_value=income_line_snapshot(line),
         )
@@ -102,7 +104,12 @@ class AnnualReportFinancialLineService:
         return IncomeLineResponse.model_validate(line)
 
     def update_income(
-        self, report_id: int, line_id: int, actor_id: int | None = None, **fields
+        self,
+        report_id: int,
+        line_id: int,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+        **fields,
     ) -> IncomeLineResponse:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
@@ -132,6 +139,7 @@ class AnnualReportFinancialLineService:
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
+            actor_display_name=actor_name,
             action=ACTION_INCOME_UPDATED,
             old_value=old_value,
             new_value={k: audit_scalar(k, v) for k, v in update_fields.items()},
@@ -139,7 +147,13 @@ class AnnualReportFinancialLineService:
         self._invalidate_tax_for_report(report)
         return IncomeLineResponse.model_validate(line)
 
-    def delete_income(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
+    def delete_income(
+        self,
+        report_id: int,
+        line_id: int,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> None:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         line = self.income_repo.get_by_report_and_line_id(report_id, line_id)
@@ -154,6 +168,7 @@ class AnnualReportFinancialLineService:
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
+            actor_display_name=actor_name,
             action=ACTION_INCOME_DELETED,
             old_value=old_value,
             note=f"line_id={line_id}",
@@ -170,6 +185,7 @@ class AnnualReportFinancialLineService:
         external_document_reference: str | None = None,
         supporting_document_id: int | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> ExpenseLineResponse:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
@@ -198,6 +214,7 @@ class AnnualReportFinancialLineService:
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
+            actor_display_name=actor_name,
             action=ACTION_EXPENSE_ADDED,
             new_value=expense_line_snapshot(line),
         )
@@ -205,7 +222,12 @@ class AnnualReportFinancialLineService:
         return ExpenseLineResponse.model_validate(line)
 
     def update_expense(
-        self, report_id: int, line_id: int, actor_id: int | None = None, **fields
+        self,
+        report_id: int,
+        line_id: int,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+        **fields,
     ) -> ExpenseLineResponse:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
@@ -235,6 +257,7 @@ class AnnualReportFinancialLineService:
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
+            actor_display_name=actor_name,
             action=ACTION_EXPENSE_UPDATED,
             old_value=old_value,
             new_value={k: audit_scalar(k, v) for k, v in update_fields.items()},
@@ -242,7 +265,13 @@ class AnnualReportFinancialLineService:
         self._invalidate_tax_for_report(report)
         return ExpenseLineResponse.model_validate(line)
 
-    def delete_expense(self, report_id: int, line_id: int, actor_id: int | None = None) -> None:
+    def delete_expense(
+        self,
+        report_id: int,
+        line_id: int,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> None:
         report = self._get_report_or_raise(report_id)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         line = self.expense_repo.get_by_report_and_line_id(report_id, line_id)
@@ -257,6 +286,7 @@ class AnnualReportFinancialLineService:
             entity_type=ENTITY_ANNUAL_REPORT,
             entity_id=report_id,
             actor_id=actor_id,
+            actor_display_name=actor_name,
             action=ACTION_EXPENSE_DELETED,
             old_value=old_value,
             note=f"line_id={line_id}",

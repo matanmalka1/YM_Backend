@@ -58,7 +58,9 @@ def add_annex_line(
     user: CurrentUser,
 ):
     svc = AnnualReportService(db)
-    return svc.add_annex_line(report_id, schedule, body.data, body.notes, actor_id=user.id)
+    return svc.add_annex_line(
+        report_id, schedule, body.data, body.notes, actor_id=user.id, actor_name=user.full_name
+    )
 
 
 @router.patch(
@@ -75,7 +77,9 @@ def update_annex_line(
     user: CurrentUser,
 ):
     svc = AnnualReportService(db)
-    return svc.update_annex_line(report_id, line_id, body.data, body.notes, actor_id=user.id)
+    return svc.update_annex_line(
+        report_id, line_id, body.data, body.notes, actor_id=user.id, actor_name=user.full_name
+    )
 
 
 @router.delete(
@@ -92,4 +96,4 @@ def delete_annex_line(
     user: CurrentUser,
 ):
     svc = AnnualReportService(db)
-    svc.delete_annex_line(report_id, line_id, actor_id=user.id)
+    svc.delete_annex_line(report_id, line_id, actor_id=user.id, actor_name=user.full_name)

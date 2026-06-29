@@ -43,6 +43,7 @@ class BusinessService:
         business_name: str | None = None,
         notes: str | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> Business:
         return self.create_business_for_client_record(
             client_record_id=client_id,
@@ -50,6 +51,7 @@ class BusinessService:
             business_name=business_name,
             notes=notes,
             actor_id=actor_id,
+            actor_name=actor_name,
         )
 
     def create_business_for_client_record(
@@ -59,6 +61,7 @@ class BusinessService:
         business_name: str | None = None,
         notes: str | None = None,
         actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> Business:
         record = get_client_or_raise(self.db, client_record_id)
 
@@ -102,6 +105,7 @@ class BusinessService:
             ENTITY_BUSINESS,
             business.id,
             actor_id,
+            actor_display_name=actor_name,
             new_value={
                 "client_record_id": client_record_id,
                 "business_name": business_name,
@@ -137,6 +141,7 @@ class BusinessService:
         client_id: int,
         user_role: UserRole,
         actor_id: int | None = None,
+        actor_name: str | None = None,
         **fields,
     ) -> Business:
         record = get_client_or_raise(self.db, client_id)
@@ -180,11 +185,20 @@ class BusinessService:
             actor_id,
             old_value=_serialize(old_snapshot),
             new_value=_serialize(new_snapshot),
+            actor_display_name=actor_name,
         )
         return updated
 
-    def delete_business(self, business_id: int, actor_id: int) -> None:
-        self._lifecycle.delete_business(business_id, actor_id)
+    def delete_business(
+        self, business_id: int, actor_id: int, actor_name: str | None = None
+    ) -> None:
+        self._lifecycle.delete_business(business_id, actor_id, actor_name)
 
-    def restore_business(self, business_id: int, actor_id: int, actor_role: UserRole) -> Business:
-        return self._lifecycle.restore_business(business_id, actor_id, actor_role)
+    def restore_business(
+        self,
+        business_id: int,
+        actor_id: int,
+        actor_role: UserRole,
+        actor_name: str | None = None,
+    ) -> Business:
+        return self._lifecycle.restore_business(business_id, actor_id, actor_role, actor_name)

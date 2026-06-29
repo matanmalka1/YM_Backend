@@ -86,6 +86,7 @@ def create_client(
         request,
         actor_id=user.id,
         actor_role=user.role,
+        actor_name=user.full_name,
     )
 
 
@@ -185,6 +186,7 @@ def update_client(
         client_record_id,
         actor_id=user.id,
         actor_role=user.role,
+        actor_name=user.full_name,
         **request.model_dump(exclude_unset=True),
     )
     return ClientQueryService(db).get_full_client(client_record_id)
@@ -201,7 +203,9 @@ def update_client(
 )
 def delete_client(client_record_id: PathId, db: DBSession, user: CurrentUser):
     """Soft-delete a client (ADVISOR only)."""
-    ClientLifecycleService(db).delete_client(client_record_id, actor_id=user.id)
+    ClientLifecycleService(db).delete_client(
+        client_record_id, actor_id=user.id, actor_name=user.full_name
+    )
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
@@ -213,5 +217,7 @@ def delete_client(client_record_id: PathId, db: DBSession, user: CurrentUser):
 )
 def restore_client(client_record_id: PathId, db: DBSession, user: CurrentUser):
     """Restore a soft-deleted client (ADVISOR only)."""
-    ClientLifecycleService(db).restore_client(client_record_id, actor_id=user.id)
+    ClientLifecycleService(db).restore_client(
+        client_record_id, actor_id=user.id, actor_name=user.full_name
+    )
     return ClientQueryService(db).get_full_client_including_deleted(client_record_id)
