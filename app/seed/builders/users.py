@@ -61,11 +61,13 @@ def create_user_audit_logs(db, rng: Random, users: list[User]) -> None:
             UserAuditLog(
                 action=AuditAction.LOGIN_SUCCESS,
                 actor_user_id=user.id,
+                actor_display_name=user.full_name,
                 target_user_id=user.id,
+                target_display_name=user.full_name,
                 email=user.email,
                 status=AuditStatus.SUCCESS,
                 reason=None,
-                metadata_json='{"source":"seed"}',
+                metadata_json={"source": "seed"},
                 created_at=datetime.now(UTC) - timedelta(days=rng.randint(0, 30)),
             )
         )
@@ -75,10 +77,11 @@ def create_user_audit_logs(db, rng: Random, users: list[User]) -> None:
                     action=AuditAction.LOGIN_FAILURE,
                     actor_user_id=None,
                     target_user_id=user.id,
+                    target_display_name=user.full_name,
                     email=user.email,
                     status=AuditStatus.FAILURE,
                     reason="invalid_password",
-                    metadata_json='{"source":"seed"}',
+                    metadata_json={"source": "seed"},
                     created_at=datetime.now(UTC) - timedelta(days=rng.randint(0, 30)),
                 )
             )
@@ -99,16 +102,21 @@ def create_entity_audit_logs(
                 entity_type=ENTITY_CLIENT,
                 entity_id=client.id,
                 performed_by=actor.id,
+                actor_type="user",
+                actor_display_name=actor.full_name,
                 action=ACTION_CREATED,
                 performed_at=datetime.now(UTC) - timedelta(days=rng.randint(30, 365)),
             )
         )
     for business in businesses:
+        business_actor = rng.choice(users)
         db.add(
             EntityAuditLog(
                 entity_type=ENTITY_BUSINESS,
                 entity_id=business.id,
-                performed_by=rng.choice(users).id,
+                performed_by=business_actor.id,
+                actor_type="user",
+                actor_display_name=business_actor.full_name,
                 action=rng.choice([ACTION_CREATED, ACTION_UPDATED]),
                 performed_at=datetime.now(UTC) - timedelta(days=rng.randint(1, 180)),
             )
