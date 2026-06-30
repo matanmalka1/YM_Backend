@@ -1,29 +1,8 @@
-from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-
-def _create_report(db) -> int:
-    crm_client = seed_client_identity(
-        db, full_name="AR CreateRead Additional", id_number="ARCRA001"
-    )
-
-    report = AnnualReportService(db).create_report(
-        client_record_id=crm_client.id,
-        tax_year=2026,
-        client_type="corporation",
-        created_by=1,
-        created_by_name="Tester",
-        deadline_type="standard",
-        notes=None,
-    )
-    return report.id
-
-
-def test_get_report_not_found_and_delete_paths(client, test_db, advisor_headers):
+def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_report_factory):
     missing = client.get("/api/v1/annual-reports/999999", headers=advisor_headers)
     assert missing.status_code == 404
 
-    report_id = _create_report(test_db)
+    report_id = annual_report_factory(client_full_name="AR CreateRead Additional").id
     get_ok = client.get(f"/api/v1/annual-reports/{report_id}", headers=advisor_headers)
     assert get_ok.status_code == 200
     body = get_ok.json()
@@ -38,14 +17,14 @@ def test_get_report_not_found_and_delete_paths(client, test_db, advisor_headers)
     assert del_missing.status_code == 404
 
 
-def test_list_dto_thin_while_detail_dto_full(client, test_db, advisor_headers):
+def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_report_factory):
     """Regression guard for the list/detail DTO split (items 35-37).
 
     GET /annual-reports rows must be the thin AnnualReportListItem (no
     detail/calc/action fields); GET /annual-reports/{id} must keep the full
     detail shape with grouped tax_calculation and no duplicate *_amount fields.
     """
-    report_id = _create_report(test_db)
+    report_id = annual_report_factory(client_full_name="AR CreateRead Additional").id
 
     list_resp = client.get("/api/v1/annual-reports", headers=advisor_headers)
     assert list_resp.status_code == 200

@@ -5,22 +5,21 @@ from sqlalchemy.exc import IntegrityError
 
 from app.binders.models.binder import BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
+from tests.factories import create_user
 from tests.helpers.identity import seed_client_identity
 
 
 def _user(test_db):
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Binder Unique Admin",
         email="binder.unique@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 

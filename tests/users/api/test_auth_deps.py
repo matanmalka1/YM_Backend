@@ -3,9 +3,9 @@ from datetime import UTC, datetime, timedelta
 import jwt
 
 from app.config import settings
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
 from app.users.services.user_token_service import generate_access_token
+from tests.factories import create_user
 
 
 def test_users_endpoint_requires_token(client):
@@ -45,16 +45,15 @@ def test_users_endpoint_rejects_invalid_and_malformed_tokens(client):
 
 
 def test_inactive_user_token_is_rejected(client, test_db):
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Inactive Auth User",
         email="inactive.token@example.com",
-        password_hash=AuthService.hash_password("password123"),
+        password="password123",
         role=UserRole.ADVISOR,
         is_active=False,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
 
     token = generate_access_token(user)
     response = client.get(

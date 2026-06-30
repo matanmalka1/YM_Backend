@@ -3,27 +3,26 @@
 from datetime import UTC, datetime
 
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_grouped_repository import (
     list_by_due_date_paginated,
     list_due_date_groups,
 )
+from tests.factories import create_user
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
 def _user(db):
-    user = User(
+    user = create_user(
+        db,
         full_name="Grouped Repo Test User",
         email="grouped.repo.test@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
     )
-    db.add(user)
-    db.flush()
     return user
 
 

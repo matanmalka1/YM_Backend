@@ -4,8 +4,8 @@ import uuid
 
 from app.tasks.schemas.task import TaskCreateRequest
 from app.tasks.services.task_service import TaskService
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
+from tests.factories import create_user
 
 
 def _task(db, **kwargs):
@@ -26,15 +26,14 @@ def _post(client, headers, task_ids, assignee_user_id, idem_key=None):
 
 
 def _create_user(db, email="assignee@example.com", active=True):
-    user = User(
+    user = create_user(
+        db,
         full_name="Assignee User",
         email=email,
-        password_hash=AuthService.hash_password("password123"),
+        password="password123",
         role=UserRole.ADVISOR,
         is_active=active,
     )
-    db.add(user)
-    db.flush()
     return user
 
 

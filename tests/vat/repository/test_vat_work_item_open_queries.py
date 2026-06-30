@@ -1,23 +1,22 @@
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
+from tests.factories import create_user
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
 def _user(test_db):
-    user = User(
+    user = create_user(
+        test_db,
         full_name="VAT Open Query User",
         email="vat.open.query@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
     )
-    test_db.add(user)
-    test_db.flush()
     return user
 
 

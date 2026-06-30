@@ -9,23 +9,7 @@ from app.annual_reports.annual_report_ni_engine import (
     calculate_national_insurance as _calculate_ni,
 )
 from app.annual_reports.annual_report_tax_engine import calculate_tax as _calculate_tax
-from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
-
-
-def _create_report(db):
-    client = seed_client_identity(db, full_name="Advances Client", id_number="878787878")
-
-    svc = AnnualReportService(db)
-    return svc.create_report(
-        client_record_id=client.id,
-        tax_year=2026,
-        client_type="corporation",
-        created_by=1,
-        created_by_name="Tester",
-        deadline_type="standard",
-    )
 
 
 def _patch_decimal_tax_input(monkeypatch):
@@ -42,10 +26,10 @@ def _patch_decimal_tax_input(monkeypatch):
 
 
 def test_advances_summary_reports_refund_when_advances_exceed_tax(
-    client, test_db, advisor_headers, monkeypatch
+    client, test_db, advisor_headers, monkeypatch, annual_report_factory
 ):
     _patch_decimal_tax_input(monkeypatch)
-    report = _create_report(test_db)
+    report = annual_report_factory()
     # No income/expense → tax_after_credits = 0
 
     repo = AdvancePaymentRepository(test_db)
@@ -75,10 +59,10 @@ def test_advances_summary_reports_refund_when_advances_exceed_tax(
 
 
 def test_advances_summary_zero_balance_without_paid_advances(
-    client, test_db, advisor_headers, monkeypatch
+    client, advisor_headers, monkeypatch, annual_report_factory
 ):
     _patch_decimal_tax_input(monkeypatch)
-    report = _create_report(test_db)
+    report = annual_report_factory()
     resp = client.get(
         f"/api/v1/annual-reports/{report.id}/advances-summary",
         headers=advisor_headers,

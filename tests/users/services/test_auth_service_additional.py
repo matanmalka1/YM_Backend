@@ -9,19 +9,19 @@ from app.users.repositories.user_audit_log_repository import UserAuditLogReposit
 from app.users.repositories.user_repository import UserRepository
 from app.users.services.user_auth_service import AuthService
 from app.users.services.user_token_service import decode_access_token
+from tests.factories import create_user
 
 
 def _user(test_db, *, email: str, is_active: bool = True) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Auth Service User",
         email=email,
-        password_hash=AuthService.hash_password("password123"),
+        password="password123",
         role=UserRole.ADVISOR,
         is_active=is_active,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 

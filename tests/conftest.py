@@ -21,52 +21,22 @@ import app.notes.models.note_entity_note  # noqa: F401
 import app.tasks.models.task  # noqa: F401
 import app.tax_calendar.models.tax_calendar_deadline_rule  # noqa: F401
 import app.tax_calendar.models.tax_calendar_entry  # noqa: F401
-from app.businesses.models.business import BusinessStatus
-from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord  # noqa: F401
-from app.common.enums import IdNumberType
 from app.database import Base, get_db
 from app.legal_entities.models.legal_entity import LegalEntity  # noqa: F401
 from app.legal_entities.models.person import Person  # noqa: F401
 from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityLink  # noqa: F401
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.services.tax_calendar_bootstrap_service import seed_default_deadline_rules
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
 from app.users.services.user_token_service import generate_access_token
-from tests.helpers.identity import seed_business, seed_client_identity
-
-
-def _ensure_client_identity_graph(session, client) -> None:
-    existing = session.scalars(select(ClientRecord).filter(ClientRecord.id == client.id)).first()
-    if existing:
-        return
-    seeded = seed_client_identity(
-        session,
-        full_name=client.full_name,
-        id_number=client.id_number,
-        id_number_type=getattr(client, "id_number_type", IdNumberType.INDIVIDUAL),
-        entity_type=getattr(client, "entity_type", None),
-        phone=getattr(client, "phone", None),
-        email=getattr(client, "email", None),
-        address_street=getattr(client, "address_street", None),
-        address_building_number=getattr(client, "address_building_number", None),
-        address_apartment=getattr(client, "address_apartment", None),
-        address_city=getattr(client, "address_city", None),
-        address_zip_code=getattr(client, "address_zip_code", None),
-        office_client_number=getattr(client, "office_client_number", None),
-        notes=getattr(client, "notes", None),
-        vat_reporting_frequency=getattr(client, "vat_reporting_frequency", None),
-        vat_exempt_ceiling=getattr(client, "vat_exempt_ceiling", None),
-        advance_rate=getattr(client, "advance_rate", None),
-        advance_rate_updated_at=getattr(client, "advance_rate_updated_at", None),
-        accountant_id=getattr(client, "accountant_id", None),
-        status=getattr(client, "status", None) or ClientStatus.ACTIVE,
-        created_by=getattr(client, "created_by", None),
-        deleted_at=getattr(client, "deleted_at", None),
-        client_record_id=client.id,
-    )
-    client.legal_entity_id = seeded.legal_entity_id
+from tests.factories import (
+    AnnualReportFactory,
+    BusinessFactory,
+    ClientBusinessFactory,
+    ClientFactory,
+    UserFactory,
+)
 
 
 @pytest.fixture(scope="function")
@@ -97,36 +67,28 @@ def test_db():
 
 
 @pytest.fixture(scope="function")
+def user_factory(test_db):
+    return UserFactory(test_db)
+
+
+@pytest.fixture(scope="function")
+def client_factory(test_db):
+    return ClientFactory(test_db)
+
+
+@pytest.fixture(scope="function")
+def business_factory(test_db):
+    return BusinessFactory(test_db)
+
+
+@pytest.fixture(scope="function")
 def create_client_with_business(test_db):
-    """Create a test client with an explicit default business."""
+    return ClientBusinessFactory(test_db)
 
-    def _create(
-        *,
-        full_name: str = "Seeded Test Client",
-        id_number: str = "SEEDED-001",
-        business_name: str | None = None,
-        opened_at: date | None = None,
-        **client_fields,
-    ):
-        client = seed_client_identity(
-            full_name=full_name,
-            id_number=id_number,
-            id_number_type=client_fields.pop("id_number_type", IdNumberType.INDIVIDUAL),
-            **client_fields,
-            db=test_db,
-        )
-        business = seed_business(
-            test_db,
-            legal_entity_id=client.legal_entity_id,
-            business_name=business_name or full_name,
-            opened_at=opened_at or date.today(),
-            status=BusinessStatus.ACTIVE,
-        )
-        test_db.commit()
-        test_db.refresh(business)
-        return client, business
 
-    return _create
+@pytest.fixture(scope="function")
+def annual_report_factory(test_db, client_factory):
+    return AnnualReportFactory(test_db, client_factory)
 
 
 @pytest.fixture(scope="function")
@@ -151,19 +113,13 @@ def client(test_db):
 
 
 @pytest.fixture(scope="function")
-def test_user(test_db):
+def test_user(user_factory):
     """Create test user."""
-    user = User(
+    return user_factory(
         full_name="Test User",
         email="test@example.com",
-        password_hash=AuthService.hash_password("password123"),
         role=UserRole.ADVISOR,
-        is_active=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
-    return user
 
 
 @pytest.fixture(scope="function")
@@ -173,19 +129,13 @@ def auth_token(test_user):
 
 
 @pytest.fixture(scope="function")
-def secretary_user(test_db):
+def secretary_user(user_factory):
     """Create secretary user."""
-    user = User(
+    return user_factory(
         full_name="Test Secretary",
         email="secretary@example.com",
-        password_hash=AuthService.hash_password("password123"),
         role=UserRole.SECRETARY,
-        is_active=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
-    return user
 
 
 @pytest.fixture(scope="function")
@@ -205,20 +155,11 @@ def secretary_headers(secretary_token):
 
 
 @pytest.fixture(scope="function")
-def vat_client(test_db):
+def vat_client(create_client_with_business):
     """A client fixture for VAT work item tests."""
-    client = seed_client_identity(
-        test_db,
+    client, _ = create_client_with_business(
         full_name="VAT Test Client",
         id_number="123456789",
-        id_number_type=IdNumberType.INDIVIDUAL,
-    )
-    seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=client.full_name,
-        status=BusinessStatus.ACTIVE,
         opened_at=date.today(),
     )
-    test_db.commit()
     return client

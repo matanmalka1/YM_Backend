@@ -2,11 +2,8 @@ from datetime import UTC, date, datetime
 from itertools import count
 
 from app.businesses.models.business import Business
-from app.clients.models.client_record import ClientRecord
-from app.common.enums import IdNumberType, VatType
-from app.legal_entities.models.legal_entity import LegalEntity
+from app.common.enums import VatType
 from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
 from app.vat.models.vat_enums import (
     DocumentType,
     ExpenseCategory,
@@ -15,50 +12,37 @@ from app.vat.models.vat_enums import (
 )
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
+from tests.factories import create_user
+from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 _client_seq = count(1)
 
 
 def _user(test_db) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="VAT Repo User",
         email="vat.repo@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 
 def _business(db) -> tuple[Business, int]:
     idx = next(_client_seq)
-    legal_entity = LegalEntity(
-        official_name=f"VAT Repo Client {idx}",
+    client, business = seed_client_with_business(
+        db,
+        full_name=f"VAT Repo Client {idx}",
         id_number=f"VRI{idx:03d}",
-        id_number_type=IdNumberType.INDIVIDUAL,
-    )
-    db.add(legal_entity)
-    db.commit()
-    db.refresh(legal_entity)
-
-    client_record = ClientRecord(legal_entity_id=legal_entity.id)
-    db.add(client_record)
-    db.commit()
-    db.refresh(client_record)
-
-    business = Business(
-        legal_entity_id=legal_entity.id,
-        business_name=legal_entity.official_name,
         opened_at=date(2026, 1, 1),
     )
-    db.add(business)
     db.commit()
     db.refresh(business)
-    return business, client_record.id
+    return business, client.id
 
 
 def test_list_by_work_item_orders_and_filters_by_type(test_db):

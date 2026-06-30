@@ -3,11 +3,8 @@ from datetime import date, timedelta
 from sqlalchemy import select
 
 from app.businesses.models.business import Business
-from app.clients.models.client_record import ClientRecord
-from app.common.enums import IdNumberType, VatType
-from app.legal_entities.models.legal_entity import LegalEntity
+from app.common.enums import VatType
 from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_audit_log import VatAuditLog
 from app.vat.services.vat_report_service import VatReportService
@@ -15,47 +12,34 @@ from app.vat.vat_constants import (
     ACTION_METADATA_UPDATED,
     ACTION_WORK_ITEM_DELETED,
 )
+from tests.factories import create_user
+from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
 def _user(test_db) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="VAT Metadata User",
         email="vat.metadata.user@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 
 def _business(test_db) -> tuple[Business, int]:
-    legal_entity = LegalEntity(
-        official_name="VAT Metadata Client",
+    client, business = seed_client_with_business(
+        test_db,
+        full_name="VAT Metadata Client",
         id_number="VMD001",
-        id_number_type=IdNumberType.INDIVIDUAL,
-    )
-    test_db.add(legal_entity)
-    test_db.commit()
-    test_db.refresh(legal_entity)
-
-    client_record = ClientRecord(legal_entity_id=legal_entity.id)
-    test_db.add(client_record)
-    test_db.commit()
-    test_db.refresh(client_record)
-
-    business = Business(
-        legal_entity_id=legal_entity.id,
-        business_name=legal_entity.official_name,
         opened_at=date(2026, 1, 1),
     )
-    test_db.add(business)
     test_db.commit()
     test_db.refresh(business)
-    return business, client_record.id
+    return business, client.id
 
 
 def test_update_work_item_metadata_touches_updated_at_and_audits_changed_fields(test_db):

@@ -14,22 +14,8 @@ from app.audit.audit_constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
-from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)
-
-
-def _create_report(db, user):
-    idx = next(_seq)
-    client = seed_client_identity(db, full_name=f"Audit Report {idx}", id_number=f"ARG{idx:06d}")
-    return AnnualReportService(db).create_report(
-        client_record_id=client.id,
-        tax_year=2026,
-        client_type="corporation",
-        created_by=user.id,
-        created_by_name=user.full_name,
-        deadline_type="custom",
-    )
 
 
 def _entry(db, report_id, action):
@@ -41,8 +27,8 @@ def _entry(db, report_id, action):
     ).one()
 
 
-def test_detail_update_writes_generic_audit(test_db, test_user):
-    report = _create_report(test_db, test_user)
+def test_detail_update_writes_generic_audit(test_db, test_user, annual_report_factory):
+    report = annual_report_factory(actor=test_user, deadline_type="custom")
 
     AnnualReportDetailService(test_db).update_detail(
         report.id,
@@ -62,8 +48,10 @@ def test_detail_update_writes_generic_audit(test_db, test_user):
     }
 
 
-def test_detail_update_skips_audit_when_values_do_not_change(test_db, test_user):
-    report = _create_report(test_db, test_user)
+def test_detail_update_skips_audit_when_values_do_not_change(
+    test_db, test_user, annual_report_factory
+):
+    report = annual_report_factory(actor=test_user, deadline_type="custom")
     service = AnnualReportDetailService(test_db)
     service.update_detail(report.id, actor_id=test_user.id, donation_amount=250)
 
@@ -78,8 +66,8 @@ def test_detail_update_skips_audit_when_values_do_not_change(test_db, test_user)
     assert len(entries) == 1
 
 
-def test_deadline_update_writes_generic_audit(test_db, test_user):
-    report = _create_report(test_db, test_user)
+def test_deadline_update_writes_generic_audit(test_db, test_user, annual_report_factory):
+    report = annual_report_factory(actor=test_user, deadline_type="custom")
 
     AnnualReportService(test_db).update_deadline(
         report.id,
@@ -97,8 +85,8 @@ def test_deadline_update_writes_generic_audit(test_db, test_user):
     assert entry.new_value["deadline_type"] == "standard"
 
 
-def test_annex_add_update_delete_write_generic_audit(test_db, test_user):
-    report = _create_report(test_db, test_user)
+def test_annex_add_update_delete_write_generic_audit(test_db, test_user, annual_report_factory):
+    report = annual_report_factory(actor=test_user, deadline_type="custom")
     service = AnnualReportService(test_db)
     schedule = AnnualReportSchedule.SCHEDULE_B
 

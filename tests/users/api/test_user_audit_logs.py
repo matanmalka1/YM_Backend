@@ -1,19 +1,18 @@
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction
-from app.users.services.user_auth_service import AuthService
+from tests.factories import create_user
 
 
 def _create_target_user(test_db) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Audit Target",
         email="audit.target@example.com",
-        password_hash=AuthService.hash_password("password123"),
+        password="password123",
         role=UserRole.SECRETARY,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 

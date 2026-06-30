@@ -1,25 +1,10 @@
-from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-
-def _create_report(test_db):
-    client = seed_client_identity(test_db, full_name="Annual Report Client", id_number="333333333")
-
-    service = AnnualReportService(test_db)
-    report = service.create_report(
-        client_record_id=client.id,
+def test_get_detail_returns_blank_when_missing(client, advisor_headers, annual_report_factory):
+    report = annual_report_factory(
+        client_full_name="Annual Report Client",
+        client_id_number="333333333",
         tax_year=2025,
-        client_type="corporation",
-        created_by=1,
-        created_by_name="Test User",
         deadline_type="custom",
-        notes=None,
     )
-    return report
-
-
-def test_get_detail_returns_blank_when_missing(client, test_db, advisor_headers):
-    report = _create_report(test_db)
 
     response = client.get(
         f"/api/v1/annual-reports/{report.id}/details",
@@ -40,8 +25,13 @@ def test_get_detail_returns_blank_when_missing(client, test_db, advisor_headers)
     assert "tax_due_amount" not in data
 
 
-def test_update_detail_creates_and_updates(client, test_db, advisor_headers):
-    report = _create_report(test_db)
+def test_update_detail_creates_and_updates(client, advisor_headers, annual_report_factory):
+    report = annual_report_factory(
+        client_full_name="Annual Report Client",
+        client_id_number="333333333",
+        tax_year=2025,
+        deadline_type="custom",
+    )
 
     first_response = client.patch(
         f"/api/v1/annual-reports/{report.id}/details",

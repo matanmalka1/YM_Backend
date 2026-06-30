@@ -16,13 +16,13 @@ from app.common.enums import VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
+from tests.factories import create_user
 from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
@@ -30,16 +30,15 @@ _seq = count(1)
 
 
 def _create_user(test_db):
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Creator",
         email=f"creator{next(_seq)}@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 

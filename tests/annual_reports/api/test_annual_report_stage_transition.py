@@ -1,24 +1,5 @@
-from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-
-def _create_report(db) -> int:
-    crm_client = seed_client_identity(db, full_name="AR Stage Transition", id_number="ARSTG001")
-
-    report = AnnualReportService(db).create_report(
-        client_record_id=crm_client.id,
-        tax_year=2026,
-        client_type="corporation",
-        created_by=1,
-        created_by_name="Tester",
-        deadline_type="standard",
-        notes=None,
-    )
-    return report.id
-
-
-def test_transition_stage_success_and_not_found(client, test_db, advisor_headers):
-    report_id = _create_report(test_db)
+def test_transition_stage_success_and_not_found(client, advisor_headers, annual_report_factory):
+    report_id = annual_report_factory().id
 
     ok = client.post(
         f"/api/v1/annual-reports/{report_id}/transition",

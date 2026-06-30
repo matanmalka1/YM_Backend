@@ -7,25 +7,24 @@ from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType, VatType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
+from tests.factories import create_user
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 _seq = count(1)
 
 
 def _user(test_db, email_suffix) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name=f"VAT Filter User {email_suffix}",
         email=f"vat.filter.{email_suffix}@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 

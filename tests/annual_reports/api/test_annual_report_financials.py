@@ -1,31 +1,8 @@
-from itertools import count
-
 from app.annual_reports.api import annual_report_routes_financials as financials_api
-from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-_client_seq = count(1)
 
 
-def _create_report(db):
-    client = seed_client_identity(
-        db, full_name="Financial Client", id_number=f"56565656{next(_client_seq)}"
-    )
-
-    svc = AnnualReportService(db)
-    return svc.create_report(
-        client_record_id=client.id,
-        tax_year=2026,
-        client_type="corporation",
-        created_by=1,
-        created_by_name="Tester",
-        deadline_type="standard",
-        notes=None,
-    )
-
-
-def test_create_income_line_accepts_zero_amount(client, test_db, advisor_headers):
-    report = _create_report(test_db)
+def test_create_income_line_accepts_zero_amount(client, advisor_headers, annual_report_factory):
+    report = annual_report_factory()
 
     resp = client.post(
         f"/api/v1/annual-reports/{report.id}/income",

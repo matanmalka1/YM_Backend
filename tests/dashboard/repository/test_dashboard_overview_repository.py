@@ -7,19 +7,19 @@ from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType
 from app.legal_entities.models.legal_entity import LegalEntity
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
+from tests.factories import create_user
 
 
 def test_business_and_binder_repository_counts_active_entities(test_db):
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Receiver",
         email="receiver@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
     )
-    test_db.add(user)
 
     le_a = LegalEntity(
         official_name="Alpha Ltd",

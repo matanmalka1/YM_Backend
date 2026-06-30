@@ -4,7 +4,7 @@ from itertools import count
 from app.binders.models.binder import Binder
 from app.binders.repositories.binder_repository import BinderRepository
 from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from tests.factories import create_user
 from tests.helpers.identity import SeededClient, seed_client_identity
 
 _client_seq = count(1)
@@ -20,16 +20,15 @@ def _client(db) -> SeededClient:
 
 
 def _user(test_db) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Timeline Repo User",
         email="timeline.repo@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 

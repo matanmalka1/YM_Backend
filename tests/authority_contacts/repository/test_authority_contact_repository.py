@@ -2,18 +2,19 @@ from app.authority_contacts.models.authority_contact import ContactType
 from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
+from tests.factories import create_user
 from tests.helpers.identity import seed_client_identity
 
 
 def test_authority_contact_repository_crud_flow(test_db):
     repo = AuthorityContactRepository(test_db)
 
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Advisor",
         email="advisor@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
     )
@@ -22,7 +23,6 @@ def test_authority_contact_repository_crud_flow(test_db):
         full_name="Client A",
         id_number="AC001",
     )
-    test_db.add(user)
     test_db.commit()
 
     contact_a = repo.create(

@@ -1,39 +1,19 @@
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-
-def _client(db, suffix: str):
-    return seed_client_identity(
-        db,
-        full_name=f"Annual Missing API Client {suffix}",
-        id_number=f"AR-MISS-{suffix}",
-    )
-
-
-def _create_report(db, user_id: int, client_id: int, tax_year: int = 2026) -> int:
-    service = AnnualReportService(db)
-    report = service.create_report(
-        client_record_id=client_id,
-        tax_year=tax_year,
-        client_type="corporation",
-        created_by=user_id,
-        created_by_name="Test User",
-        deadline_type="standard",
-    )
-    return report.id
 
 
 def _force_submitted(db, report_id: int):
     AnnualReportService(db).repo.update(report_id, status=AnnualReportStatus.SUBMITTED)
 
 
-def test_annual_report_overdue_endpoint(client, test_db, advisor_headers, test_user):
-    old_client = _client(test_db, "A")
-    new_client = _client(test_db, "B")
+def test_annual_report_overdue_endpoint(
+    client, advisor_headers, test_user, client_factory, annual_report_factory
+):
+    old_client = client_factory()
+    new_client = client_factory()
 
-    _create_report(test_db, test_user.id, old_client.id, tax_year=2020)
-    _create_report(test_db, test_user.id, new_client.id, tax_year=2099)
+    annual_report_factory(actor=test_user, client=old_client, tax_year=2020)
+    annual_report_factory(actor=test_user, client=new_client, tax_year=2099)
 
     resp = client.get("/api/v1/annual-reports/overdue", headers=advisor_headers)
 
@@ -47,9 +27,11 @@ def test_annual_report_overdue_endpoint(client, test_db, advisor_headers, test_u
     assert new_client.id not in overdue_ids
 
 
-def test_annual_report_amend_endpoint(client, test_db, advisor_headers, test_user):
-    crm_client = _client(test_db, "C")
-    report_id = _create_report(test_db, test_user.id, crm_client.id, tax_year=2026)
+def test_annual_report_amend_endpoint(
+    client, test_db, advisor_headers, test_user, client_factory, annual_report_factory
+):
+    crm_client = client_factory()
+    report_id = annual_report_factory(actor=test_user, client=crm_client).id
     _force_submitted(test_db, report_id)
 
     amend_resp = client.post(
@@ -65,13 +47,18 @@ def test_annual_report_amend_endpoint(client, test_db, advisor_headers, test_use
 
 
 def test_annual_report_schedule_complete_and_season_summary(
-    client, test_db, advisor_headers, test_user
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    client_factory,
+    annual_report_factory,
 ):
-    c1 = _client(test_db, "D")
-    c2 = _client(test_db, "E")
+    c1 = client_factory()
+    c2 = client_factory()
 
-    report_id = _create_report(test_db, test_user.id, c1.id, tax_year=2026)
-    completed_report_id = _create_report(test_db, test_user.id, c2.id, tax_year=2026)
+    report_id = annual_report_factory(actor=test_user, client=c1).id
+    completed_report_id = annual_report_factory(actor=test_user, client=c2).id
 
     add_schedule_resp = client.post(
         f"/api/v1/annual-reports/{report_id}/schedules",

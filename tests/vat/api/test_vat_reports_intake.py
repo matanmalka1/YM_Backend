@@ -1,5 +1,5 @@
-from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
+from app.users.models.user import UserRole
+from tests.factories import create_user
 from tests.vat.api.test_vat_reports_utils import create_work_item
 
 
@@ -46,16 +46,15 @@ class TestCreateWorkItem:
     def test_create_work_item_response_is_enriched(
         self, client, test_db, advisor_headers, vat_client
     ):
-        assignee = User(
+        assignee = create_user(
+            test_db,
             full_name="VAT Assignee",
             email="vat.assignee.intake@example.com",
-            password_hash=AuthService.hash_password("pass"),
+            password="pass",
             role=UserRole.SECRETARY,
             is_active=True,
+            commit=True,
         )
-        test_db.add(assignee)
-        test_db.commit()
-        test_db.refresh(assignee)
 
         response = client.post(
             "/api/v1/vat/work-items",

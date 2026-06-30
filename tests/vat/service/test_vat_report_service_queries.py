@@ -5,49 +5,35 @@ from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType, VatType
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.users.models.user import User, UserRole
-from app.users.services.user_auth_service import AuthService
 from app.vat.services.vat_report_service import VatReportService
+from tests.factories import create_user
+from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
 def _user(test_db) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="VAT Query User",
         email="vat.query.user@example.com",
-        password_hash=AuthService.hash_password("pass"),
+        password="pass",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 
 def _business(test_db) -> tuple[Business, int]:
-    legal_entity = LegalEntity(
-        official_name="VAT Query Client",
+    client, business = seed_client_with_business(
+        test_db,
+        full_name="VAT Query Client",
         id_number="VQS001",
-        id_number_type=IdNumberType.INDIVIDUAL,
-    )
-    test_db.add(legal_entity)
-    test_db.commit()
-    test_db.refresh(legal_entity)
-
-    client_record = ClientRecord(legal_entity_id=legal_entity.id)
-    test_db.add(client_record)
-    test_db.commit()
-    test_db.refresh(client_record)
-
-    business = Business(
-        legal_entity_id=legal_entity.id,
-        business_name=legal_entity.official_name,
         opened_at=date(2026, 1, 1),
     )
-    test_db.add(business)
     test_db.commit()
     test_db.refresh(business)
-    return business, client_record.id
+    return business, client.id
 
 
 def test_list_all_work_items_and_get_audit_trail(test_db):

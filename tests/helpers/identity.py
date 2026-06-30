@@ -184,6 +184,9 @@ def seed_client_with_business(
     business_name: str | None = None,
     id_number_type: IdNumberType = IdNumberType.INDIVIDUAL,
     opened_at: date | None = None,
+    business_status: BusinessStatus = BusinessStatus.ACTIVE,
+    business_created_by: int | None = None,
+    business_notes: str | None = None,
     **client_fields,
 ) -> tuple[SeededClient, Business]:
     client = seed_client_identity(
@@ -198,6 +201,9 @@ def seed_client_with_business(
         legal_entity_id=client.legal_entity_id,
         business_name=business_name or full_name,
         opened_at=opened_at,
+        status=business_status,
+        created_by=business_created_by,
+        notes=business_notes,
     )
     business.client_id = client.id
     business.client_record_id = client.id

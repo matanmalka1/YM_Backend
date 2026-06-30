@@ -3,20 +3,19 @@ from datetime import UTC, datetime, timedelta
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
 from app.users.services.user_audit_log_service import AuditLogService
-from app.users.services.user_auth_service import AuthService
+from tests.factories import create_user
 
 
 def _user(test_db, *, email: str) -> User:
-    user = User(
+    user = create_user(
+        test_db,
         full_name="Audit Service User",
         email=email,
-        password_hash=AuthService.hash_password("password123"),
+        password="password123",
         role=UserRole.ADVISOR,
         is_active=True,
+        commit=True,
     )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
     return user
 
 
