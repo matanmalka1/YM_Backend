@@ -180,6 +180,12 @@ class VatImportService:
                     actor_id=actor_id,
                     actor_display_name=actor_name,
                     action=ACTION_INCOME_DELETED,
+                    metadata_json={
+                        "client_record_id": report.client_record_id,
+                        "tax_year": report.tax_year,
+                        "section": "income",
+                        "line_id": line.id,
+                    },
                     old_value=old_value,
                     note=(
                         f"mutation_source={_VAT_IMPORT_SOURCE}; "
@@ -199,6 +205,12 @@ class VatImportService:
                     actor_id=actor_id,
                     actor_display_name=actor_name,
                     action=ACTION_EXPENSE_DELETED,
+                    metadata_json={
+                        "client_record_id": report.client_record_id,
+                        "tax_year": report.tax_year,
+                        "section": "expense",
+                        "line_id": line.id,
+                    },
                     old_value=old_value,
                     note=(
                         f"mutation_source={_VAT_IMPORT_SOURCE}; "
@@ -236,6 +248,12 @@ class VatImportService:
                 actor_id=actor_id,
                 actor_display_name=actor_name,
                 action=ACTION_INCOME_ADDED,
+                metadata_json={
+                    "client_record_id": report.client_record_id,
+                    "tax_year": report.tax_year,
+                    "section": "income",
+                    "line_id": line.id,
+                },
                 new_value=income_line_snapshot(line)
                 | {
                     "source": _VAT_IMPORT_SOURCE,
@@ -334,6 +352,12 @@ class VatImportService:
                 actor_id=actor_id,
                 actor_display_name=actor_name,
                 action=ACTION_EXPENSE_ADDED,
+                metadata_json={
+                    "client_record_id": report.client_record_id,
+                    "tax_year": report.tax_year,
+                    "section": "expense",
+                    "line_id": line.id,
+                },
                 new_value=expense_line_snapshot(line)
                 | {
                     "source": _VAT_IMPORT_SOURCE,

@@ -37,6 +37,7 @@ def test_attach_invoice_succeeds_only_for_issued_charge(test_db):
         business_id=business.id,
         amount=10.0,
         charge_type="consultation_fee",
+        actor_id=1,
     )
     with pytest.raises(AppError) as exc_info:
         invoices.attach_invoice_to_charge(
@@ -47,7 +48,7 @@ def test_attach_invoice_succeeds_only_for_issued_charge(test_db):
         )
     assert exc_info.value.code == "INVOICE.INVALID_STATUS"
 
-    issued = billing.issue_charge(draft.id)
+    issued = billing.issue_charge(draft.id, actor_id=1)
     inv = invoices.attach_invoice_to_charge(
         issued.id,
         provider="icount",
@@ -58,7 +59,7 @@ def test_attach_invoice_succeeds_only_for_issued_charge(test_db):
     assert inv.charge_id == issued.id
     assert inv.external_invoice_id == "INV-2"
 
-    billing.mark_charge_paid(issued.id)
+    billing.mark_charge_paid(issued.id, actor_id=1)
     with pytest.raises(AppError) as exc_info:
         invoices.attach_invoice_to_charge(
             issued.id,
@@ -74,9 +75,11 @@ def test_attach_invoice_succeeds_only_for_issued_charge(test_db):
             business_id=business.id,
             amount=30.0,
             charge_type="consultation_fee",
-        ).id
+            actor_id=1,
+        ).id,
+        actor_id=1,
     ).id
-    billing.cancel_charge(canceled_id)
+    billing.cancel_charge(canceled_id, actor_id=1)
     with pytest.raises(AppError) as exc_info:
         invoices.attach_invoice_to_charge(
             canceled_id,
@@ -98,7 +101,9 @@ def test_attach_invoice_fails_if_already_attached(test_db):
             business_id=business.id,
             amount=20.0,
             charge_type="monthly_retainer",
-        ).id
+            actor_id=1,
+        ).id,
+        actor_id=1,
     )
     invoices.attach_invoice_to_charge(
         ch.id, "icount", "INV-10", issued_at=datetime.now(UTC).replace(tzinfo=None)

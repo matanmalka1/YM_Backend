@@ -1,9 +1,9 @@
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import (
-    ACTION_CANCELED,
-    ACTION_ISSUED,
-    ACTION_PAID,
+    ACTION_CHARGE_CANCELED,
+    ACTION_CHARGE_ISSUED,
+    ACTION_CHARGE_PAID,
     ENTITY_CHARGE,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
@@ -28,6 +28,14 @@ from app.clients.services.client_service import get_client_or_raise
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
+
+
+def _charge_context(charge: Charge) -> dict:
+    """metadata_json client context for a charge audit row (§8)."""
+    meta: dict = {"client_record_id": charge.client_record_id}
+    if charge.business_id is not None:
+        meta["business_id"] = charge.business_id
+    return meta
 
 
 class BillingService:
@@ -81,6 +89,7 @@ class BillingService:
             charge.id,
             actor_id,
             actor_display_name=actor_name,
+            metadata_json=_charge_context(charge),
             new_value={
                 "amount": str(amount),
                 "charge_type": charge_type,
@@ -112,10 +121,11 @@ class BillingService:
             self._audit,
             charge_id,
             actor_id,
-            ACTION_ISSUED,
+            ACTION_CHARGE_ISSUED,
             ChargeStatus.DRAFT,
             ChargeStatus.ISSUED,
             actor_display_name=actor_name,
+            metadata_json=_charge_context(charge),
         )
         return issued
 
@@ -143,10 +153,11 @@ class BillingService:
             self._audit,
             charge_id,
             actor_id,
-            ACTION_PAID,
+            ACTION_CHARGE_PAID,
             ChargeStatus.ISSUED,
             ChargeStatus.PAID,
             actor_display_name=actor_name,
+            metadata_json=_charge_context(charge),
         )
         return paid
 
@@ -179,11 +190,12 @@ class BillingService:
             self._audit,
             charge_id,
             actor_id,
-            ACTION_CANCELED,
+            ACTION_CHARGE_CANCELED,
             old_status,
             ChargeStatus.CANCELED,
             note=reason,
             actor_display_name=actor_name,
+            metadata_json=_charge_context(charge),
         )
         return canceled
 
@@ -200,10 +212,15 @@ class BillingService:
                 CHARGE_DELETE_INVALID_STATUS.format(status=charge.status.value),
                 ErrorCode.CHARGE_INVALID_STATUS,
             )
+        metadata = _charge_context(charge)
         result = self.charge_repo.soft_delete(charge_id, deleted_by=actor_id)
         if result:
             self._audit.record_delete(
-                ENTITY_CHARGE, charge_id, actor_id, actor_display_name=actor_name
+                ENTITY_CHARGE,
+                charge_id,
+                actor_id,
+                actor_display_name=actor_name,
+                metadata_json=metadata,
             )
         return result
 

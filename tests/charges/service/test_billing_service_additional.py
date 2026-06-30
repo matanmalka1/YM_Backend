@@ -56,13 +56,14 @@ def test_billing_service_cancel_and_delete_status_guards(test_db):
         business_id=business.id,
         amount=50,
         charge_type=ChargeType.CONSULTATION_FEE,
+        actor_id=1,
     )
 
-    service.issue_charge(charge.id)
+    service.issue_charge(charge.id, actor_id=1)
     with pytest.raises(AppError):
         service.delete_charge(charge.id)
 
-    canceled = service.cancel_charge(charge.id)
+    canceled = service.cancel_charge(charge.id, actor_id=1)
     assert canceled.status == ChargeStatus.CANCELED
     with pytest.raises(ConflictError):
         service.cancel_charge(charge.id)
@@ -99,6 +100,7 @@ def test_list_charges_exposes_amount_to_all_roles(test_db):
         business_id=business.id,
         amount=77,
         charge_type=ChargeType.CONSULTATION_FEE,
+        actor_id=1,
     )
 
     query = ChargeQueryService(test_db)

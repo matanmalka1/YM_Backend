@@ -10,6 +10,7 @@ class BulkBillingService:
     """Bulk charge action logic."""
 
     def __init__(self, db: Session):
+        self.db = db
         self.billing = BillingService(db)
 
     def bulk_action(
@@ -29,20 +30,26 @@ class BulkBillingService:
         failed: list[BulkChargeFailedItem] = []
 
         for charge_id in charge_ids:
+            # Each item runs in its own SAVEPOINT so a failure (including a failed
+            # audit write, §17) rolls back that charge's status mutation instead of
+            # leaving it to commit without its audit row. Other items are unaffected.
             try:
-                if action == "issue":
-                    self.billing.issue_charge(charge_id, actor_id=actor_id, actor_name=actor_name)
-                elif action == "mark-paid":
-                    self.billing.mark_charge_paid(
-                        charge_id, actor_id=actor_id, actor_name=actor_name
-                    )
-                elif action == "cancel":
-                    self.billing.cancel_charge(
-                        charge_id,
-                        actor_id=actor_id,
-                        reason=cancellation_reason,
-                        actor_name=actor_name,
-                    )
+                with self.db.begin_nested():
+                    if action == "issue":
+                        self.billing.issue_charge(
+                            charge_id, actor_id=actor_id, actor_name=actor_name
+                        )
+                    elif action == "mark-paid":
+                        self.billing.mark_charge_paid(
+                            charge_id, actor_id=actor_id, actor_name=actor_name
+                        )
+                    elif action == "cancel":
+                        self.billing.cancel_charge(
+                            charge_id,
+                            actor_id=actor_id,
+                            reason=cancellation_reason,
+                            actor_name=actor_name,
+                        )
                 succeeded.append(charge_id)
             except AppError as exc:
                 failed.append(BulkChargeFailedItem(id=charge_id, error=exc.message))

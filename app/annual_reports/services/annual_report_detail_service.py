@@ -55,6 +55,10 @@ class AnnualReportDetailService:
                 old_value=old_value,
                 new_value=changes,
                 actor_display_name=actor_name,
+                metadata_json={
+                    "client_record_id": report.client_record_id,
+                    "tax_year": report.tax_year,
+                },
             )
         return detail
 

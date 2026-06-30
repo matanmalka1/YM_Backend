@@ -98,6 +98,12 @@ class AnnualReportFinancialLineService:
             actor_id=actor_id,
             actor_display_name=actor_name,
             action=ACTION_INCOME_ADDED,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "section": "income",
+                "line_id": line.id,
+            },
             new_value=income_line_snapshot(line),
         )
         self._invalidate_tax_for_report(report)
@@ -141,6 +147,12 @@ class AnnualReportFinancialLineService:
             actor_id=actor_id,
             actor_display_name=actor_name,
             action=ACTION_INCOME_UPDATED,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "section": "income",
+                "line_id": line.id,
+            },
             old_value=old_value,
             new_value={k: audit_scalar(k, v) for k, v in update_fields.items()},
         )
@@ -170,6 +182,12 @@ class AnnualReportFinancialLineService:
             actor_id=actor_id,
             actor_display_name=actor_name,
             action=ACTION_INCOME_DELETED,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "section": "income",
+                "line_id": line.id,
+            },
             old_value=old_value,
             note=f"line_id={line_id}",
         )
@@ -216,6 +234,12 @@ class AnnualReportFinancialLineService:
             actor_id=actor_id,
             actor_display_name=actor_name,
             action=ACTION_EXPENSE_ADDED,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "section": "expense",
+                "line_id": line.id,
+            },
             new_value=expense_line_snapshot(line),
         )
         self._invalidate_tax_for_report(report)
@@ -259,6 +283,12 @@ class AnnualReportFinancialLineService:
             actor_id=actor_id,
             actor_display_name=actor_name,
             action=ACTION_EXPENSE_UPDATED,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "section": "expense",
+                "line_id": line.id,
+            },
             old_value=old_value,
             new_value={k: audit_scalar(k, v) for k, v in update_fields.items()},
         )
@@ -288,6 +318,12 @@ class AnnualReportFinancialLineService:
             actor_id=actor_id,
             actor_display_name=actor_name,
             action=ACTION_EXPENSE_DELETED,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "section": "expense",
+                "line_id": line.id,
+            },
             old_value=old_value,
             note=f"line_id={line_id}",
         )

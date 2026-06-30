@@ -152,6 +152,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
             linked_report.id,
             created_by,
             actor_display_name=created_by_name,
+            metadata_json={"client_record_id": client_record_id, "tax_year": tax_year},
             new_value={
                 "tax_year": tax_year,
                 "client_type": client_type,

@@ -14,6 +14,7 @@ def record_charge_status_audit(
     note: str | None = None,
     *,
     actor_display_name: str | None = None,
+    metadata_json: dict | None = None,
 ) -> None:
     writer.append(
         entity_type=ENTITY_CHARGE,
@@ -24,4 +25,5 @@ def record_charge_status_audit(
         new_value={"status": new_status},
         note=note,
         actor_display_name=actor_display_name,
+        metadata_json=metadata_json,
     )

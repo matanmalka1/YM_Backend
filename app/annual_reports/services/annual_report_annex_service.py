@@ -2,6 +2,7 @@
 
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
 from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.schemas.annual_report_annex import AnnexDataLineResponse
 from app.annual_reports.schemas.annual_report_annex_schemas import SCHEDULE_VALIDATORS
 from app.audit.audit_constants import (
@@ -63,13 +64,14 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         actor_id: int | None = None,
         actor_name: str | None = None,
     ) -> AnnexDataLineResponse:
-        self._get_or_raise(report_id)
+        report = self._get_or_raise(report_id)
         data = self._validate_annex_data(schedule, data)
         schedule_entry = self.annex_repo.get_or_create_schedule_entry(report_id, schedule)  # type: ignore[attr-defined]
         line_number = self.annex_repo.next_line_number(schedule_entry.id)  # type: ignore[attr-defined]
         row = self.annex_repo.add_line(schedule_entry.id, line_number, data, notes)  # type: ignore[attr-defined]
         self._record_annex_audit(
-            report_id,
+            report,
+            row,
             actor_id,
             ACTION_ANNEX_LINE_ADDED,
             actor_name=actor_name,
@@ -86,7 +88,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         actor_id: int | None = None,
         actor_name: str | None = None,
     ) -> AnnexDataLineResponse:
-        self._get_or_raise(report_id)
+        report = self._get_or_raise(report_id)
         existing = self.annex_repo.get_by_id(line_id)  # type: ignore[attr-defined]
         if not existing or existing.annual_report_id != report_id:
             raise NotFoundError(
@@ -102,7 +104,8 @@ class AnnualReportAnnexService(AnnualReportBaseService):
                 ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         self._record_annex_audit(
-            report_id,
+            report,
+            row,
             actor_id,
             ACTION_ANNEX_LINE_UPDATED,
             actor_name=actor_name,
@@ -118,7 +121,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         actor_id: int | None = None,
         actor_name: str | None = None,
     ) -> None:
-        self._get_or_raise(report_id)
+        report = self._get_or_raise(report_id)
         existing = self.annex_repo.get_by_id(line_id)  # type: ignore[attr-defined]
         if not existing or existing.annual_report_id != report_id:
             raise NotFoundError(
@@ -132,7 +135,8 @@ class AnnualReportAnnexService(AnnualReportBaseService):
                 ErrorCode.ANNUAL_REPORT_LINE_NOT_FOUND,
             )
         self._record_annex_audit(
-            report_id,
+            report,
+            existing,
             actor_id,
             ACTION_ANNEX_LINE_DELETED,
             actor_name=actor_name,
@@ -141,7 +145,8 @@ class AnnualReportAnnexService(AnnualReportBaseService):
 
     def _record_annex_audit(
         self,
-        report_id: int,
+        report: AnnualReport,
+        line: AnnualReportAnnexData,
         actor_id: int | None,
         action: str,
         actor_name: str | None = None,
@@ -149,10 +154,17 @@ class AnnualReportAnnexService(AnnualReportBaseService):
     ) -> None:
         EntityAuditWriter(self.db).append(
             entity_type=ENTITY_ANNUAL_REPORT,
-            entity_id=report_id,
+            entity_id=report.id,
             actor_id=actor_id,
             action=action,
             actor_display_name=actor_name,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+                "line_id": line.id,
+                "schedule_id": line.schedule_entry_id,
+                "line_number": line.line_number,
+            },
             **values,
         )
 

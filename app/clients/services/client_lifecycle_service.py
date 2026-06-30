@@ -29,7 +29,13 @@ class ClientLifecycleService:
                 CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
         self.record_repo.soft_delete(client_id, deleted_by=actor_id)
-        self._audit.record_delete(ENTITY_CLIENT, client_id, actor_id, actor_display_name=actor_name)
+        self._audit.record_delete(
+            ENTITY_CLIENT,
+            client_id,
+            actor_id,
+            actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_id},
+        )
 
     def restore_client(self, client_id: int, actor_id: int, actor_name: str | None = None):
         client = self.record_repo.get_by_id_including_deleted(client_id)
@@ -53,6 +59,10 @@ class ClientLifecycleService:
                 CLIENT_NOT_FOUND.format(client_id=client_id), ErrorCode.CLIENT_RECORD_NOT_FOUND
             )
         self._audit.record_restore(
-            ENTITY_CLIENT, client_id, actor_id, actor_display_name=actor_name
+            ENTITY_CLIENT,
+            client_id,
+            actor_id,
+            actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_id},
         )
         return restored

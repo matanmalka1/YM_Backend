@@ -81,6 +81,7 @@ class ClientUpdateService:
             old_value=old_snapshot,
             new_value={k: updated.get(k) for k in fields},
             actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_id},
         )
         return updated
 
@@ -110,12 +111,13 @@ class ClientUpdateService:
             new_entity_type,
             actor_id,
         )
-        self._audit.record_update(
+        self._audit.record_action(
             ENTITY_CLIENT,
             client_id,
             actor_id,
+            ACTION_ENTITY_TYPE_CHANGED,
             old_value={"entity_type": old_entity_type},
             new_value={"entity_type": new_entity_type},
-            note=ACTION_ENTITY_TYPE_CHANGED,
             actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_id},
         )

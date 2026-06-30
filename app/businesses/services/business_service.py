@@ -106,6 +106,7 @@ class BusinessService:
             business.id,
             actor_id,
             actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_record_id, "business_id": business.id},
             new_value={
                 "client_record_id": client_record_id,
                 "business_name": business_name,
@@ -186,6 +187,7 @@ class BusinessService:
             old_value=_serialize(old_snapshot),
             new_value=_serialize(new_snapshot),
             actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_id, "business_id": business_id},
         )
         return updated
 

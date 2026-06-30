@@ -50,6 +50,7 @@ def test_update_business_resolves_legal_entity_from_client_record(test_db):
         client_id=client_record.id,
         user_role=UserRole.ADVISOR,
         business_name="Updated Name",
+        actor_id=1,
     )
 
     assert updated.business_name == "Updated Name"

@@ -5,7 +5,7 @@ from unittest.mock import patch
 import pytest
 from sqlalchemy import select
 
-from app.audit.audit_constants import ACTION_RESTORED, ENTITY_BUSINESS
+from app.audit.audit_constants import ACTION_RESTORED, ENTITY_BUSINESS, entity_action
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business, BusinessStatus
 from app.businesses.services.business_service import BusinessService
@@ -49,6 +49,7 @@ def test_create_business_defaults_opened_at_to_today_when_missing_everywhere(tes
         result = service.create_business(
             client_id=client.id,
             business_name="Uses Today",
+            actor_id=1,
         )
 
     assert result.opened_at == date(2026, 4, 9)
@@ -101,6 +102,7 @@ def test_update_business_to_active_clears_closed_at(test_db):
         client_id=client.id,
         user_role=UserRole.ADVISOR,
         status=BusinessStatus.ACTIVE.value,
+        actor_id=1,
     )
 
     assert result.status == BusinessStatus.ACTIVE
@@ -173,7 +175,7 @@ def test_restore_business_restores_soft_deleted_business_and_writes_audit(test_d
         select(EntityAuditLog).filter(
             EntityAuditLog.entity_type == ENTITY_BUSINESS,
             EntityAuditLog.entity_id == business.id,
-            EntityAuditLog.action == ACTION_RESTORED,
+            EntityAuditLog.action == entity_action(ENTITY_BUSINESS, ACTION_RESTORED),
         )
     ).one()
     assert audit.performed_by == 9

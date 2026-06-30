@@ -165,6 +165,10 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             old_status,
             ns,
             actor_display_name=changed_by_name,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+            },
         )
 
         if (
@@ -272,6 +276,10 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             old_value=old_value,
             new_value=_deadline_snapshot(updated),
             actor_display_name=changed_by_name,
+            metadata_json={
+                "client_record_id": updated.client_record_id,
+                "tax_year": updated.tax_year,
+            },
         )
         return updated
 

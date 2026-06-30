@@ -73,6 +73,7 @@ def test_update_business_sets_closed_at_for_close_action(test_db):
         client_id=client.id,
         user_role=UserRole.ADVISOR,
         status=BusinessStatus.CLOSED.value,
+        actor_id=1,
     )
 
     assert result.status == BusinessStatus.CLOSED

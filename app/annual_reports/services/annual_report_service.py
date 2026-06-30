@@ -68,7 +68,14 @@ class AnnualReportService(
         result = self.repo.soft_delete(report_id, deleted_by=actor_id)
         if result:
             EntityAuditWriter(self.db).record_delete(
-                ENTITY_ANNUAL_REPORT, report_id, actor_id, actor_display_name=actor_name
+                ENTITY_ANNUAL_REPORT,
+                report_id,
+                actor_id,
+                actor_display_name=actor_name,
+                metadata_json={
+                    "client_record_id": report.client_record_id,
+                    "tax_year": report.tax_year,
+                },
             )
         return result
 

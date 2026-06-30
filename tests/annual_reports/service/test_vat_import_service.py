@@ -56,6 +56,18 @@ def _audit_payloads(db, report_id: int, action: str, field: str) -> list[dict]:
     return [getattr(row, field) for row in rows if getattr(row, field)]
 
 
+def _audit_rows(db, report_id: int, action: str) -> list[EntityAuditLog]:
+    return list(
+        db.scalars(
+            select(EntityAuditLog)
+            .where(EntityAuditLog.entity_type == ENTITY_ANNUAL_REPORT)
+            .where(EntityAuditLog.entity_id == report_id)
+            .where(EntityAuditLog.action == action)
+            .order_by(EntityAuditLog.id.asc())
+        ).all()
+    )
+
+
 def test_vat_auto_populate_writes_audit_and_source_breakdown(test_db, test_user, monkeypatch):
     _, report = _create_report(test_db, test_user, "A")
     service = VatImportService(test_db)
@@ -90,6 +102,9 @@ def test_vat_auto_populate_writes_audit_and_source_breakdown(test_db, test_user,
     income_payload = _audit_payloads(test_db, report.id, ACTION_INCOME_ADDED, "new_value")[0]
     assert income_payload["source"] == "vat_import"
     assert income_payload["amount"] == "1000.00"
+    income_entry = _audit_rows(test_db, report.id, ACTION_INCOME_ADDED)[0]
+    assert income_entry.metadata_json["section"] == "income"
+    assert income_entry.metadata_json["line_id"] == income_payload["line_id"]
 
     expense_payloads = _audit_payloads(test_db, report.id, ACTION_EXPENSE_ADDED, "new_value")
     vehicle_payload = next(
@@ -100,6 +115,13 @@ def test_vat_auto_populate_writes_audit_and_source_breakdown(test_db, test_user,
         "fuel": "800.00",
         "vehicle_maintenance": "400.00",
     }
+    expense_entry = next(
+        row
+        for row in _audit_rows(test_db, report.id, ACTION_EXPENSE_ADDED)
+        if row.new_value["category"] == "vehicle"
+    )
+    assert expense_entry.metadata_json["section"] == "expense"
+    assert expense_entry.metadata_json["line_id"] == vehicle_payload["line_id"]
 
 
 def test_vat_auto_populate_force_audits_replaced_lines(test_db, test_user, monkeypatch):

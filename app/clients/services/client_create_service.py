@@ -222,6 +222,7 @@ class CreateClientService:
             client_record.id,
             actor_id,
             actor_display_name=actor_name,
+            metadata_json={"client_record_id": client_record.id},
             new_value={
                 "full_name": full_name,
                 "id_number": id_number,

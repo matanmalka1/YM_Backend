@@ -6,7 +6,6 @@ from sqlalchemy import select
 
 from app.audit.audit_constants import (
     ACTION_ENTITY_TYPE_CHANGED,
-    ACTION_UPDATED,
     ENTITY_CLIENT,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
@@ -105,21 +104,14 @@ def test_entity_type_change_logs_audit_entry(test_db):
         entity_type=EntityType.COMPANY_LTD,
     )
 
-    audit_entries = test_db.scalars(
+    matching_entries = test_db.scalars(
         select(EntityAuditLog).filter(
             EntityAuditLog.entity_type == ENTITY_CLIENT,
             EntityAuditLog.entity_id == cr.id,
-            EntityAuditLog.action == ACTION_UPDATED,
+            EntityAuditLog.action == ACTION_ENTITY_TYPE_CHANGED,
         )
     ).all()
-    matching_entries = [
-        entry for entry in audit_entries if entry.note == ACTION_ENTITY_TYPE_CHANGED
-    ]
     assert len(matching_entries) == 1
     entry = matching_entries[0]
-    assert entry.note == ACTION_ENTITY_TYPE_CHANGED
-    assert entry.old_value is not None
-    assert entry.new_value is not None
-    assert entry.old_value != entry.new_value
     assert entry.old_value == {"entity_type": EntityType.OSEK_MURSHE.value}
     assert entry.new_value == {"entity_type": EntityType.COMPANY_LTD.value}

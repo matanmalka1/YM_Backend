@@ -26,9 +26,9 @@ class _FakeBilling:
             raise RuntimeError("cancel failed")
 
 
-def test_bulk_action_issue_collects_success_and_failures(monkeypatch):
+def test_bulk_action_issue_collects_success_and_failures(test_db):
     fake = _FakeBilling(failures={2})
-    service = BulkBillingService(db=None)
+    service = BulkBillingService(db=test_db)
     service.billing = fake
 
     succeeded, failed = service.bulk_action([1, 2, 3], action="issue", actor_id=99)
@@ -38,10 +38,10 @@ def test_bulk_action_issue_collects_success_and_failures(monkeypatch):
     assert failed[0].error == "אירעה שגיאה פנימית"
 
 
-def test_bulk_action_uses_domain_error_message_for_app_error():
+def test_bulk_action_uses_domain_error_message_for_app_error(test_db):
     fake = _FakeBilling()
     fake.app_error_ids = {5}
-    service = BulkBillingService(db=None)
+    service = BulkBillingService(db=test_db)
     service.billing = fake
 
     succeeded, failed = service.bulk_action([5], action="issue", actor_id=12)
@@ -51,8 +51,8 @@ def test_bulk_action_uses_domain_error_message_for_app_error():
     assert failed[0].error == "invalid transition"
 
 
-def test_bulk_action_mark_paid_and_cancel_paths():
-    service = BulkBillingService(db=None)
+def test_bulk_action_mark_paid_and_cancel_paths(test_db):
+    service = BulkBillingService(db=test_db)
     fake = _FakeBilling()
     service.billing = fake
 

@@ -91,7 +91,7 @@ def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db):
     report = service.create_report(c.id, 2026, "corporation", 1, "A")
 
     # ensure summary has taxable income
-    line_service.add_income(report.id, "salary", 1000)
+    line_service.add_income(report.id, "salary", 1000, actor_id=1)
     AnnualReportDetailRepository(test_db).update_meta(
         report.id,
         pension_contribution=100.0,
@@ -133,7 +133,7 @@ def test_income_line_allows_zero_amount(test_db):
     summary_service = AnnualReportFinancialSummaryService(test_db)
     report = service.create_report(c.id, 2026, "corporation", 1, "A")
 
-    line = line_service.add_income(report.id, "salary", 0)
+    line = line_service.add_income(report.id, "salary", 0, actor_id=1)
 
     assert float(line.amount) == 0.0
     summary = summary_service.get_financial_summary(report.id)
@@ -151,6 +151,7 @@ def test_expense_line_uses_external_document_reference(test_db):
         "office_rent",
         250,
         external_document_reference="INV-2026-001",
+        actor_id=1,
     )
 
     assert line.external_document_reference == "INV-2026-001"
@@ -159,21 +160,27 @@ def test_expense_line_uses_external_document_reference(test_db):
 
 def _prepare_financial_mutation(line_service, report_id: int, mutation: str):
     if mutation == "add_income":
-        return lambda: line_service.add_income(report_id, "salary", Decimal("100.00"))
+        return lambda: line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=1)
     if mutation == "update_income":
-        line = line_service.add_income(report_id, "salary", Decimal("100.00"))
-        return lambda: line_service.update_income(report_id, line.id, amount=Decimal("125.00"))
+        line = line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=1)
+        return lambda: line_service.update_income(
+            report_id, line.id, amount=Decimal("125.00"), actor_id=1
+        )
     if mutation == "delete_income":
-        line = line_service.add_income(report_id, "salary", Decimal("100.00"))
-        return lambda: line_service.delete_income(report_id, line.id)
+        line = line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=1)
+        return lambda: line_service.delete_income(report_id, line.id, actor_id=1)
     if mutation == "add_expense":
-        return lambda: line_service.add_expense(report_id, "office_rent", Decimal("100.00"))
+        return lambda: line_service.add_expense(
+            report_id, "office_rent", Decimal("100.00"), actor_id=1
+        )
     if mutation == "update_expense":
-        line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"))
-        return lambda: line_service.update_expense(report_id, line.id, amount=Decimal("125.00"))
+        line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"), actor_id=1)
+        return lambda: line_service.update_expense(
+            report_id, line.id, amount=Decimal("125.00"), actor_id=1
+        )
     if mutation == "delete_expense":
-        line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"))
-        return lambda: line_service.delete_expense(report_id, line.id)
+        line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"), actor_id=1)
+        return lambda: line_service.delete_expense(report_id, line.id, actor_id=1)
     raise AssertionError(f"Unhandled mutation {mutation}")
 
 
@@ -216,7 +223,9 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(t
     )
     test_db.refresh(report)
 
-    AnnualReportFinancialLineService(test_db).add_income(report.id, "salary", Decimal("100.00"))
+    AnnualReportFinancialLineService(test_db).add_income(
+        report.id, "salary", Decimal("100.00"), actor_id=1
+    )
 
     test_db.refresh(report)
     assert report.status == AnnualReportStatus.SUBMITTED
@@ -236,6 +245,7 @@ def test_annex_line_creates_schedule_owner_when_missing(test_db):
         AnnualReportSchedule.SCHEDULE_B,
         {"rental_income": 12000},
         notes="auto owner",
+        actor_id=1,
     )
 
     assert line.schedule == AnnualReportSchedule.SCHEDULE_B
