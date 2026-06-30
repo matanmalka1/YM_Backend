@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from random import Random
 
-from .constants import FIRST_NAMES, LAST_NAMES
 from app.utils.id_validation import validate_israeli_id_checksum
+
+from .constants import FIRST_NAMES, LAST_NAMES
 
 
 def full_name(rng: Random) -> str:

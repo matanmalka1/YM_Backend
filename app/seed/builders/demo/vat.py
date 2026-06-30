@@ -95,9 +95,7 @@ def _vat_due_date(db, period: str, vat_type: VatType) -> date:
     return entry.due_date
 
 
-def _status_for_period(
-    rng: Random, period: str, reference_date: date
-) -> VatWorkItemStatus:
+def _status_for_period(rng: Random, period: str, reference_date: date) -> VatWorkItemStatus:
     period_year = int(period.split("-")[0])
     if period_year <= reference_date.year - 2:
         return VatWorkItemStatus.FILED
@@ -141,15 +139,11 @@ def _promote_to_filed(rng: Random, item: VatWorkItem, cfg) -> None:
     item.submission_method = rng.choice(list(SubmissionMethod))
     period_dt = datetime.strptime(f"{item.period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
     filed_at = period_dt + timedelta(days=rng.randint(15, 45))
-    reference_now = datetime.combine(
-        cfg.reference_date, datetime.min.time(), tzinfo=UTC
-    )
+    reference_now = datetime.combine(cfg.reference_date, datetime.min.time(), tzinfo=UTC)
     item.filed_at = min(filed_at, reference_now)
     item.filed_by = item.assigned_to or item.created_by
     if not item.submission_reference:
-        item.submission_reference = (
-            f"VAT-{item.period.replace('-', '')}-{rng.randint(1000, 9999)}"
-        )
+        item.submission_reference = f"VAT-{item.period.replace('-', '')}-{rng.randint(1000, 9999)}"
 
 
 def _invoice_date_for_period(rng: Random, period: str):
@@ -202,9 +196,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                     work_items.append(existing_item)
                 continue
 
-            period_start = datetime.strptime(f"{period}-01", "%Y-%m-%d").replace(
-                tzinfo=UTC
-            )
+            period_start = datetime.strptime(f"{period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
             created_at = max(
                 period_start,
                 datetime.now(UTC) - timedelta(days=rng.randint(5, 75)),
@@ -213,9 +205,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 created_at = datetime.now(UTC)
 
             if business.status == BusinessStatus.CLOSED:
-                status = rng.choice(
-                    [VatWorkItemStatus.FILED, VatWorkItemStatus.READY_FOR_REVIEW]
-                )
+                status = rng.choice([VatWorkItemStatus.FILED, VatWorkItemStatus.READY_FOR_REVIEW])
             elif business.status == BusinessStatus.FROZEN:
                 status = rng.choice(
                     [
@@ -237,15 +227,13 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
 
             created_by = rng.choice(advisors) if advisors else fallback_user_id
             period_months_count = _VAT_PERIOD_MONTHS_COUNT.get(period_type)
-            tax_calendar_entry = TaxCalendarMaterializationService(
-                db
-            ).ensure_periodic_entry(ObligationType.VAT, period, period_months_count)
+            tax_calendar_entry = TaxCalendarMaterializationService(db).ensure_periodic_entry(
+                ObligationType.VAT, period, period_months_count
+            )
             work_item = VatWorkItem(
                 client_record_id=business_client_record_id,
                 created_by=created_by,
-                assigned_to=rng.choice(advisors)
-                if advisors and rng.random() < 0.7
-                else None,
+                assigned_to=rng.choice(advisors) if advisors and rng.random() < 0.7 else None,
                 period=period,
                 period_type=period_type,
                 status=status,
@@ -329,15 +317,11 @@ def create_vat_invoices(db, rng: Random, cfg, work_items, users) -> list[VatInvo
                 if rng.random() < 0.2:
                     category_pool = list(ExpenseCategory)
                 expense_category = rng.choice(category_pool)
-                counterparty_name, min_amount, max_amount = (
-                    VAT_COUNTERPARTY_DETAILS.get(
-                        expense_category,
-                        (rng.choice(VAT_COUNTERPARTIES), 250, 12000),
-                    )
+                counterparty_name, min_amount, max_amount = VAT_COUNTERPARTY_DETAILS.get(
+                    expense_category,
+                    (rng.choice(VAT_COUNTERPARTIES), 250, 12000),
                 )
-                base_amount = Decimal(
-                    str(round(rng.uniform(min_amount, max_amount), 2))
-                )
+                base_amount = Decimal(str(round(rng.uniform(min_amount, max_amount), 2)))
                 document_type = rng.choice(
                     [
                         DocumentType.TAX_INVOICE,
@@ -347,17 +331,11 @@ def create_vat_invoices(db, rng: Random, cfg, work_items, users) -> list[VatInvo
                         DocumentType.SELF_INVOICE,
                     ]
                 )
-                deduction_rate = DEDUCTION_RATES.get(
-                    expense_category, Decimal("1.0000")
-                )
+                deduction_rate = DEDUCTION_RATES.get(expense_category, Decimal("1.0000"))
             else:
                 expense_category = None
-                counterparty_name, min_amount, max_amount = rng.choice(
-                    VAT_INCOME_COUNTERPARTIES
-                )
-                base_amount = Decimal(
-                    str(round(rng.uniform(min_amount, max_amount), 2))
-                )
+                counterparty_name, min_amount, max_amount = rng.choice(VAT_INCOME_COUNTERPARTIES)
+                base_amount = Decimal(str(round(rng.uniform(min_amount, max_amount), 2)))
                 document_type = rng.choice(
                     [
                         DocumentType.TAX_INVOICE,
@@ -383,7 +361,9 @@ def create_vat_invoices(db, rng: Random, cfg, work_items, users) -> list[VatInvo
             )
 
             invoice_counters[work_item.id] += 1
-            invoice_number = f"{work_item.period.replace('-', '')}-{invoice_counters[work_item.id]:03d}"
+            invoice_number = (
+                f"{work_item.period.replace('-', '')}-{invoice_counters[work_item.id]:03d}"
+            )
             counterparty_id_type = (
                 CounterpartyIdType.IL_BUSINESS
                 if document_type == DocumentType.TAX_INVOICE

@@ -205,7 +205,7 @@ def create_signature_requests(
     return requests
 
 
-def create_signature_audit_events(db, rng: Random, requests: Iterable[SignatureRequest]) -> None:
+def create_signature_audit_logs(db, rng: Random, requests: Iterable[SignatureRequest]) -> None:
     for req in requests:
         events: list[tuple[str, datetime, str]] = [
             (ACTION_SIGNATURE_REQUEST_CREATED, req.created_at, "advisor")

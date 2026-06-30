@@ -22,9 +22,7 @@ def create_notifications(
     clients_by_id = {c.id: c for c in clients}
     businesses_by_client: dict[int, list] = {}
     for business in businesses:
-        businesses_by_client.setdefault(get_seed_client_record_id(business), []).append(
-            business
-        )
+        businesses_by_client.setdefault(get_seed_client_record_id(business), []).append(business)
 
     for binder in binders:
         if rng.random() > 0.65:
@@ -40,9 +38,7 @@ def create_notifications(
             continue
 
         is_email = rng.random() < 0.35
-        channel = (
-            NotificationChannel.EMAIL if is_email else NotificationChannel.WHATSAPP
-        )
+        channel = NotificationChannel.EMAIL if is_email else NotificationChannel.WHATSAPP
         recipient = (
             getattr(client, "email", None)
             if is_email
@@ -81,14 +77,12 @@ def create_notifications(
         if status == NotificationStatus.SENT:
             sent_at = min(
                 datetime.now(UTC),
-                created_at
-                + timedelta(days=rng.randint(0, 5), hours=rng.randint(0, 12)),
+                created_at + timedelta(days=rng.randint(0, 5), hours=rng.randint(0, 12)),
             )
         elif status == NotificationStatus.FAILED:
             failed_at = min(
                 datetime.now(UTC),
-                created_at
-                + timedelta(days=rng.randint(0, 3), hours=rng.randint(0, 12)),
+                created_at + timedelta(days=rng.randint(0, 3), hours=rng.randint(0, 12)),
             )
 
         triggered_by = None
@@ -106,9 +100,7 @@ def create_notifications(
             content_snapshot=f"הודעה אוטומטית עבור קלסר {binder.binder_number}",
             sent_at=sent_at,
             failed_at=failed_at,
-            error_message="פסק זמן מול הספק"
-            if status == NotificationStatus.FAILED
-            else None,
+            error_message="פסק זמן מול הספק" if status == NotificationStatus.FAILED else None,
             triggered_by=triggered_by,
             created_at=created_at,
         )

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import UTC, date, datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from random import Random
 
@@ -62,9 +62,7 @@ def create_charges(db, rng: Random, cfg, businesses, users=None) -> list[Charge]
                 paid_at = issued_at + timedelta(days=rng.randint(0, 20))
                 paid_by = rng.choice(users).id if users else None
 
-            charge_type = rng.choices(
-                list(ChargeType), weights=[35, 20, 18, 8, 12, 7], k=1
-            )[0]
+            charge_type = rng.choices(list(ChargeType), weights=[35, 20, 18, 8, 12, 7], k=1)[0]
             period = None
             months_covered = 1
             if charge_type == ChargeType.MONTHLY_RETAINER:
@@ -75,8 +73,7 @@ def create_charges(db, rng: Random, cfg, businesses, users=None) -> list[Charge]
             elif charge_type == ChargeType.ANNUAL_REPORT_FEE:
                 period = f"{israel_today().year - rng.randint(1, 3)}-12"
             elif (
-                charge_type in (ChargeType.VAT_FILING_FEE, ChargeType.OTHER)
-                and rng.random() < 0.4
+                charge_type in (ChargeType.VAT_FILING_FEE, ChargeType.OTHER) and rng.random() < 0.4
             ):
                 month = rng.randint(1, 12)
                 year = israel_today().year - rng.randint(0, 1)

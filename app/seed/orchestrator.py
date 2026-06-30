@@ -10,20 +10,20 @@ from app.clients.repositories.client_record_repository import OFFICE_CLIENT_NUMB
 from app.database import Base, SessionLocal, engine
 from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 
-from .config import SeedConfig
-from .tax_calendar_range import tax_calendar_year_range_for_seed
-from .builders import users as users_builder
 from .builders import clients as clients_builder
-from .builders.shared.client_refs import attach_seed_client_context
+from .builders import users as users_builder
+from .builders.demo import advance_payments as advance_payments_builder
 from .builders.demo import binders as binders_builder
 from .builders.demo import charges as charges_builder
-from .builders.demo import vat as vat_builder
-from .builders.demo import reports as reports_builder
-from .builders.demo import documents as documents_builder
 from .builders.demo import contacts as contacts_builder
-from .builders.demo import signature_requests as sig_builder
-from .builders.demo import advance_payments as advance_payments_builder
+from .builders.demo import documents as documents_builder
 from .builders.demo import notifications as notifications_builder
+from .builders.demo import reports as reports_builder
+from .builders.demo import signature_requests as sig_builder
+from .builders.demo import vat as vat_builder
+from .builders.shared.client_refs import attach_seed_client_context
+from .config import SeedConfig
+from .tax_calendar_range import tax_calendar_year_range_for_seed
 from .validator import SeedIntegrityValidator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -60,9 +60,7 @@ def _ensure_schema_ready() -> None:
             missing_columns[table.name] = gaps
 
     if missing_columns:
-        preview_items = [
-            f"{t}({', '.join(c[:4])})" for t, c in list(missing_columns.items())[:6]
-        ]
+        preview_items = [f"{t}({', '.join(c[:4])})" for t, c in list(missing_columns.items())[:6]]
         suffix = "..." if len(missing_columns) > 6 else ""
         raise RuntimeError(
             "Database schema is not ready. Missing columns: "
@@ -103,9 +101,7 @@ class SeedOrchestrator:
             # CreateClientService → automatically triggers ClientOnboardingOrchestrator
             # which creates: initial binder, TaxCalendar entries, VAT items (eligible only),
             # advance payments, annual report shell.
-            client_pairs = clients_builder.create_clients(
-                db, self.rng, self.cfg, seeded_users
-            )
+            client_pairs = clients_builder.create_clients(db, self.rng, self.cfg, seeded_users)
             client_records = [cr for cr, _ in client_pairs]
             primary_businesses = [biz for _, biz in client_pairs]
 
@@ -118,9 +114,7 @@ class SeedOrchestrator:
             db.flush()
 
             if self.cfg.onboarding_only:
-                clients_builder.create_entity_notes(
-                    db, self.rng, client_records, seeded_users
-                )
+                clients_builder.create_entity_notes(db, self.rng, client_records, seeded_users)
                 db.commit()
                 if not self.cfg.skip_validation:
                     SeedIntegrityValidator(db).validate()
@@ -128,9 +122,7 @@ class SeedOrchestrator:
                 return
 
             # ── Demo phase ───────────────────────────────────────────────────
-            clients_builder.create_entity_notes(
-                db, self.rng, client_records, seeded_users
-            )
+            clients_builder.create_entity_notes(db, self.rng, client_records, seeded_users)
 
             # Historical binders (on top of initial binder from onboarding)
             demo_binders = binders_builder.create_binders(
@@ -166,12 +158,8 @@ class SeedOrchestrator:
                 db, self.rng, all_reports, seeded_users
             )
             reports_builder.create_annual_report_annex_data(db, self.rng, all_reports)
-            reports_builder.create_annual_report_credit_points(
-                db, self.rng, all_reports
-            )
-            reports_builder.create_annual_report_status_history(
-                db, self.rng, all_reports, seeded_users
-            )
+            reports_builder.create_annual_report_credit_points(db, self.rng, all_reports)
+            reports_builder.create_annual_report_audit_logs(db, self.rng, all_reports, seeded_users)
 
             seeded_documents = documents_builder.create_documents(
                 db, self.rng, client_records, all_businesses, seeded_users
@@ -184,10 +172,8 @@ class SeedOrchestrator:
                 db, self.rng, demo_binders, all_businesses, all_reports, binder_intakes
             )
             binders_builder.create_binder_logs(db, self.rng, demo_binders, seeded_users)
-            binders_builder.create_binder_handovers(
-                db, self.rng, demo_binders, seeded_users
-            )
-            binders_builder.create_binder_intake_edit_logs(
+            binders_builder.create_binder_handovers(db, self.rng, demo_binders, seeded_users)
+            binders_builder.create_binder_intake_audit_logs(
                 db, self.rng, binder_intakes, seeded_users
             )
 
@@ -208,13 +194,9 @@ class SeedOrchestrator:
             vat_work_items = vat_builder.create_vat_work_items(
                 db, self.rng, self.cfg, all_businesses, seeded_users
             )
-            vat_builder.create_vat_invoices(
-                db, self.rng, self.cfg, vat_work_items, seeded_users
-            )
+            vat_builder.create_vat_invoices(db, self.rng, self.cfg, vat_work_items, seeded_users)
 
-            advance_payments_builder.create_advance_payments(
-                db, self.rng, self.cfg, all_businesses
-            )
+            advance_payments_builder.create_advance_payments(db, self.rng, self.cfg, all_businesses)
 
             sig_requests = sig_builder.create_signature_requests(
                 db,
@@ -226,7 +208,7 @@ class SeedOrchestrator:
                 all_reports,
                 seeded_documents,
             )
-            sig_builder.create_signature_audit_events(db, self.rng, sig_requests)
+            sig_builder.create_signature_audit_logs(db, self.rng, sig_requests)
 
             db.commit()
             if not self.cfg.skip_validation:
@@ -315,8 +297,6 @@ class SeedOrchestrator:
     def _print_counts(self, db) -> None:
         print("Seeding completed. Row counts:")
         for table in Base.metadata.sorted_tables:
-            count = int(
-                db.execute(select(func.count()).select_from(table)).scalar_one()
-            )
+            count = int(db.execute(select(func.count()).select_from(table)).scalar_one())
             if count > 0:
                 print(f"  {table.name}: {count}")

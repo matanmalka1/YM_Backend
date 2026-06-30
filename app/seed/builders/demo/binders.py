@@ -5,17 +5,26 @@ from random import Random
 
 from sqlalchemy import func, select
 
+from app.audit.audit_constants import (
+    ACTION_BINDER_HANDED_OVER,
+    ACTION_BINDER_INTAKE_UPDATED,
+    ACTION_BINDER_MARKED_FULL,
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+    ACTION_BINDER_MATERIAL_RECEIVED,
+    ENTITY_BINDER,
+    ENTITY_BINDER_INTAKE,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.binders.binder_audit import binder_metadata, intake_metadata, lifecycle_value
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.binders.models.binder_handover import BinderHandover, BinderHandoverBinder
 from app.binders.models.binder_intake import BinderIntake
-from app.binders.models.binder_intake_edit_log import BinderIntakeEditLog
 from app.binders.models.binder_intake_material import BinderIntakeMaterial, MaterialType
-from app.binders.models.binder_lifecycle_log import BinderLifecycleLog
 from app.common.enums import VatType
 
 from ...data.demo_catalog import BUSINESS_NOTES
-from ...data.realistic_seed_text import MATERIAL_DESCRIPTIONS
 from ...data.random_utils import full_name
+from ...data.realistic_seed_text import MATERIAL_DESCRIPTIONS
 from ..shared.client_refs import (
     attach_seed_client_context,
     get_seed_client_record,
@@ -47,7 +56,9 @@ def create_binders(db, rng: Random, cfg, businesses, users) -> list[Binder]:
     for client_id, client_businesses in businesses_by_client.items():
         office_num = client_office_number.get(client_id, client_id)
         existing_count = db.scalar(
-            select(func.count()).select_from(Binder).where(
+            select(func.count())
+            .select_from(Binder)
+            .where(
                 Binder.client_record_id == client_id,
                 Binder.deleted_at.is_(None),
             )
@@ -75,7 +86,9 @@ def create_binders(db, rng: Random, cfg, businesses, users) -> list[Binder]:
                 cfg.reference_date - timedelta(days=1),
                 period_start + timedelta(days=duration),
             )
-            handed_over_at = period_end if location_status == BinderLocationStatus.HANDED_OVER else None
+            handed_over_at = (
+                period_end if location_status == BinderLocationStatus.HANDED_OVER else None
+            )
             cursor = period_end + timedelta(days=rng.randint(1, 14))
 
             binder = Binder(
@@ -88,9 +101,7 @@ def create_binders(db, rng: Random, cfg, businesses, users) -> list[Binder]:
                 capacity_status=capacity_status,
                 created_by=rng.choice(users).id,
                 handover_recipient_name=(
-                    full_name(rng)
-                    if location_status == BinderLocationStatus.HANDED_OVER
-                    else None
+                    full_name(rng) if location_status == BinderLocationStatus.HANDED_OVER else None
                 ),
                 notes=rng.choice(BUSINESS_NOTES),
             )
@@ -105,7 +116,10 @@ def create_binders(db, rng: Random, cfg, businesses, users) -> list[Binder]:
 
 
 def create_binder_logs(db, rng: Random, binders, users) -> None:
+    if not users:
+        return
     now = datetime.now(UTC)
+    writer = EntityAuditWriter(db)
     for binder in binders:
         logs = []
         intake_time = datetime.combine(
@@ -121,9 +135,7 @@ def create_binder_logs(db, rng: Random, binders, users) -> None:
             )
         )
         if binder.capacity_status == BinderCapacityStatus.FULL:
-            closed_time = intake_time + timedelta(
-                days=rng.randint(2, 14), hours=rng.randint(1, 8)
-            )
+            closed_time = intake_time + timedelta(days=rng.randint(2, 14), hours=rng.randint(1, 8))
             if closed_time > now:
                 closed_time = now
             logs.append(
@@ -136,9 +148,7 @@ def create_binder_logs(db, rng: Random, binders, users) -> None:
                 )
             )
         if binder.location_status == BinderLocationStatus.HANDED_OVER:
-            ready_time = intake_time + timedelta(
-                days=rng.randint(2, 14), hours=rng.randint(1, 8)
-            )
+            ready_time = intake_time + timedelta(days=rng.randint(2, 14), hours=rng.randint(1, 8))
             if ready_time > now:
                 ready_time = now
             handed_over_base = binder.handed_over_at or binder.period_end or binder.period_start
@@ -169,18 +179,33 @@ def create_binder_logs(db, rng: Random, binders, users) -> None:
             )
 
         for old_value, new_value, note, changed_at, field_name in logs:
-            db.add(
-                BinderLifecycleLog(
-                    binder_id=binder.id,
-                    field_name=field_name,
-                    old_value=old_value,
-                    new_value=new_value,
-                    changed_by_user_id=rng.choice(users).id,
-                    changed_at=changed_at,
-                    notes=note,
-                )
+            actor = rng.choice(users)
+            row = writer.record_action(
+                ENTITY_BINDER,
+                binder.id,
+                actor.id,
+                _binder_action_for_seed(field_name, new_value),
+                old_value=lifecycle_value(field_name, None if old_value == "null" else old_value),
+                new_value=lifecycle_value(field_name, new_value),
+                note=note,
+                actor_display_name=actor.full_name,
+                metadata_json=binder_metadata(binder),
             )
+            row.performed_at = changed_at
     db.flush()
+
+
+def _binder_action_for_seed(field_name: str, new_value: str) -> str:
+    if field_name == "capacity_status" and new_value == BinderCapacityStatus.FULL.value:
+        return ACTION_BINDER_MARKED_FULL
+    if (
+        field_name == "location_status"
+        and new_value == BinderLocationStatus.READY_FOR_HANDOVER.value
+    ):
+        return ACTION_BINDER_MARKED_READY_FOR_HANDOVER
+    if field_name == "location_status" and new_value == BinderLocationStatus.HANDED_OVER.value:
+        return ACTION_BINDER_HANDED_OVER
+    return ACTION_BINDER_MATERIAL_RECEIVED
 
 
 def create_binder_intakes(db, binders) -> list[BinderIntake]:
@@ -207,9 +232,7 @@ def create_binder_intake_materials(
 
     reports_by_client: dict[int, list] = {}
     for report in reports:
-        reports_by_client.setdefault(get_seed_client_record_id(report), []).append(
-            report
-        )
+        reports_by_client.setdefault(get_seed_client_record_id(report), []).append(report)
 
     intake_by_binder = {intake.binder_id: intake for intake in intakes}
 
@@ -220,15 +243,11 @@ def create_binder_intake_materials(
         binder_client_record_id = get_seed_client_record_id(binder)
         candidate_businesses = businesses_by_client.get(binder_client_record_id, [])
         for _ in range(rng.randint(1, 4)):
-            business = (
-                rng.choice(candidate_businesses) if candidate_businesses else None
-            )
+            business = rng.choice(candidate_businesses) if candidate_businesses else None
             report = None
             material_type = rng.choice(list(MaterialType))
             if business and rng.random() < 0.45:
-                client_reports = reports_by_client.get(
-                    get_seed_client_record_id(business), []
-                )
+                client_reports = reports_by_client.get(get_seed_client_record_id(business), [])
                 if client_reports:
                     report = rng.choice(client_reports)
             period_year = (
@@ -254,9 +273,7 @@ def create_binder_intake_materials(
                     description=MATERIAL_DESCRIPTIONS[material_type],
                     created_at=min(
                         now,
-                        datetime.combine(
-                            intake.received_at, datetime.min.time(), tzinfo=UTC
-                        )
+                        datetime.combine(intake.received_at, datetime.min.time(), tzinfo=UTC)
                         + timedelta(days=rng.randint(0, 14), hours=rng.randint(1, 10)),
                     ),
                 )
@@ -271,9 +288,7 @@ def create_binder_handovers(db, rng: Random, binders, users) -> list[BinderHando
     for binder in binders:
         if binder.location_status != BinderLocationStatus.HANDED_OVER:
             continue
-        handed_over_by_client.setdefault(get_seed_client_record_id(binder), []).append(
-            binder
-        )
+        handed_over_by_client.setdefault(get_seed_client_record_id(binder), []).append(binder)
 
     for client_id, client_binders in handed_over_by_client.items():
         ordered = sorted(
@@ -303,9 +318,7 @@ def create_binder_handovers(db, rng: Random, binders, users) -> list[BinderHando
                     ]
                 ),
                 created_by=rng.choice(users).id,
-                created_at=datetime.combine(
-                    handed_over_at, datetime.min.time(), tzinfo=UTC
-                )
+                created_at=datetime.combine(handed_over_at, datetime.min.time(), tzinfo=UTC)
                 + timedelta(hours=rng.randint(9, 18)),
             )
             db.add(handover)
@@ -318,11 +331,15 @@ def create_binder_handovers(db, rng: Random, binders, users) -> list[BinderHando
     return handovers
 
 
-def create_binder_intake_edit_logs(db, rng: Random, intakes, users) -> None:
+def create_binder_intake_audit_logs(db, rng: Random, intakes, users) -> None:
     if not intakes or not users:
         return
+    writer = EntityAuditWriter(db)
     sample_size = min(len(intakes), max(1, len(intakes) // 3))
     for intake in rng.sample(intakes, sample_size):
+        binder = db.get(Binder, intake.binder_id)
+        if binder is None:
+            continue
         edit_time = datetime.combine(
             intake.received_at, datetime.min.time(), tzinfo=UTC
         ) + timedelta(days=rng.randint(0, 10), hours=rng.randint(9, 18))
@@ -334,33 +351,45 @@ def create_binder_intake_edit_logs(db, rng: Random, intakes, users) -> None:
             ]
         )
         old_notes = intake.notes or None
-        new_notes = (
-            note_suffix if not intake.notes else f"{intake.notes}. {note_suffix}"
-        )
-        db.add(
-            BinderIntakeEditLog(
+        new_notes = note_suffix if not intake.notes else f"{intake.notes}. {note_suffix}"
+        actor = rng.choice(users)
+        row = writer.record_action(
+            ENTITY_BINDER_INTAKE,
+            intake.id,
+            actor.id,
+            ACTION_BINDER_INTAKE_UPDATED,
+            old_value=old_notes,
+            new_value=new_notes,
+            actor_display_name=actor.full_name,
+            metadata_json=intake_metadata(
+                client_record_id=binder.client_record_id,
+                binder_id=binder.id,
                 intake_id=intake.id,
                 field_name="notes",
-                old_value=old_notes,
-                new_value=new_notes,
-                changed_by=rng.choice(users).id,
-                changed_at=edit_time,
-            )
+            ),
         )
+        row.performed_at = edit_time
         intake.notes = new_notes
 
         if rng.random() < 0.4:
             shifted_date = intake.received_at + timedelta(days=1)
-            db.add(
-                BinderIntakeEditLog(
+            actor = rng.choice(users)
+            row = writer.record_action(
+                ENTITY_BINDER_INTAKE,
+                intake.id,
+                actor.id,
+                ACTION_BINDER_INTAKE_UPDATED,
+                old_value=str(intake.received_at),
+                new_value=str(shifted_date),
+                actor_display_name=actor.full_name,
+                metadata_json=intake_metadata(
+                    client_record_id=binder.client_record_id,
+                    binder_id=binder.id,
                     intake_id=intake.id,
                     field_name="received_at",
-                    old_value=str(intake.received_at),
-                    new_value=str(shifted_date),
-                    changed_by=rng.choice(users).id,
-                    changed_at=edit_time + timedelta(minutes=15),
-                )
+                ),
             )
+            row.performed_at = edit_time + timedelta(minutes=15)
             intake.received_at = shifted_date
 
     db.flush()

@@ -18,9 +18,7 @@ def get_seed_client_record_id(row: Any) -> int:
     if seed_client_record_id is not None:
         return int(seed_client_record_id)
 
-    raise AttributeError(
-        f"{type(row).__name__} has no client_record_id or seed client context"
-    )
+    raise AttributeError(f"{type(row).__name__} has no client_record_id or seed client context")
 
 
 def get_seed_client_record(row: Any) -> Any | None:

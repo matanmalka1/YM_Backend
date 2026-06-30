@@ -21,9 +21,7 @@ def create_authority_contacts(db, rng: Random, cfg, clients, businesses):
     now = datetime.now(UTC)
     businesses_by_client: dict[int, list] = {}
     for business in businesses:
-        businesses_by_client.setdefault(get_seed_client_record_id(business), []).append(
-            business
-        )
+        businesses_by_client.setdefault(get_seed_client_record_id(business), []).append(business)
 
     for client in clients:
         if not businesses_by_client.get(client.id):
@@ -34,17 +32,13 @@ def create_authority_contacts(db, rng: Random, cfg, clients, businesses):
         for idx in range(num):
             created_at = now - timedelta(days=rng.randint(0, 300))
             updated_at = min(now, created_at + timedelta(days=rng.randint(0, 90)))
-            contact_profile = AUTHORITY_CONTACTS[
-                (client.id + idx - 1) % len(AUTHORITY_CONTACTS)
-            ]
+            contact_profile = AUTHORITY_CONTACTS[(client.id + idx - 1) % len(AUTHORITY_CONTACTS)]
             contact_type = authority_contact_type(idx)
             contact = AuthorityContact(
                 client_record_id=client.id,
                 contact_type=contact_type,
                 name=contact_profile["name"],
-                office=authority_office_name(
-                    contact_type, getattr(client, "city", None)
-                ),
+                office=authority_office_name(contact_type, getattr(client, "city", None)),
                 phone=office_phone(rng),
                 email=contact_profile["email"],
                 notes=rng.choice(
@@ -64,9 +58,7 @@ def create_correspondence(db, rng: Random, businesses, users, authority_contacts
     now = datetime.now(UTC)
     contacts_by_client: dict[int, list] = {}
     for contact in authority_contacts:
-        contacts_by_client.setdefault(get_seed_client_record_id(contact), []).append(
-            contact
-        )
+        contacts_by_client.setdefault(get_seed_client_record_id(contact), []).append(contact)
 
     for business in businesses:
         business_client_record_id = get_seed_client_record_id(business)

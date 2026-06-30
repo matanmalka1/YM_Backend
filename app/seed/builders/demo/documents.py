@@ -6,8 +6,8 @@ from random import Random
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     DocumentStatus,
-    PermanentDocumentType,
     PermanentDocument,
+    PermanentDocumentType,
 )
 
 from ...data.realistic_seed_text import DOCUMENT_TYPE_DETAILS
@@ -50,9 +50,7 @@ def create_documents(db, rng: Random, clients, businesses, users):
     now = datetime.now(UTC)
     businesses_by_client: dict[int, list] = {}
     for business in businesses:
-        businesses_by_client.setdefault(get_seed_client_record_id(business), []).append(
-            business
-        )
+        businesses_by_client.setdefault(get_seed_client_record_id(business), []).append(business)
 
     for client in clients:
         doc_types = [PermanentDocumentType.ID_COPY, PermanentDocumentType.POWER_OF_ATTORNEY]
@@ -63,17 +61,11 @@ def create_documents(db, rng: Random, clients, businesses, users):
 
         for doc_type in doc_types:
             doc_label, filename = DOCUMENT_TYPE_DETAILS[doc_type]
-            status, is_present, uploaded_at, approved_at, rejected_at = _doc_timestamps(
-                rng, now
-            )
+            status, is_present, uploaded_at, approved_at, rejected_at = _doc_timestamps(rng, now)
             approved_by = (
-                rng.choice(users).id
-                if status == DocumentStatus.APPROVED and approved_at
-                else None
+                rng.choice(users).id if status == DocumentStatus.APPROVED and approved_at else None
             )
-            rejected_by = (
-                rng.choice(users).id if status == DocumentStatus.REJECTED else None
-            )
+            rejected_by = rng.choice(users).id if status == DocumentStatus.REJECTED else None
             doc = PermanentDocument(
                 client_record_id=client.id,
                 business_id=None,
@@ -101,17 +93,11 @@ def create_documents(db, rng: Random, clients, businesses, users):
         for business in rng.sample(
             client_businesses, k=min(max(0, 4 - len(doc_types)), len(client_businesses))
         ):
-            status, is_present, uploaded_at, approved_at, rejected_at = _doc_timestamps(
-                rng, now
-            )
+            status, is_present, uploaded_at, approved_at, rejected_at = _doc_timestamps(rng, now)
             approved_by = (
-                rng.choice(users).id
-                if status == DocumentStatus.APPROVED and approved_at
-                else None
+                rng.choice(users).id if status == DocumentStatus.APPROVED and approved_at else None
             )
-            rejected_by = (
-                rng.choice(users).id if status == DocumentStatus.REJECTED else None
-            )
+            rejected_by = rng.choice(users).id if status == DocumentStatus.REJECTED else None
             doc_type = rng.choice(
                 [
                     PermanentDocumentType.INVOICE_DOC,

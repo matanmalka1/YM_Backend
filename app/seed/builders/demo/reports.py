@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from random import Random
-from typing import Any, Iterable
+from typing import Any
 
 from sqlalchemy import select
 
-
+from app.annual_reports.annual_report_constants import VALID_TRANSITIONS
+from app.annual_reports.annual_report_deadlines import extended_deadline, standard_deadline
+from app.annual_reports.domain.expense_rules import default_recognition_rate
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
 from app.annual_reports.models.annual_report_credit_point_reason import (
     AnnualReportCreditPoint,
@@ -15,13 +18,15 @@ from app.annual_reports.models.annual_report_credit_point_reason import (
 )
 from app.annual_reports.models.annual_report_detail import AnnualReportDetail
 from app.annual_reports.models.annual_report_enums import (
-    PrimaryAnnualReportForm,
     AnnualReportSchedule,
     AnnualReportStatus,
     ClientAnnualFilingType,
     ExtensionReason,
-    FilingDeadlineType as DeadlineType,
+    PrimaryAnnualReportForm,
     SubmissionMethod,
+)
+from app.annual_reports.models.annual_report_enums import (
+    FilingDeadlineType as DeadlineType,
 )
 from app.annual_reports.models.annual_report_expense_line import (
     AnnualReportExpenseLine,
@@ -35,12 +40,10 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.models.annual_report_schedule_entry import (
     AnnualReportScheduleEntry,
 )
-from app.annual_reports.models.annual_report_status_history import (
-    AnnualReportStatusHistory,
+from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
+from app.audit.services.audit_entity_audit_writer_service import (
+    EntityAuditWriter,
 )
-from app.annual_reports.domain.expense_rules import default_recognition_rate
-from app.annual_reports.annual_report_constants import VALID_TRANSITIONS
-from app.annual_reports.annual_report_deadlines import extended_deadline, standard_deadline
 from app.common.enums import EntityType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
@@ -53,7 +56,6 @@ from ..shared.client_refs import (
     get_seed_client_record,
     get_seed_client_record_id,
 )
-
 
 SEEDABLE_STATUSES = [
     AnnualReportStatus.NOT_STARTED,
@@ -188,9 +190,7 @@ def _build_annex_payload(
     return {}
 
 
-def _annex_schedules_for_report(
-    report: AnnualReport, rng: Random
-) -> list[AnnualReportSchedule]:
+def _annex_schedules_for_report(report: AnnualReport, rng: Random) -> list[AnnualReportSchedule]:
     schedules: list[AnnualReportSchedule] = []
     if report.client_type in (
         ClientAnnualFilingType.SELF_EMPLOYED,
@@ -200,13 +200,9 @@ def _annex_schedules_for_report(
     if report.has_rental_income:
         schedules.append(AnnualReportSchedule.SCHEDULE_B)
     if report.has_capital_gains:
-        schedules.extend(
-            [AnnualReportSchedule.FORM_1399, AnnualReportSchedule.SCHEDULE_GIMMEL]
-        )
+        schedules.extend([AnnualReportSchedule.FORM_1399, AnnualReportSchedule.SCHEDULE_GIMMEL])
     if report.has_foreign_income:
-        schedules.extend(
-            [AnnualReportSchedule.SCHEDULE_DALET, AnnualReportSchedule.FORM_150]
-        )
+        schedules.extend([AnnualReportSchedule.SCHEDULE_DALET, AnnualReportSchedule.FORM_150])
     if report.has_depreciation:
         schedules.append(AnnualReportSchedule.FORM_1342)
     if rng.random() < 0.35:
@@ -228,14 +224,10 @@ def _status_path_to(target: AnnualReportStatus) -> list[AnnualReportStatus]:
             if nxt == target:
                 return new_path
             frontier.append(new_path)
-    raise RuntimeError(
-        f"Cannot build legal annual-report status path to {target.value}"
-    )
+    raise RuntimeError(f"Cannot build legal annual-report status path to {target.value}")
 
 
-def create_annual_reports(
-    db, rng: Random, cfg, businesses, users
-) -> list[AnnualReport]:
+def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[AnnualReport]:
     """
     Creates historical annual report shells for years prior to current year.
     The current year's shell is already created by the onboarding orchestrator.
@@ -243,9 +235,7 @@ def create_annual_reports(
     reports: list[AnnualReport] = []
     current_year = cfg.reference_date.year
     # Only historical years — onboarding already created current year shell
-    available_years = list(
-        range(current_year - cfg.annual_reports_per_client, current_year)
-    )
+    available_years = list(range(current_year - cfg.annual_reports_per_client, current_year))
     advisors = [u.id for u in users if u.role == UserRole.ADVISOR]
     fallback_user_id = users[0].id if users else None
     status_cycle = list(SEEDABLE_STATUSES)
@@ -281,10 +271,7 @@ def create_annual_reports(
                 )
             ).first()
             if existing:
-                if (
-                    existing.tax_year < current_year
-                    and existing.status not in FINAL_STATUSES
-                ):
+                if existing.tax_year < current_year and existing.status not in FINAL_STATUSES:
                     existing.status = rng.choice(FINAL_STATUSES)
                 reports.append(existing)
                 continue
@@ -325,9 +312,7 @@ def create_annual_reports(
                 else None
             )
             created_at = datetime.now(UTC) - timedelta(days=rng.randint(0, 400))
-            updated_at = min(
-                datetime.now(UTC), created_at + timedelta(days=rng.randint(0, 60))
-            )
+            updated_at = min(datetime.now(UTC), created_at + timedelta(days=rng.randint(0, 60)))
             submitted_at = None
             if status in (
                 AnnualReportStatus.SUBMITTED,
@@ -339,9 +324,7 @@ def create_annual_reports(
                 if updated_at < submitted_at:
                     updated_at = submitted_at
 
-            tax_calendar_entry = TaxCalendarMaterializationService(
-                db
-            ).ensure_annual_entry(year)
+            tax_calendar_entry = TaxCalendarMaterializationService(db).ensure_annual_entry(year)
             report = AnnualReport(
                 client_record_id=business_client_record_id,
                 tax_year=year,
@@ -497,9 +480,7 @@ def create_annual_report_expense_lines(
     documents_by_client: dict[int, list] = {}
     if seeded_documents:
         for doc in seeded_documents:
-            documents_by_client.setdefault(get_seed_client_record_id(doc), []).append(
-                doc
-            )
+            documents_by_client.setdefault(get_seed_client_record_id(doc), []).append(doc)
 
     for report in reports:
         category_candidates = list(base_categories)
@@ -526,9 +507,7 @@ def create_annual_report_expense_lines(
             unique_categories, k=min(len(unique_categories), rng.randint(1, 4))
         ):
             client_docs = documents_by_client.get(get_seed_client_record_id(report), [])
-            linked_doc = (
-                rng.choice(client_docs) if client_docs and rng.random() < 0.7 else None
-            )
+            linked_doc = rng.choice(client_docs) if client_docs and rng.random() < 0.7 else None
             db.add(
                 AnnualReportExpenseLine(
                     annual_report_id=report.id,
@@ -536,10 +515,7 @@ def create_annual_report_expense_lines(
                     amount=_random_decimal(rng, 200, 40_000),
                     recognition_rate=default_recognition_rate(category),
                     external_document_reference=(
-                        (
-                            linked_doc.original_filename
-                            or linked_doc.storage_key.split("/")[-1]
-                        )
+                        (linked_doc.original_filename or linked_doc.storage_key.split("/")[-1])
                         if linked_doc
                         else (
                             f"EXP-{report.tax_year}-{rng.randint(1000, 9999)}"
@@ -567,9 +543,7 @@ def create_annual_report_annex_data(db, rng: Random, reports) -> None:
                 )
             ).all()
         }
-        for line_number, schedule in enumerate(
-            _annex_schedules_for_report(report, rng), start=1
-        ):
+        for line_number, schedule in enumerate(_annex_schedules_for_report(report, rng), start=1):
             schedule_entry = schedule_entries.get(schedule)
             if schedule_entry is None:
                 continue
@@ -589,9 +563,7 @@ def create_annual_report_credit_points(db, rng: Random, reports) -> None:
     for report in reports:
         reason_candidates = list(CreditPointReason)
         rng.shuffle(reason_candidates)
-        for reason in reason_candidates[
-            : rng.randint(1, min(3, len(reason_candidates)))
-        ]:
+        for reason in reason_candidates[: rng.randint(1, min(3, len(reason_candidates)))]:
             points = (
                 Decimal("2.25")
                 if reason == CreditPointReason.RESIDENT
@@ -608,34 +580,41 @@ def create_annual_report_credit_points(db, rng: Random, reports) -> None:
     db.flush()
 
 
-def create_annual_report_status_history(db, rng: Random, reports, users) -> None:
+def create_annual_report_audit_logs(db, rng: Random, reports, users) -> None:
     fallback_user = users[0] if users else None
+    writer = EntityAuditWriter(db)
     for report in reports:
         history_statuses = _status_path_to(report.status)
         previous = None
         occurred_at = report.created_at
         for status in history_statuses:
-            actor_id = (
-                report.created_by
-                or report.assigned_to
-                or (fallback_user.id if fallback_user else None)
-            )
+            actor = fallback_user
+            for candidate in users:
+                if candidate.id in {report.created_by, report.assigned_to}:
+                    actor = candidate
+                    break
+            if actor is None:
+                continue
             occurred_at += timedelta(hours=rng.randint(1, 72))
-            db.add(
-                AnnualReportStatusHistory(
-                    annual_report_id=report.id,
-                    from_status=previous,
-                    to_status=status,
-                    changed_by=actor_id,
-                    note=rng.choice(
-                        [
-                            "היסטוריית סטטוסים שנוצרה אוטומטית",
-                            "עודכן לאחר בדיקת מסמכים",
-                            "הועבר לשלב הבא",
-                        ]
-                    ),
-                    occurred_at=occurred_at,
-                )
+            row = writer.record_status_change(
+                ENTITY_ANNUAL_REPORT,
+                report.id,
+                actor.id,
+                previous,
+                status,
+                note=rng.choice(
+                    [
+                        "היסטוריית סטטוסים שנוצרה אוטומטית",
+                        "עודכן לאחר בדיקת מסמכים",
+                        "הועבר לשלב הבא",
+                    ]
+                ),
+                actor_display_name=actor.full_name,
+                metadata_json={
+                    "client_record_id": report.client_record_id,
+                    "tax_year": report.tax_year,
+                },
             )
+            row.performed_at = occurred_at
             previous = status
     db.flush()

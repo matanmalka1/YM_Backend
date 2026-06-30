@@ -9,8 +9,8 @@ from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import EntityType
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.tax_calendar_link_diagnostics import (
     find_active_null_tax_calendar_links,
 )
@@ -42,9 +42,7 @@ class SeedIntegrityValidator:
 
     def _check_active_clients_have_binders(self) -> None:
         active_clients = (
-            self.db.execute(
-                select(ClientRecord.id).where(ClientRecord.deleted_at.is_(None))
-            )
+            self.db.execute(select(ClientRecord.id).where(ClientRecord.deleted_at.is_(None)))
             .scalars()
             .all()
         )
@@ -52,9 +50,7 @@ class SeedIntegrityValidator:
             count = self.db.execute(
                 select(func.count())
                 .select_from(Binder)
-                .where(
-                    Binder.client_record_id == client_id, Binder.deleted_at.is_(None)
-                )
+                .where(Binder.client_record_id == client_id, Binder.deleted_at.is_(None))
             ).scalar_one()
             if count == 0:
                 self._errors.append(f"Client {client_id} has no binders")
@@ -125,13 +121,9 @@ class SeedIntegrityValidator:
                 Decimal(str(p.turnover_amount)) * Decimal(str(p.advance_rate)) / 100
             ).quantize(Decimal("0.01"), ROUND_HALF_UP)
             if Decimal(str(p.calculated_amount)).quantize(Decimal("0.01")) != expected_calc:
-                self._errors.append(
-                    f"AdvancePayment {p.id}: calculated_amount mismatch"
-                )
+                self._errors.append(f"AdvancePayment {p.id}: calculated_amount mismatch")
             expected_final = (
-                p.override_amount
-                if p.override_amount is not None
-                else p.calculated_amount
+                p.override_amount if p.override_amount is not None else p.calculated_amount
             )
             if Decimal(str(p.expected_amount)) != Decimal(str(expected_final)):
                 self._errors.append(f"AdvancePayment {p.id}: expected_amount mismatch")

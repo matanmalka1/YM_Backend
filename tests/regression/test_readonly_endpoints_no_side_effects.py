@@ -2,8 +2,11 @@ from datetime import date, timedelta
 
 from sqlalchemy import func, select
 
+from app.audit.audit_constants import ACTION_BINDER_MATERIAL_RECEIVED, ENTITY_BINDER
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.binders.binder_audit import binder_metadata
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.binders.models.binder_lifecycle_log import BinderLifecycleLog
 from app.clients.models.client_record import ClientRecord
 
 
@@ -44,20 +47,22 @@ def test_readonly_get_endpoints_keep_db_state_intact(
     test_db.commit()
 
     test_db.refresh(b_open)
-    log = BinderLifecycleLog(
-        binder_id=b_open.id,
-        field_name="location_status",
-        old_value="null",
-        new_value="in_office",
-        changed_by_user_id=test_user.id,
-        notes="seed",
+    EntityAuditWriter(test_db).record_action(
+        ENTITY_BINDER,
+        b_open.id,
+        test_user.id,
+        ACTION_BINDER_MATERIAL_RECEIVED,
+        old_value=None,
+        new_value={"location_status": BinderLocationStatus.IN_OFFICE.value},
+        note="seed",
+        actor_display_name=test_user.full_name,
+        metadata_json=binder_metadata(b_open),
     )
-    test_db.add(log)
     test_db.commit()
 
     baseline = {
         "binders": test_db.scalar(select(func.count(Binder.id))),
-        "logs": test_db.scalar(select(func.count(BinderLifecycleLog.id))),
+        "logs": test_db.scalar(select(func.count(EntityAuditLog.id))),
         "clients": test_db.scalar(select(func.count(ClientRecord.id))),
         "lifecycles": {
             b.id: (b.location_status.value, b.capacity_status.value)
@@ -82,7 +87,7 @@ def test_readonly_get_endpoints_keep_db_state_intact(
     assert "open_charges_count" in r_overview.json()
 
     assert test_db.scalar(select(func.count(Binder.id))) == baseline["binders"]
-    assert test_db.scalar(select(func.count(BinderLifecycleLog.id))) == baseline["logs"]
+    assert test_db.scalar(select(func.count(EntityAuditLog.id))) == baseline["logs"]
     assert test_db.scalar(select(func.count(ClientRecord.id))) == baseline["clients"]
     assert {
         b.id: (b.location_status.value, b.capacity_status.value)

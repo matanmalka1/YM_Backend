@@ -42,9 +42,7 @@ def create_clients(
     serial_offset = len(existing_max)
 
     results: list[tuple[ClientRecord, Business]] = []
-    used_names: set[str] = set(
-        db.execute(select(Business.business_name)).scalars().all()
-    )
+    used_names: set[str] = set(db.execute(select(Business.business_name)).scalars().all())
 
     for i in range(cfg.clients):
         serial = serial_offset + i + 1
@@ -71,9 +69,7 @@ def create_clients(
         else:
             full_name_value = full_name(rng)
             id_number_type = IdNumberType.INDIVIDUAL
-            id_number = generate_valid_israeli_id(
-                serial, prefix=str(rng.choice([0, 1, 2, 3]))
-            )
+            id_number = generate_valid_israeli_id(serial, prefix=str(rng.choice([0, 1, 2, 3])))
             if entity_type == EntityType.OSEK_PATUR:
                 vat_reporting_frequency = VatType.EXEMPT
             else:
@@ -160,14 +156,11 @@ def create_extra_businesses(
     biz_svc = BusinessService(db)
     actor_id = users[0].id if users else None
     extra: list[Business] = []
-    used_names: set[str] = set(
-        db.execute(select(Business.business_name)).scalars().all()
-    )
+    used_names: set[str] = set(db.execute(select(Business.business_name)).scalars().all())
 
     multi_target = max(1, round(len(client_pairs) * 0.2))
     multi_clients = {
-        cr.id
-        for cr, _ in rng.sample(client_pairs, k=min(multi_target, len(client_pairs)))
+        cr.id for cr, _ in rng.sample(client_pairs, k=min(multi_target, len(client_pairs)))
     }
 
     serial = 10000
@@ -182,9 +175,7 @@ def create_extra_businesses(
             serial += 1
             entity_type = getattr(client_record, "entity_type", None)
             biz_name = seed_business_name(
-                client_full_name=getattr(
-                    client_record, "full_name", str(client_record.id)
-                ),
+                client_full_name=getattr(client_record, "full_name", str(client_record.id)),
                 entity_type=entity_type,
                 business_index=business_index,
                 serial=serial,

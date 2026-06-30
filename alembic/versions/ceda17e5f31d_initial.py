@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 3e2669e69e32
+Revision ID: ceda17e5f31d
 Revises: 
-Create Date: 2026-06-23 13:17:27.041291
+Create Date: 2026-06-30 17:33:13.169994
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '3e2669e69e32'
+revision: str = 'ceda17e5f31d'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -170,16 +170,22 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('entity_type', sa.String(), nullable=False),
     sa.Column('entity_id', sa.Integer(), nullable=False),
-    sa.Column('performed_by', sa.Integer(), nullable=False),
+    sa.Column('performed_by', sa.Integer(), nullable=True),
+    sa.Column('actor_type', sa.String(), nullable=False),
+    sa.Column('actor_display_name', sa.String(), nullable=True),
     sa.Column('action', sa.String(), nullable=False),
-    sa.Column('old_value', sa.Text(), nullable=True),
-    sa.Column('new_value', sa.Text(), nullable=True),
+    sa.Column('old_value', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
+    sa.Column('new_value', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
+    sa.Column('metadata_json', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
     sa.Column('note', sa.Text(), nullable=True),
     sa.Column('performed_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['performed_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_entity_audit_type_id', 'entity_audit_logs', ['entity_type', 'entity_id'], unique=False)
+    op.create_index('idx_entity_audit_action_perf', 'entity_audit_logs', ['action', 'performed_at'], unique=False)
+    op.create_index('idx_entity_audit_entity_perf', 'entity_audit_logs', ['entity_type', 'entity_id', 'performed_at'], unique=False)
+    op.create_index('idx_entity_audit_performed_at', 'entity_audit_logs', ['performed_at'], unique=False)
+    op.create_index('idx_entity_audit_performer_perf', 'entity_audit_logs', ['performed_by', 'performed_at'], unique=False)
     op.create_index(op.f('ix_entity_audit_logs_entity_id'), 'entity_audit_logs', ['entity_id'], unique=False)
     op.create_index(op.f('ix_entity_audit_logs_entity_type'), 'entity_audit_logs', ['entity_type'], unique=False)
     op.create_table('entity_notes',
@@ -268,7 +274,9 @@ def upgrade() -> None:
     sa.Column('email', sa.String(), nullable=True),
     sa.Column('status', sa.Enum('success', 'failure', name='auditstatus'), nullable=False),
     sa.Column('reason', sa.String(), nullable=True),
-    sa.Column('metadata_json', sa.Text(), nullable=True),
+    sa.Column('actor_display_name', sa.String(), nullable=True),
+    sa.Column('target_display_name', sa.String(), nullable=True),
+    sa.Column('metadata_json', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['actor_user_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['target_user_id'], ['users.id'], ),
@@ -567,19 +575,6 @@ def upgrade() -> None:
     sa.UniqueConstraint('annual_report_id', 'schedule', name='uq_annual_report_schedules_report_schedule')
     )
     op.create_index(op.f('ix_annual_report_schedules_annual_report_id'), 'annual_report_schedules', ['annual_report_id'], unique=False)
-    op.create_table('annual_report_status_history',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('annual_report_id', sa.Integer(), nullable=False),
-    sa.Column('from_status', sa.Enum('not_started', 'collecting_docs', 'in_preparation', 'pending_client', 'submitted', 'closed', 'canceled', name='annualreportstatus'), nullable=True),
-    sa.Column('to_status', sa.Enum('not_started', 'collecting_docs', 'in_preparation', 'pending_client', 'submitted', 'closed', 'canceled', name='annualreportstatus'), nullable=False),
-    sa.Column('changed_by', sa.Integer(), nullable=False),
-    sa.Column('note', sa.Text(), nullable=True),
-    sa.Column('occurred_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['annual_report_id'], ['annual_reports.id'], ),
-    sa.ForeignKeyConstraint(['changed_by'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_annual_report_status_history_annual_report_id'), 'annual_report_status_history', ['annual_report_id'], unique=False)
     op.create_table('binder_handover_binders',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('handover_id', sa.Integer(), nullable=False),
@@ -603,20 +598,6 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_binder_intakes_binder_id'), 'binder_intakes', ['binder_id'], unique=False)
-    op.create_table('binder_lifecycle_logs',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('binder_id', sa.Integer(), nullable=False),
-    sa.Column('field_name', sa.String(), nullable=False),
-    sa.Column('old_value', sa.String(), nullable=False),
-    sa.Column('new_value', sa.String(), nullable=False),
-    sa.Column('changed_by_user_id', sa.Integer(), nullable=False),
-    sa.Column('changed_at', sa.DateTime(), nullable=False),
-    sa.Column('notes', sa.Text(), nullable=True),
-    sa.ForeignKeyConstraint(['binder_id'], ['binders.id'], ),
-    sa.ForeignKeyConstraint(['changed_by_user_id'], ['users.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_binder_lifecycle_logs_binder_id'), 'binder_lifecycle_logs', ['binder_id'], unique=False)
     op.create_table('charges',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_record_id', sa.Integer(), nullable=False),
@@ -783,19 +764,6 @@ def upgrade() -> None:
     )
     op.create_index(op.f('ix_annual_report_expense_lines_annual_report_id'), 'annual_report_expense_lines', ['annual_report_id'], unique=False)
     op.create_index(op.f('ix_annual_report_expense_lines_supporting_document_id'), 'annual_report_expense_lines', ['supporting_document_id'], unique=False)
-    op.create_table('binder_intake_edit_logs',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('intake_id', sa.Integer(), nullable=False),
-    sa.Column('field_name', sa.String(), nullable=False),
-    sa.Column('old_value', sa.Text(), nullable=True),
-    sa.Column('new_value', sa.Text(), nullable=True),
-    sa.Column('changed_by', sa.Integer(), nullable=False),
-    sa.Column('changed_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['changed_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['intake_id'], ['binder_intakes.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_binder_intake_edit_logs_intake_id'), 'binder_intake_edit_logs', ['intake_id'], unique=False)
     op.create_table('binder_intake_materials',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('intake_id', sa.Integer(), nullable=False),
@@ -882,23 +850,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_signature_requests_annual_report_id'), 'signature_requests', ['annual_report_id'], unique=False)
     op.create_index(op.f('ix_signature_requests_business_id'), 'signature_requests', ['business_id'], unique=False)
     op.create_index(op.f('ix_signature_requests_client_record_id'), 'signature_requests', ['client_record_id'], unique=False)
-    op.create_table('vat_audit_logs',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('work_item_id', sa.Integer(), nullable=False),
-    sa.Column('performed_by', sa.Integer(), nullable=False),
-    sa.Column('action', sa.String(), nullable=False),
-    sa.Column('old_value', sa.Text(), nullable=True),
-    sa.Column('new_value', sa.Text(), nullable=True),
-    sa.Column('note', sa.Text(), nullable=True),
-    sa.Column('invoice_id', sa.Integer(), nullable=True),
-    sa.Column('performed_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['invoice_id'], ['vat_invoices.id'], ondelete='SET NULL'),
-    sa.ForeignKeyConstraint(['performed_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['work_item_id'], ['vat_work_items.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index(op.f('ix_vat_audit_logs_invoice_id'), 'vat_audit_logs', ['invoice_id'], unique=False)
-    op.create_index(op.f('ix_vat_audit_logs_work_item_id'), 'vat_audit_logs', ['work_item_id'], unique=False)
     op.create_table('notifications',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_record_id', sa.Integer(), nullable=False),
@@ -943,22 +894,6 @@ def upgrade() -> None:
     op.create_index(op.f('ix_notifications_business_id'), 'notifications', ['business_id'], unique=False)
     op.create_index(op.f('ix_notifications_client_record_id'), 'notifications', ['client_record_id'], unique=False)
     op.create_index(op.f('ix_notifications_signature_request_id'), 'notifications', ['signature_request_id'], unique=False)
-    op.create_table('signature_audit_events',
-    sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
-    sa.Column('signature_request_id', sa.Integer(), nullable=False),
-    sa.Column('event_type', sa.String(), nullable=False),
-    sa.Column('actor_type', sa.String(), nullable=False),
-    sa.Column('actor_id', sa.Integer(), nullable=True),
-    sa.Column('actor_name', sa.String(), nullable=True),
-    sa.Column('ip_address', sa.String(), nullable=True),
-    sa.Column('user_agent', sa.String(), nullable=True),
-    sa.Column('notes', sa.Text(), nullable=True),
-    sa.Column('occurred_at', sa.DateTime(), nullable=False),
-    sa.ForeignKeyConstraint(['signature_request_id'], ['signature_requests.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_index('idx_sig_audit_occurred', 'signature_audit_events', ['occurred_at'], unique=False)
-    op.create_index(op.f('ix_signature_audit_events_signature_request_id'), 'signature_audit_events', ['signature_request_id'], unique=False)
     # ### end Alembic commands ###
 
 
@@ -966,9 +901,6 @@ def downgrade() -> None:
     """Downgrade schema."""
     op.execute("DROP SEQUENCE IF EXISTS client_office_number_seq")
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_index(op.f('ix_signature_audit_events_signature_request_id'), table_name='signature_audit_events')
-    op.drop_index('idx_sig_audit_occurred', table_name='signature_audit_events')
-    op.drop_table('signature_audit_events')
     op.drop_index(op.f('ix_notifications_signature_request_id'), table_name='notifications')
     op.drop_index(op.f('ix_notifications_client_record_id'), table_name='notifications')
     op.drop_index(op.f('ix_notifications_business_id'), table_name='notifications')
@@ -983,9 +915,6 @@ def downgrade() -> None:
     op.drop_index('idx_notification_client_record_status', table_name='notifications')
     op.drop_index('idx_notification_business_status', table_name='notifications')
     op.drop_table('notifications')
-    op.drop_index(op.f('ix_vat_audit_logs_work_item_id'), table_name='vat_audit_logs')
-    op.drop_index(op.f('ix_vat_audit_logs_invoice_id'), table_name='vat_audit_logs')
-    op.drop_table('vat_audit_logs')
     op.drop_index(op.f('ix_signature_requests_client_record_id'), table_name='signature_requests')
     op.drop_index(op.f('ix_signature_requests_business_id'), table_name='signature_requests')
     op.drop_index(op.f('ix_signature_requests_annual_report_id'), table_name='signature_requests')
@@ -1004,8 +933,6 @@ def downgrade() -> None:
     op.drop_index('idx_intake_material_type', table_name='binder_intake_materials')
     op.drop_index('idx_intake_material_business', table_name='binder_intake_materials')
     op.drop_table('binder_intake_materials')
-    op.drop_index(op.f('ix_binder_intake_edit_logs_intake_id'), table_name='binder_intake_edit_logs')
-    op.drop_table('binder_intake_edit_logs')
     op.drop_index(op.f('ix_annual_report_expense_lines_supporting_document_id'), table_name='annual_report_expense_lines')
     op.drop_index(op.f('ix_annual_report_expense_lines_annual_report_id'), table_name='annual_report_expense_lines')
     op.drop_table('annual_report_expense_lines')
@@ -1036,16 +963,12 @@ def downgrade() -> None:
     op.drop_index('idx_charge_status', table_name='charges')
     op.drop_index('idx_charge_client_record_period', table_name='charges')
     op.drop_table('charges')
-    op.drop_index(op.f('ix_binder_lifecycle_logs_binder_id'), table_name='binder_lifecycle_logs')
-    op.drop_table('binder_lifecycle_logs')
     op.drop_index(op.f('ix_binder_intakes_binder_id'), table_name='binder_intakes')
     op.drop_table('binder_intakes')
     op.drop_index(op.f('ix_binder_handover_binders_handover_id'), table_name='binder_handover_binders')
     op.drop_index(op.f('ix_binder_handover_binders_binder_id'), table_name='binder_handover_binders')
     op.drop_index('idx_handover_binder_unique', table_name='binder_handover_binders')
     op.drop_table('binder_handover_binders')
-    op.drop_index(op.f('ix_annual_report_status_history_annual_report_id'), table_name='annual_report_status_history')
-    op.drop_table('annual_report_status_history')
     op.drop_index(op.f('ix_annual_report_schedules_annual_report_id'), table_name='annual_report_schedules')
     op.drop_table('annual_report_schedules')
     op.drop_index(op.f('ix_annual_report_income_lines_annual_report_id'), table_name='annual_report_income_lines')
@@ -1125,7 +1048,10 @@ def downgrade() -> None:
     op.drop_table('entity_notes')
     op.drop_index(op.f('ix_entity_audit_logs_entity_type'), table_name='entity_audit_logs')
     op.drop_index(op.f('ix_entity_audit_logs_entity_id'), table_name='entity_audit_logs')
-    op.drop_index('idx_entity_audit_type_id', table_name='entity_audit_logs')
+    op.drop_index('idx_entity_audit_performer_perf', table_name='entity_audit_logs')
+    op.drop_index('idx_entity_audit_performed_at', table_name='entity_audit_logs')
+    op.drop_index('idx_entity_audit_entity_perf', table_name='entity_audit_logs')
+    op.drop_index('idx_entity_audit_action_perf', table_name='entity_audit_logs')
     op.drop_table('entity_audit_logs')
     op.drop_index('ix_client_records_office_client_number_active', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.drop_index('ix_client_records_legal_entity_id_active', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))

@@ -9,15 +9,12 @@ import app.annual_reports.models.annual_report_expense_line  # noqa: F401
 import app.annual_reports.models.annual_report_income_line  # noqa: F401
 import app.annual_reports.models.annual_report_model  # noqa: F401
 import app.annual_reports.models.annual_report_schedule_entry  # noqa: F401
-import app.annual_reports.models.annual_report_status_history  # noqa: F401
 import app.audit.models.audit_entity_audit_log  # noqa: F401
 import app.authority_contacts.models.authority_contact  # noqa: F401
 import app.binders.models.binder  # noqa: F401
 import app.binders.models.binder_handover  # noqa: F401
 import app.binders.models.binder_intake  # noqa: F401
-import app.binders.models.binder_intake_edit_log  # noqa: F401
 import app.binders.models.binder_intake_material  # noqa: F401
-import app.binders.models.binder_lifecycle_log  # noqa: F401
 import app.businesses.models.business  # noqa: F401
 import app.charges.models.charge  # noqa: F401
 import app.clients.models.client_record  # noqa: F401
@@ -38,6 +35,5 @@ import app.tax_calendar.models.tax_calendar_entry  # noqa: F401
 import app.users.models.user  # noqa: F401
 import app.users.models.user_audit_log  # noqa: F401
 import app.users.models.user_password_reset_token  # noqa: F401
-import app.vat.models.vat_audit_log  # noqa: F401
 import app.vat.models.vat_invoice  # noqa: F401
 import app.vat.models.vat_work_item  # noqa: F401

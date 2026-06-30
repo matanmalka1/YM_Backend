@@ -10,9 +10,6 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.models.annual_report_schedule_entry import (
     AnnualReportScheduleEntry,
 )
-from app.annual_reports.models.annual_report_status_history import (
-    AnnualReportStatusHistory,
-)
 
 __all__ = [
     "AnnualReport",
@@ -23,5 +20,4 @@ __all__ = [
     "AnnualReportExpenseLine",
     "AnnualReportCreditPoint",
     "AnnualReportAnnexData",
-    "AnnualReportStatusHistory",
 ]

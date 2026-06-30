@@ -20,8 +20,7 @@ Design decisions:
 - content_hash (SHA-256) enables tamper detection of the signed content.
 - signed_document_key stores the countersigned PDF in S3/R2.
 - canceled_by: who canceled (advisor/system) — separate from deleted_by.
-- SignatureAuditEvent is a retained legacy table for the audit-refactor cleanup
-  migration; production signature audit writes/readers use EntityAuditLog.
+- Signature lifecycle evidence is stored in EntityAuditLog.
 """
 
 from __future__ import annotations
@@ -30,7 +29,7 @@ import datetime
 from enum import Enum as PyEnum
 from typing import TYPE_CHECKING
 
-from sqlalchemy import ForeignKey, Index, Integer, String, Text, text
+from sqlalchemy import ForeignKey, Index, String, Text, text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -137,10 +136,6 @@ class SignatureRequest(Base):
         foreign_keys="[SignatureRequest.annual_report_id]",
         viewonly=True,
     )
-    audit_events: Mapped[list[SignatureAuditEvent]] = relationship(
-        "SignatureAuditEvent", back_populates="signature_request"
-    )
-
     __table_args__ = (
         Index("idx_sig_request_client_record", "client_record_id"),
         Index("idx_sig_request_business", "business_id"),
@@ -160,42 +155,4 @@ class SignatureRequest(Base):
             f"<SignatureRequest(id={self.id}, client_record_id={self.client_record_id}, "
             f"business_id={self.business_id}, type='{self.request_type}', "
             f"status='{self.status}')>"
-        )
-
-
-class SignatureAuditEvent(Base):
-    """Retained legacy audit table; dropped in the Phase 9 cleanup migration."""
-
-    __tablename__ = "signature_audit_events"
-
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
-    signature_request_id: Mapped[int] = mapped_column(
-        ForeignKey("signature_requests.id"), nullable=False, index=True
-    )
-
-    # String (not enum) — expands freely without migrations
-    event_type: Mapped[str] = mapped_column(
-        String, nullable=False
-    )  # created, sent, viewed, signed, declined, canceled, expired
-    actor_type: Mapped[str] = mapped_column(String, nullable=False)  # advisor, signer, system
-
-    actor_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
-    actor_name: Mapped[str | None] = mapped_column(String, nullable=True)
-    ip_address: Mapped[str | None] = mapped_column(String, nullable=True)
-    user_agent: Mapped[str | None] = mapped_column(String, nullable=True)
-    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
-    occurred_at: Mapped[datetime.datetime] = mapped_column(nullable=False, default=utcnow)
-
-    # ── Relationships ─────────────────────────────────────────────────────────
-    signature_request: Mapped[SignatureRequest] = relationship(
-        "SignatureRequest", back_populates="audit_events"
-    )
-
-    __table_args__ = (Index("idx_sig_audit_occurred", "occurred_at"),)
-
-    def __repr__(self) -> str:
-        return (
-            f"<SignatureAuditEvent(id={self.id}, "
-            f"request_id={self.signature_request_id}, "
-            f"type='{self.event_type}', actor='{self.actor_type}')>"
         )

@@ -93,9 +93,7 @@ def _with_branch(base_name: str, business_index: int) -> str:
     return f"{base_name} - פעילות {branch}"
 
 
-def _unique_name(
-    candidate: str, client_full_name: str, serial: int, used_names: set[str]
-) -> str:
+def _unique_name(candidate: str, client_full_name: str, serial: int, used_names: set[str]) -> str:
     forbidden = {
         client_full_name,
         f"{client_full_name} 1",

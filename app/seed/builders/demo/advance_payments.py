@@ -12,9 +12,9 @@ from app.advance_payments.models.advance_payment import (
     PaymentMethod,
 )
 from app.clients.models.client_record import ClientRecord
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.common.enums import EntityType, ObligationType
 from app.common.obligation_plan import advance_payment_obligation_plan
+from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
@@ -72,9 +72,7 @@ def _apply_payment_fields(
         if vat_turnover is not None
         else Decimal(str(round(rng.uniform(10_000, 150_000), 2)))
     )
-    calculated_amount = (turnover_amount * rate / 100).quantize(
-        Decimal("0.01"), ROUND_HALF_UP
-    )
+    calculated_amount = (turnover_amount * rate / 100).quantize(Decimal("0.01"), ROUND_HALF_UP)
     payment.advance_rate = rate
     payment.turnover_amount = turnover_amount
     payment.calculated_amount = calculated_amount
@@ -90,9 +88,9 @@ def _apply_payment_fields(
         payment.paid_at = min(paid_at, datetime.now(UTC))
     elif status == AdvancePaymentStatus.PARTIAL:
         expected = payment.expected_amount
-        payment.paid_amount = (
-            expected * Decimal(str(round(rng.uniform(0.2, 0.8), 2)))
-        ).quantize(Decimal("0.01"))
+        payment.paid_amount = (expected * Decimal(str(round(rng.uniform(0.2, 0.8), 2)))).quantize(
+            Decimal("0.01")
+        )
         payment.payment_method = rng.choice(list(PaymentMethod))
         period_dt = datetime.strptime(f"{period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
         paid_at = period_dt + timedelta(days=rng.randint(14, 45))
@@ -111,17 +109,10 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
     mat = TaxCalendarMaterializationService(db)
     payments: list[AdvancePayment] = []
 
-    _crs = [
-        get_seed_client_record(b)
-        for b in businesses
-        if get_seed_client_record(b) is not None
-    ]
+    _crs = [get_seed_client_record(b) for b in businesses if get_seed_client_record(b) is not None]
     _le_ids = list({cr.legal_entity_id for cr in _crs})
     legal_entity_map: dict[int, LegalEntity] = {
-        le.id: le
-        for le in db.scalars(
-            select(LegalEntity).where(LegalEntity.id.in_(_le_ids))
-        ).all()
+        le.id: le for le in db.scalars(select(LegalEntity).where(LegalEntity.id.in_(_le_ids))).all()
     }
 
     seen_clients: set[int] = set()
@@ -184,9 +175,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
                     status=AdvancePaymentStatus.PENDING,
                     tax_calendar_entry_id=entry.id,
                 )
-                _apply_payment_fields(
-                    rng, payment, status, plan.period, le, db, client_record_id
-                )
+                _apply_payment_fields(rng, payment, status, plan.period, le, db, client_record_id)
                 db.add(payment)
                 payments.append(payment)
 
