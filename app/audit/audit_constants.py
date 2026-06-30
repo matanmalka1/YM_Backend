@@ -120,3 +120,18 @@ ACTION_BINDER_HANDED_OVER = entity_action(ENTITY_BINDER, "handed_over")
 # row with the field identity in metadata_json (§10b).
 # ---------------------------------------------------------------------------
 ACTION_BINDER_INTAKE_UPDATED = entity_action(ENTITY_BINDER_INTAKE, ACTION_UPDATED)
+
+# ---------------------------------------------------------------------------
+# Signature-request lifecycle actions (pre-namespaced; evidence events with
+# per-action forensic metadata in metadata_json).
+# ---------------------------------------------------------------------------
+ACTION_SIGNATURE_REQUEST_CREATED = entity_action(ENTITY_SIGNATURE_REQUEST, ACTION_CREATED)
+ACTION_SIGNATURE_REQUEST_SENT = entity_action(ENTITY_SIGNATURE_REQUEST, "sent")
+ACTION_SIGNATURE_REQUEST_VIEWED = entity_action(ENTITY_SIGNATURE_REQUEST, "viewed")
+ACTION_SIGNATURE_REQUEST_SIGNED = entity_action(ENTITY_SIGNATURE_REQUEST, "signed")
+ACTION_SIGNATURE_REQUEST_DECLINED = entity_action(ENTITY_SIGNATURE_REQUEST, "declined")
+ACTION_SIGNATURE_REQUEST_CANCELED = entity_action(ENTITY_SIGNATURE_REQUEST, "canceled")
+ACTION_SIGNATURE_REQUEST_EXPIRED = entity_action(ENTITY_SIGNATURE_REQUEST, "expired")
+ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED = entity_action(
+    ENTITY_SIGNATURE_REQUEST, "annual_report_signed"
+)

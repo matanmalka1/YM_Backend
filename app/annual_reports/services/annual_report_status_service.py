@@ -86,7 +86,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         self,
         report_id: int,
         new_status: str,
-        changed_by: int,
+        changed_by: int | None,
         changed_by_name: str,
         note: str | None = None,
         ita_reference: str | None = None,
@@ -95,6 +95,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         tax_due: float | None = None,
         submitted_at: datetime | None = None,
         submission_method: str | None = None,
+        actor_type: str = "user",
     ) -> AnnualReportResponse:
         report = self._get_or_raise_for_update(report_id)
         valid_statuses = {e.value for e in AnnualReportStatus}
@@ -157,6 +158,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             old_status,
             ns,
             note=note,
+            actor_type=actor_type,
             actor_display_name=changed_by_name,
             metadata_json={
                 "client_record_id": report.client_record_id,
@@ -173,9 +175,15 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                 changed_by,
                 changed_by_name,
                 STATUS_CHANGE_CANCEL_SIGNATURE_REASON,
+                actor_type=actor_type,
             )
 
         if ns == AnnualReportStatus.PENDING_CLIENT:
+            if changed_by is None:
+                raise AppError(
+                    "יצירת בקשת חתימה לדוח שנתי דורשת משתמש מבצע",
+                    ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
+                )
             self._cancel_pending_signature_requests(
                 report_id,
                 changed_by,

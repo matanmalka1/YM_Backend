@@ -30357,32 +30357,21 @@
         ],
         "title": "SendBackForCorrectionRequest"
       },
-      "SignatureAuditEventResponse": {
+      "SignatureRequestAuditItemResponse": {
         "properties": {
           "id": {
             "type": "integer",
             "title": "Id"
           },
-          "event_type": {
+          "action": {
             "type": "string",
-            "title": "Event Type"
+            "title": "Action"
           },
           "actor_type": {
             "type": "string",
             "title": "Actor Type"
           },
-          "actor_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Actor Id"
-          },
-          "actor_name": {
+          "actor_display_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -30391,7 +30380,92 @@
                 "type": "null"
               }
             ],
-            "title": "Actor Name"
+            "title": "Actor Display Name"
+          },
+          "performed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Performed At",
+            "examples": [
+              "2026-01-02T03:04:05Z"
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          },
+          "client_record_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Record Id"
+          },
+          "signer_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Name"
+          },
+          "signer_email": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signer Email"
+          },
+          "business_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Business Id"
+          },
+          "annual_report_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Report Id"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
           },
           "ip_address": {
             "anyOf": [
@@ -30404,7 +30478,7 @@
             ],
             "title": "Ip Address"
           },
-          "notes": {
+          "user_agent": {
             "anyOf": [
               {
                 "type": "string"
@@ -30413,25 +30487,61 @@
                 "type": "null"
               }
             ],
-            "title": "Notes"
+            "title": "User Agent"
           },
-          "occurred_at": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Occurred At",
-            "examples": [
-              "2026-01-02T03:04:05Z"
-            ]
+          "content_hash": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash"
+          },
+          "content_hash_missing": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Hash Missing"
+          },
+          "signed_document_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Signed Document Key"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
           }
         },
         "type": "object",
         "required": [
           "id",
-          "event_type",
+          "action",
           "actor_type",
-          "occurred_at"
+          "performed_at"
         ],
-        "title": "SignatureAuditEventResponse"
+        "title": "SignatureRequestAuditItemResponse"
       },
       "SignatureRequestCreateRequest": {
         "properties": {
@@ -31455,7 +31565,7 @@
           },
           "audit_trail": {
             "items": {
-              "$ref": "#/components/schemas/SignatureAuditEventResponse"
+              "$ref": "#/components/schemas/SignatureRequestAuditItemResponse"
             },
             "type": "array",
             "title": "Audit Trail",

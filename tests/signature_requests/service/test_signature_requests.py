@@ -4,6 +4,13 @@ from types import SimpleNamespace
 import pytest
 
 import app.signature_requests.signature_request_validations as validations
+from app.audit.audit_constants import (
+    ACTION_SIGNATURE_REQUEST_CREATED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+    ACTION_SIGNATURE_REQUEST_SENT,
+    ENTITY_SIGNATURE_REQUEST,
+)
+from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.businesses.models.business import Business
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
@@ -76,7 +83,8 @@ def test_expire_overdue_requests_marks_expired_and_audits(test_db, test_user):
     )
     assert expire_overdue_requests(repo) == 1
     assert repo.get_by_id(req.id).status == SignatureRequestStatus.EXPIRED
-    assert any(e.event_type == "expired" for e in repo.list_audit_events(req.id))
+    audit_rows = EntityAuditLogRepository(test_db).list_by_entity(ENTITY_SIGNATURE_REQUEST, req.id)
+    assert any(e.action == ACTION_SIGNATURE_REQUEST_EXPIRED for e in audit_rows)
 
 
 def test_record_view_on_expired_request_sets_status_and_raises(test_db, test_user):
@@ -135,12 +143,15 @@ def test_create_request_sets_pending_token_and_expiry(test_db, test_user):
     assert req.sent_at is not None
     assert req.expires_at is not None
     assert req.expiry_days == 14
-    assert [
-        event.event_type for event in SignatureRequestRepository(test_db).list_audit_events(req.id)
-    ] == [
-        "created",
-        "sent",
+    audit_rows = list(
+        reversed(EntityAuditLogRepository(test_db).list_by_entity(ENTITY_SIGNATURE_REQUEST, req.id))
+    )
+    assert [event.action for event in audit_rows] == [
+        ACTION_SIGNATURE_REQUEST_CREATED,
+        ACTION_SIGNATURE_REQUEST_SENT,
     ]
+    assert audit_rows[0].metadata_json["client_record_id"] == business.client_id
+    assert audit_rows[0].metadata_json["signer_name"] == "Signer"
 
 
 def test_create_pending_requires_signing_link_fields(test_db, test_user):
@@ -164,7 +175,6 @@ def test_create_pending_requires_signing_link_fields(test_db, test_user):
 def test_create_request_raises_when_business_missing():
     repo = SimpleNamespace(
         create_pending=lambda **kwargs: None,
-        append_audit_event=lambda **kwargs: None,
         db=SimpleNamespace(),
     )
     business_repo = SimpleNamespace(get_by_id=lambda _business_id: None)
@@ -194,7 +204,6 @@ def test_create_request_raises_when_business_missing():
 def test_create_request_raises_on_invalid_type():
     repo = SimpleNamespace(
         create_pending=lambda **kwargs: None,
-        append_audit_event=lambda **kwargs: None,
         db=object(),
     )
     business_repo = SimpleNamespace(
@@ -241,7 +250,6 @@ def test_create_request_falls_back_to_business_contact_details():
 
     repo = SimpleNamespace(
         create_pending=_create,
-        append_audit_event=lambda **kwargs: captured.setdefault("audit", kwargs),
         db=object(),
     )
     business_repo = SimpleNamespace(
@@ -264,6 +272,10 @@ def test_create_request_falls_back_to_business_contact_details():
                 contact_phone=lambda _business: "050-1111111",
             ),
         )
+        mp.setattr(
+            "app.signature_requests.services.signature_request_creation_service.record_signature_user_action",
+            lambda *args, **kwargs: captured.setdefault("audit", kwargs),
+        )
         create_request_module.create_request(
             repo,
             business_repo,
@@ -282,7 +294,7 @@ def test_create_request_falls_back_to_business_contact_details():
         )
     assert captured["create"]["signer_email"] == "biz@example.com"
     assert captured["create"]["signer_phone"] == "050-1111111"
-    assert captured["audit"]["event_type"] == "created"
+    assert captured["audit"]["action"] == ACTION_SIGNATURE_REQUEST_CREATED
 
 
 def test_cancel_request_requires_pending_request_in_client_scope(test_db, test_user):

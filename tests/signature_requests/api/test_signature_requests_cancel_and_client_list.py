@@ -58,8 +58,11 @@ def test_cancel_signature_request(client, test_db, advisor_headers):
     detail_payload = detail.json()
     assert "signing_token" not in detail_payload
     assert "signing_url_hint" not in detail_payload
-    events = [e["event_type"] for e in detail_payload["audit_trail"]]
-    assert "canceled" in events
+    events = detail_payload["audit_trail"]
+    actions = [e["action"] for e in events]
+    assert "signature_request.canceled" in actions
+    canceled_event = next(e for e in events if e["action"] == "signature_request.canceled")
+    assert canceled_event["reason"] == "Client asked to stop"
 
 
 def test_list_signature_requests_by_client_with_status_filter(client, test_db, advisor_headers):

@@ -19,6 +19,11 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
+from app.signature_requests.signature_request_audit import (
+    ACTION_SIGNATURE_REQUEST_CREATED,
+    ACTION_SIGNATURE_REQUEST_SENT,
+    record_signature_user_action,
+)
 from app.signature_requests.signature_request_messages import (
     BUSINESS_NOT_FOUND,
     INVALID_REQUEST_TYPE,
@@ -111,21 +116,21 @@ def create_request(
         expiry_days=expiry_days,
     )
 
-    repo.append_audit_event(
-        signature_request_id=req.id,
-        event_type="created",
-        actor_type="advisor",
+    record_signature_user_action(
+        repo.db,
+        req,
         actor_id=created_by,
-        actor_name=created_by_name,
-        notes=SIGNATURE_REQUEST_CREATED_NOTE.format(title=title),
+        actor_display_name=created_by_name,
+        action=ACTION_SIGNATURE_REQUEST_CREATED,
+        note=SIGNATURE_REQUEST_CREATED_NOTE.format(title=title),
     )
-    repo.append_audit_event(
-        signature_request_id=req.id,
-        event_type="sent",
-        actor_type="advisor",
+    record_signature_user_action(
+        repo.db,
+        req,
         actor_id=sent_by,
-        actor_name=sent_by_name,
-        notes=SIGNATURE_REQUEST_SENT_NOTE.format(expires_at=expires_at.date().isoformat()),
+        actor_display_name=sent_by_name,
+        action=ACTION_SIGNATURE_REQUEST_SENT,
+        note=SIGNATURE_REQUEST_SENT_NOTE.format(expires_at=expires_at.date().isoformat()),
     )
 
     return req

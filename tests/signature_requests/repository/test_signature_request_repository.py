@@ -66,7 +66,7 @@ def _create(
     return req
 
 
-def test_signature_request_repository_pending_expired_and_audit_methods(test_db):
+def test_signature_request_repository_pending_and_expired_queries(test_db):
     repo = SignatureRequestRepository(test_db)
     user = _user(test_db)
     business_a = _business(test_db, suffix="A")
@@ -120,19 +120,6 @@ def test_signature_request_repository_pending_expired_and_audit_methods(test_db)
     assert repo.get_pending_by_client_and_id_for_update(business_a.client_id, canceled.id) is None
     assert [item.id for item in repo.list_expired_pending()] == [expired_pending.id]
     assert canceled.id not in [item.id for item in repo.list_expired_pending()]
-    late = repo.append_audit_event(
-        signature_request_id=active_pending.id, event_type="late", actor_type="system"
-    )
-    early = repo.append_audit_event(
-        signature_request_id=active_pending.id, event_type="early", actor_type="system"
-    )
-    late.occurred_at = now + timedelta(minutes=1)
-    early.occurred_at = now - timedelta(minutes=1)
-    test_db.commit()
-    assert [event.event_type for event in repo.list_audit_events(active_pending.id)] == [
-        "early",
-        "late",
-    ]
 
 
 def test_repository_update_missing_id_and_pending_by_annual_report(test_db):

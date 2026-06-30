@@ -5,6 +5,8 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import ENTITY_SIGNATURE_REQUEST
+from app.audit.services.audit_trail_service import AuditTrailService
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.services.client_service import get_client_or_raise
 from app.core.error_codes import ErrorCode
@@ -26,19 +28,20 @@ from app.signature_requests.services import (
 from app.signature_requests.services import (
     signature_request_signer_service as signer_actions,
 )
+from app.signature_requests.signature_request_audit import (
+    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
+    SIGNATURE_REQUEST_SYSTEM_ACTOR,
+    record_signature_system_action,
+)
 from app.signature_requests.signature_request_messages import (
     ANNUAL_REPORT_SIGNED_NOTE,
     AUTO_ADVANCE_ANNUAL_REPORT_ERROR,
     AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,
     INVALID_FILTER_STATUS,
-    SYSTEM_USER_NAME,
 )
 from app.signature_requests.signature_request_validations import get_or_raise
 
 _log = logging.getLogger(__name__)
-
-_SYSTEM_USER_ID = 0
-_SYSTEM_USER_NAME = SYSTEM_USER_NAME
 
 
 class SignatureRequestService:
@@ -76,11 +79,11 @@ class SignatureRequestService:
     def sign_request(self, **kwargs):
         req, annual_report_id, signed_at = signer_actions.sign_request(self.repo, **kwargs)
         if annual_report_id:
-            self.repo.append_audit_event(
-                signature_request_id=req.id,
-                event_type="annual_report_signed",
-                actor_type="system",
-                notes=ANNUAL_REPORT_SIGNED_NOTE.format(annual_report_id=annual_report_id),
+            record_signature_system_action(
+                self.db,
+                req,
+                action=ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
+                note=ANNUAL_REPORT_SIGNED_NOTE.format(annual_report_id=annual_report_id),
             )
             self._auto_advance_annual_report(annual_report_id, signed_at)
         return req
@@ -102,19 +105,13 @@ class SignatureRequestService:
             report = svc.repo.get_by_id(annual_report_id)
             if report is None or report.status != AnnualReportStatus.PENDING_CLIENT:
                 return
-            # DEFERRED (Phase 2/6): this is a SYSTEM-initiated transition. The
-            # correct EntityAuditLog representation is actor_type="system" with
-            # performed_by=NULL + a system actor_display_name, which requires the
-            # system/external-signer writer API (§5a) introduced in Phase 2 (and
-            # exercised for signatures in Phase 6). Until then it keeps the
-            # pre-existing _SYSTEM_USER_ID sentinel; Phase 1 only made performed_by
-            # nullable to enable that future fix, it did not change this path.
             svc.transition_status(
                 report_id=annual_report_id,
                 new_status=AnnualReportStatus.SUBMITTED.value,
-                changed_by=_SYSTEM_USER_ID,
-                changed_by_name=_SYSTEM_USER_NAME,
+                changed_by=None,
+                changed_by_name=SIGNATURE_REQUEST_SYSTEM_ACTOR,
                 note=AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,
+                actor_type="system",
             )
             detail_repo = AnnualReportDetailRepository(self.db)
             detail_repo.update_meta(annual_report_id, client_approved_at=now)
@@ -128,9 +125,10 @@ class SignatureRequestService:
         *,
         client_record_id: int,
         request_id: int,
-        canceled_by: int,
+        canceled_by: int | None,
         canceled_by_name: str,
         reason: str | None = None,
+        actor_type: str = "user",
     ) -> SignatureRequest:
         return admin_actions.cancel_request(
             self.repo,
@@ -139,6 +137,7 @@ class SignatureRequestService:
             canceled_by=canceled_by,
             canceled_by_name=canceled_by_name,
             reason=reason,
+            actor_type=actor_type,
         )
 
     def expire_overdue_requests(self):
@@ -192,9 +191,13 @@ class SignatureRequestService:
         total = self.repo.count_pending(**filters)
         return items, total
 
-    def get_audit_trail(self, request_id: int) -> list:
+    def get_audit_trail(self, request_id: int, *, current_user) -> list:
         get_or_raise(self.repo, request_id)
-        return self.repo.list_audit_events(request_id)
+        return AuditTrailService(self.db).get_entity_audit_items(
+            ENTITY_SIGNATURE_REQUEST,
+            request_id,
+            current_user=current_user,
+        )
 
     @staticmethod
     def _parse_status(status: str | None) -> SignatureRequestStatus | None:

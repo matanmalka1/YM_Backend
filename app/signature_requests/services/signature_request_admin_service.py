@@ -9,6 +9,12 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
+from app.signature_requests.signature_request_audit import (
+    ACTION_SIGNATURE_REQUEST_CANCELED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+    record_signature_system_action,
+    record_signature_user_action,
+)
 from app.signature_requests.signature_request_messages import (
     CANCELED_BY_ADVISOR_NOTE,
     SIGNATURE_REQUEST_EXPIRED_NOTE,
@@ -22,9 +28,10 @@ def cancel_request(
     *,
     client_record_id: int,
     request_id: int,
-    canceled_by: int,
+    canceled_by: int | None,
     canceled_by_name: str,
     reason: str | None = None,
+    actor_type: str = "user",
 ) -> SignatureRequest:
     req = repo.get_pending_by_client_and_id_for_update(client_record_id, request_id)
     if not req:
@@ -42,14 +49,26 @@ def cancel_request(
         signing_token=None,
     )
 
-    repo.append_audit_event(
-        signature_request_id=request_id,
-        event_type="canceled",
-        actor_type="advisor",
-        actor_id=canceled_by,
-        actor_name=canceled_by_name,
-        notes=reason or CANCELED_BY_ADVISOR_NOTE,
-    )
+    if actor_type == "system":
+        record_signature_system_action(
+            repo.db,
+            req,
+            action=ACTION_SIGNATURE_REQUEST_CANCELED,
+            note=reason or CANCELED_BY_ADVISOR_NOTE,
+            reason=reason,
+        )
+    else:
+        if canceled_by is None:
+            raise ValueError("canceled_by is required for user signature cancellation")
+        record_signature_user_action(
+            repo.db,
+            req,
+            actor_id=canceled_by,
+            actor_display_name=canceled_by_name,
+            action=ACTION_SIGNATURE_REQUEST_CANCELED,
+            note=reason or CANCELED_BY_ADVISOR_NOTE,
+            reason=reason,
+        )
 
     return req
 
@@ -65,13 +84,13 @@ def expire_overdue_requests(repo: SignatureRequestRepository) -> int:
             status=SignatureRequestStatus.EXPIRED,
             signing_token=None,
         )
-        repo.append_audit_event(
-            signature_request_id=req.id,
-            event_type="expired",
-            actor_type="system",
-            notes=SIGNATURE_REQUEST_EXPIRED_NOTE.format(
-                expires_at=req.expires_at.date().isoformat()
-            ),
+        note = SIGNATURE_REQUEST_EXPIRED_NOTE.format(expires_at=req.expires_at.date().isoformat())
+        record_signature_system_action(
+            repo.db,
+            req,
+            action=ACTION_SIGNATURE_REQUEST_EXPIRED,
+            note=note,
+            reason=note,
         )
         count += 1
     return count

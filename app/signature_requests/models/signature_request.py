@@ -20,8 +20,8 @@ Design decisions:
 - content_hash (SHA-256) enables tamper detection of the signed content.
 - signed_document_key stores the countersigned PDF in S3/R2.
 - canceled_by: who canceled (advisor/system) — separate from deleted_by.
-- SignatureAuditEvent is append-only — no soft delete, no updated_at.
-- event_type and actor_type are String (not enum) — expand freely without migrations.
+- SignatureAuditEvent is a retained legacy table for the audit-refactor cleanup
+  migration; production signature audit writes/readers use EntityAuditLog.
 """
 
 from __future__ import annotations
@@ -108,8 +108,8 @@ class SignatureRequest(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(default=utcnow, nullable=False)
     # Set only on real mutation of the request row (send/sign/decline/cancel/expire/
     # soft-delete). NULL until first update — never faked from created_at. The
-    # per-event audit trail (SignatureAuditEvent) stays the detailed source of truth
-    # and remains append-only. See docs/api-todo.md #46.
+    # Generic EntityAuditLog rows are the detailed audit source of truth.
+    # updated_at stays a row-mutation timestamp, not an audit timestamp.
     updated_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
     sent_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)
     expires_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)
@@ -164,7 +164,7 @@ class SignatureRequest(Base):
 
 
 class SignatureAuditEvent(Base):
-    """Append-only audit trail — no soft delete, no updated_at."""
+    """Retained legacy audit table; dropped in the Phase 9 cleanup migration."""
 
     __tablename__ = "signature_audit_events"
 

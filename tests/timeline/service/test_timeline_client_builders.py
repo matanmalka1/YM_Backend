@@ -1,6 +1,7 @@
 from datetime import datetime
 from types import SimpleNamespace
 
+from app.audit.audit_constants import ACTION_SIGNATURE_REQUEST_SENT
 from app.common.enums import EntityType
 from app.documents.permanent_documents.models.permanent_document import PermanentDocumentType
 from app.signature_requests.models.signature_request import (
@@ -46,9 +47,9 @@ def test_document_and_signature_lifecycle_builder_events():
         decline_reason=None,
     )
     audit_event = SimpleNamespace(
-        event_type="sent",
-        occurred_at=datetime(2026, 1, 6, 13, 0),
-        notes="נשלח",
+        action=ACTION_SIGNATURE_REQUEST_SENT,
+        performed_at=datetime(2026, 1, 6, 13, 0),
+        note="נשלח",
     )
 
     document_event = document_uploaded_event(document)

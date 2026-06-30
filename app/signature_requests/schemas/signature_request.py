@@ -8,20 +8,28 @@ from app.signature_requests.models.signature_request import (
     SignatureRequestType,
 )
 
-# ── Audit event ───────────────────────────────────────────────────────────────
+# ── Embedded audit event ──────────────────────────────────────────────────────
 
 
-class SignatureAuditEventResponse(BaseModel):
+class SignatureRequestAuditItemResponse(BaseModel):
     id: int
-    event_type: str  # String במודל — לא enum, מרחיב בחופשיות
-    actor_type: str  # String במודל — לא enum
-    actor_id: int | None = None
-    actor_name: str | None = None
+    action: str
+    actor_type: str
+    actor_display_name: str | None = None
+    performed_at: ApiDateTime
+    note: str | None = None
+    client_record_id: int | None = None
+    signer_name: str | None = None
+    signer_email: str | None = None
+    business_id: int | None = None
+    annual_report_id: int | None = None
+    document_id: int | None = None
     ip_address: str | None = None
-    notes: str | None = None
-    occurred_at: ApiDateTime
-
-    model_config = {"from_attributes": True}
+    user_agent: str | None = None
+    content_hash: str | None = None
+    content_hash_missing: bool | None = None
+    signed_document_key: str | None = None
+    reason: str | None = None
 
 
 # ── Core response ─────────────────────────────────────────────────────────────
@@ -65,7 +73,7 @@ class SignatureRequestListResponse(PaginatedResponse[SignatureRequestResponse]):
 
 
 class SignatureRequestWithAuditResponse(SignatureRequestResponse):
-    audit_trail: list[SignatureAuditEventResponse] = []
+    audit_trail: list[SignatureRequestAuditItemResponse] = []
 
 
 # ── Advisor create request ────────────────────────────────────────────────────

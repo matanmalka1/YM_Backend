@@ -52,6 +52,14 @@ from app.audit.audit_constants import (
     ACTION_INCOME_DELETED,
     ACTION_INCOME_UPDATED,
     ACTION_RESTORED,
+    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
+    ACTION_SIGNATURE_REQUEST_CANCELED,
+    ACTION_SIGNATURE_REQUEST_CREATED,
+    ACTION_SIGNATURE_REQUEST_DECLINED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+    ACTION_SIGNATURE_REQUEST_SENT,
+    ACTION_SIGNATURE_REQUEST_SIGNED,
+    ACTION_SIGNATURE_REQUEST_VIEWED,
     ACTION_STATUS_CHANGED,
     ACTION_UPDATED,
     ACTION_VAT_INVOICE_AMOUNT_CHANGED,
@@ -68,7 +76,6 @@ from app.audit.audit_constants import (
     ENTITY_BUSINESS,
     ENTITY_CHARGE,
     ENTITY_CLIENT,
-    ENTITY_SIGNATURE_REQUEST,
     entity_action,
 )
 from app.core.error_codes import ErrorCode
@@ -444,27 +451,36 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "binder_id", "intake_id", "field_name"}),
         metadata_allowed=_BINDER_INTAKE_META,
     ),
-    # signature_request (evidence; per-action forensic metadata §8a). Phase 6 wires
-    # the writers; policies exist now so the sensitive type is governed + testable.
-    **{
-        entity_action(ENTITY_SIGNATURE_REQUEST, verb): ActionPolicy(
-            metadata_required=frozenset({"client_record_id", "signer_name"}),
-            metadata_allowed=_SIGNATURE_BASE_META,
-        )
-        for verb in ("created", "sent", "expired")
-    },
-    **{
-        entity_action(ENTITY_SIGNATURE_REQUEST, verb): ActionPolicy(
-            metadata_required=frozenset({"client_record_id", "signer_name"}),
-            metadata_allowed=_SIGNATURE_BASE_META | _SIGNATURE_CLIENT_META,
-        )
-        for verb in ("viewed", "declined")
-    },
-    entity_action(ENTITY_SIGNATURE_REQUEST, "signed"): ActionPolicy(
-        metadata_required=frozenset({"client_record_id", "signer_name", "signed_document_key"}),
+    # signature_request (evidence; per-action forensic metadata §8a).
+    ACTION_SIGNATURE_REQUEST_CREATED: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
+        metadata_allowed=_SIGNATURE_BASE_META,
+    ),
+    ACTION_SIGNATURE_REQUEST_SENT: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
+        metadata_allowed=_SIGNATURE_BASE_META,
+    ),
+    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
+        metadata_allowed=_SIGNATURE_BASE_META,
+    ),
+    ACTION_SIGNATURE_REQUEST_VIEWED: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
+        metadata_allowed=_SIGNATURE_BASE_META | _SIGNATURE_CLIENT_META,
+    ),
+    ACTION_SIGNATURE_REQUEST_DECLINED: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
+        metadata_allowed=_SIGNATURE_BASE_META | _SIGNATURE_CLIENT_META | frozenset({"reason"}),
+    ),
+    ACTION_SIGNATURE_REQUEST_SIGNED: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
         metadata_allowed=_SIGNATURE_BASE_META | _SIGNATURE_CLIENT_META | _SIGNATURE_SIGNED_META,
     ),
-    entity_action(ENTITY_SIGNATURE_REQUEST, "canceled"): ActionPolicy(
+    ACTION_SIGNATURE_REQUEST_CANCELED: ActionPolicy(
+        metadata_required=frozenset({"client_record_id", "signer_name"}),
+        metadata_allowed=_SIGNATURE_BASE_META | frozenset({"reason"}),
+    ),
+    ACTION_SIGNATURE_REQUEST_EXPIRED: ActionPolicy(
         metadata_required=frozenset({"client_record_id", "signer_name"}),
         metadata_allowed=_SIGNATURE_BASE_META | frozenset({"reason"}),
     ),
@@ -588,7 +604,7 @@ def validate_payload(
             ErrorCode.AUDIT_FORBIDDEN_FIELD,
         )
 
-    if action == entity_action(ENTITY_SIGNATURE_REQUEST, "signed"):
+    if action == ACTION_SIGNATURE_REQUEST_SIGNED:
         assert isinstance(metadata_json, dict)  # required metadata above guarantees an object
         has_hash = bool(metadata_json.get("content_hash"))
         hash_missing = metadata_json.get("content_hash_missing") is True

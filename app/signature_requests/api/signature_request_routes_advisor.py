@@ -104,5 +104,5 @@ def list_pending_requests(
 def get_signature_request(request_id: PathId, db: DBSession, user: CurrentUser):
     service = SignatureRequestService(db)
     req = service.get_request(request_id)
-    audit_events = service.get_audit_trail(request_id)
+    audit_events = service.get_audit_trail(request_id, current_user=user)
     return SignatureRequestResponseBuilder(db).build_with_audit(req, audit_events)

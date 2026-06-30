@@ -14,7 +14,13 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
     """Mixin: manage signature requests during status transitions."""
 
     def _cancel_pending_signature_requests(
-        self, report_id: int, actor_id: int, actor_name: str, reason: str
+        self,
+        report_id: int,
+        actor_id: int | None,
+        actor_name: str,
+        reason: str,
+        *,
+        actor_type: str = "user",
     ) -> None:
         from app.signature_requests.repositories.signature_request_repository import (
             SignatureRequestRepository,
@@ -35,6 +41,7 @@ class AnnualReportSignatureHelper(AnnualReportBaseService):
                 canceled_by=actor_id,
                 canceled_by_name=actor_name,
                 reason=reason,
+                actor_type=actor_type,
             )
 
     def _get_signature_client_context(self, report):

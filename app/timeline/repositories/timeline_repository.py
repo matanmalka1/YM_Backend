@@ -6,17 +6,30 @@ from sqlalchemy.orm import Session
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.audit.audit_constants import ACTION_STATUS_CHANGED, ENTITY_ANNUAL_REPORT, entity_action
+from app.audit.audit_constants import (
+    ACTION_SIGNATURE_REQUEST_CANCELED,
+    ACTION_SIGNATURE_REQUEST_DECLINED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+    ACTION_SIGNATURE_REQUEST_SENT,
+    ACTION_SIGNATURE_REQUEST_SIGNED,
+    ACTION_STATUS_CHANGED,
+    ENTITY_ANNUAL_REPORT,
+    ENTITY_SIGNATURE_REQUEST,
+    entity_action,
+)
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.clients.models.client_record import ClientRecord
 from app.documents.permanent_documents.models.permanent_document import PermanentDocument
-from app.signature_requests.models.signature_request import (
-    SignatureAuditEvent,
-    SignatureRequest,
-)
+from app.signature_requests.models.signature_request import SignatureRequest
 
 _BULK_LIMIT = 500
-_SIGNATURE_LIFECYCLE_TYPES = ("sent", "signed", "declined", "canceled", "expired")
+_SIGNATURE_LIFECYCLE_ACTIONS = (
+    ACTION_SIGNATURE_REQUEST_SENT,
+    ACTION_SIGNATURE_REQUEST_SIGNED,
+    ACTION_SIGNATURE_REQUEST_DECLINED,
+    ACTION_SIGNATURE_REQUEST_CANCELED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+)
 _ANNUAL_REPORT_STATUS_CHANGED = entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED)
 
 
@@ -67,19 +80,22 @@ class TimelineRepository:
     def list_signature_lifecycle_events(
         self,
         client_record_id: int,
-    ) -> list[tuple[SignatureRequest, SignatureAuditEvent]]:
+    ) -> list[tuple[SignatureRequest, EntityAuditLog]]:
         rows = self.db.execute(
-            select(SignatureRequest, SignatureAuditEvent)
+            select(SignatureRequest, EntityAuditLog)
             .join(
-                SignatureAuditEvent,
-                SignatureAuditEvent.signature_request_id == SignatureRequest.id,
+                EntityAuditLog,
+                and_(
+                    EntityAuditLog.entity_type == ENTITY_SIGNATURE_REQUEST,
+                    EntityAuditLog.entity_id == SignatureRequest.id,
+                ),
             )
             .where(
                 SignatureRequest.client_record_id == client_record_id,
                 SignatureRequest.deleted_at.is_(None),
-                SignatureAuditEvent.event_type.in_(_SIGNATURE_LIFECYCLE_TYPES),
+                EntityAuditLog.action.in_(_SIGNATURE_LIFECYCLE_ACTIONS),
             )
-            .order_by(SignatureAuditEvent.occurred_at.desc())
+            .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
             .limit(_BULK_LIMIT)
         ).all()
         return [(sig, audit) for sig, audit in rows]

@@ -127,6 +127,7 @@ class EntityAuditWriter:
         new_value: Any = None,
         note: str | None = None,
         *,
+        actor_type: str = "user",
         actor_display_name: str | None = None,
         metadata_json: Any = None,
     ) -> EntityAuditLog:
@@ -218,6 +219,7 @@ class EntityAuditWriter:
         new_status: Any,
         note: str | None = None,
         *,
+        actor_type: str = "user",
         actor_display_name: str | None = None,
         metadata_json: Any = None,
     ) -> EntityAuditLog:
@@ -229,6 +231,7 @@ class EntityAuditWriter:
             old_value={"status": self._status_value(old_status)},
             new_value={"status": self._status_value(new_status)},
             note=note,
+            actor_type=actor_type,
             actor_display_name=actor_display_name,
             metadata_json=metadata_json,
         )

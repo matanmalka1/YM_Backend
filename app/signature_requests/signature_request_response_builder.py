@@ -3,7 +3,7 @@
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.signature_requests.schemas.signature_request import (
-    SignatureAuditEventResponse,
+    SignatureRequestAuditItemResponse,
     SignatureRequestCreatedResponse,
     SignatureRequestListResponse,
     SignatureRequestResponse,
@@ -41,9 +41,7 @@ class SignatureRequestResponseBuilder:
     def build_with_audit(self, request, audit_events) -> SignatureRequestWithAuditResponse:
         response = SignatureRequestWithAuditResponse.model_validate(request)
         self._enrich(response)
-        response.audit_trail = [
-            SignatureAuditEventResponse.model_validate(event) for event in audit_events
-        ]
+        response.audit_trail = [self._map_audit_item(event) for event in audit_events]
         return response
 
     def build_created(self, request) -> SignatureRequestCreatedResponse:
@@ -82,3 +80,26 @@ class SignatureRequestResponseBuilder:
             record.id: record.office_client_number
             for record in self.client_repo.list_by_ids(client_ids)
         }
+
+    def _map_audit_item(self, event) -> SignatureRequestAuditItemResponse:
+        metadata = event.metadata_json if isinstance(event.metadata_json, dict) else {}
+        return SignatureRequestAuditItemResponse(
+            id=event.id,
+            action=event.action,
+            actor_type=event.actor_type,
+            actor_display_name=event.actor_display_name or event.performed_by_name,
+            performed_at=event.performed_at,
+            note=event.note,
+            client_record_id=metadata.get("client_record_id"),
+            signer_name=metadata.get("signer_name"),
+            signer_email=metadata.get("signer_email"),
+            business_id=metadata.get("business_id"),
+            annual_report_id=metadata.get("annual_report_id"),
+            document_id=metadata.get("document_id"),
+            ip_address=metadata.get("ip_address"),
+            user_agent=metadata.get("user_agent"),
+            content_hash=metadata.get("content_hash"),
+            content_hash_missing=metadata.get("content_hash_missing"),
+            signed_document_key=metadata.get("signed_document_key"),
+            reason=metadata.get("reason"),
+        )

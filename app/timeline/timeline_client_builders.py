@@ -1,4 +1,9 @@
 from app.audit.audit_constants import (
+    ACTION_SIGNATURE_REQUEST_CANCELED,
+    ACTION_SIGNATURE_REQUEST_DECLINED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+    ACTION_SIGNATURE_REQUEST_SENT,
+    ACTION_SIGNATURE_REQUEST_SIGNED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_BUSINESS,
     ENTITY_CHARGE,
@@ -86,26 +91,26 @@ def document_uploaded_event(document) -> dict:
 
 def signature_request_lifecycle_event(sig_request, audit_event) -> dict:
     event_type_map = {
-        "sent": "signature_request_sent",
-        "signed": "signature_request_signed",
-        "declined": "signature_request_declined",
-        "canceled": "signature_request_canceled",
-        "expired": "signature_request_expired",
+        ACTION_SIGNATURE_REQUEST_SENT: "signature_request_sent",
+        ACTION_SIGNATURE_REQUEST_SIGNED: "signature_request_signed",
+        ACTION_SIGNATURE_REQUEST_DECLINED: "signature_request_declined",
+        ACTION_SIGNATURE_REQUEST_CANCELED: "signature_request_canceled",
+        ACTION_SIGNATURE_REQUEST_EXPIRED: "signature_request_expired",
     }
     label_map = {
-        "sent": "בקשת חתימה נשלחה",
-        "signed": "מסמך נחתם",
-        "declined": "חתימה נדחתה",
-        "canceled": "בקשת חתימה בוטלה",
-        "expired": "בקשת חתימה פגה",
+        ACTION_SIGNATURE_REQUEST_SENT: "בקשת חתימה נשלחה",
+        ACTION_SIGNATURE_REQUEST_SIGNED: "מסמך נחתם",
+        ACTION_SIGNATURE_REQUEST_DECLINED: "חתימה נדחתה",
+        ACTION_SIGNATURE_REQUEST_CANCELED: "בקשת חתימה בוטלה",
+        ACTION_SIGNATURE_REQUEST_EXPIRED: "בקשת חתימה פגה",
     }
     type_he = SIGNATURE_REQUEST_TYPE_HE.get(
         sig_request.request_type.value, sig_request.request_type.value
     )
-    audit_type = audit_event.event_type
+    audit_type = audit_event.action
     return {
         "event_type": event_type_map[audit_type],
-        "timestamp": audit_event.occurred_at,
+        "timestamp": audit_event.performed_at,
         "binder_id": None,
         "charge_id": None,
         "description": f"{label_map[audit_type]}: {type_he}",
@@ -116,7 +121,7 @@ def signature_request_lifecycle_event(sig_request, audit_event) -> dict:
             "annual_report_id": sig_request.annual_report_id,
             "document_id": sig_request.document_id,
             "signer_name": sig_request.signer_name,
-            "reason": audit_event.notes if audit_type == "declined" else None,
-            "notes": audit_event.notes,
+            "reason": audit_event.note if audit_type == ACTION_SIGNATURE_REQUEST_DECLINED else None,
+            "notes": audit_event.note,
         },
     }

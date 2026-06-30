@@ -97,6 +97,29 @@ class AuditTrailService:
             entity_deleted=scope.entity_deleted,
         )
 
+    def get_entity_audit_items(
+        self,
+        entity_type: str,
+        entity_id: int,
+        *,
+        current_user: User,
+    ) -> list[EntityAuditLogResponse]:
+        """Return authorized/redacted unpaginated audit items for embedded views."""
+        descriptor = self._require_descriptor(entity_type)
+        entries = self.audit_repo.list_by_entity(entity_type, entity_id)
+        history_exists = bool(entries)
+        scope = self._resolve_scope(descriptor, entity_id, history_exists)
+        if scope is None:
+            raise AppError(
+                ENTITY_NOT_FOUND_ERROR, ErrorCode.AUDIT_ENTITY_NOT_FOUND, status_code=404
+            )
+
+        self._authorize(current_user)
+        ordered_entries = list(reversed(entries))
+        return self._map_items(
+            self._apply_sensitive_hook(descriptor, current_user, ordered_entries)
+        )
+
     def _require_descriptor(self, entity_type: str) -> AuditEntityDescriptor:
         descriptor = get_descriptor(entity_type)
         if descriptor is None:

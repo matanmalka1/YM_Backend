@@ -1,8 +1,8 @@
 """issue #46 — SignatureRequestResponse.updated_at.
 
 Set only on real mutation of the request row (here: cancel). The row-level
-updated_at is independent of the append-only SignatureAuditEvent trail,
-which stays the detailed source of truth. Never faked from created_at.
+updated_at is independent of the append-only EntityAuditLog trail, which stays
+the detailed source of truth. Never faked from created_at.
 """
 
 from datetime import date

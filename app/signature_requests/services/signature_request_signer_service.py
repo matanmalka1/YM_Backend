@@ -11,6 +11,14 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
+from app.signature_requests.signature_request_audit import (
+    ACTION_SIGNATURE_REQUEST_DECLINED,
+    ACTION_SIGNATURE_REQUEST_EXPIRED,
+    ACTION_SIGNATURE_REQUEST_SIGNED,
+    ACTION_SIGNATURE_REQUEST_VIEWED,
+    record_signature_external_action,
+    record_signature_system_action,
+)
 from app.signature_requests.signature_request_messages import (
     DECLINED_WITHOUT_REASON_NOTE,
     DOCUMENT_SIGNED_BY_SIGNER_NOTE,
@@ -29,11 +37,13 @@ from app.utils.time_utils import utcnow
 def _expire_and_raise(repo: SignatureRequestRepository, req: SignatureRequest) -> None:
     """Transition to EXPIRED and raise. Called only when expiry is detected at signing time."""
     repo.update(req.id, req=req, status=SignatureRequestStatus.EXPIRED, signing_token=None)
-    repo.append_audit_event(
-        signature_request_id=req.id,
-        event_type="expired",
-        actor_type="system",
-        notes=SIGNATURE_REQUEST_EXPIRED_NOTE.format(expires_at=req.expires_at.date().isoformat()),
+    note = SIGNATURE_REQUEST_EXPIRED_NOTE.format(expires_at=req.expires_at.date().isoformat())
+    record_signature_system_action(
+        repo.db,
+        req,
+        action=ACTION_SIGNATURE_REQUEST_EXPIRED,
+        note=note,
+        reason=note,
     )
     raise AppError(SIGNATURE_REQUEST_EXPIRED_ERROR, ErrorCode.SIGNATURE_REQUEST_EXPIRED)
 
@@ -50,11 +60,10 @@ def record_view(
     if check_not_expired(req):
         _expire_and_raise(repo, req)
 
-    repo.append_audit_event(
-        signature_request_id=req.id,
-        event_type="viewed",
-        actor_type="signer",
-        actor_name=req.signer_name,
+    record_signature_external_action(
+        repo.db,
+        req,
+        action=ACTION_SIGNATURE_REQUEST_VIEWED,
         ip_address=ip_address,
         user_agent=user_agent,
     )
@@ -85,14 +94,13 @@ def sign_request(
         signing_token=None,
     )
 
-    repo.append_audit_event(
-        signature_request_id=req.id,
-        event_type="signed",
-        actor_type="signer",
-        actor_name=req.signer_name,
+    record_signature_external_action(
+        repo.db,
+        req,
+        action=ACTION_SIGNATURE_REQUEST_SIGNED,
         ip_address=ip_address,
         user_agent=user_agent,
-        notes=DOCUMENT_SIGNED_BY_SIGNER_NOTE,
+        note=DOCUMENT_SIGNED_BY_SIGNER_NOTE,
     )
 
     return req, req.annual_report_id, now
@@ -123,14 +131,14 @@ def decline_request(
         signing_token=None,
     )
 
-    repo.append_audit_event(
-        signature_request_id=req.id,
-        event_type="declined",
-        actor_type="signer",
-        actor_name=req.signer_name,
+    record_signature_external_action(
+        repo.db,
+        req,
+        action=ACTION_SIGNATURE_REQUEST_DECLINED,
         ip_address=ip_address,
         user_agent=user_agent,
-        notes=reason or DECLINED_WITHOUT_REASON_NOTE,
+        note=reason or DECLINED_WITHOUT_REASON_NOTE,
+        reason=reason,
     )
 
     return req
