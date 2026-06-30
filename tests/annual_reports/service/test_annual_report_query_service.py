@@ -79,8 +79,9 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     # Removed duplicate float copies (item 35) are gone.
     assert not hasattr(detail, "tax_refund_amount")
     assert not hasattr(detail, "tax_due_amount")
-    # Detail still carries detail-only + transition fields.
-    assert len(detail.status_audit) >= 1
+    # Detail still carries detail-only + transition fields. Audit moved to the
+    # generic /audit/annual_report/{id} endpoint.
+    assert not hasattr(detail, "status_audit")
     assert hasattr(detail, "available_transitions")
 
 

@@ -92,22 +92,6 @@ class ScheduleEntryResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 
-class AnnualReportAuditEntry(BaseModel):
-    id: int
-    annual_report_id: int
-    from_status: AnnualReportStatus | None = None
-    to_status: AnnualReportStatus
-    changed_by: int
-    note: str | None = None
-    occurred_at: ApiDateTime
-
-    model_config = {"from_attributes": True}
-
-
-class AnnualReportAuditListResponse(PaginatedResponse[AnnualReportAuditEntry]):
-    pass
-
-
 class AnnualReportScheduleListResponse(PaginatedResponse[ScheduleEntryResponse]):
     pass
 
@@ -140,7 +124,6 @@ class AnnualReportTaxCalculationResponse(BaseModel):
 
 class AnnualReportDetailResponse(AnnualReportResponse):
     schedules: list[ScheduleEntryResponse] = []
-    status_audit: list[AnnualReportAuditEntry] = []
     # ניכויים שמוזנים ידנית — מ-AnnualReportDetail
     pension_contribution: ApiDecimal | None = None
     donation_amount: ApiDecimal | None = None

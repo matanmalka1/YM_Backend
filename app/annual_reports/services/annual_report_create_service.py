@@ -134,24 +134,17 @@ class AnnualReportCreateService(AnnualReportBaseService):
         # Auto-generate required schedules
         self._generate_schedules(linked_report)
 
-        self.repo.append_status_audit_entry(
-            annual_report_id=linked_report.id,
-            from_status=None,
-            to_status=AnnualReportStatus.NOT_STARTED,
-            changed_by=created_by,
+        EntityAuditWriter(self.db).record_create(
+            ENTITY_ANNUAL_REPORT,
+            linked_report.id,
+            created_by,
+            actor_display_name=created_by_name,
             note=ANNUAL_REPORT_CREATED_NOTE.format(
                 form_type=form_type.value,
                 filing_deadline=filing_deadline.strftime("%d/%m/%Y")
                 if filing_deadline
                 else DEADLINE_NOT_SET,
             ),
-        )
-
-        EntityAuditWriter(self.db).record_create(
-            ENTITY_ANNUAL_REPORT,
-            linked_report.id,
-            created_by,
-            actor_display_name=created_by_name,
             metadata_json={"client_record_id": client_record_id, "tax_year": tax_year},
             new_value={
                 "tax_year": tax_year,

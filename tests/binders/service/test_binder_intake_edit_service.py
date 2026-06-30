@@ -7,12 +7,13 @@ from app.annual_reports.models.annual_report_enums import (
     PrimaryAnnualReportForm,
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
+from app.audit.audit_constants import ACTION_BINDER_INTAKE_UPDATED, ENTITY_BINDER_INTAKE
+from app.audit.repositories.audit_entity_audit_log_repository import (
+    EntityAuditLogRepository,
+)
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.binders.models.binder_intake import BinderIntake
 from app.binders.models.binder_intake_material import BinderIntakeMaterial, MaterialType
-from app.binders.repositories.binder_intake_edit_log_repository import (
-    BinderIntakeEditLogRepository,
-)
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.businesses.models.business import Business, BusinessStatus
 from app.clients.models.client_record import ClientRecord
@@ -177,14 +178,18 @@ def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(te
     assert materials[0].annual_report_id == target_report.id
     assert materials[0].vat_report_id == target_vat.id
 
-    logs = BinderIntakeEditLogRepository(test_db).list_by_intake(updated.id)
-    assert {log.field_name for log in logs} == {
+    rows = EntityAuditLogRepository(test_db).list_by_entity(ENTITY_BINDER_INTAKE, updated.id)
+    assert rows, "intake edit must append binder_intake audit rows"
+    assert all(row.action == ACTION_BINDER_INTAKE_UPDATED for row in rows)
+    assert {row.metadata_json["field_name"] for row in rows} == {
         "client_record_id",
         "binder_id",
         f"material:{materials[0].id}.business_id",
         f"material:{materials[0].id}.annual_report_id",
         f"material:{materials[0].id}.vat_report_id",
     }
+    # client context is threaded into metadata for every row.
+    assert all(row.metadata_json["client_record_id"] for row in rows)
 
 
 def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(test_db, test_user):

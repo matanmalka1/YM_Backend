@@ -4,6 +4,18 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import (
+    ACTION_BINDER_CREATED,
+    ACTION_BINDER_HANDED_OVER,
+    ACTION_BINDER_MARKED_FULL,
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+    ACTION_BINDER_MATERIAL_RECEIVED,
+    ACTION_BINDER_REOPENED,
+    ACTION_BINDER_REVERTED_READY,
+    ENTITY_BINDER,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.binders.binder_audit import binder_metadata, lifecycle_value
 from app.binders.binder_messages import (
     BINDER_CAPACITY_REOPENED,
     BINDER_HANDED_OVER,
@@ -18,7 +30,6 @@ from app.binders.models.binder_intake_material import BinderIntakeMaterial
 from app.binders.repositories.binder_intake_material_repository import (
     BinderIntakeMaterialRepository,
 )
-from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
 from app.binders.repositories.binder_repository import BinderRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
@@ -42,7 +53,7 @@ class BinderLifecycleService:
         self.db = db
         self.binder_repo = BinderRepository(db)
         self.material_repo = BinderIntakeMaterialRepository(db)
-        self.lifecycle_log_repo = BinderLifecycleLogRepository(db)
+        self.audit_writer = EntityAuditWriter(db)
         self.auto_send_service = NotificationAutoSendService(db)
 
     @staticmethod
@@ -84,6 +95,7 @@ class BinderLifecycleService:
         changed_by_user_id: int,
         *,
         allow_full_in_office: bool = False,
+        actor_display_name: str | None = None,
     ) -> Binder:
         eligible = self.is_intake_eligible(binder) or (
             allow_full_in_office
@@ -94,25 +106,35 @@ class BinderLifecycleService:
             raise AppError(
                 "לא ניתן לקלוט חומר לקלסר במצב הנוכחי", ErrorCode.BINDER_NOT_INTAKE_ELIGIBLE
             )
-        self._append_log(
+        self._record(
             binder,
+            ACTION_BINDER_MATERIAL_RECEIVED,
             "capacity_status",
             binder.capacity_status.value,
             binder.capacity_status.value,
             changed_by_user_id,
+            actor_display_name,
             BINDER_RECEIVED,
         )
         return binder
 
-    def receive_material_by_id(self, binder_id: int, changed_by_user_id: int) -> Binder:
+    def receive_material_by_id(
+        self,
+        binder_id: int,
+        changed_by_user_id: int,
+        actor_display_name: str | None = None,
+    ) -> Binder:
         binder = self._get_for_update(binder_id)
-        return self.receive_material(binder, changed_by_user_id)
+        return self.receive_material(
+            binder, changed_by_user_id, actor_display_name=actor_display_name
+        )
 
     def mark_full(
         self,
         binder_id: int,
         changed_by_user_id: int,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> Binder:
         binder = self._get_for_update(binder_id)
         self._ensure_capacity_change_allowed(binder)
@@ -121,8 +143,10 @@ class BinderLifecycleService:
         return self._set_capacity(
             binder,
             BinderCapacityStatus.FULL,
+            ACTION_BINDER_MARKED_FULL,
             changed_by_user_id,
             notes or BINDER_MARKED_FULL,
+            actor_display_name,
         )
 
     def reopen_capacity(
@@ -130,6 +154,7 @@ class BinderLifecycleService:
         binder_id: int,
         changed_by_user_id: int,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> Binder:
         binder = self._get_for_update(binder_id)
         self._ensure_capacity_change_allowed(binder)
@@ -138,8 +163,10 @@ class BinderLifecycleService:
         return self._set_capacity(
             binder,
             BinderCapacityStatus.OPEN,
+            ACTION_BINDER_REOPENED,
             changed_by_user_id,
             notes or BINDER_CAPACITY_REOPENED,
+            actor_display_name,
         )
 
     def mark_ready_for_handover(
@@ -147,6 +174,7 @@ class BinderLifecycleService:
         binder_id: int,
         changed_by_user_id: int,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> tuple[Binder, NotificationResult]:
         binder = self._get_for_update(binder_id)
         if binder.location_status != BinderLocationStatus.IN_OFFICE:
@@ -158,12 +186,14 @@ class BinderLifecycleService:
         binder.location_status = BinderLocationStatus.READY_FOR_HANDOVER
         binder.ready_for_handover_at = utcnow()
         self.db.flush()
-        self._append_log(
+        self._record(
             binder,
+            ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
             "location_status",
             old_value,
             BinderLocationStatus.READY_FOR_HANDOVER.value,
             changed_by_user_id,
+            actor_display_name,
             notes or BINDER_MARKED_READY_FOR_HANDOVER,
         )
         if binder.client_record_id:
@@ -190,6 +220,7 @@ class BinderLifecycleService:
         until_period_year: int,
         until_period_month: int,
         changed_by_user_id: int,
+        actor_display_name: str | None = None,
     ) -> list[tuple[Binder, NotificationResult]]:
         cutoff = (until_period_year, until_period_month)
         updated: list[tuple[Binder, NotificationResult]] = []
@@ -203,6 +234,7 @@ class BinderLifecycleService:
                 self.mark_ready_for_handover(
                     binder.id,
                     changed_by_user_id=changed_by_user_id,
+                    actor_display_name=actor_display_name,
                 )
             )
         return updated
@@ -212,6 +244,7 @@ class BinderLifecycleService:
         binder_id: int,
         changed_by_user_id: int,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> Binder:
         binder = self._get_for_update(binder_id)
         if binder.location_status != BinderLocationStatus.READY_FOR_HANDOVER:
@@ -222,12 +255,14 @@ class BinderLifecycleService:
         old_value = binder.location_status.value
         binder.location_status = BinderLocationStatus.IN_OFFICE
         self.db.flush()
-        self._append_log(
+        self._record(
             binder,
+            ACTION_BINDER_REVERTED_READY,
             "location_status",
             old_value,
             BinderLocationStatus.IN_OFFICE.value,
             changed_by_user_id,
+            actor_display_name,
             notes or BINDER_HANDOVER_REVERTED,
         )
         return binder
@@ -239,6 +274,7 @@ class BinderLifecycleService:
         handed_over_at: date | None = None,
         handover_recipient_name: str | None = None,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> Binder:
         binder = self._get_for_update(binder_id)
         return self.handover_loaded_binder(
@@ -247,6 +283,7 @@ class BinderLifecycleService:
             handed_over_at=handed_over_at,
             handover_recipient_name=handover_recipient_name,
             notes=notes,
+            actor_display_name=actor_display_name,
         )
 
     def handover_loaded_binder(
@@ -256,6 +293,7 @@ class BinderLifecycleService:
         handed_over_at: date | None = None,
         handover_recipient_name: str | None = None,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> Binder:
         if binder.location_status == BinderLocationStatus.HANDED_OVER:
             raise AppError("הקלסר כבר נמסר ללקוח", ErrorCode.BINDER_ALREADY_HANDED_OVER)
@@ -269,12 +307,14 @@ class BinderLifecycleService:
         if binder.period_end is None:
             binder.period_end = effective_handover_at
         self.db.flush()
-        self._append_log(
+        self._record(
             binder,
+            ACTION_BINDER_HANDED_OVER,
             "location_status",
             old_value,
             BinderLocationStatus.HANDED_OVER.value,
             changed_by_user_id,
+            actor_display_name,
             notes or BINDER_HANDED_OVER,
         )
         return binder
@@ -301,38 +341,48 @@ class BinderLifecycleService:
         self,
         binder: Binder,
         new_value: BinderCapacityStatus,
+        action: str,
         changed_by_user_id: int,
         notes: str | None,
+        actor_display_name: str | None,
     ) -> Binder:
         old_value = binder.capacity_status.value
         binder.capacity_status = new_value
         self.db.flush()
-        self._append_log(
+        self._record(
             binder,
+            action,
             "capacity_status",
             old_value,
             new_value.value,
             changed_by_user_id,
+            actor_display_name,
             notes,
         )
         return binder
 
-    def _append_log(
+    def _record(
         self,
         binder: Binder,
+        action: str,
         field_name: str,
         old_value: str,
         new_value: str,
         changed_by_user_id: int,
+        actor_display_name: str | None,
         notes: str | None,
     ) -> None:
-        self.lifecycle_log_repo.append(
-            binder_id=binder.id,
-            field_name=field_name,
-            old_value=old_value,
-            new_value=new_value,
-            changed_by_user_id=changed_by_user_id,
-            notes=notes,
+        """Append a binder lifecycle audit row to EntityAuditLog (§10b/§17)."""
+        self.audit_writer.record_action(
+            ENTITY_BINDER,
+            binder.id,
+            changed_by_user_id,
+            action,
+            old_value=lifecycle_value(field_name, old_value),
+            new_value=lifecycle_value(field_name, new_value),
+            note=notes,
+            actor_display_name=actor_display_name,
+            metadata_json=binder_metadata(binder),
         )
 
     @staticmethod
@@ -349,20 +399,23 @@ class BinderLifecycleService:
         binder: Binder,
         changed_by_user_id: int,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> None:
-        self._append_log(
-            binder,
-            "location_status",
-            "null",
-            binder.location_status.value,
+        """Record the binder's creation as one ``binder.created`` audit row.
+
+        Replaces the two legacy ``null -> in_office`` / ``null -> open`` lifecycle
+        rows; both initial statuses are carried in ``new_value``.
+        """
+        self.audit_writer.record_action(
+            ENTITY_BINDER,
+            binder.id,
             changed_by_user_id,
-            notes or BINDER_RECEIVED,
-        )
-        self._append_log(
-            binder,
-            "capacity_status",
-            "null",
-            binder.capacity_status.value,
-            changed_by_user_id,
-            notes or BINDER_RECEIVED,
+            ACTION_BINDER_CREATED,
+            new_value={
+                "location_status": binder.location_status.value,
+                "capacity_status": binder.capacity_status.value,
+            },
+            note=notes or BINDER_RECEIVED,
+            actor_display_name=actor_display_name,
+            metadata_json=binder_metadata(binder),
         )

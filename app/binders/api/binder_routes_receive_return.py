@@ -79,6 +79,7 @@ def mark_ready_for_handover_bulk(
         until_period_year=request.until_period_year,
         until_period_month=request.until_period_month,
         changed_by_user_id=user.id,
+        actor_display_name=user.full_name,
     )
     return [
         BinderReadyForHandoverResponse(
@@ -105,6 +106,7 @@ def handover_to_client_bulk(request: BinderHandoverRequest, db: DBSession, user:
         until_period_month=request.until_period_month,
         actor_id=user.id,
         notes=request.notes,
+        actor_display_name=user.full_name,
     )
     binder_ids = BinderHandoverRepository(db).get_binder_ids_for_handover(handover.id)
     return BinderHandoverResponse(
@@ -129,6 +131,7 @@ def receive_material(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).receive_material_by_id(
         binder_id=binder_id,
         changed_by_user_id=user.id,
+        actor_display_name=user.full_name,
     )
     return fetch_client_and_build_response(binder, db)
 
@@ -142,6 +145,7 @@ def mark_full(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).mark_full(
         binder_id=binder_id,
         changed_by_user_id=user.id,
+        actor_display_name=user.full_name,
     )
     return fetch_client_and_build_response(binder, db)
 
@@ -155,6 +159,7 @@ def reopen_capacity(binder_id: PathId, db: DBSession, user: CurrentUser):
     binder = BinderLifecycleService(db).reopen_capacity(
         binder_id=binder_id,
         changed_by_user_id=user.id,
+        actor_display_name=user.full_name,
     )
     return fetch_client_and_build_response(binder, db)
 
@@ -168,6 +173,7 @@ def mark_ready_for_handover(binder_id: PathId, db: DBSession, user: CurrentUser)
     binder, notification = BinderLifecycleService(db).mark_ready_for_handover(
         binder_id=binder_id,
         changed_by_user_id=user.id,
+        actor_display_name=user.full_name,
     )
     return BinderReadyForHandoverResponse(
         binder=fetch_client_and_build_response(binder, db),
@@ -184,6 +190,7 @@ def revert_ready_for_handover(binder_id: PathId, db: DBSession, user: CurrentUse
     binder = BinderLifecycleService(db).revert_ready_for_handover(
         binder_id=binder_id,
         changed_by_user_id=user.id,
+        actor_display_name=user.full_name,
     )
     return fetch_client_and_build_response(binder, db)
 
@@ -204,5 +211,6 @@ def handover_to_client(
         changed_by_user_id=user.id,
         handed_over_at=request.handed_over_at,
         handover_recipient_name=request.handover_recipient_name,
+        actor_display_name=user.full_name,
     )
     return fetch_client_and_build_response(binder, db)

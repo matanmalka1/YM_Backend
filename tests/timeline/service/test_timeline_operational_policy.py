@@ -7,9 +7,6 @@ from app.annual_reports.models.annual_report_enums import (
     PrimaryAnnualReportForm,
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.models.annual_report_status_history import (
-    AnnualReportStatusHistory,
-)
 from app.audit.audit_constants import (
     ACTION_CREATED,
     ACTION_STATUS_CHANGED,
@@ -187,7 +184,7 @@ def test_timeline_excludes_noisy_notification_events(test_db):
     assert "notification_sent" not in _event_types(events)
 
 
-def test_timeline_annual_report_status_events_use_history_source(test_db, test_user):
+def test_timeline_annual_report_status_events_use_entity_audit_source(test_db, test_user):
     service = TimelineService(test_db)
     business = _business(test_db)
     entry = create_tax_calendar_entry_for_annual(test_db, 2025)
@@ -203,24 +200,27 @@ def test_timeline_annual_report_status_events_use_history_source(test_db, test_u
     )
     test_db.add(report)
     test_db.flush()
-    history = AnnualReportStatusHistory(
-        annual_report_id=report.id,
-        from_status=AnnualReportStatus.NOT_STARTED,
-        to_status=AnnualReportStatus.COLLECTING_DOCS,
-        changed_by=test_user.id,
+    audit = EntityAuditLogRepository(test_db).append(
+        entity_type=ENTITY_ANNUAL_REPORT,
+        entity_id=report.id,
+        performed_by=test_user.id,
+        action=entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED),
+        old_value={"status": AnnualReportStatus.NOT_STARTED.value},
+        new_value={"status": AnnualReportStatus.COLLECTING_DOCS.value},
         note="Started collection",
-        occurred_at=datetime(2026, 4, 1, 8, 0, tzinfo=UTC),
+        actor_display_name=test_user.full_name,
+        metadata_json={"client_record_id": business.client_id, "tax_year": 2025},
     )
-    test_db.add(history)
+    audit.performed_at = datetime(2026, 4, 1, 8, 0, tzinfo=UTC)
     test_db.commit()
 
     events, _ = service.get_client_timeline(business.client_id, page=1, page_size=50)
     event = next(e for e in events if e["event_type"] == "annual_report_status_changed")
 
-    assert event["timestamp"] == history.occurred_at
+    assert event["timestamp"] == audit.performed_at
     assert event["timestamp"] != report.updated_at
     assert event["metadata"] == {
-        "history_id": history.id,
+        "history_id": audit.id,
         "annual_report_id": report.id,
         "tax_year": 2025,
         "form_type": "1301",

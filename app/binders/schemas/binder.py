@@ -196,26 +196,3 @@ class BinderHandoverResponse(BaseModel):
     created_at: ApiDateTime
 
     model_config = {"from_attributes": True}
-
-
-# ── Lifecycle audit ───────────────────────────────────────────────────────────
-
-
-class BinderAuditEntry(BaseModel):
-    field_name: str
-    old_value: str
-    new_value: str
-    changed_by_user_id: int
-    changed_by_name: str | None = None  # enriched by service
-    changed_at: ApiDateTime
-    notes: str | None = None
-
-    model_config = {"from_attributes": True}
-
-
-class BinderAuditResponse(BaseModel):
-    binder_id: int
-    audit: list[BinderAuditEntry]
-    total: int
-    page: int
-    page_size: int

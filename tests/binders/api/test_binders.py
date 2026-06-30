@@ -51,18 +51,21 @@ def test_binder_receive_creates_initial_lifecycle_log(client, auth_token, test_d
         "mark_full",
     ]
 
-    from app.binders.repositories.binder_lifecycle_log_repository import (
-        BinderLifecycleLogRepository,
+    from app.audit.audit_constants import ACTION_BINDER_CREATED, ENTITY_BINDER
+    from app.audit.repositories.audit_entity_audit_log_repository import (
+        EntityAuditLogRepository,
     )
 
-    logs = BinderLifecycleLogRepository(test_db).list_all_by_binder(binder_id)
+    rows = EntityAuditLogRepository(test_db).list_by_entity(ENTITY_BINDER, binder_id)
 
-    assert len(logs) == 2
-    assert [(log.field_name, log.old_value, log.new_value) for log in logs] == [
-        ("location_status", "null", "in_office"),
-        ("capacity_status", "null", "open"),
-    ]
-    assert logs[0].changed_by_user_id == test_user.id
+    # A new binder records one binder.created row (both initial statuses in new_value),
+    # replacing the two legacy null->in_office / null->open lifecycle-log rows.
+    assert len(rows) == 1
+    created = rows[0]
+    assert created.action == ACTION_BINDER_CREATED
+    assert created.new_value == {"location_status": "in_office", "capacity_status": "open"}
+    assert created.performed_by == test_user.id
+    assert created.metadata_json["client_record_id"] == test_client.id
 
 
 def test_lifecycle_endpoints_return_final_contract(client, auth_token, test_db, test_user):

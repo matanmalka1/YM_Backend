@@ -1,8 +1,14 @@
 import pytest
+from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.audit.audit_constants import ACTION_STATUS_CHANGED, ENTITY_ANNUAL_REPORT, entity_action
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
@@ -127,3 +133,34 @@ def test_transition_closed_sets_financial_fields(test_db):
     )
     assert updated.status == AnnualReportStatus.CLOSED.value
     assert float(updated.assessment_amount) == 111.0
+
+
+def test_status_audit_failure_rolls_back_status_mutation(test_db, monkeypatch):
+    _client, report = _create_report(test_db, id_number="ARSTAT006")
+
+    def fail_record_status_change(_self, *_args, **_kwargs):
+        raise AppError("audit failed", ErrorCode.AUDIT_FORBIDDEN_FIELD)
+
+    monkeypatch.setattr(EntityAuditWriter, "record_status_change", fail_record_status_change)
+
+    with pytest.raises(AppError):
+        with test_db.begin_nested():
+            AnnualReportService(test_db).transition_status(
+                report.id,
+                "collecting_docs",
+                1,
+                "A",
+                note="must roll back",
+            )
+
+    test_db.expire_all()
+    persisted = test_db.scalar(select(AnnualReport).where(AnnualReport.id == report.id))
+    assert persisted.status == AnnualReportStatus.NOT_STARTED
+    status_audit_count = test_db.scalars(
+        select(EntityAuditLog).where(
+            EntityAuditLog.entity_type == ENTITY_ANNUAL_REPORT,
+            EntityAuditLog.entity_id == report.id,
+            EntityAuditLog.action == entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED),
+        )
+    ).all()
+    assert status_audit_count == []

@@ -98,3 +98,25 @@ ACTION_VAT_INVOICE_CREATED = entity_action(ENTITY_VAT_INVOICE, ACTION_CREATED)
 ACTION_VAT_INVOICE_UPDATED = entity_action(ENTITY_VAT_INVOICE, ACTION_UPDATED)
 ACTION_VAT_INVOICE_AMOUNT_CHANGED = entity_action(ENTITY_VAT_INVOICE, "amount_changed")
 ACTION_VAT_INVOICE_DELETED = entity_action(ENTITY_VAT_INVOICE, ACTION_DELETED)
+
+# ---------------------------------------------------------------------------
+# Binder lifecycle actions (pre-namespaced). Each rich semantic verb replaces a
+# BinderLifecycleLog field-change row; the changed status is carried in
+# old_value/new_value and the client context in metadata_json.client_record_id.
+# binder.created/handed_over/material_received are also surfaced by live timeline
+# builders, so timeline reads them from those builders, not from these rows.
+# ---------------------------------------------------------------------------
+ACTION_BINDER_CREATED = entity_action(ENTITY_BINDER, ACTION_CREATED)
+ACTION_BINDER_MATERIAL_RECEIVED = entity_action(ENTITY_BINDER, "material_received")
+ACTION_BINDER_MARKED_FULL = entity_action(ENTITY_BINDER, "marked_full")
+ACTION_BINDER_REOPENED = entity_action(ENTITY_BINDER, "reopened")
+ACTION_BINDER_MARKED_READY_FOR_HANDOVER = entity_action(ENTITY_BINDER, "marked_ready_for_handover")
+ACTION_BINDER_REVERTED_READY = entity_action(ENTITY_BINDER, "reverted_ready")
+ACTION_BINDER_HANDED_OVER = entity_action(ENTITY_BINDER, "handed_over")
+
+# ---------------------------------------------------------------------------
+# Binder-intake edit actions (pre-namespaced). A single PATCH may touch the
+# intake row and its materials; each changed field is one binder_intake.updated
+# row with the field identity in metadata_json (§10b).
+# ---------------------------------------------------------------------------
+ACTION_BINDER_INTAKE_UPDATED = entity_action(ENTITY_BINDER_INTAKE, ACTION_UPDATED)

@@ -2,11 +2,28 @@ from datetime import date
 
 import pytest
 
+from app.audit.audit_constants import (
+    ACTION_BINDER_HANDED_OVER,
+    ACTION_BINDER_MARKED_FULL,
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+    ACTION_BINDER_MATERIAL_RECEIVED,
+    ACTION_BINDER_REOPENED,
+    ENTITY_BINDER,
+)
+from app.audit.repositories.audit_entity_audit_log_repository import (
+    EntityAuditLogRepository,
+)
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.core.exceptions import AppError
 from tests.helpers.identity import seed_client_identity
+
+
+def _binder_actions(db, binder_id: int) -> list[str]:
+    """Lifecycle actions recorded for a binder, oldest first."""
+    rows = EntityAuditLogRepository(db).list_by_entity(ENTITY_BINDER, binder_id)
+    return [row.action for row in reversed(rows)]
 
 
 def _binder(db, client_id: int, user_id: int):
@@ -44,12 +61,11 @@ def test_mark_full_reopen_and_handover_transitions_write_lifecycle_logs(test_db,
     assert handed_over.handed_over_at == date(2026, 2, 1)
     assert handed_over.handover_recipient_name == "Dana"
 
-    logs = service.lifecycle_log_repo.list_all_by_binder(binder.id)
-    assert [(log.field_name, log.old_value, log.new_value) for log in logs] == [
-        ("capacity_status", "open", "full"),
-        ("capacity_status", "full", "open"),
-        ("location_status", "in_office", "ready_for_handover"),
-        ("location_status", "ready_for_handover", "handed_over"),
+    assert _binder_actions(test_db, binder.id) == [
+        ACTION_BINDER_MARKED_FULL,
+        ACTION_BINDER_REOPENED,
+        ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+        ACTION_BINDER_HANDED_OVER,
     ]
 
 
@@ -84,7 +100,29 @@ def test_receive_material_writes_audit_log_without_state_change(test_db, test_us
 
     assert received.location_status == BinderLocationStatus.IN_OFFICE
     assert received.capacity_status == BinderCapacityStatus.OPEN
-    logs = service.lifecycle_log_repo.list_all_by_binder(binder.id)
-    assert [(log.field_name, log.old_value, log.new_value) for log in logs] == [
-        ("capacity_status", "open", "open"),
-    ]
+    assert _binder_actions(test_db, binder.id) == [ACTION_BINDER_MATERIAL_RECEIVED]
+
+
+def test_audit_failure_rolls_back_binder_lifecycle_mutation(test_db, test_user, monkeypatch):
+    """A failing audit write rolls back the binder lifecycle mutation in the same
+    transaction (§17) — the binder's status change does not persist and no audit row lands."""
+    from app.core.error_codes import ErrorCode
+
+    client = seed_client_identity(test_db, full_name="Atomic Binder", id_number="LC-ATOMIC")
+    binder = _binder(test_db, client.id, test_user.id)
+    service = BinderLifecycleService(test_db)
+
+    def _boom(*args, **kwargs):
+        raise AppError("forced audit failure", ErrorCode.AUDIT_FORBIDDEN_FIELD, status_code=500)
+
+    # Force the audit append to fail mid-transition.
+    monkeypatch.setattr(service.audit_writer, "record_action", _boom)
+
+    with pytest.raises(AppError):
+        with test_db.begin_nested():
+            service.mark_full(binder.id, changed_by_user_id=test_user.id)
+
+    test_db.expire_all()
+    reloaded = BinderRepository(test_db).get_by_id(binder.id)
+    assert reloaded.capacity_status == BinderCapacityStatus.OPEN
+    assert _binder_actions(test_db, binder.id) == []
