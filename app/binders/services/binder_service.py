@@ -24,6 +24,7 @@ class BinderService:
         open_new_binder: bool = False,
         notes: str | None = None,
         materials: list[dict] | None = None,
+        actor_display_name: str | None = None,
     ) -> tuple[Binder, BinderIntake, bool]:
         return self.intake_service.receive(
             client_record_id=client_record_id,
@@ -32,6 +33,7 @@ class BinderService:
             received_by=received_by,
             notes=notes,
             materials=materials,
+            actor_display_name=actor_display_name,
         )
 
     def delete_binder(self, binder_id: int, actor_id: int) -> bool:

@@ -65,6 +65,7 @@ def test_binder_receive_creates_initial_lifecycle_log(client, auth_token, test_d
     assert created.action == ACTION_BINDER_CREATED
     assert created.new_value == {"location_status": "in_office", "capacity_status": "open"}
     assert created.performed_by == test_user.id
+    assert created.actor_display_name == test_user.full_name
     assert created.metadata_json["client_record_id"] == test_client.id
 
 

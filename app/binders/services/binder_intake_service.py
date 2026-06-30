@@ -92,6 +92,7 @@ class BinderIntakeService:
         open_new_binder: bool = False,
         notes: str | None = None,
         materials: list[dict] | None = None,
+        actor_display_name: str | None = None,
     ) -> tuple[Binder, BinderIntake, bool]:
         """
         Find open (IN_OFFICE) binder or create new one, then record the intake.
@@ -108,6 +109,7 @@ class BinderIntakeService:
 
         client_record = self.client_repo.get_by_id(client_record_id)
         assert_client_record_is_active(client_record)
+        actor_display_name = actor_display_name or self._resolve_actor_display_name(received_by)
 
         businesses = self.business_repo.list_by_legal_entity(client_record.legal_entity_id)
         has_active = any(b.status == BusinessStatus.ACTIVE for b in businesses)
@@ -136,6 +138,7 @@ class BinderIntakeService:
                     active_binder.id,
                     changed_by_user_id=received_by,
                     notes=BINDER_RECEIVED,
+                    actor_display_name=actor_display_name,
                 )
 
             if client_record.office_client_number is None:
@@ -151,6 +154,7 @@ class BinderIntakeService:
                 binder=binder,
                 changed_by_user_id=received_by,
                 notes=BINDER_RECEIVED,
+                actor_display_name=actor_display_name,
             )
             is_new_binder = True
 
@@ -159,6 +163,7 @@ class BinderIntakeService:
                 binder,
                 changed_by_user_id=received_by,
                 allow_full_in_office=True,
+                actor_display_name=actor_display_name,
             )
 
         # Old-period guard: if any material is for a period older than the binder's
@@ -197,7 +202,9 @@ class BinderIntakeService:
                 binder.period_start = _date(py, pm, 1)
                 self.db.flush()
 
-        self._auto_advance_vat_work_items(materials, performed_by=received_by)
+        self._auto_advance_vat_work_items(
+            materials, performed_by=received_by, actor_display_name=actor_display_name
+        )
 
         return binder, intake, is_new_binder
 
@@ -205,6 +212,7 @@ class BinderIntakeService:
         self,
         materials: list[dict] | None,
         performed_by: int,
+        actor_display_name: str | None,
     ) -> None:
         """Advance PENDING_MATERIALS → MATERIAL_RECEIVED for linked VAT work items."""
         from app.audit.audit_constants import ENTITY_VAT_WORK_ITEM
@@ -236,8 +244,13 @@ class BinderIntakeService:
                 performed_by,
                 VatWorkItemStatus.PENDING_MATERIALS.value,
                 VatWorkItemStatus.MATERIAL_RECEIVED.value,
+                actor_display_name=actor_display_name,
                 metadata_json=work_item_metadata(item),
             )
+
+    def _resolve_actor_display_name(self, user_id: int) -> str | None:
+        user = self.user_repo.get_by_id(user_id)
+        return user.full_name if user else None
 
     def _resolve_existing_binder_for_materials(
         self,

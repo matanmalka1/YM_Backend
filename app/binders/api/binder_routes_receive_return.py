@@ -55,6 +55,7 @@ def receive_binder(request: BinderReceiveRequest, db: DBSession, user: CurrentUs
         received_by=request.received_by,
         notes=request.notes,
         materials=materials,
+        actor_display_name=user.full_name if request.received_by == user.id else None,
     )
     binder_resp = fetch_client_and_build_response(binder, db)
     return BinderReceiveResult(

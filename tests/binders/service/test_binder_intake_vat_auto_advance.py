@@ -106,6 +106,7 @@ def test_vat_material_advance_writes_audit_entry(test_db, test_user):
     assert audit_rows[0].old_value == {"status": VatWorkItemStatus.PENDING_MATERIALS.value}
     assert audit_rows[0].new_value == {"status": VatWorkItemStatus.MATERIAL_RECEIVED.value}
     assert audit_rows[0].performed_by == test_user.id
+    assert audit_rows[0].actor_display_name == test_user.full_name
     assert audit_rows[0].metadata_json["client_record_id"] == client.id
 
 

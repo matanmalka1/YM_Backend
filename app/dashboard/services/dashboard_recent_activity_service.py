@@ -8,6 +8,7 @@ from app.annual_reports.repositories.annual_report_repository import (
 from app.audit.audit_constants import (
     ACTION_BINDER_CREATED,
     ACTION_BINDER_HANDED_OVER,
+    ACTION_BINDER_INTAKE_UPDATED,
     ACTION_BINDER_MARKED_FULL,
     ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
     ACTION_BINDER_MATERIAL_RECEIVED,
@@ -24,10 +25,23 @@ from app.audit.audit_constants import (
     ACTION_INCOME_UPDATED,
     ACTION_STATUS_CHANGED,
     ACTION_UPDATED,
+    ACTION_VAT_INVOICE_AMOUNT_CHANGED,
+    ACTION_VAT_INVOICE_CREATED,
+    ACTION_VAT_INVOICE_DELETED,
+    ACTION_VAT_INVOICE_UPDATED,
+    ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
+    ACTION_VAT_WORK_ITEM_CREATED,
+    ACTION_VAT_WORK_ITEM_DELETED,
+    ACTION_VAT_WORK_ITEM_FILED,
+    ACTION_VAT_WORK_ITEM_STATUS_CHANGED,
+    ACTION_VAT_WORK_ITEM_UPDATED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_BINDER,
+    ENTITY_BINDER_INTAKE,
     ENTITY_CHARGE,
     ENTITY_CLIENT,
+    ENTITY_VAT_INVOICE,
+    ENTITY_VAT_WORK_ITEM,
     entity_action,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
@@ -44,6 +58,9 @@ _ENTITY_LABELS = {
     ENTITY_CHARGE: "חיוב",
     ENTITY_CLIENT: "לקוח",
     ENTITY_BINDER: "קלסר",
+    ENTITY_BINDER_INTAKE: "קליטת חומר",
+    ENTITY_VAT_WORK_ITEM: "תיק מע״מ",
+    ENTITY_VAT_INVOICE: "חשבונית מע״מ",
 }
 
 # Keyed by the namespaced persisted action value (e.g. "client.created").
@@ -72,6 +89,17 @@ _ACTION_LABELS = {
     ACTION_BINDER_MARKED_READY_FOR_HANDOVER: "קלסר מוכן למסירה",
     ACTION_BINDER_REVERTED_READY: "קלסר חזר לעבודה במשרד",
     ACTION_BINDER_HANDED_OVER: "קלסר נמסר ללקוח",
+    ACTION_BINDER_INTAKE_UPDATED: "עודכן אירוע קליטת חומר",
+    ACTION_VAT_WORK_ITEM_CREATED: "נוצר תיק מע״מ",
+    ACTION_VAT_WORK_ITEM_STATUS_CHANGED: "עודכן סטטוס תיק מע״מ",
+    ACTION_VAT_WORK_ITEM_FILED: "דיווח מע״מ הוגש",
+    ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN: "עודכן סכום מע״מ סופי",
+    ACTION_VAT_WORK_ITEM_UPDATED: "עודכן תיק מע״מ",
+    ACTION_VAT_WORK_ITEM_DELETED: "נמחק תיק מע״מ",
+    ACTION_VAT_INVOICE_CREATED: "נוספה חשבונית מע״מ",
+    ACTION_VAT_INVOICE_UPDATED: "עודכנה חשבונית מע״מ",
+    ACTION_VAT_INVOICE_AMOUNT_CHANGED: "עודכן סכום חשבונית מע״מ",
+    ACTION_VAT_INVOICE_DELETED: "נמחקה חשבונית מע״מ",
 }
 
 _ACTIVITY_TYPES = {
@@ -100,6 +128,17 @@ _ACTIVITY_TYPES = {
     ACTION_BINDER_MARKED_READY_FOR_HANDOVER: "done",
     ACTION_BINDER_REVERTED_READY: "updated",
     ACTION_BINDER_HANDED_OVER: "done",
+    ACTION_BINDER_INTAKE_UPDATED: "updated",
+    ACTION_VAT_WORK_ITEM_CREATED: "created",
+    ACTION_VAT_WORK_ITEM_STATUS_CHANGED: "done",
+    ACTION_VAT_WORK_ITEM_FILED: "done",
+    ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN: "updated",
+    ACTION_VAT_WORK_ITEM_UPDATED: "updated",
+    ACTION_VAT_WORK_ITEM_DELETED: "updated",
+    ACTION_VAT_INVOICE_CREATED: "created",
+    ACTION_VAT_INVOICE_UPDATED: "updated",
+    ACTION_VAT_INVOICE_AMOUNT_CHANGED: "updated",
+    ACTION_VAT_INVOICE_DELETED: "updated",
 }
 
 
@@ -161,6 +200,13 @@ class RecentActivityService:
                 client_id = (row.metadata_json or {}).get("client_record_id")
                 if client_id is not None:
                     activity_client_ids[row.id] = client_id
+            elif isinstance(row.metadata_json, dict):
+                # Generic audit rows for VAT and binder-intake carry immutable client
+                # context in metadata_json; use it so new audit traffic does not
+                # consume the recent window and then disappear from the dashboard.
+                client_id = row.metadata_json.get("client_record_id")
+                if client_id is not None:
+                    activity_client_ids[row.id] = int(client_id)
 
         # The same client can appear in multiple audit rows; keep the bulk lookup compact.
         records = get_full_records_bulk(self.db, list(set(activity_client_ids.values())))
@@ -196,6 +242,14 @@ class RecentActivityService:
             return f"/clients/{row.entity_id}"
         if row.entity_type == ENTITY_BINDER:
             return f"/binders?binder_id={row.entity_id}"
+        if row.entity_type == ENTITY_BINDER_INTAKE and isinstance(row.metadata_json, dict):
+            binder_id = row.metadata_json.get("binder_id")
+            return f"/binders?binder_id={binder_id}" if binder_id else "/binders"
+        if row.entity_type == ENTITY_VAT_WORK_ITEM:
+            return f"/tax/vat/{row.entity_id}"
+        if row.entity_type == ENTITY_VAT_INVOICE and isinstance(row.metadata_json, dict):
+            work_item_id = row.metadata_json.get("vat_work_item_id")
+            return f"/tax/vat/{work_item_id}" if work_item_id else "/tax/vat"
         return "/"
 
     def _timestamp(self, row: EntityAuditLog):
