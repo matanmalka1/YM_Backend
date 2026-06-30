@@ -188,6 +188,13 @@ def upgrade() -> None:
     op.create_index('idx_entity_audit_performer_perf', 'entity_audit_logs', ['performed_by', 'performed_at'], unique=False)
     op.create_index(op.f('ix_entity_audit_logs_entity_id'), 'entity_audit_logs', ['entity_id'], unique=False)
     op.create_index(op.f('ix_entity_audit_logs_entity_type'), 'entity_audit_logs', ['entity_type'], unique=False)
+    # §8b PostgreSQL expression index for metadata_json->>'client_record_id' lookups
+    # (timeline/dashboard client-context queries). Not expressible via autogenerate;
+    # PostgreSQL-only — SQLite dev/test uses create_all and may table-scan.
+    op.execute(
+        "CREATE INDEX idx_entity_audit_client_ctx ON entity_audit_logs "
+        "((metadata_json->>'client_record_id'), performed_at)"
+    )
     op.create_table('entity_notes',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('entity_type', sa.String(), nullable=False),
@@ -1046,6 +1053,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_entity_notes_entity_id'), table_name='entity_notes')
     op.drop_index('idx_entity_notes_type_id', table_name='entity_notes')
     op.drop_table('entity_notes')
+    op.execute("DROP INDEX IF EXISTS idx_entity_audit_client_ctx")
     op.drop_index(op.f('ix_entity_audit_logs_entity_type'), table_name='entity_audit_logs')
     op.drop_index(op.f('ix_entity_audit_logs_entity_id'), table_name='entity_audit_logs')
     op.drop_index('idx_entity_audit_performer_perf', table_name='entity_audit_logs')
