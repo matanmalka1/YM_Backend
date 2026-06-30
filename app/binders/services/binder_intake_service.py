@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.binders.binder_messages import (
     BINDER_CLIENT_LOCKED,
+    BINDER_NOT_FOUND,
     BINDER_RECEIVED,
 )
 from app.binders.models.binder import Binder, BinderLocationStatus
@@ -14,13 +15,15 @@ from app.binders.repositories.binder_intake_material_repository import (
 )
 from app.binders.repositories.binder_intake_repository import BinderIntakeRepository
 from app.binders.repositories.binder_repository import BinderRepository
+from app.binders.schemas.binder import BinderIntakeMaterialResponse, BinderIntakeResponse
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from app.businesses.models.business import BusinessStatus
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import AppError
+from app.core.exceptions import AppError, NotFoundError
+from app.users.repositories.user_repository import UserRepository
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
@@ -41,6 +44,45 @@ class BinderIntakeService:
         # Used for the "all businesses locked" guard before intake is accepted.
         self.business_repo = BusinessRepository(db)
         self.client_repo = ClientRecordRepository(db)
+        self.user_repo = UserRepository(db)
+
+    def get_binder_intakes(
+        self, binder_id: int, page: int = 1, page_size: int = 20
+    ) -> tuple[list[BinderIntakeResponse], int]:
+        """Paginated material intakes for a binder, with received-by names enriched."""
+        binder = self.binder_repo.get_by_id(binder_id)
+        if not binder:
+            raise NotFoundError(
+                BINDER_NOT_FOUND.format(binder_id=binder_id),
+                ErrorCode.BINDER_NOT_FOUND,
+            )
+
+        intakes, total = self.intake_repo.list_by_binder_page(binder_id, page, page_size)
+
+        # Batch-fetch user names to avoid N+1 queries.
+        user_ids = {i.received_by for i in intakes}
+        users = [self.user_repo.get_by_id(uid) for uid in user_ids]
+        name_map = {u.id: u.full_name for u in users if u}
+
+        result: list[BinderIntakeResponse] = []
+        for intake in intakes:
+            raw_materials = self.material_repo.list_by_intake(intake.id)
+            material_responses = [
+                BinderIntakeMaterialResponse.model_validate(m) for m in raw_materials
+            ]
+            result.append(
+                BinderIntakeResponse(
+                    id=intake.id,
+                    binder_id=intake.binder_id,
+                    received_at=intake.received_at,
+                    received_by=intake.received_by,
+                    received_by_name=name_map.get(intake.received_by),
+                    notes=intake.notes,
+                    created_at=intake.created_at,
+                    materials=material_responses,
+                )
+            )
+        return result, total
 
     def receive(
         self,

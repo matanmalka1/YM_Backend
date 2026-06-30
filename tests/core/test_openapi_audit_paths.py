@@ -12,5 +12,7 @@ def test_audit_trail_endpoints_do_not_use_history_paths():
     ]
 
     assert forbidden_paths == []
-    assert "/api/v1/binders/{binder_id}/audit" in paths
-    assert "/api/v1/annual-reports/{report_id}/audit" in paths
+    # Binder lifecycle audit moved to the generic /audit/binder/{id} route (Phase 5);
+    # the per-domain binder audit route is removed.
+    assert "/api/v1/binders/{binder_id}/audit" not in paths
+    assert "/api/v1/annual-reports/{report_id}/audit" not in paths

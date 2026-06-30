@@ -31,6 +31,14 @@ from app.audit.audit_constants import (
     ACTION_ANNEX_LINE_UPDATED,
     ACTION_ANNUAL_REPORT_DEADLINE_UPDATED,
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
+    ACTION_BINDER_CREATED,
+    ACTION_BINDER_HANDED_OVER,
+    ACTION_BINDER_INTAKE_UPDATED,
+    ACTION_BINDER_MARKED_FULL,
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+    ACTION_BINDER_MATERIAL_RECEIVED,
+    ACTION_BINDER_REOPENED,
+    ACTION_BINDER_REVERTED_READY,
     ACTION_CHARGE_CANCELED,
     ACTION_CHARGE_ISSUED,
     ACTION_CHARGE_PAID,
@@ -168,6 +176,14 @@ _VAT_INVOICE_META = frozenset(
 )
 # Invoice snapshot keys captured in old_value/new_value.
 _VAT_INVOICE_FIELDS = frozenset({"invoice_id", "type", "number", "vat_amount"})
+
+# Binder lifecycle: old_value/new_value carry the changed status field; metadata
+# carries the indexed client context plus binder identity (§8).
+_BINDER_LIFECYCLE_FIELDS = frozenset({"location_status", "capacity_status"})
+_BINDER_META = frozenset({"client_record_id", "binder_id", "binder_number"})
+# Binder-intake edit: each changed field is one row; the value is wrapped as
+# {"value": ...}; metadata carries client context + binder/intake/field identity (§8/§10b).
+_BINDER_INTAKE_META = frozenset({"client_record_id", "binder_id", "intake_id", "field_name"})
 
 
 @dataclass(frozen=True)
@@ -385,6 +401,48 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         value_fields=_VAT_INVOICE_FIELDS,
         metadata_required=frozenset({"client_record_id"}),
         metadata_allowed=_VAT_INVOICE_META,
+    ),
+    # binder lifecycle (rich semantic verbs replacing BinderLifecycleLog rows §10b).
+    ACTION_BINDER_CREATED: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    ACTION_BINDER_MATERIAL_RECEIVED: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    ACTION_BINDER_MARKED_FULL: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    ACTION_BINDER_REOPENED: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    ACTION_BINDER_REVERTED_READY: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    ACTION_BINDER_HANDED_OVER: ActionPolicy(
+        value_fields=_BINDER_LIFECYCLE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "binder_id"}),
+        metadata_allowed=_BINDER_META,
+    ),
+    # binder_intake edit (field-level; value wrapped as {"value": ...}) (§10b).
+    ACTION_BINDER_INTAKE_UPDATED: ActionPolicy(
+        value_fields=frozenset({"value"}),
+        metadata_required=frozenset({"client_record_id", "binder_id", "intake_id", "field_name"}),
+        metadata_allowed=_BINDER_INTAKE_META,
     ),
     # signature_request (evidence; per-action forensic metadata §8a). Phase 6 wires
     # the writers; policies exist now so the sensitive type is governed + testable.

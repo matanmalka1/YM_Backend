@@ -48,6 +48,7 @@ def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_rep
 
     detail = client.get(f"/api/v1/annual-reports/{report_id}", headers=advisor_headers).json()
     # Detail keeps full shape with grouped calculation + transitions.
+    assert "status_audit" not in detail
     assert "tax_calculation" in detail
     assert {
         "total_income",
@@ -56,6 +57,5 @@ def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_rep
         "credit_points",
     } <= detail["tax_calculation"].keys()
     assert "available_transitions" in detail
-    # Removed duplicate float copies (item 35) are gone from detail.
     assert "tax_refund_amount" not in detail
     assert "tax_due_amount" not in detail

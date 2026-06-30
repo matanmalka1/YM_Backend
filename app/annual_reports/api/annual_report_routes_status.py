@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends
 
 from app.annual_reports.api.annual_report_responses import (
     REPORT_TRANSITION_RESPONSES,
@@ -10,15 +10,12 @@ from app.annual_reports.schemas.annual_report_requests import (
     SubmitRequest,
 )
 from app.annual_reports.schemas.annual_report_responses import (
-    AnnualReportAuditListResponse,
     AnnualReportDetailResponse,
     AnnualReportResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
-from app.core.openapi_responses import not_found_response
-from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE, paginate_sequence
 from app.core.path_params import PathId
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -123,27 +120,3 @@ def update_deadline(
         custom_deadline_note_provided="custom_deadline_note" in patch,
     )
     return report
-
-
-@router.get(
-    "/{report_id}/audit",
-    response_model=AnnualReportAuditListResponse,
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
-)
-def get_report_audit(
-    report_id: PathId,
-    db: DBSession,
-    user: CurrentUser,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-):
-    service = AnnualReportService(db)
-    all_audit_entries = service.get_report_audit(report_id)
-    total = len(all_audit_entries)
-    items = paginate_sequence(all_audit_entries, page, page_size)
-    return AnnualReportAuditListResponse(
-        items=items,
-        page=page,
-        page_size=page_size,
-        total=total,
-    )

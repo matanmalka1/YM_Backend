@@ -150,20 +150,13 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         old_status = report.status
         updated = self.repo.update(report_id, report=report, **update_fields)
 
-        self.repo.append_status_audit_entry(
-            annual_report_id=report_id,
-            from_status=old_status,
-            to_status=ns,
-            changed_by=changed_by,
-            note=note,
-        )
-
         EntityAuditWriter(self.db).record_status_change(
             ENTITY_ANNUAL_REPORT,
             report_id,
             changed_by,
             old_status,
             ns,
+            note=note,
             actor_display_name=changed_by_name,
             metadata_json={
                 "client_record_id": report.client_record_id,
@@ -260,13 +253,6 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             deadline_type=dt,
             filing_deadline=filing_deadline,
             custom_deadline_note=custom_deadline_note,
-        )
-        self.repo.append_status_audit_entry(
-            annual_report_id=report_id,
-            from_status=updated.status,
-            to_status=updated.status,
-            changed_by=changed_by,
-            note=_deadline_note(dt, filing_deadline, custom_deadline_note),
         )
         EntityAuditWriter(self.db).append(
             entity_type=ENTITY_ANNUAL_REPORT,

@@ -16,16 +16,12 @@ from app.annual_reports.repositories.annual_report_report_repository import (
 from app.annual_reports.repositories.annual_report_schedule_repository import (
     AnnualReportScheduleRepository,
 )
-from app.annual_reports.repositories.annual_report_status_audit_repository import (
-    AnnualReportStatusAuditRepository,
-)
 
 
 class AnnualReportRepository(
     AnnualReportRootRepository,
     AnnualReportLifecycleRepository,
     AnnualReportScheduleRepository,
-    AnnualReportStatusAuditRepository,
 ):
     def __init__(self, db: Session):
         # Each mixin expects self.db

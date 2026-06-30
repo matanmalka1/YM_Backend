@@ -31,6 +31,7 @@ class BinderHandoverService:
         until_period_month: int,
         actor_id: int,
         notes: str | None = None,
+        actor_display_name: str | None = None,
     ) -> BinderHandover:
         """
         Hand over multiple binders to a client in a single grouped event.
@@ -50,6 +51,7 @@ class BinderHandoverService:
                 handed_over_at=handed_over_at,
                 handover_recipient_name=received_by_name,
                 notes=notes,
+                actor_display_name=actor_display_name,
             )
 
         handover = self.handover_repo.create(

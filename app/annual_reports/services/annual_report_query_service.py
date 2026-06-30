@@ -7,7 +7,6 @@ from app.annual_reports.integrations.tax_rules_registry import (
     get_default_resident_credit_points,
 )
 from app.annual_reports.schemas.annual_report_responses import (
-    AnnualReportAuditEntry,
     AnnualReportDetailResponse,
     AnnualReportListItem,
     AnnualReportListResponse,
@@ -100,12 +99,8 @@ class AnnualReportQueryService(AnnualReportBaseService):
             total=total,
         )
 
-    def get_report_audit(self, report_id: int) -> list:
-        self._get_or_raise(report_id)
-        return self.repo.list_status_audit_entries(report_id)
-
     def get_detail_report(self, report_id: int) -> AnnualReportDetailResponse | None:
-        """Return report with schedules, status audit entries, financial summary, and detail fields. None if not found."""
+        """Return report with schedules, financial summary, and detail fields. None if not found."""
         from app.annual_reports.repositories.annual_report_credit_point_repository import (
             AnnualReportCreditPointRepository,
         )
@@ -119,7 +114,6 @@ class AnnualReportQueryService(AnnualReportBaseService):
         report = self._to_responses([orm_report])[0]
 
         schedules = self.repo.get_schedules(report_id)
-        status_audit = self.repo.list_status_audit_entries(report_id)
         financial_summary = AnnualReportFinancialSummaryService(
             self.db
         ).get_financial_summary_for_report(orm_report)
@@ -132,7 +126,6 @@ class AnnualReportQueryService(AnnualReportBaseService):
 
         response = AnnualReportDetailResponse(**report.model_dump())
         response.schedules = [ScheduleEntryResponse.model_validate(s) for s in schedules]
-        response.status_audit = [AnnualReportAuditEntry.model_validate(h) for h in status_audit]
 
         if detail:
             response.client_approved_at = detail.client_approved_at

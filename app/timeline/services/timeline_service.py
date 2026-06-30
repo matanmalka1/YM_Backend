@@ -1,9 +1,16 @@
 from datetime import date
+from types import SimpleNamespace
 
 from sqlalchemy.orm import Session
 
-from app.binders.binder_messages import BINDER_RECEIVED
-from app.binders.repositories.binder_lifecycle_log_repository import BinderLifecycleLogRepository
+from app.audit.audit_constants import (
+    ACTION_BINDER_MARKED_FULL,
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+    ACTION_BINDER_REOPENED,
+    ACTION_BINDER_REVERTED_READY,
+    ENTITY_BINDER,
+)
+from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.binders.repositories.binder_repository import BinderRepository
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.charges.repositories.charge_repository import ChargeRepository
@@ -49,7 +56,7 @@ class TimelineService:
     def __init__(self, db: Session):
         self.db = db
         self.binder_repo = BinderRepository(db)
-        self.lifecycle_log_repo = BinderLifecycleLogRepository(db)
+        self.entity_audit_repo = EntityAuditLogRepository(db)
         self.business_repo = BusinessRepository(db)
         self.charge_repo = ChargeRepository(db)
         self.invoice_repo = InvoiceRepository(db)
@@ -169,23 +176,40 @@ class TimelineService:
 
         return [event for event in events if in_range(event)]
 
-    @staticmethod
-    def _status_str(value) -> str | None:
-        """Normalise an enum or string lifecycle value."""
-        if value is None:
-            return None
-        return value.value if hasattr(value, "value") else str(value)
+    # Binder lifecycle transitions surfaced in the timeline. binder.created /
+    # binder.material_received are covered by the live binder_received builder and
+    # binder.handed_over by the live binder_handed_over builder, so they are excluded
+    # here to keep one source per category (plan §4).
+    _BINDER_LIFECYCLE_TIMELINE_ACTIONS = frozenset(
+        {
+            ACTION_BINDER_MARKED_FULL,
+            ACTION_BINDER_REOPENED,
+            ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+            ACTION_BINDER_REVERTED_READY,
+        }
+    )
 
     def _append_lifecycle_change_events(self, events: list[dict], binder) -> None:
-        logs = self.lifecycle_log_repo.list_all_by_binder(binder.id)
-        for lifecycle_log in logs:
-            old_value = self._status_str(getattr(lifecycle_log, "old_value", None))
-            new_value = self._status_str(getattr(lifecycle_log, "new_value", None))
-            if old_value == new_value and getattr(lifecycle_log, "notes", None) != BINDER_RECEIVED:
+        rows = self.entity_audit_repo.list_by_entity(ENTITY_BINDER, binder.id)
+        for row in rows:
+            if row.action not in self._BINDER_LIFECYCLE_TIMELINE_ACTIONS:
                 continue
-            if old_value in (None, "null") and new_value == "in_office":
-                continue
-            events.append(binder_lifecycle_change_event(binder, lifecycle_log))
+            events.append(binder_lifecycle_change_event(binder, self._lifecycle_log_view(row)))
+
+    @staticmethod
+    def _lifecycle_log_view(row):
+        """Adapt an EntityAuditLog binder row to the lifecycle-log shape the timeline
+        binder event builder reads (field_name/old_value/new_value/notes/changed_at)."""
+        old_value = row.old_value or {}
+        new_value = row.new_value or {}
+        field_name = next(iter(new_value), next(iter(old_value), ""))
+        return SimpleNamespace(
+            field_name=field_name,
+            old_value=old_value.get(field_name),
+            new_value=new_value.get(field_name),
+            notes=row.note,
+            changed_at=row.performed_at,
+        )
 
     def _build_notification_events(self, client_record_id: int) -> list[dict]:
         notifications, _ = self.notification_repo.list_paginated(

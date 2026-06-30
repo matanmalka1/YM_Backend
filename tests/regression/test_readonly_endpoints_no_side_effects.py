@@ -71,9 +71,10 @@ def test_readonly_get_endpoints_keep_db_state_intact(
     assert r_client_binders.status_code == 200
     assert r_client_binders.json()["total"] == 3
 
-    r_audit = client.get(f"/api/v1/binders/{b_open.id}/audit", headers=advisor_headers)
+    # Binder lifecycle audit is served by the generic audit route (Phase 5).
+    r_audit = client.get(f"/api/v1/audit/binder/{b_open.id}", headers=advisor_headers)
     assert r_audit.status_code == 200
-    assert r_audit.json()["binder_id"] == b_open.id
+    assert "items" in r_audit.json()
 
     r_overview = client.get("/api/v1/dashboard/overview", headers=advisor_headers)
     assert r_overview.status_code == 200

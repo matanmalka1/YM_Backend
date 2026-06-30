@@ -1,18 +1,18 @@
 from datetime import date
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.binders.repositories.binder_lifecycle_log_repository import (
-    BinderLifecycleLogRepository,
+from app.audit.audit_constants import (
+    ACTION_BINDER_MARKED_READY_FOR_HANDOVER,
+    ENTITY_BINDER,
 )
+from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.services.binder_lifecycle_service import BinderLifecycleService
 from tests.helpers.identity import seed_client_identity
 
 
-def _seed_binder_with_audit(db, user_id: int):
-    client = seed_client_identity(
-        db,
-        full_name="Audit Client",
-        id_number="BND-HIST-1",
-    )
+def _seed_binder_with_audit(db, user_id: int) -> Binder:
+    """Create a binder and drive a real lifecycle transition so its audit rows land in
+    EntityAuditLog via the generic writer (no legacy BinderLifecycleLog path)."""
+    client = seed_client_identity(db, full_name="Audit Client", id_number="BND-HIST-1")
 
     binder = Binder(
         client_record_id=client.id,
@@ -26,84 +26,56 @@ def _seed_binder_with_audit(db, user_id: int):
     db.commit()
     db.refresh(binder)
 
-    log_repo = BinderLifecycleLogRepository(db)
-    log_repo.append(
-        binder.id,
-        field_name="location_status",
-        old_value="null",
-        new_value="in_office",
-        changed_by_user_id=user_id,
-    )
-    log_repo.append(
-        binder.id,
-        field_name="location_status",
-        old_value="in_office",
-        new_value="ready_for_handover",
-        changed_by_user_id=user_id,
-    )
+    service = BinderLifecycleService(db)
+    service.log_initial_state(binder, changed_by_user_id=user_id)
+    service.mark_ready_for_handover(binder.id, changed_by_user_id=user_id)
+    db.commit()
     return binder
 
 
-def test_binder_audit_endpoint_returns_logs(client, test_db, advisor_headers, test_user):
+def test_generic_binder_audit_returns_lifecycle_events(client, test_db, advisor_headers, test_user):
     binder = _seed_binder_with_audit(test_db, test_user.id)
 
-    resp = client.get(f"/api/v1/binders/{binder.id}/audit", headers=advisor_headers)
+    resp = client.get(f"/api/v1/audit/{ENTITY_BINDER}/{binder.id}", headers=advisor_headers)
     assert resp.status_code == 200
 
     payload = resp.json()
-    assert payload["binder_id"] == binder.id
-    assert payload["total"] == 2
-    assert payload["page"] == 1
-    assert payload["page_size"] == 50
-    audit = payload["audit"]
-    assert len(audit) == 2
-    assert audit[0]["old_value"] == "null"
-    assert audit[0]["new_value"] == "in_office"
-    assert audit[1]["new_value"] == "ready_for_handover"
+    actions = {item["action"] for item in payload["items"]}
+    assert ACTION_BINDER_MARKED_READY_FOR_HANDOVER in actions
+    # every lifecycle row carries the indexed client context.
+    assert all(
+        item["metadata_json"]["client_record_id"] == binder.client_record_id
+        for item in payload["items"]
+    )
+    assert payload["entity_deleted"] is False
 
 
-def test_binder_audit_pagination(client, test_db, advisor_headers, test_user):
+def test_generic_binder_audit_readable_by_secretary(client, test_db, secretary_headers, test_user):
+    binder = _seed_binder_with_audit(test_db, test_user.id)
+
+    resp = client.get(f"/api/v1/audit/{ENTITY_BINDER}/{binder.id}", headers=secretary_headers)
+    assert resp.status_code == 200
+    assert resp.json()["items"]
+
+
+def test_generic_binder_audit_pagination(client, test_db, advisor_headers, test_user):
     binder = _seed_binder_with_audit(test_db, test_user.id)
 
     resp = client.get(
-        f"/api/v1/binders/{binder.id}/audit",
+        f"/api/v1/audit/{ENTITY_BINDER}/{binder.id}",
         params={"page": 1, "page_size": 1},
         headers=advisor_headers,
     )
     assert resp.status_code == 200
     payload = resp.json()
-    assert payload["total"] == 2
     assert payload["page"] == 1
     assert payload["page_size"] == 1
-    assert len(payload["audit"]) == 1
-
-    resp2 = client.get(
-        f"/api/v1/binders/{binder.id}/audit",
-        params={"page": 2, "page_size": 1},
-        headers=advisor_headers,
-    )
-    assert resp2.status_code == 200
-    assert len(resp2.json()["audit"]) == 1
+    assert len(payload["items"]) == 1
+    assert payload["total"] >= 2
 
 
-def test_binder_audit_page_size_cap(client, test_db, advisor_headers, test_user):
-    binder = _seed_binder_with_audit(test_db, test_user.id)
-    resp = client.get(
-        f"/api/v1/binders/{binder.id}/audit",
-        params={"page_size": 999},
-        headers=advisor_headers,
-    )
-    assert resp.status_code == 422
-
-
-def test_binder_audit_404_when_missing(client, advisor_headers):
-    resp = client.get("/api/v1/binders/9999/audit", headers=advisor_headers)
-    assert resp.status_code == 404
-
-
-def test_binder_history_endpoint_is_removed(client, test_db, advisor_headers, test_user):
+def test_legacy_binder_audit_route_is_removed(client, test_db, advisor_headers, test_user):
     binder = _seed_binder_with_audit(test_db, test_user.id)
 
-    resp = client.get(f"/api/v1/binders/{binder.id}/history", headers=advisor_headers)
-
+    resp = client.get(f"/api/v1/binders/{binder.id}/audit", headers=advisor_headers)
     assert resp.status_code == 404

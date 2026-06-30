@@ -11,16 +11,17 @@ from sqlalchemy.orm import Session
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
+from app.audit.audit_constants import ACTION_BINDER_INTAKE_UPDATED, ENTITY_BINDER_INTAKE
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.binders.binder_audit import intake_metadata
 from app.binders.binder_messages import (
     BINDER_INTAKE_CROSS_CLIENT_VALIDATION_FAILED,
     BINDER_INTAKE_NOT_FOUND,
     BINDER_NOT_FOUND,
 )
+from app.binders.models.binder import Binder
 from app.binders.models.binder_intake import BinderIntake
 from app.binders.models.binder_intake_material import BinderIntakeMaterial
-from app.binders.repositories.binder_intake_edit_log_repository import (
-    BinderIntakeEditLogRepository,
-)
 from app.binders.repositories.binder_intake_material_repository import (
     BinderIntakeMaterialRepository,
 )
@@ -49,7 +50,7 @@ class BinderIntakeEditService:
         self.db = db
         self.intake_repo = BinderIntakeRepository(db)
         self.material_repo = BinderIntakeMaterialRepository(db)
-        self.edit_log_repo = BinderIntakeEditLogRepository(db)
+        self.audit_writer = EntityAuditWriter(db)
         self.client_record_repo = ClientRecordRepository(db)
         self.binder_repo = BinderRepository(db)
         self.business_repo = BusinessRepository(db)
@@ -62,6 +63,7 @@ class BinderIntakeEditService:
         actor_id: int,
         patch: dict[str, Any],
         binder_id: int | None = None,
+        actor_display_name: str | None = None,
     ) -> BinderIntake:
         """
         Apply a partial update to a BinderIntake.
@@ -72,10 +74,20 @@ class BinderIntakeEditService:
         - linked FK replacements: business_ids, annual_report_ids, vat_report_ids
 
         binder_id: when provided, the intake must belong to that binder (scoped lookup).
+
+        Each changed field is appended to EntityAuditLog as a ``binder_intake.updated``
+        row (§10b) in the caller's transaction.
         """
         intake = self.intake_repo.get_by_id(intake_id)
         if not intake or (binder_id is not None and intake.binder_id != binder_id):
             raise NotFoundError(BINDER_INTAKE_NOT_FOUND, ErrorCode.BINDER_INTAKE_NOT_FOUND)
+
+        owning_binder = self.binder_repo.get_by_id(intake.binder_id)
+        if not owning_binder:
+            raise NotFoundError(
+                BINDER_NOT_FOUND.format(binder_id=intake.binder_id),
+                ErrorCode.BINDER_NOT_FOUND,
+            )
 
         normalized_patch = self._normalize_patch(patch)
 
@@ -85,6 +97,8 @@ class BinderIntakeEditService:
             self._apply_logged_change(
                 intake=intake,
                 actor_id=actor_id,
+                actor_display_name=actor_display_name,
+                binder=owning_binder,
                 field_name=field,
                 target=intake,
                 attr_name=field,
@@ -92,7 +106,12 @@ class BinderIntakeEditService:
             )
 
         if self._is_transfer_patch(normalized_patch):
-            self._apply_transfer_patch(intake=intake, actor_id=actor_id, patch=normalized_patch)
+            self._apply_transfer_patch(
+                intake=intake,
+                actor_id=actor_id,
+                actor_display_name=actor_display_name,
+                patch=normalized_patch,
+            )
 
         self.db.flush()
         return intake
@@ -112,6 +131,7 @@ class BinderIntakeEditService:
         *,
         intake: BinderIntake,
         actor_id: int,
+        actor_display_name: str | None,
         patch: dict[str, Any],
     ) -> None:
         current_binder = self.binder_repo.get_by_id(intake.binder_id)
@@ -131,18 +151,22 @@ class BinderIntakeEditService:
         target_legal_entity_id = target_client_record.legal_entity_id
 
         if current_binder.client_record_id != target_client_id:
-            self.edit_log_repo.append(
-                intake_id=intake.id,
+            self._audit_change(
+                intake=intake,
+                binder=current_binder,
+                actor_id=actor_id,
+                actor_display_name=actor_display_name,
                 field_name="client_record_id",
-                old_value=self._stringify_value(current_binder.client_record_id),
-                new_value=self._stringify_value(target_client_id),
-                changed_by=actor_id,
+                old_value=current_binder.client_record_id,
+                new_value=target_client_id,
             )
 
         materials = self.material_repo.list_by_intake(intake.id)
         self._validate_and_apply_fk_updates(
             intake=intake,
+            binder=current_binder,
             actor_id=actor_id,
+            actor_display_name=actor_display_name,
             materials=materials,
             attr_name="business_id",
             replacements=patch.get("business_ids"),
@@ -152,7 +176,9 @@ class BinderIntakeEditService:
         )
         self._validate_and_apply_fk_updates(
             intake=intake,
+            binder=current_binder,
             actor_id=actor_id,
+            actor_display_name=actor_display_name,
             materials=materials,
             attr_name="annual_report_id",
             replacements=patch.get("annual_report_ids"),
@@ -162,7 +188,9 @@ class BinderIntakeEditService:
         )
         self._validate_and_apply_fk_updates(
             intake=intake,
+            binder=current_binder,
             actor_id=actor_id,
+            actor_display_name=actor_display_name,
             materials=materials,
             attr_name="vat_report_id",
             replacements=patch.get("vat_report_ids"),
@@ -175,6 +203,8 @@ class BinderIntakeEditService:
             self._apply_logged_change(
                 intake=intake,
                 actor_id=actor_id,
+                actor_display_name=actor_display_name,
+                binder=current_binder,
                 field_name="binder_id",
                 target=intake,
                 attr_name="binder_id",
@@ -223,7 +253,9 @@ class BinderIntakeEditService:
         self,
         *,
         intake: BinderIntake,
+        binder: Binder,
         actor_id: int,
+        actor_display_name: str | None,
         materials: list[BinderIntakeMaterial],
         attr_name: str,
         replacements: list[int] | None,
@@ -256,6 +288,8 @@ class BinderIntakeEditService:
             self._apply_logged_change(
                 intake=intake,
                 actor_id=actor_id,
+                actor_display_name=actor_display_name,
+                binder=binder,
                 field_name=f"material:{material.id}.{attr_name}",
                 target=material,
                 attr_name=attr_name,
@@ -267,6 +301,8 @@ class BinderIntakeEditService:
         *,
         intake: BinderIntake,
         actor_id: int,
+        actor_display_name: str | None,
+        binder: Binder,
         field_name: str,
         target: Any,
         attr_name: str,
@@ -276,14 +312,44 @@ class BinderIntakeEditService:
         if old_value == new_value:
             return
 
-        self.edit_log_repo.append(
-            intake_id=intake.id,
+        self._audit_change(
+            intake=intake,
+            binder=binder,
+            actor_id=actor_id,
+            actor_display_name=actor_display_name,
             field_name=field_name,
-            old_value=self._stringify_value(old_value),
-            new_value=self._stringify_value(new_value),
-            changed_by=actor_id,
+            old_value=old_value,
+            new_value=new_value,
         )
         setattr(target, attr_name, new_value)
+
+    def _audit_change(
+        self,
+        *,
+        intake: BinderIntake,
+        binder: Binder,
+        actor_id: int,
+        actor_display_name: str | None,
+        field_name: str,
+        old_value: Any,
+        new_value: Any,
+    ) -> None:
+        """Append one ``binder_intake.updated`` audit row for a single field change (§10b)."""
+        self.audit_writer.record_action(
+            ENTITY_BINDER_INTAKE,
+            intake.id,
+            actor_id,
+            ACTION_BINDER_INTAKE_UPDATED,
+            old_value={"value": self._stringify_value(old_value)},
+            new_value={"value": self._stringify_value(new_value)},
+            actor_display_name=actor_display_name,
+            metadata_json=intake_metadata(
+                client_record_id=binder.client_record_id,
+                binder_id=binder.id,
+                intake_id=intake.id,
+                field_name=field_name,
+            ),
+        )
 
     @staticmethod
     def _stringify_value(value: Any) -> str | None:
