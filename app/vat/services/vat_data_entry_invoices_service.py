@@ -1,9 +1,14 @@
 """Invoice add flow for VAT work items."""
 
-import json
 from datetime import datetime
 from uuid import uuid4
 
+from app.audit.audit_constants import (
+    ACTION_VAT_INVOICE_CREATED,
+    ENTITY_VAT_INVOICE,
+    ENTITY_VAT_WORK_ITEM,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -23,11 +28,8 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.vat_amounts import split_gross_amount
-from app.vat.vat_constants import (
-    ACTION_INVOICE_ADDED,
-    ACTION_STATUS_CHANGED,
-    CATEGORY_LABELS_SERVER,
-)
+from app.vat.vat_audit import invoice_metadata, invoice_snapshot, work_item_metadata
+from app.vat.vat_constants import CATEGORY_LABELS_SERVER
 from app.vat.vat_data_entry_common import (
     assert_editable,
     check_osek_patur_ceiling,
@@ -64,6 +66,7 @@ def add_invoice(
     rate_type: VatRateType = VatRateType.STANDARD,
     document_type: DocumentType | None = None,
     business_activity_id: int | None = None,
+    actor_display_name: str | None = None,
 ):
     """Add an invoice to a work item. Validation delegated to resolve_invoice_derived_fields."""
     item = work_item_repo.get_by_id(item_id)
@@ -139,17 +142,21 @@ def add_invoice(
             ErrorCode.VAT_CONFLICT,
         )
 
+    writer = EntityAuditWriter(work_item_repo.db)
+
     original_status = item.status
 
     if original_status == VatWorkItemStatus.MATERIAL_RECEIVED:
         work_item_repo.update_status(item_id, VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS)
-        work_item_repo.append_audit(
-            work_item_id=item_id,
-            performed_by=created_by,
-            action=ACTION_STATUS_CHANGED,
-            old_value=VatWorkItemStatus.MATERIAL_RECEIVED.value,
-            new_value=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
+        writer.record_status_change(
+            ENTITY_VAT_WORK_ITEM,
+            item_id,
+            created_by,
+            VatWorkItemStatus.MATERIAL_RECEIVED.value,
+            VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
             note=VAT_AUTO_STATUS_CHANGE_ON_FIRST_INVOICE,
+            actor_display_name=actor_display_name,
+            metadata_json=work_item_metadata(item),
         )
     elif original_status not in (
         VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
@@ -181,17 +188,15 @@ def add_invoice(
 
     recalculate_totals(work_item_repo, invoice_repo, item_id)
 
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=created_by,
-        action=ACTION_INVOICE_ADDED,
-        new_value=json.dumps(
-            {
-                "invoice_id": invoice.id,
-                "type": invoice_type.value,
-                "number": invoice_number,
-                "vat_amount": str(vat_amount),
-            }
+    writer.record_action(
+        ENTITY_VAT_INVOICE,
+        invoice.id,
+        created_by,
+        ACTION_VAT_INVOICE_CREATED,
+        new_value=invoice_snapshot(invoice),
+        actor_display_name=actor_display_name,
+        metadata_json=invoice_metadata(
+            item, invoice_number=invoice.invoice_number, business_id=invoice.business_activity_id
         ),
     )
 

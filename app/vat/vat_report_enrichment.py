@@ -7,8 +7,6 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.vat_report_queries import (
-    count_audit_trail,
-    get_audit_trail,
     get_work_item,
     list_all_work_items,
     list_client_work_items_paginated,
@@ -130,23 +128,5 @@ def get_list_enriched(
         "items": items,
         "total": total,
         **client_maps,
-        "user_map": {u.id: u.full_name for u in users},
-    }
-
-
-def get_audit_trail_enriched(
-    work_item_repo: VatWorkItemRepository,
-    user_repo: UserRepository,
-    item_id: int,
-    page: int,
-    page_size: int,
-) -> dict:
-    get_work_item(work_item_repo, item_id)  # raises VAT.NOT_FOUND (404) if missing
-    entries = get_audit_trail(work_item_repo, item_id, page, page_size)
-    user_ids = list({e.performed_by for e in entries})
-    users = user_repo.list_by_ids(user_ids) if user_ids else []
-    return {
-        "entries": entries,
-        "total": count_audit_trail(work_item_repo, item_id),
         "user_map": {u.id: u.full_name for u in users},
     }

@@ -2,6 +2,12 @@
 
 from decimal import Decimal
 
+from app.audit.audit_constants import (
+    ACTION_VAT_INVOICE_AMOUNT_CHANGED,
+    ACTION_VAT_INVOICE_UPDATED,
+    ENTITY_VAT_INVOICE,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
@@ -16,10 +22,9 @@ from app.vat.repositories.vat_work_item_write_repository import (
 )
 from app.vat.schemas.vat_invoice_schema import validate_counterparty_pair
 from app.vat.vat_amounts import split_gross_amount
-from app.vat.vat_constants import ACTION_INVOICE_UPDATED
+from app.vat.vat_audit import invoice_metadata, invoice_snapshot
 from app.vat.vat_data_entry_common import (
     assert_editable,
-    audit_invoice_snapshot,
     recalculate_totals,
 )
 from app.vat.vat_messages import (
@@ -39,6 +44,7 @@ def update_invoice(
     invoice_id: int,
     performed_by: int,
     patch: dict,
+    actor_display_name: str | None = None,
 ):
     """Update an existing invoice (partial PATCH). Work item must not be FILED.
 
@@ -109,7 +115,7 @@ def update_invoice(
     )
     validate_counterparty_pair(effective_counterparty_id, effective_counterparty_id_type)
 
-    snapshot_before = audit_invoice_snapshot(invoice)
+    snapshot_before = invoice_snapshot(invoice)
 
     # Only fields the client actually sent are applied (true partial PATCH).
     update_fields: dict = {
@@ -161,12 +167,23 @@ def update_invoice(
 
     recalculate_totals(work_item_repo, invoice_repo, item_id)
 
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=performed_by,
-        action=ACTION_INVOICE_UPDATED,
+    snapshot_after = invoice_snapshot(updated)
+    action = (
+        ACTION_VAT_INVOICE_AMOUNT_CHANGED
+        if snapshot_after["vat_amount"] != snapshot_before["vat_amount"]
+        else ACTION_VAT_INVOICE_UPDATED
+    )
+    EntityAuditWriter(work_item_repo.db).record_action(
+        ENTITY_VAT_INVOICE,
+        invoice_id,
+        performed_by,
+        action,
         old_value=snapshot_before,
-        new_value=audit_invoice_snapshot(updated),
+        new_value=snapshot_after,
+        actor_display_name=actor_display_name,
+        metadata_json=invoice_metadata(
+            item, invoice_number=updated.invoice_number, business_id=updated.business_activity_id
+        ),
     )
 
     return updated

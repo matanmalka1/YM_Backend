@@ -44,6 +44,7 @@ def create_work_item(
         assigned_to=request.assigned_to,
         mark_pending=request.mark_pending,
         pending_materials_note=request.pending_materials_note,
+        actor_display_name=current_user.full_name,
     )
     return serialize_work_item(service, item.id, current_user.role)
 
@@ -68,5 +69,6 @@ def mark_materials_complete(
     item = service.mark_materials_complete(
         item_id=item_id,
         performed_by=current_user.id,
+        actor_display_name=current_user.full_name,
     )
     return serialize_work_item(service, item.id, current_user.role)

@@ -1,17 +1,14 @@
 """Operational metadata mutations for VAT work items."""
 
-import json
-
+from app.audit.audit_constants import ENTITY_VAT_WORK_ITEM
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.vat_constants import (
-    ACTION_METADATA_UPDATED,
-    ACTION_WORK_ITEM_DELETED,
-)
+from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_messages import (
     VAT_FILED_ITEM_IMMUTABLE,
     VAT_ITEM_NOT_FOUND,
@@ -26,6 +23,7 @@ def update_work_item_metadata(
     item_id: int,
     performed_by: int,
     patch: dict,
+    actor_display_name: str | None = None,
 ):
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
@@ -35,21 +33,19 @@ def update_work_item_metadata(
 
     fields = {key: value for key, value in patch.items() if key in _UPDATEABLE_FIELDS}
     old_values = {key: getattr(item, key) for key in fields}
-    changed = {
-        key: {"old": old_values[key], "new": value}
-        for key, value in fields.items()
-        if old_values[key] != value
-    }
+    changed = {key: value for key, value in fields.items() if old_values[key] != value}
 
     updated = work_item_repo.update_work_item_metadata(item_id, item=item, **fields)
 
-    for field, values in changed.items():
-        work_item_repo.append_audit(
-            work_item_id=item_id,
-            performed_by=performed_by,
-            action=ACTION_METADATA_UPDATED,
-            old_value=json.dumps({field: values["old"]}, ensure_ascii=False),
-            new_value=json.dumps({field: values["new"]}, ensure_ascii=False),
+    if changed:
+        EntityAuditWriter(work_item_repo.db).record_update(
+            ENTITY_VAT_WORK_ITEM,
+            item_id,
+            performed_by,
+            old_value={key: old_values[key] for key in changed},
+            new_value=dict(changed),
+            actor_display_name=actor_display_name,
+            metadata_json=work_item_metadata(item),
         )
 
     return updated
@@ -60,6 +56,7 @@ def soft_delete_work_item(
     *,
     item_id: int,
     deleted_by: int,
+    actor_display_name: str | None = None,
 ) -> None:
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
@@ -67,11 +64,14 @@ def soft_delete_work_item(
     if item.status == VatWorkItemStatus.FILED:
         raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
+    metadata = work_item_metadata(item)
+    status_before = item.status.value
     work_item_repo.soft_delete_work_item(item_id, deleted_by=deleted_by, item=item)
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=deleted_by,
-        action=ACTION_WORK_ITEM_DELETED,
-        old_value=json.dumps({"deleted_at": None, "deleted_by": None}, ensure_ascii=False),
-        new_value=json.dumps({"deleted": True, "deleted_by": deleted_by}, ensure_ascii=False),
+    EntityAuditWriter(work_item_repo.db).record_delete(
+        ENTITY_VAT_WORK_ITEM,
+        item_id,
+        deleted_by,
+        old_value={"status": status_before},
+        actor_display_name=actor_display_name,
+        metadata_json=metadata,
     )

@@ -24,17 +24,9 @@ VALID_TRANSITIONS: dict[VatWorkItemStatus, set[VatWorkItemStatus]] = {
     VatWorkItemStatus.FILED: set(),  # terminal — immutable
 }
 
-# Audit action labels
-ACTION_WORK_ITEM_CREATED_PENDING = "work_item_created_pending"
-ACTION_MATERIAL_RECEIVED = "material_received"
-ACTION_STATUS_CHANGED = "status_changed"
-ACTION_INVOICE_ADDED = "invoice_added"
-ACTION_INVOICE_DELETED = "invoice_deleted"
-ACTION_INVOICE_UPDATED = "invoice_updated"
-ACTION_OVERRIDE = "vat_override"
-ACTION_FILED = "filed"
-ACTION_METADATA_UPDATED = "metadata_updated"
-ACTION_WORK_ITEM_DELETED = "work_item_deleted"
+# VAT audit actions are now namespaced EntityAuditLog constants in
+# app/audit/audit_constants.py (ACTION_VAT_WORK_ITEM_* / ACTION_VAT_INVOICE_*);
+# the raw VAT-local strings were removed in the Phase 3 audit refactor.
 
 CATEGORY_LABELS_SERVER: dict[str, str] = {
     "inventory": "קניית סחורה / מלאי",
@@ -68,16 +60,6 @@ CATEGORY_LABELS_SERVER: dict[str, str] = {
 OSEK_PATUR_CEILING_WARNING_RATE: Decimal = Decimal("0.80")
 
 __all__ = [
-    "ACTION_FILED",
-    "ACTION_INVOICE_ADDED",
-    "ACTION_INVOICE_DELETED",
-    "ACTION_INVOICE_UPDATED",
-    "ACTION_MATERIAL_RECEIVED",
-    "ACTION_METADATA_UPDATED",
-    "ACTION_WORK_ITEM_CREATED_PENDING",
-    "ACTION_OVERRIDE",
-    "ACTION_STATUS_CHANGED",
-    "ACTION_WORK_ITEM_DELETED",
     "CATEGORY_LABELS_SERVER",
     "OSEK_PATUR_CEILING_WARNING_RATE",
     "VALID_TRANSITIONS",

@@ -81,3 +81,20 @@ ACTION_INCOME_DELETED = entity_action(ENTITY_ANNUAL_REPORT, "income_line_deleted
 ACTION_EXPENSE_ADDED = entity_action(ENTITY_ANNUAL_REPORT, "expense_line_added")
 ACTION_EXPENSE_UPDATED = entity_action(ENTITY_ANNUAL_REPORT, "expense_line_updated")
 ACTION_EXPENSE_DELETED = entity_action(ENTITY_ANNUAL_REPORT, "expense_line_deleted")
+
+# ---------------------------------------------------------------------------
+# VAT actions (pre-namespaced). Work-item lifecycle events anchor on the
+# vat_work_item entity; invoice events anchor on the vat_invoice entity (the
+# owning work item is carried in metadata_json.vat_work_item_id).
+# ---------------------------------------------------------------------------
+ACTION_VAT_WORK_ITEM_CREATED = entity_action(ENTITY_VAT_WORK_ITEM, ACTION_CREATED)
+ACTION_VAT_WORK_ITEM_STATUS_CHANGED = entity_action(ENTITY_VAT_WORK_ITEM, ACTION_STATUS_CHANGED)
+ACTION_VAT_WORK_ITEM_FILED = entity_action(ENTITY_VAT_WORK_ITEM, "filed")
+ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN = entity_action(ENTITY_VAT_WORK_ITEM, "amount_overridden")
+ACTION_VAT_WORK_ITEM_UPDATED = entity_action(ENTITY_VAT_WORK_ITEM, ACTION_UPDATED)
+ACTION_VAT_WORK_ITEM_DELETED = entity_action(ENTITY_VAT_WORK_ITEM, ACTION_DELETED)
+
+ACTION_VAT_INVOICE_CREATED = entity_action(ENTITY_VAT_INVOICE, ACTION_CREATED)
+ACTION_VAT_INVOICE_UPDATED = entity_action(ENTITY_VAT_INVOICE, ACTION_UPDATED)
+ACTION_VAT_INVOICE_AMOUNT_CHANGED = entity_action(ENTITY_VAT_INVOICE, "amount_changed")
+ACTION_VAT_INVOICE_DELETED = entity_action(ENTITY_VAT_INVOICE, ACTION_DELETED)

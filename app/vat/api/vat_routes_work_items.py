@@ -33,6 +33,7 @@ def update_work_item_metadata(
         item_id=item_id,
         performed_by=current_user.id,
         patch=request.model_dump(exclude_unset=True),
+        actor_display_name=current_user.full_name,
     )
     return serialize_work_item(service, item.id, current_user.role)
 
@@ -52,4 +53,5 @@ def delete_work_item(
     service.soft_delete_work_item(
         item_id=item_id,
         deleted_by=current_user.id,
+        actor_display_name=current_user.full_name,
     )

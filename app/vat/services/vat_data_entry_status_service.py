@@ -1,12 +1,14 @@
 """Status transitions for VAT work items during data entry."""
 
+from app.audit.audit_constants import ENTITY_VAT_WORK_ITEM
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.vat_constants import ACTION_STATUS_CHANGED
+from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_data_entry_common import assert_transition_allowed
 from app.vat.vat_messages import (
     VAT_CORRECTION_NOTE_REQUIRED,
@@ -20,6 +22,7 @@ def mark_ready_for_review(
     *,
     item_id: int,
     performed_by: int,
+    actor_display_name: str | None = None,
 ):
     """
     Transition DATA_ENTRY_IN_PROGRESS → READY_FOR_REVIEW.
@@ -39,12 +42,14 @@ def mark_ready_for_review(
 
     updated = work_item_repo.update_status(item_id, VatWorkItemStatus.READY_FOR_REVIEW, item=item)
 
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=performed_by,
-        action=ACTION_STATUS_CHANGED,
-        old_value=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
-        new_value=VatWorkItemStatus.READY_FOR_REVIEW.value,
+    EntityAuditWriter(work_item_repo.db).record_status_change(
+        ENTITY_VAT_WORK_ITEM,
+        item_id,
+        performed_by,
+        VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
+        VatWorkItemStatus.READY_FOR_REVIEW.value,
+        actor_display_name=actor_display_name,
+        metadata_json=work_item_metadata(item),
     )
 
     return updated
@@ -56,6 +61,7 @@ def send_back_for_correction(
     item_id: int,
     performed_by: int,
     correction_note: str,
+    actor_display_name: str | None = None,
 ):
     """
     Advisor sends work item back for correction.
@@ -79,13 +85,15 @@ def send_back_for_correction(
         item_id, VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS, item=item
     )
 
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=performed_by,
-        action=ACTION_STATUS_CHANGED,
-        old_value=VatWorkItemStatus.READY_FOR_REVIEW.value,
-        new_value=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
+    EntityAuditWriter(work_item_repo.db).record_status_change(
+        ENTITY_VAT_WORK_ITEM,
+        item_id,
+        performed_by,
+        VatWorkItemStatus.READY_FOR_REVIEW.value,
+        VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
         note=correction_note,
+        actor_display_name=actor_display_name,
+        metadata_json=work_item_metadata(item),
     )
 
     return updated

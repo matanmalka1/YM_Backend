@@ -165,9 +165,12 @@ class BinderIntakeService:
         performed_by: int,
     ) -> None:
         """Advance PENDING_MATERIALS → MATERIAL_RECEIVED for linked VAT work items."""
-        from app.vat.vat_constants import ACTION_STATUS_CHANGED
+        from app.audit.audit_constants import ENTITY_VAT_WORK_ITEM
+        from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+        from app.vat.vat_audit import work_item_metadata
 
         vat_repo = VatWorkItemRepository(self.db)
+        writer = EntityAuditWriter(self.db)
         seen: set[int] = set()
         for mat in materials or []:
             if mat.get("material_type") != "vat":
@@ -185,12 +188,13 @@ class BinderIntakeService:
                 item=item,
                 pending_materials_note=None,
             )
-            vat_repo.append_audit(
-                work_item_id=vat_id,
-                performed_by=performed_by,
-                action=ACTION_STATUS_CHANGED,
-                old_value=VatWorkItemStatus.PENDING_MATERIALS.value,
-                new_value=VatWorkItemStatus.MATERIAL_RECEIVED.value,
+            writer.record_status_change(
+                ENTITY_VAT_WORK_ITEM,
+                vat_id,
+                performed_by,
+                VatWorkItemStatus.PENDING_MATERIALS.value,
+                VatWorkItemStatus.MATERIAL_RECEIVED.value,
+                metadata_json=work_item_metadata(item),
             )
 
     def _resolve_existing_binder_for_materials(

@@ -1,7 +1,10 @@
 """Work item creation and material intake flows."""
 
-import json
-
+from app.audit.audit_constants import (
+    ACTION_VAT_WORK_ITEM_CREATED,
+    ENTITY_VAT_WORK_ITEM,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.client_enums import ClientStatus
 from app.common.enums import ObligationType, VatType
 from app.core.error_codes import ErrorCode
@@ -14,11 +17,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 from app.vat.services.vat_client_context_service import VatClientContextService
-from app.vat.vat_constants import (
-    ACTION_MATERIAL_RECEIVED,
-    ACTION_STATUS_CHANGED,
-    ACTION_WORK_ITEM_CREATED_PENDING,
-)
+from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_messages import (
     VAT_CLIENT_CLOSED_CREATE_ITEM,
     VAT_CLIENT_EXEMPT,
@@ -59,6 +58,7 @@ def create_work_item(
     assigned_to: int | None = None,
     mark_pending: bool = False,
     pending_materials_note: str | None = None,
+    actor_display_name: str | None = None,
 ):
     client_record, legal_entity = VatClientContextService(db).get_active_client_and_entity(
         client_record_id
@@ -112,12 +112,14 @@ def create_work_item(
     materializer.link_vat_work_item(item)
     db.flush()
 
-    action = ACTION_WORK_ITEM_CREATED_PENDING if mark_pending else ACTION_MATERIAL_RECEIVED
-    work_item_repo.append_audit(
-        work_item_id=item.id,
-        performed_by=created_by,
-        action=action,
-        new_value=json.dumps({"status": status.value, "period": period}),
+    EntityAuditWriter(db).record_action(
+        ENTITY_VAT_WORK_ITEM,
+        item.id,
+        created_by,
+        ACTION_VAT_WORK_ITEM_CREATED,
+        new_value={"status": status.value, "period": period},
+        actor_display_name=actor_display_name,
+        metadata_json=work_item_metadata(item),
     )
 
     return item
@@ -128,6 +130,7 @@ def mark_materials_complete(
     *,
     item_id: int,
     performed_by: int,
+    actor_display_name: str | None = None,
 ):
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
@@ -147,12 +150,14 @@ def mark_materials_complete(
         pending_materials_note=None,
     )
 
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=performed_by,
-        action=ACTION_STATUS_CHANGED,
-        old_value=old_status,
-        new_value=VatWorkItemStatus.MATERIAL_RECEIVED.value,
+    EntityAuditWriter(work_item_repo.db).record_status_change(
+        ENTITY_VAT_WORK_ITEM,
+        item_id,
+        performed_by,
+        old_status,
+        VatWorkItemStatus.MATERIAL_RECEIVED.value,
+        actor_display_name=actor_display_name,
+        metadata_json=work_item_metadata(item),
     )
 
     return updated

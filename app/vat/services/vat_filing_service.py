@@ -1,7 +1,11 @@
 """Advisor review and filing flows."""
 
-import json
-
+from app.audit.audit_constants import (
+    ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
+    ACTION_VAT_WORK_ITEM_FILED,
+    ENTITY_VAT_WORK_ITEM,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import SubmissionMethod
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
@@ -9,7 +13,7 @@ from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.vat_constants import ACTION_FILED, ACTION_OVERRIDE
+from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_data_entry_common import assert_transition_allowed
 from app.vat.vat_messages import (
     AMENDED_ITEM_NOT_FILED,
@@ -65,6 +69,7 @@ def file_vat_return(
     submission_reference: str | None = None,
     is_amendment: bool = False,
     amends_item_id: int | None = None,
+    actor_display_name: str | None = None,
 ):
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
@@ -93,15 +98,20 @@ def file_vat_return(
             FINAL_VAT_AMOUNT_REQUIRED, code=ErrorCode.VAT_MISSING_FINAL_AMOUNT, status_code=400
         )
 
+    writer = EntityAuditWriter(work_item_repo.db)
+
     if is_overridden:
         final_amount = override_amount
-        work_item_repo.append_audit(
-            work_item_id=item_id,
-            performed_by=filed_by,
-            action=ACTION_OVERRIDE,
-            old_value=str(item.net_vat),
-            new_value=str(override_amount),
+        writer.record_action(
+            ENTITY_VAT_WORK_ITEM,
+            item_id,
+            filed_by,
+            ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
+            old_value={"final_vat_amount": str(item.net_vat)},
+            new_value={"final_vat_amount": str(override_amount)},
             note=override_justification,
+            actor_display_name=actor_display_name,
+            metadata_json=work_item_metadata(item),
         )
     else:
         final_amount = float(item.net_vat)
@@ -119,18 +129,18 @@ def file_vat_return(
         item=item,
     )
 
-    work_item_repo.append_audit(
-        work_item_id=item_id,
-        performed_by=filed_by,
-        action=ACTION_FILED,
-        performed_at=filed_item.filed_at,
-        new_value=json.dumps(
-            {
-                "final_vat_amount": str(final_amount),
-                "submission_method": submission_method.value,
-                "is_overridden": is_overridden,
-            }
-        ),
+    writer.record_action(
+        ENTITY_VAT_WORK_ITEM,
+        item_id,
+        filed_by,
+        ACTION_VAT_WORK_ITEM_FILED,
+        new_value={
+            "final_vat_amount": str(final_amount),
+            "submission_method": submission_method.value,
+            "is_overridden": is_overridden,
+        },
+        actor_display_name=actor_display_name,
+        metadata_json=work_item_metadata(item),
     )
 
     return filed_item

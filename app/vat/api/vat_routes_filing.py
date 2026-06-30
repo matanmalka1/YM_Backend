@@ -44,5 +44,6 @@ def file_vat_return(
         submission_reference=request.submission_reference,
         is_amendment=request.is_amendment,
         amends_item_id=request.amends_item_id,
+        actor_display_name=current_user.full_name,
     )
     return serialize_work_item(service, item.id, current_user.role)

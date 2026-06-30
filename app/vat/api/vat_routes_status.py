@@ -38,6 +38,7 @@ def mark_ready_for_review(
     item = service.mark_ready_for_review(
         item_id=item_id,
         performed_by=current_user.id,
+        actor_display_name=current_user.full_name,
     )
     return serialize_work_item(service, item.id, current_user.role)
 
@@ -62,5 +63,6 @@ def send_back_for_correction(
         item_id=item_id,
         performed_by=current_user.id,
         correction_note=request.correction_note,
+        actor_display_name=current_user.full_name,
     )
     return serialize_work_item(service, item.id, current_user.role)

@@ -1,6 +1,5 @@
 """Shared helpers for VAT work item data-entry flows."""
 
-import json
 from decimal import Decimal
 
 from app.common.enums import EntityType
@@ -59,17 +58,6 @@ def recalculate_totals(
     output_net, input_net = invoice_repo.sum_net_both_types(item_id)
     work_item_repo.update_vat_totals(item_id, output_vat, input_vat, output_net, input_net)
     return output_vat, input_vat
-
-
-def audit_invoice_snapshot(invoice) -> str:
-    return json.dumps(
-        {
-            "invoice_id": invoice.id,
-            "type": invoice.invoice_type.value,
-            "number": invoice.invoice_number,
-            "vat_amount": str(invoice.vat_amount),
-        }
-    )
 
 
 def resolve_invoice_derived_fields(

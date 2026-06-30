@@ -211,9 +211,6 @@ class SeedOrchestrator:
             vat_builder.create_vat_invoices(
                 db, self.rng, self.cfg, vat_work_items, seeded_users
             )
-            vat_builder.create_vat_audit_logs(
-                db, self.rng, vat_work_items, seeded_users
-            )
 
             advance_payments_builder.create_advance_payments(
                 db, self.rng, self.cfg, all_businesses

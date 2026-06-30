@@ -52,6 +52,7 @@ def add_invoice(
         rate_type=request.rate_type,
         document_type=request.document_type,
         business_activity_id=request.business_activity_id,
+        actor_display_name=current_user.full_name,
     )
     response = VatInvoiceResponse.model_validate(invoice)
     response.ceiling_warning = ceiling_warning
@@ -102,6 +103,7 @@ def update_invoice(
         invoice_id=invoice_id,
         performed_by=current_user.id,
         patch=patch,
+        actor_display_name=current_user.full_name,
     )
 
 
@@ -123,4 +125,5 @@ def delete_invoice(
         item_id=item_id,
         invoice_id=invoice_id,
         performed_by=current_user.id,
+        actor_display_name=current_user.full_name,
     )

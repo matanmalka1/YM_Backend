@@ -14,7 +14,6 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import UserRole
-from app.vat.models.vat_audit_log import VatAuditLog
 from app.vat.models.vat_enums import (
     CounterpartyIdType,
     DocumentType,
@@ -462,41 +461,8 @@ def create_vat_invoices(db, rng: Random, cfg, work_items, users) -> list[VatInvo
     return invoices
 
 
-def create_vat_audit_logs(db, rng: Random, work_items, users) -> None:
-    advisors = [u.id for u in users if u.role == UserRole.ADVISOR]
-    fallback_user_id = users[0].id if users else None
-    for work_item in work_items:
-        events = [("status_changed", None, work_item.status.value)]
-        if work_item.net_vat:
-            events.append(("vat_calculated", None, str(work_item.net_vat)))
-        if work_item.filed_at:
-            events.append(
-                ("filed", None, str(work_item.final_vat_amount or work_item.net_vat))
-            )
-        if work_item.is_amendment and work_item.amends_item_id:
-            events.append(
-                ("amendment_linked", str(work_item.amends_item_id), work_item.period)
-            )
-        for action, old, new in events:
-            performed_at = work_item.filed_at if action == "filed" else work_item.updated_at
-            db.add(
-                VatAuditLog(
-                    work_item_id=work_item.id,
-                    performed_by=rng.choice(advisors) if advisors else fallback_user_id,
-                    action=action,
-                    old_value=old,
-                    new_value=new,
-                    note=(
-                        "נדרש תיקון לדיווח קודם"
-                        if action == "amendment_linked"
-                        else (
-                            "בוצע override ידני"
-                            if action == "filed" and work_item.is_overridden
-                            else None
-                        )
-                    ),
-                    invoice_id=None,
-                    performed_at=performed_at,
-                )
-            )
-    db.flush()
+# VAT audit rows are no longer seeded: VAT mutations write to the generic
+# EntityAuditLog via EntityAuditWriter at runtime (Phase 3 audit refactor). The
+# demo seed creates work items/invoices directly (no service-layer mutations), so
+# there are no seeded VAT audit rows; the legacy create_vat_audit_logs builder was
+# removed with VatAuditLog's read path.

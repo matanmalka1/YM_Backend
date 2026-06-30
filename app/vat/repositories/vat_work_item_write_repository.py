@@ -1,4 +1,9 @@
-"""Write operations and audit delegation for VatWorkItem entities."""
+"""Write operations for VatWorkItem entities.
+
+Audit is no longer delegated here: VAT mutations write to the generic
+EntityAuditLog via ``EntityAuditWriter`` in the service layer (see
+``app/vat/vat_audit.py``); reads go through ``AuditTrailService``.
+"""
 
 from datetime import date
 
@@ -8,10 +13,8 @@ from sqlalchemy.orm import Session
 from app.common.enums import SubmissionMethod
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_audit_log import VatAuditLog
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
-from app.vat.repositories.vat_audit_log_repository import VatAuditLogRepository
 from app.vat.repositories.vat_work_item_query_repository import (
     VatWorkItemQueryRepository,
 )
@@ -23,7 +26,6 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
     def __init__(self, db: Session):
         super().__init__(db)
         self._query = VatWorkItemQueryRepository(db)
-        self._audit = VatAuditLogRepository(db)
 
     # ── Read delegation ───────────────────────────────────────────────────────
 
@@ -265,14 +267,3 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         item.updated_at = utcnow()
         self.db.flush()
         return item
-
-    def append_audit(self, **kwargs) -> VatAuditLog:
-        return self._audit.append(**kwargs)
-
-    def count_audit_trail(self, work_item_id: int) -> int:
-        return self._audit.count_audit_trail(work_item_id)
-
-    def get_audit_trail(
-        self, work_item_id: int, page: int = 1, page_size: int = 20
-    ) -> list[VatAuditLog]:
-        return self._audit.get_audit_trail(work_item_id, page=page, page_size=page_size)

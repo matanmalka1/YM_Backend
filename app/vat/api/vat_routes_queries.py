@@ -15,7 +15,6 @@ from app.vat.api.vat_serializers import (
     serialize_enriched_work_items,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.schemas.vat_audit import VatAuditLogResponse, VatAuditTrailResponse
 from app.vat.schemas.vat_report import (
     VatPeriodOptionsResponse,
     VatWorkItemListResponse,
@@ -176,29 +175,5 @@ def list_work_items(
         user_role=current_user.role,
     )
     return VatWorkItemListResponse(
-        items=items, total=enriched["total"], page=page, page_size=page_size
-    )
-
-
-@router.get(
-    "/work-items/{item_id}/audit",
-    response_model=VatAuditTrailResponse,
-    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
-)
-def get_audit_trail(
-    item_id: PathId,
-    db: DBSession,
-    page: int = Query(default=1, ge=1),
-    page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
-):
-    service = VatReportService(db)
-    enriched = service.get_audit_trail_enriched(item_id, page, page_size)
-    items = []
-    for e in enriched["entries"]:
-        row = VatAuditLogResponse.model_validate(e)
-        row.performed_by_name = enriched["user_map"].get(e.performed_by)
-        items.append(row)
-    return VatAuditTrailResponse(
         items=items, total=enriched["total"], page=page, page_size=page_size
     )

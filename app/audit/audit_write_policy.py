@@ -46,6 +46,16 @@ from app.audit.audit_constants import (
     ACTION_RESTORED,
     ACTION_STATUS_CHANGED,
     ACTION_UPDATED,
+    ACTION_VAT_INVOICE_AMOUNT_CHANGED,
+    ACTION_VAT_INVOICE_CREATED,
+    ACTION_VAT_INVOICE_DELETED,
+    ACTION_VAT_INVOICE_UPDATED,
+    ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
+    ACTION_VAT_WORK_ITEM_CREATED,
+    ACTION_VAT_WORK_ITEM_DELETED,
+    ACTION_VAT_WORK_ITEM_FILED,
+    ACTION_VAT_WORK_ITEM_STATUS_CHANGED,
+    ACTION_VAT_WORK_ITEM_UPDATED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_BUSINESS,
     ENTITY_CHARGE,
@@ -140,6 +150,24 @@ _EXPENSE_FIELDS = (
 )
 _ANNEX_FIELDS = frozenset({"schedule", "line_id", "line_number", "data", "notes"})
 _STATUS_ONLY = frozenset({"status"})
+
+# VAT metadata: client_record_id is the indexed client context (§8); period/
+# tax_year give the reporting period; invoice events additionally carry the
+# owning work item + invoice identity.
+_VAT_WORK_ITEM_META = frozenset({"client_record_id", "period", "tax_year", "source"})
+_VAT_INVOICE_META = frozenset(
+    {
+        "client_record_id",
+        "vat_work_item_id",
+        "invoice_number",
+        "period",
+        "tax_year",
+        "business_id",
+        "source",
+    }
+)
+# Invoice snapshot keys captured in old_value/new_value.
+_VAT_INVOICE_FIELDS = frozenset({"invoice_id", "type", "number", "vat_amount"})
 
 
 @dataclass(frozen=True)
@@ -305,6 +333,58 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
             {"client_record_id", "tax_year", "line_id", "schedule_id", "line_number"}
         ),
         metadata_allowed=_AR_META,
+    ),
+    # vat_work_item (lifecycle on the work item itself).
+    ACTION_VAT_WORK_ITEM_CREATED: ActionPolicy(
+        value_fields=frozenset({"status", "period"}),
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    ACTION_VAT_WORK_ITEM_STATUS_CHANGED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    ACTION_VAT_WORK_ITEM_FILED: ActionPolicy(
+        value_fields=frozenset({"final_vat_amount", "submission_method", "is_overridden"}),
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN: ActionPolicy(
+        value_fields=frozenset({"final_vat_amount"}),
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    ACTION_VAT_WORK_ITEM_UPDATED: ActionPolicy(
+        value_fields=frozenset({"assigned_to", "pending_materials_note"}),
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    ACTION_VAT_WORK_ITEM_DELETED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    # vat_invoice (line-item events; owning work item carried in metadata).
+    ACTION_VAT_INVOICE_CREATED: ActionPolicy(
+        value_fields=_VAT_INVOICE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_INVOICE_META,
+    ),
+    ACTION_VAT_INVOICE_UPDATED: ActionPolicy(
+        value_fields=_VAT_INVOICE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_INVOICE_META,
+    ),
+    ACTION_VAT_INVOICE_AMOUNT_CHANGED: ActionPolicy(
+        value_fields=_VAT_INVOICE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_INVOICE_META,
+    ),
+    ACTION_VAT_INVOICE_DELETED: ActionPolicy(
+        value_fields=_VAT_INVOICE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_INVOICE_META,
     ),
     # signature_request (evidence; per-action forensic metadata §8a). Phase 6 wires
     # the writers; policies exist now so the sensitive type is governed + testable.
