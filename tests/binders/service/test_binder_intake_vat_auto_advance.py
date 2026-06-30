@@ -10,9 +10,10 @@ from datetime import date
 
 from sqlalchemy import select
 
+from app.audit.audit_constants import ACTION_VAT_WORK_ITEM_STATUS_CHANGED, ENTITY_VAT_WORK_ITEM
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.binders.services.binder_intake_service import BinderIntakeService
 from app.common.enums import IdNumberType, VatType
-from app.vat.models.vat_audit_log import VatAuditLog
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_business, seed_client_identity
@@ -73,7 +74,7 @@ def test_vat_material_advances_pending_materials_to_material_received(test_db, t
 
 
 def test_vat_material_advance_writes_audit_entry(test_db, test_user):
-    """Status advance appends a VatAuditLog row with old/new status values."""
+    """Status advance appends a vat_work_item.status_changed EntityAuditLog row."""
     client, _ = _setup(test_db, "VA-002", 100502)
     vat_item = _vat_item(test_db, client.id, "2026-02", VatWorkItemStatus.PENDING_MATERIALS)
 
@@ -93,12 +94,19 @@ def test_vat_material_advance_writes_audit_entry(test_db, test_user):
     )
 
     audit_rows = list(
-        test_db.scalars(select(VatAuditLog).where(VatAuditLog.work_item_id == vat_item.id))
+        test_db.scalars(
+            select(EntityAuditLog).where(
+                EntityAuditLog.entity_type == ENTITY_VAT_WORK_ITEM,
+                EntityAuditLog.entity_id == vat_item.id,
+            )
+        )
     )
     assert len(audit_rows) == 1
-    assert audit_rows[0].old_value == VatWorkItemStatus.PENDING_MATERIALS.value
-    assert audit_rows[0].new_value == VatWorkItemStatus.MATERIAL_RECEIVED.value
+    assert audit_rows[0].action == ACTION_VAT_WORK_ITEM_STATUS_CHANGED
+    assert audit_rows[0].old_value == {"status": VatWorkItemStatus.PENDING_MATERIALS.value}
+    assert audit_rows[0].new_value == {"status": VatWorkItemStatus.MATERIAL_RECEIVED.value}
     assert audit_rows[0].performed_by == test_user.id
+    assert audit_rows[0].metadata_json["client_record_id"] == client.id
 
 
 def test_vat_material_does_not_advance_non_pending_status(test_db, test_user):
@@ -172,6 +180,11 @@ def test_duplicate_vat_report_id_advanced_only_once(test_db, test_user):
     assert vat_item.status == VatWorkItemStatus.MATERIAL_RECEIVED
 
     audit_rows = list(
-        test_db.scalars(select(VatAuditLog).where(VatAuditLog.work_item_id == vat_item.id))
+        test_db.scalars(
+            select(EntityAuditLog).where(
+                EntityAuditLog.entity_type == ENTITY_VAT_WORK_ITEM,
+                EntityAuditLog.entity_id == vat_item.id,
+            )
+        )
     )
     assert len(audit_rows) == 1, "de-duped vat_report_id should produce a single audit entry"

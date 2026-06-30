@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime, timedelta
+from datetime import date
 
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
@@ -36,13 +36,12 @@ def _business(test_db) -> tuple[Business, int]:
     return business, client.id
 
 
-def test_list_all_work_items_and_get_audit_trail(test_db):
+def test_list_all_work_items_paginated(test_db):
     user = _user(test_db)
     _, client_record_id = _business(test_db)
     service = VatReportService(test_db)
-    now = datetime.now(UTC)
 
-    older = create_linked_vat_work_item(
+    create_linked_vat_work_item(
         test_db,
         repo=service.work_item_repo,
         client_record_id=client_record_id,
@@ -62,19 +61,6 @@ def test_list_all_work_items_and_get_audit_trail(test_db):
     items, total = service.list_all_work_items(page=1, page_size=1)
     assert total == 2
     assert [item.id for item in items] == [newer.id]
-
-    late = service.work_item_repo.append_audit(
-        work_item_id=older.id, performed_by=user.id, action="late"
-    )
-    early = service.work_item_repo.append_audit(
-        work_item_id=older.id, performed_by=user.id, action="early"
-    )
-    late.performed_at = now + timedelta(minutes=1)
-    early.performed_at = now - timedelta(minutes=1)
-    test_db.commit()
-
-    trail = service.get_audit_trail(older.id, page=1, page_size=25)
-    assert {entry.action for entry in trail} == {"early", "late"}
 
 
 def test_list_work_items_filters_by_period_type(test_db):

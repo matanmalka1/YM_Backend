@@ -2,16 +2,17 @@ from datetime import date, timedelta
 
 from sqlalchemy import select
 
+from app.audit.audit_constants import (
+    ACTION_VAT_WORK_ITEM_DELETED,
+    ACTION_VAT_WORK_ITEM_UPDATED,
+    ENTITY_VAT_WORK_ITEM,
+)
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business
 from app.common.enums import VatType
 from app.users.models.user import User, UserRole
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_audit_log import VatAuditLog
 from app.vat.services.vat_report_service import VatReportService
-from app.vat.vat_constants import (
-    ACTION_METADATA_UPDATED,
-    ACTION_WORK_ITEM_DELETED,
-)
 from tests.factories import create_user
 from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
@@ -68,14 +69,16 @@ def test_update_work_item_metadata_touches_updated_at_and_audits_changed_fields(
     assert updated.pending_materials_note == "new note"
     assert updated.updated_at > old_updated_at
     audit = test_db.scalars(
-        select(VatAuditLog).where(
-            VatAuditLog.work_item_id == item.id,
-            VatAuditLog.action == ACTION_METADATA_UPDATED,
+        select(EntityAuditLog).where(
+            EntityAuditLog.entity_type == ENTITY_VAT_WORK_ITEM,
+            EntityAuditLog.entity_id == item.id,
+            EntityAuditLog.action == ACTION_VAT_WORK_ITEM_UPDATED,
         )
     ).one()
     assert audit.performed_by == user.id
-    assert '"pending_materials_note": "old note"' in audit.old_value
-    assert '"pending_materials_note": "new note"' in audit.new_value
+    assert audit.old_value == {"pending_materials_note": "old note"}
+    assert audit.new_value == {"pending_materials_note": "new note"}
+    assert audit.metadata_json["client_record_id"] == client_record_id
 
 
 def test_soft_delete_work_item_sets_delete_fields_updated_at_and_audit(test_db):
@@ -101,9 +104,11 @@ def test_soft_delete_work_item_sets_delete_fields_updated_at_and_audit(test_db):
     assert item.deleted_by == user.id
     assert item.updated_at > old_updated_at
     audit = test_db.scalars(
-        select(VatAuditLog).where(
-            VatAuditLog.work_item_id == item.id,
-            VatAuditLog.action == ACTION_WORK_ITEM_DELETED,
+        select(EntityAuditLog).where(
+            EntityAuditLog.entity_type == ENTITY_VAT_WORK_ITEM,
+            EntityAuditLog.entity_id == item.id,
+            EntityAuditLog.action == ACTION_VAT_WORK_ITEM_DELETED,
         )
     ).one()
     assert audit.performed_by == user.id
+    assert audit.metadata_json["client_record_id"] == client_record_id

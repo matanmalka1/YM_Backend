@@ -1,12 +1,24 @@
 from sqlalchemy import select
 
-from app.vat.models.vat_audit_log import VatAuditLog
-from app.vat.models.vat_work_item import VatWorkItem
-from app.vat.vat_constants import (
-    ACTION_METADATA_UPDATED,
-    ACTION_WORK_ITEM_DELETED,
+from app.audit.audit_constants import (
+    ACTION_VAT_WORK_ITEM_DELETED,
+    ACTION_VAT_WORK_ITEM_UPDATED,
+    ENTITY_VAT_WORK_ITEM,
 )
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.vat.models.vat_work_item import VatWorkItem
 from tests.vat.api.test_vat_reports_utils import create_work_item, setup_ready_item
+
+
+def _audit_actions(test_db, item_id: int) -> list[str]:
+    return list(
+        test_db.scalars(
+            select(EntityAuditLog.action).where(
+                EntityAuditLog.entity_type == ENTITY_VAT_WORK_ITEM,
+                EntityAuditLog.entity_id == item_id,
+            )
+        )
+    )
 
 
 def _file_item(client, headers, item_id: int):
@@ -110,10 +122,7 @@ def test_delete_existing_non_filed_item_soft_deletes_and_hides_it(
     detail = client.get(f"/api/v1/vat/work-items/{item_id}", headers=advisor_headers)
     assert detail.status_code == 404
 
-    actions = test_db.scalars(
-        select(VatAuditLog.action).where(VatAuditLog.work_item_id == item_id)
-    ).all()
-    assert ACTION_WORK_ITEM_DELETED in actions
+    assert ACTION_VAT_WORK_ITEM_DELETED in _audit_actions(test_db, item_id)
 
 
 def test_delete_missing_item_returns_404(client, advisor_headers):
@@ -145,7 +154,4 @@ def test_patch_writes_audit_for_changed_fields(client, test_db, advisor_headers,
     )
 
     assert response.status_code == 200
-    actions = test_db.scalars(
-        select(VatAuditLog.action).where(VatAuditLog.work_item_id == item_id)
-    ).all()
-    assert ACTION_METADATA_UPDATED in actions
+    assert ACTION_VAT_WORK_ITEM_UPDATED in _audit_actions(test_db, item_id)

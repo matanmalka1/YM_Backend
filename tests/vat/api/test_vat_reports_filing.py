@@ -17,7 +17,7 @@ class TestFiling:
         assert data["submission_method"] == "online"
         assert data["is_overridden"] is False
 
-    def test_file_vat_return_records_filed_audit_at_filed_at(
+    def test_file_vat_return_records_filed_audit(
         self, client, advisor_headers, vat_client, test_user
     ):
         item_id = setup_ready_item(
@@ -29,18 +29,20 @@ class TestFiling:
             json={"submission_method": "online"},
         )
         assert file_response.status_code == 200
-        filed_at = file_response.json()["filed_at"]
 
+        # Reads now go through the generic audit endpoint (vat_work_item entity).
         audit_response = client.get(
-            f"/api/v1/vat/work-items/{item_id}/audit",
+            f"/api/v1/audit/vat_work_item/{item_id}",
             headers=advisor_headers,
         )
         assert audit_response.status_code == 200
         filed_entries = [
-            entry for entry in audit_response.json()["items"] if entry["action"] == "filed"
+            entry
+            for entry in audit_response.json()["items"]
+            if entry["action"] == "vat_work_item.filed"
         ]
         assert len(filed_entries) == 1
-        assert filed_entries[0]["performed_at"] == filed_at
+        assert filed_entries[0]["new_value"]["submission_method"] == "online"
 
     def test_cannot_file_without_advisor_role(self, client, secretary_headers, vat_client):
         response = client.post(

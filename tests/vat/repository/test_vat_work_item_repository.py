@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date
 from itertools import count
 
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
@@ -6,7 +6,6 @@ from app.businesses.models.business import Business
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType
 from app.users.models.user import User, UserRole
-from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from tests.factories import create_user
@@ -42,11 +41,10 @@ def _business(db) -> tuple[Business, int]:
     return business, client.id
 
 
-def test_status_listing_totals_and_audit_trail(test_db):
+def test_status_listing_and_totals(test_db):
     repo = VatWorkItemRepository(test_db)
     user = _user(test_db)
     _, client_record_id = _business(test_db)
-    now = utcnow()
 
     oldest = create_linked_vat_work_item(
         test_db,
@@ -94,23 +92,6 @@ def test_status_listing_totals_and_audit_trail(test_db):
     assert float(updated.total_output_vat) == 170.0
     assert float(updated.total_input_vat) == 20.0
     assert float(updated.net_vat) == 150.0
-
-    late = repo.append_audit(
-        work_item_id=oldest.id,
-        performed_by=user.id,
-        action="late",
-    )
-    early = repo.append_audit(
-        work_item_id=oldest.id,
-        performed_by=user.id,
-        action="early",
-    )
-    late.performed_at = now + timedelta(minutes=1)
-    early.performed_at = now - timedelta(minutes=1)
-    test_db.commit()
-
-    trail = repo.get_audit_trail(oldest.id, page=1, page_size=25)
-    assert {event.action for event in trail} == {"early", "late"}
 
 
 def test_global_work_item_lists_hide_deleted_clients_and_restore_visibility(test_db):
