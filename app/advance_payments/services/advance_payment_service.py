@@ -19,10 +19,17 @@ from app.advance_payments.repositories.advance_payment_repository import (
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
 )
+from app.audit.audit_constants import (
+    ACTION_ADVANCE_PAYMENT_CREATED,
+    ACTION_ADVANCE_PAYMENT_DELETED,
+    ACTION_ADVANCE_PAYMENT_UPDATED,
+    ENTITY_ADVANCE_PAYMENT,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationType
-from app.common.period_utils import parse_period_month
+from app.common.period_utils import parse_period_month, parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
@@ -31,12 +38,53 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
 )
 from app.utils.time_utils import israel_today, utcnow
 
+_SYSTEM_ACTOR_DISPLAY = "מערכת"
+
 
 class AdvancePaymentService:
     def __init__(self, db: Session):
         self.db = db
         self.repo = AdvancePaymentRepository(db)
         self.client_repo = ClientRecordRepository(db)
+        self._audit = EntityAuditWriter(db)
+
+    def _audit_metadata(self, payment: AdvancePayment, *, source: str | None = None) -> dict:
+        meta = {
+            "client_record_id": payment.client_record_id,
+            "period": payment.period,
+            "tax_year": parse_period_year(payment.period),
+        }
+        if payment.annual_report_id is not None:
+            meta["annual_report_id"] = payment.annual_report_id
+        if source is not None:
+            meta["source"] = source
+        return meta
+
+    def _audit_snapshot(self, payment: AdvancePayment) -> dict:
+        return {
+            "period": payment.period,
+            "period_months_count": payment.period_months_count,
+            "due_date": payment.due_date,
+            "expected_amount": payment.expected_amount,
+            "paid_amount": payment.paid_amount,
+            "payment_method": payment.payment_method,
+            "annual_report_id": payment.annual_report_id,
+            "notes": payment.notes,
+            "advance_rate": payment.advance_rate,
+            "turnover_amount": payment.turnover_amount,
+            "calculated_amount": payment.calculated_amount,
+            "override_amount": payment.override_amount,
+            "status": payment.status,
+            "paid_at": payment.paid_at,
+        }
+
+    def _actor_kwargs(self, actor_id: int | None, actor_name: str | None) -> dict:
+        if actor_id is None:
+            return {
+                "actor_type": "system",
+                "actor_display_name": actor_name or _SYSTEM_ACTOR_DISPLAY,
+            }
+        return {"actor_display_name": actor_name}
 
     def _get_record_or_raise(self, client_record_id: int):
         record = self.client_repo.get_by_id(client_record_id)
@@ -127,6 +175,8 @@ class AdvancePaymentService:
         turnover_amount=None,
         advance_rate=None,
         override_amount=None,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> AdvancePayment:
         self._assert_client_allows_create(client_record_id)
         configured_count = self.default_period_months_count_for_client(client_record_id)
@@ -175,7 +225,17 @@ class AdvancePaymentService:
             calculated_amount=calculated_amount,
             override_amount=override_amount,
         )
-        return mat.link_advance_payment(payment)
+        payment = mat.link_advance_payment(payment)
+        self._audit.record_action(
+            ENTITY_ADVANCE_PAYMENT,
+            payment.id,
+            actor_id,
+            ACTION_ADVANCE_PAYMENT_CREATED,
+            new_value=self._audit_snapshot(payment),
+            metadata_json=self._audit_metadata(payment),
+            **self._actor_kwargs(actor_id, actor_name),
+        )
+        return payment
 
     # ─── Update ───────────────────────────────────────────────────────────────
 
@@ -191,7 +251,13 @@ class AdvancePaymentService:
     }
 
     def update_payment_for_client(
-        self, client_record_id: int, payment_id: int, **fields
+        self,
+        client_record_id: int,
+        payment_id: int,
+        *,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+        **fields,
     ) -> AdvancePayment:
         self._get_record_or_raise(client_record_id)
         payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
@@ -231,12 +297,28 @@ class AdvancePaymentService:
             else:
                 filtered["status"] = AdvancePaymentStatus.PARTIAL
 
-        return self.repo.update_payment(payment, **filtered)
+        old_snapshot = self._audit_snapshot(payment)
+        updated = self.repo.update_payment(payment, **filtered)
+        self._audit.record_action(
+            ENTITY_ADVANCE_PAYMENT,
+            updated.id,
+            actor_id,
+            ACTION_ADVANCE_PAYMENT_UPDATED,
+            old_value=old_snapshot,
+            new_value=self._audit_snapshot(updated),
+            metadata_json=self._audit_metadata(updated),
+            **self._actor_kwargs(actor_id, actor_name),
+        )
+        return updated
 
     # ─── Delete ───────────────────────────────────────────────────────────────
 
     def delete_payment_for_client(
-        self, client_record_id: int, payment_id: int, actor_id: int
+        self,
+        client_record_id: int,
+        payment_id: int,
+        actor_id: int,
+        actor_name: str | None = None,
     ) -> None:
         self._get_record_or_raise(client_record_id)
         payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
@@ -245,7 +327,17 @@ class AdvancePaymentService:
                 f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
                 ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
+        old_snapshot = self._audit_snapshot(payment)
         self.repo.soft_delete(payment_id, deleted_by=actor_id)
+        self._audit.record_action(
+            ENTITY_ADVANCE_PAYMENT,
+            payment.id,
+            actor_id,
+            ACTION_ADVANCE_PAYMENT_DELETED,
+            old_value=old_snapshot,
+            actor_display_name=actor_name,
+            metadata_json=self._audit_metadata(payment),
+        )
 
     # ─── Generate schedule ────────────────────────────────────────────────────
 
@@ -255,6 +347,8 @@ class AdvancePaymentService:
         year: int,
         period_months_count: int | None = None,
         reference_date: date | None = None,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> tuple[list[AdvancePayment], int]:
         if reference_date is None:
             reference_date = israel_today()
@@ -287,6 +381,8 @@ class AdvancePaymentService:
                 client_record_id=client_record_id,
                 period=period,
                 period_months_count=period_months_count,
+                actor_id=actor_id,
+                actor_name=actor_name,
             )
             created.append(payment)
         return created, skipped

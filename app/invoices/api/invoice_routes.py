@@ -12,7 +12,7 @@ from app.core.path_params import PathId
 from app.invoices.repositories.invoice_repository import InvoiceRepository
 from app.invoices.schemas.invoice_schemas import InvoiceAttachRequest, InvoiceResponse
 from app.invoices.services.invoice_service import InvoiceService
-from app.users.api.user_deps import DBSession, require_role
+from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
 router = APIRouter(
@@ -32,13 +32,15 @@ router = APIRouter(
         conflict_response(description="כבר קיימת חשבונית מצורפת לחיוב זה"),
     ),
 )
-def attach_invoice(request: InvoiceAttachRequest, db: DBSession):
+def attach_invoice(request: InvoiceAttachRequest, db: DBSession, user: CurrentUser):
     invoice = InvoiceService(db).attach_invoice_to_charge(
         charge_id=request.charge_id,
         provider=request.provider,
         external_invoice_id=request.external_invoice_id,
         issued_at=request.issued_at,
         document_url=request.document_url,
+        actor_id=user.id,
+        actor_name=user.full_name,
     )
     return invoice
 

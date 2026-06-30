@@ -67,6 +67,7 @@ def add_note(
         entity_id=client_record_id,
         note=request.note,
         created_by=user.id,
+        actor_name=user.full_name,
     )
     return EntityNoteResponse.model_validate(note)
 
@@ -90,6 +91,7 @@ def update_note(
         entity_id=client_record_id,
         note=request.note,
         actor_id=user.id,
+        actor_name=user.full_name,
     )
     return EntityNoteResponse.model_validate(note)
 
@@ -111,5 +113,6 @@ def delete_note(
         entity_type=_ENTITY_TYPE,
         entity_id=client_record_id,
         actor_id=user.id,
+        actor_name=user.full_name,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

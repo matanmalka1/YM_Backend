@@ -42,7 +42,7 @@ def create_authority_contact(
     client_record_id: PathId,
     request: AuthorityContactCreateRequest,
     db: DBSession,
-    _: CurrentUser,
+    user: CurrentUser,
 ):
     """Create new authority contact for client."""
     service = AuthorityContactService(db)
@@ -54,6 +54,8 @@ def create_authority_contact(
         phone=request.phone,
         email=request.email,
         notes=request.notes,
+        actor_id=user.id,
+        actor_name=user.full_name,
     )
     return _to_contact_response(contact)
 
@@ -113,12 +115,18 @@ def update_authority_contact(
     contact_id: PathId,
     request: AuthorityContactUpdateRequest,
     db: DBSession,
-    _: CurrentUser,
+    user: CurrentUser,
 ):
     """Update authority contact, scoped to client."""
     service = AuthorityContactService(db)
     update_data = request.model_dump(exclude_unset=True)
-    contact = service.update_contact(client_record_id, contact_id, **update_data)
+    contact = service.update_contact(
+        client_record_id,
+        contact_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+        **update_data,
+    )
     return _to_contact_response(contact)
 
 
@@ -133,4 +141,9 @@ def delete_authority_contact(
 ):
     """Delete authority contact (ADVISOR only), scoped to client."""
     service = AuthorityContactService(db)
-    service.delete_contact(client_record_id, contact_id, actor_id=user.id)
+    service.delete_contact(
+        client_record_id,
+        contact_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )

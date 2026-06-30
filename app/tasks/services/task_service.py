@@ -4,6 +4,16 @@ from typing import Any
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import (
+    ACTION_TASK_ASSIGNED,
+    ACTION_TASK_CANCELED,
+    ACTION_TASK_COMPLETED,
+    ACTION_TASK_CREATED,
+    ACTION_TASK_DELETED,
+    ACTION_TASK_UPDATED,
+    ENTITY_TASK,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.services.base_service import BaseService
 from app.common.source_types import WorkQueueSourceType, normalize_source_domain
 from app.core.error_codes import ErrorCode
@@ -27,6 +37,7 @@ _CONFLICT = ErrorCode.TASK_CONFLICT
 _INVALID_SOURCE = ErrorCode.TASK_INVALID_SOURCE
 _INVALID_ASSIGNEE = ErrorCode.TASK_INVALID_ASSIGNEE
 _CLIENT_SOURCE_MISMATCH = ErrorCode.TASK_CLIENT_SOURCE_MISMATCH
+_SYSTEM_ACTOR_DISPLAY = "מערכת"
 
 
 class TaskService(BaseService):
@@ -34,8 +45,48 @@ class TaskService(BaseService):
         super().__init__(db)
         self.repo = TaskRepository(db)
         self.source_repo = TaskSourceRepository(db)
+        self._audit = EntityAuditWriter(db)
 
-    def create(self, data: TaskCreateRequest, created_by_user_id: int | None) -> Task:
+    def _audit_snapshot(self, task: Task) -> dict:
+        return {
+            "title": task.title,
+            "description": task.description,
+            "status": task.status,
+            "priority": task.priority,
+            "due_date": task.due_date,
+            "assigned_to_user_id": task.assigned_to_user_id,
+            "assigned_role": task.assigned_role,
+            "source_domain": task.source_domain,
+            "source_id": task.source_id,
+            "client_record_id": task.client_record_id,
+            "action_key": task.action_key,
+            "action_payload": task.action_payload,
+        }
+
+    def _audit_metadata(self, task: Task) -> dict:
+        meta = {
+            "client_record_id": task.client_record_id,
+            "source_domain": task.source_domain,
+            "source_id": task.source_id,
+            "assigned_to_user_id": task.assigned_to_user_id,
+            "assigned_role": task.assigned_role,
+        }
+        return {key: value for key, value in meta.items() if value is not None}
+
+    def _actor_kwargs(self, actor_id: int | None, actor_name: str | None) -> dict:
+        if actor_id is None:
+            return {
+                "actor_type": "system",
+                "actor_display_name": actor_name or _SYSTEM_ACTOR_DISPLAY,
+            }
+        return {"actor_display_name": actor_name}
+
+    def create(
+        self,
+        data: TaskCreateRequest,
+        created_by_user_id: int | None,
+        actor_name: str | None = None,
+    ) -> Task:
         self._validate_source(data.source_domain, data.source_id)
         resolved_client_id = self._resolve_client_from_source(data.source_domain, data.source_id)
         if data.client_record_id is not None:
@@ -46,7 +97,7 @@ class TaskService(BaseService):
         else:
             final_client_id = resolved_client_id
         with self.transaction():
-            return self.repo.create(
+            task = self.repo.create(
                 title=data.title,
                 created_by_user_id=created_by_user_id,
                 description=data.description,
@@ -60,6 +111,16 @@ class TaskService(BaseService):
                 action_key=data.action_key,
                 action_payload=data.action_payload,
             )
+            self._audit.record_action(
+                ENTITY_TASK,
+                task.id,
+                created_by_user_id,
+                ACTION_TASK_CREATED,
+                new_value=self._audit_snapshot(task),
+                metadata_json=self._audit_metadata(task),
+                **self._actor_kwargs(created_by_user_id, actor_name),
+            )
+            return task
 
     def list(
         self,
@@ -110,17 +171,34 @@ class TaskService(BaseService):
             page_size=page_size,
         )
 
-    def update(self, task_id: int, data: TaskUpdateRequest) -> Task:
+    def update(
+        self,
+        task_id: int,
+        data: TaskUpdateRequest,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> Task:
         task = self.get(task_id)
         if task.status in _TERMINAL:
             raise ConflictError("לא ניתן לערוך משימה שהושלמה או בוטלה", _CONFLICT)
         updates = data.model_dump(exclude_unset=True)
         if "source_domain" in updates or "source_id" in updates:
             updates = self._resolve_source_update(updates)
+        old_snapshot = self._audit_snapshot(task)
         with self.transaction():
             for field, value in updates.items():
                 setattr(task, field, value)
             task.updated_at = utcnow()
+            self._audit.record_action(
+                ENTITY_TASK,
+                task.id,
+                actor_id,
+                ACTION_TASK_UPDATED,
+                old_value=old_snapshot,
+                new_value=self._audit_snapshot(task),
+                metadata_json=self._audit_metadata(task),
+                **self._actor_kwargs(actor_id, actor_name),
+            )
         return task
 
     def _resolve_source_update(self, updates: dict[str, Any]) -> dict[str, Any]:
@@ -152,37 +230,81 @@ class TaskService(BaseService):
         updates["source_id"] = new_id
         return updates
 
-    def complete(self, task_id: int, completed_by_user_id: int | None) -> Task:
+    def complete(
+        self,
+        task_id: int,
+        completed_by_user_id: int | None,
+        actor_name: str | None = None,
+    ) -> Task:
         task = self.get(task_id)
         if task.status == TaskStatus.CANCELED:
             raise ConflictError("לא ניתן להשלים משימה שבוטלה", _CONFLICT)
         if task.status == TaskStatus.DONE:
             raise ConflictError("משימה כבר הושלמה", _CONFLICT)
         with self.transaction():
+            old_status = task.status
             task.status = TaskStatus.DONE
             task.completed_at = utcnow()
             task.completed_by_user_id = completed_by_user_id
             task.updated_at = utcnow()
+            self._audit.record_action(
+                ENTITY_TASK,
+                task.id,
+                completed_by_user_id,
+                ACTION_TASK_COMPLETED,
+                old_value={"status": old_status},
+                new_value={"status": task.status},
+                metadata_json=self._audit_metadata(task),
+                **self._actor_kwargs(completed_by_user_id, actor_name),
+            )
         return task
 
-    def cancel(self, task_id: int, canceled_by_user_id: int | None = None) -> Task:
+    def cancel(
+        self,
+        task_id: int,
+        canceled_by_user_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> Task:
         task = self.get(task_id)
         if task.status == TaskStatus.DONE:
             raise ConflictError("לא ניתן לבטל משימה שהושלמה", _CONFLICT)
         if task.status == TaskStatus.CANCELED:
             raise ConflictError("משימה כבר בוטלה", _CONFLICT)
         with self.transaction():
+            old_status = task.status
             task.status = TaskStatus.CANCELED
             task.canceled_at = utcnow()
             task.canceled_by_user_id = canceled_by_user_id
             task.updated_at = utcnow()
+            self._audit.record_action(
+                ENTITY_TASK,
+                task.id,
+                canceled_by_user_id,
+                ACTION_TASK_CANCELED,
+                old_value={"status": old_status},
+                new_value={"status": task.status},
+                metadata_json=self._audit_metadata(task),
+                **self._actor_kwargs(canceled_by_user_id, actor_name),
+            )
         return task
 
-    def delete(self, task_id: int) -> None:
+    def delete(
+        self, task_id: int, actor_id: int | None = None, actor_name: str | None = None
+    ) -> None:
         task = self.get(task_id)
+        old_snapshot = self._audit_snapshot(task)
         with self.transaction():
             task.deleted_at = utcnow()
             task.updated_at = utcnow()
+            self._audit.record_action(
+                ENTITY_TASK,
+                task.id,
+                actor_id,
+                ACTION_TASK_DELETED,
+                old_value=old_snapshot,
+                metadata_json=self._audit_metadata(task),
+                **self._actor_kwargs(actor_id, actor_name),
+            )
 
     def get(self, task_id: int) -> Task:
         task = self.repo.get_by_id(task_id)
@@ -191,7 +313,7 @@ class TaskService(BaseService):
         return task
 
     def bulk_complete(
-        self, task_ids: list[int], completed_by_user_id: int | None
+        self, task_ids: list[int], completed_by_user_id: int | None, actor_name: str | None = None
     ) -> TaskBulkActionResponse:
         deduped = list(dict.fromkeys(task_ids))
         found_map = self.repo.get_by_ids(deduped)
@@ -229,17 +351,32 @@ class TaskService(BaseService):
             now = utcnow()
             with self.transaction():
                 for task in to_complete:
+                    old_status = task.status
                     task.status = TaskStatus.DONE
                     task.completed_at = now
                     task.completed_by_user_id = completed_by_user_id
                     task.updated_at = now
+                    self._audit.record_action(
+                        ENTITY_TASK,
+                        task.id,
+                        completed_by_user_id,
+                        ACTION_TASK_COMPLETED,
+                        old_value={"status": old_status},
+                        new_value={"status": task.status},
+                        metadata_json=self._audit_metadata(task),
+                        **self._actor_kwargs(completed_by_user_id, actor_name),
+                    )
 
         succeeded = [task_id for is_ok, task_id, _ in results if is_ok]
         failed = [f for is_ok, _, f in results if not is_ok and f is not None]
         return TaskBulkActionResponse(succeeded=succeeded, failed=failed)
 
     def bulk_assign(
-        self, task_ids: list[int], assignee_user_id: int | None
+        self,
+        task_ids: list[int],
+        assignee_user_id: int | None,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
     ) -> TaskBulkActionResponse:
         if assignee_user_id is not None:
             from app.users.repositories.user_repository import UserRepository
@@ -286,8 +423,19 @@ class TaskService(BaseService):
             now = utcnow()
             with self.transaction():
                 for task in to_update:
+                    old_assignee = task.assigned_to_user_id
                     task.assigned_to_user_id = assignee_user_id
                     task.updated_at = now
+                    self._audit.record_action(
+                        ENTITY_TASK,
+                        task.id,
+                        actor_id,
+                        ACTION_TASK_ASSIGNED,
+                        old_value={"assigned_to_user_id": old_assignee},
+                        new_value={"assigned_to_user_id": task.assigned_to_user_id},
+                        metadata_json=self._audit_metadata(task),
+                        **self._actor_kwargs(actor_id, actor_name),
+                    )
 
         succeeded = [task_id for is_ok, task_id, _ in results if is_ok]
         failed = [f for is_ok, _, f in results if not is_ok and f is not None]

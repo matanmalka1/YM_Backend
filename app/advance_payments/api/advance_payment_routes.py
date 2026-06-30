@@ -107,6 +107,8 @@ def create_advance_payment(
         payment_method=request.payment_method,
         annual_report_id=request.annual_report_id,
         notes=request.notes,
+        actor_id=user.id,
+        actor_name=user.full_name,
     )
     return AdvancePaymentRow.model_validate(payment)
 
@@ -169,6 +171,8 @@ def update_advance_payment(
     payment = service.update_payment_for_client(
         client_record_id=client_record_id,
         payment_id=payment_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
         **request.model_dump(exclude_unset=True),
     )
     # When a payment is marked PAID, invalidate any open annual report tax calculation
@@ -207,5 +211,5 @@ def delete_advance_payment(
     user: CurrentUser,
 ):
     AdvancePaymentService(db).delete_payment_for_client(
-        client_record_id, payment_id, actor_id=user.id
+        client_record_id, payment_id, actor_id=user.id, actor_name=user.full_name
     )

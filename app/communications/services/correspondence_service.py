@@ -3,6 +3,13 @@ from typing import Literal
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import (
+    ACTION_CORRESPONDENCE_CREATED,
+    ACTION_CORRESPONDENCE_DELETED,
+    ACTION_CORRESPONDENCE_UPDATED,
+    ENTITY_CORRESPONDENCE,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
@@ -20,6 +27,7 @@ from app.core.exceptions import ForbiddenError, NotFoundError
 
 _NOT_FOUND = ErrorCode.CORRESPONDENCE_NOT_FOUND
 _FORBIDDEN_CONTACT = ErrorCode.CORRESPONDENCE_FORBIDDEN_CONTACT
+_SYSTEM_ACTOR_DISPLAY = "מערכת"
 
 
 class CorrespondenceService:
@@ -29,6 +37,33 @@ class CorrespondenceService:
         self.contact_repo = AuthorityContactRepository(db)
         self.business_repo = BusinessRepository(db)
         self.client_repo = ClientRecordRepository(db)
+        self._audit = EntityAuditWriter(db)
+
+    def _actor_kwargs(self, actor_id: int | None, actor_name: str | None) -> dict:
+        if actor_id is None:
+            return {
+                "actor_type": "system",
+                "actor_display_name": actor_name or _SYSTEM_ACTOR_DISPLAY,
+            }
+        return {"actor_display_name": actor_name}
+
+    def _audit_snapshot(self, entry: Correspondence) -> dict:
+        return {
+            "correspondence_type": entry.correspondence_type,
+            "subject": entry.subject,
+            "occurred_at": entry.occurred_at,
+            "business_id": entry.business_id,
+            "contact_id": entry.contact_id,
+            "notes": entry.notes,
+        }
+
+    def _audit_metadata(self, entry: Correspondence) -> dict:
+        meta = {
+            "client_record_id": entry.client_record_id,
+            "business_id": entry.business_id,
+            "contact_id": entry.contact_id,
+        }
+        return {key: value for key, value in meta.items() if value is not None}
 
     def _assert_business_belongs_to_client(self, business_id: int, legal_entity_id: int) -> None:
         """Validate optional business context belongs to the same client."""
@@ -79,6 +114,7 @@ class CorrespondenceService:
         business_id: int | None = None,
         contact_id: int | None = None,
         notes: str | None = None,
+        actor_name: str | None = None,
     ) -> Correspondence:
         client_record = self._get_client_record_or_raise(client_record_id)
         if business_id is not None:
@@ -87,7 +123,7 @@ class CorrespondenceService:
         if contact_id is not None:
             self._assert_contact_belongs_to_client(contact_id, client_record_id)
 
-        return self.repo.create(
+        entry = self.repo.create(
             client_record_id=client_record.id,
             business_id=business_id,
             correspondence_type=correspondence_type,
@@ -97,12 +133,30 @@ class CorrespondenceService:
             contact_id=contact_id,
             notes=notes,
         )
+        self._audit.record_action(
+            ENTITY_CORRESPONDENCE,
+            entry.id,
+            created_by,
+            ACTION_CORRESPONDENCE_CREATED,
+            new_value=self._audit_snapshot(entry),
+            metadata_json=self._audit_metadata(entry),
+            **self._actor_kwargs(created_by, actor_name),
+        )
+        return entry
 
     def get_entry(self, entry_id: int, client_record_id: int) -> Correspondence:
         self._get_client_record_or_raise(client_record_id)
         return self._get_entry_or_raise(entry_id, client_record_id)
 
-    def update_entry(self, entry_id: int, client_record_id: int, **fields) -> Correspondence:
+    def update_entry(
+        self,
+        entry_id: int,
+        client_record_id: int,
+        *,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+        **fields,
+    ) -> Correspondence:
         client_record = self._get_client_record_or_raise(client_record_id)
         entry = self._get_entry_or_raise(entry_id, client_record_id)
 
@@ -114,18 +168,45 @@ class CorrespondenceService:
         if contact_id is not None:
             self._assert_contact_belongs_to_client(contact_id, client_record_id)
 
+        old_snapshot = self._audit_snapshot(entry)
         updated = self.repo.update(entry_id, **fields)
         if not updated:
             raise NotFoundError(
                 f"התכתבות {entry_id} לא נמצאה עבור לקוח {client_record_id}",
                 _NOT_FOUND,
             )
+        self._audit.record_action(
+            ENTITY_CORRESPONDENCE,
+            updated.id,
+            actor_id,
+            ACTION_CORRESPONDENCE_UPDATED,
+            old_value=old_snapshot,
+            new_value=self._audit_snapshot(updated),
+            metadata_json=self._audit_metadata(updated),
+            **self._actor_kwargs(actor_id, actor_name),
+        )
         return updated
 
-    def delete_entry(self, entry_id: int, client_record_id: int, actor_id: int) -> None:
+    def delete_entry(
+        self,
+        entry_id: int,
+        client_record_id: int,
+        actor_id: int,
+        actor_name: str | None = None,
+    ) -> None:
         self._get_client_record_or_raise(client_record_id)
-        self._get_entry_or_raise(entry_id, client_record_id)
+        entry = self._get_entry_or_raise(entry_id, client_record_id)
+        old_snapshot = self._audit_snapshot(entry)
         self.repo.soft_delete(entry_id, deleted_by=actor_id)
+        self._audit.record_action(
+            ENTITY_CORRESPONDENCE,
+            entry.id,
+            actor_id,
+            ACTION_CORRESPONDENCE_DELETED,
+            old_value=old_snapshot,
+            actor_display_name=actor_name,
+            metadata_json=self._audit_metadata(entry),
+        )
 
     def list_client_entries(
         self,

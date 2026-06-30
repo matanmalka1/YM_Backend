@@ -5,6 +5,14 @@ from typing import BinaryIO
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import (
+    ACTION_DOCUMENT_DELETED,
+    ACTION_DOCUMENT_REPLACED,
+    ACTION_DOCUMENT_UPDATED,
+    ACTION_DOCUMENT_UPLOADED,
+    ENTITY_DOCUMENT,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.binders.binder_messages import BINDER_NOT_FOUND
 from app.binders.repositories.binder_repository import BinderRepository
 from app.businesses.business_guards import (
@@ -52,6 +60,7 @@ _DEFAULT_REQUIRED_TYPES = [
 ]
 
 _UPDATABLE_METADATA_FIELDS = {"document_type", "original_filename", "tax_year"}
+_SYSTEM_ACTOR_DISPLAY = "מערכת"
 
 
 class PermanentDocumentService:
@@ -63,6 +72,42 @@ class PermanentDocumentService:
         self.query_repo = PermanentDocumentQueryRepository(db)
         self.storage = storage or get_storage_provider()
         self.client_repo = ClientRecordRepository(db)
+        self._audit = EntityAuditWriter(db)
+
+    def _actor_kwargs(self, actor_id: int | None, actor_display_name: str | None) -> dict:
+        if actor_id is None:
+            return {
+                "actor_type": "system",
+                "actor_display_name": actor_display_name or _SYSTEM_ACTOR_DISPLAY,
+            }
+        return {"actor_display_name": actor_display_name}
+
+    def _audit_metadata(self, doc: PermanentDocument) -> dict:
+        meta = {
+            "client_record_id": doc.client_record_id,
+            "document_type": doc.document_type,
+            "tax_year": doc.tax_year,
+            "version": doc.version,
+            "mime_type": doc.mime_type,
+            "file_size_bytes": doc.file_size_bytes,
+        }
+        if doc.business_id is not None:
+            meta["business_id"] = doc.business_id
+        if doc.annual_report_id is not None:
+            meta["annual_report_id"] = doc.annual_report_id
+        return meta
+
+    def _audit_snapshot(self, doc: PermanentDocument) -> dict:
+        return {
+            "document_type": doc.document_type,
+            "original_filename": doc.original_filename,
+            "tax_year": doc.tax_year,
+            "status": doc.status,
+            "version": doc.version,
+            "file_size_bytes": doc.file_size_bytes,
+            "mime_type": doc.mime_type,
+            "is_deleted": doc.is_deleted,
+        }
 
     def _resolve_mime(self, mime_type: str | None, filename: str) -> str:
         resolved = mime_type or mimetypes.guess_type(filename)[0] or "application/octet-stream"
@@ -104,6 +149,7 @@ class PermanentDocumentService:
         annual_report_id: int | None = None,
         mime_type: str | None = None,
         legal_entity_id: int | None = None,
+        actor_display_name: str | None = None,
     ) -> PermanentDocument:
         get_client_or_raise(self.db, client_record_id)
         client_record = self.client_repo.get_by_id(client_record_id)
@@ -187,6 +233,15 @@ class PermanentDocumentService:
 
         if existing:
             existing.superseded_by = document.id
+        self._audit.record_action(
+            ENTITY_DOCUMENT,
+            document.id,
+            uploaded_by,
+            ACTION_DOCUMENT_UPLOADED,
+            new_value=self._audit_snapshot(document),
+            actor_display_name=actor_display_name,
+            metadata_json=self._audit_metadata(document),
+        )
         try:
             self.db.commit()
         except IntegrityError as exc:
@@ -209,16 +264,29 @@ class PermanentDocumentService:
         self,
         client_record_id: int,
         document_id: int,
+        actor_id: int | None = None,
+        actor_display_name: str | None = None,
         **fields,
     ) -> PermanentDocument:
         doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, ErrorCode.PERMANENT_DOCUMENTS_NOT_FOUND)
+        old_snapshot = self._audit_snapshot(doc)
         for key, value in fields.items():
             if key not in _UPDATABLE_METADATA_FIELDS:
                 raise ValueError(f"Unsupported document metadata field: {key}")
             setattr(doc, key, value)
         self.db.flush()
+        self._audit.record_action(
+            ENTITY_DOCUMENT,
+            doc.id,
+            actor_id,
+            ACTION_DOCUMENT_UPDATED,
+            old_value=old_snapshot,
+            new_value=self._audit_snapshot(doc),
+            metadata_json=self._audit_metadata(doc),
+            **self._actor_kwargs(actor_id, actor_display_name),
+        )
         return doc
 
     def list_binder_documents(
@@ -299,12 +367,29 @@ class PermanentDocumentService:
             ),
         }
 
-    def delete_document(self, client_record_id: int, document_id: int) -> None:
+    def delete_document(
+        self,
+        client_record_id: int,
+        document_id: int,
+        *,
+        actor_id: int,
+        actor_display_name: str | None = None,
+    ) -> None:
         doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, ErrorCode.PERMANENT_DOCUMENTS_NOT_FOUND)
+        old_snapshot = self._audit_snapshot(doc)
         doc.is_deleted = True
         self.db.flush()
+        self._audit.record_action(
+            ENTITY_DOCUMENT,
+            doc.id,
+            actor_id,
+            ACTION_DOCUMENT_DELETED,
+            old_value=old_snapshot,
+            actor_display_name=actor_display_name,
+            metadata_json=self._audit_metadata(doc),
+        )
 
     def replace_document(
         self,
@@ -314,10 +399,12 @@ class PermanentDocumentService:
         filename: str,
         uploaded_by: int,
         mime_type: str | None = None,
+        actor_display_name: str | None = None,
     ) -> PermanentDocument:
         doc = self.document_repo.get_by_id_and_client_record(document_id, client_record_id)
         if not doc:
             raise NotFoundError(DOCUMENT_NOT_FOUND_ERROR, ErrorCode.PERMANENT_DOCUMENTS_NOT_FOUND)
+        old_snapshot = self._audit_snapshot(doc)
 
         file_bytes = file_data.read()
         file_size = len(file_bytes)
@@ -347,6 +434,16 @@ class PermanentDocumentService:
         doc.uploaded_by = uploaded_by
         doc.is_present = True
         doc.version = next_version
+        self._audit.record_action(
+            ENTITY_DOCUMENT,
+            doc.id,
+            uploaded_by,
+            ACTION_DOCUMENT_REPLACED,
+            old_value=old_snapshot,
+            new_value=self._audit_snapshot(doc),
+            actor_display_name=actor_display_name,
+            metadata_json=self._audit_metadata(doc),
+        )
         # explicit commit: storage upload already succeeded above
         self.db.commit()
         return doc

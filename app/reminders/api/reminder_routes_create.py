@@ -24,5 +24,9 @@ def create_reminder(
     user: CurrentUser,
 ):
     service = ReminderService(db)
-    reminder = service.create_from_request(request, created_by_user_id=user.id)
+    reminder = service.create_from_request(
+        request,
+        created_by_user_id=user.id,
+        actor_name=user.full_name,
+    )
     return service.to_response(reminder)

@@ -79,7 +79,7 @@ def create_task(
     user: CurrentUser,
     data: TaskCreateRequest,
 ):
-    return TaskService(db).create(data, created_by_user_id=user.id)
+    return TaskService(db).create(data, created_by_user_id=user.id, actor_name=user.full_name)
 
 
 @router.post(
@@ -95,7 +95,11 @@ def bulk_complete_tasks(
 ):
     return idem.execute(
         payload=data.model_dump_json().encode(),
-        fn=lambda: TaskService(db).bulk_complete(data.task_ids, completed_by_user_id=user.id),
+        fn=lambda: TaskService(db).bulk_complete(
+            data.task_ids,
+            completed_by_user_id=user.id,
+            actor_name=user.full_name,
+        ),
     )
 
 
@@ -106,14 +110,17 @@ def bulk_complete_tasks(
 )
 def bulk_assign_tasks(
     db: DBSession,
-    _user: CurrentUser,
+    user: CurrentUser,
     data: TaskBulkAssignRequest,
     idem: IdempotencyGuard = Depends(require_idempotency_key),
 ):
     return idem.execute(
         payload=data.model_dump_json().encode(),
         fn=lambda: TaskService(db).bulk_assign(
-            data.task_ids, assignee_user_id=data.assignee_user_id
+            data.task_ids,
+            assignee_user_id=data.assignee_user_id,
+            actor_id=user.id,
+            actor_name=user.full_name,
         ),
     )
 
@@ -134,10 +141,11 @@ def get_task(db: DBSession, task_id: PathId):
 )
 def update_task(
     db: DBSession,
+    user: CurrentUser,
     task_id: PathId,
     data: TaskUpdateRequest,
 ):
-    return TaskService(db).update(task_id, data)
+    return TaskService(db).update(task_id, data, actor_id=user.id, actor_name=user.full_name)
 
 
 @router.post(
@@ -146,7 +154,11 @@ def update_task(
     responses=TASK_COMPLETE_RESPONSES,
 )
 def complete_task(db: DBSession, user: CurrentUser, task_id: PathId):
-    return TaskService(db).complete(task_id, completed_by_user_id=user.id)
+    return TaskService(db).complete(
+        task_id,
+        completed_by_user_id=user.id,
+        actor_name=user.full_name,
+    )
 
 
 @router.post(
@@ -155,7 +167,11 @@ def complete_task(db: DBSession, user: CurrentUser, task_id: PathId):
     responses=TASK_CANCEL_RESPONSES,
 )
 def cancel_task(db: DBSession, user: CurrentUser, task_id: PathId):
-    return TaskService(db).cancel(task_id, canceled_by_user_id=user.id)
+    return TaskService(db).cancel(
+        task_id,
+        canceled_by_user_id=user.id,
+        actor_name=user.full_name,
+    )
 
 
 @router.delete(
@@ -163,6 +179,6 @@ def cancel_task(db: DBSession, user: CurrentUser, task_id: PathId):
     status_code=204,
     responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
 )
-def delete_task(db: DBSession, _user: CurrentUser, task_id: PathId):
-    TaskService(db).delete(task_id)
+def delete_task(db: DBSession, user: CurrentUser, task_id: PathId):
+    TaskService(db).delete(task_id, actor_id=user.id, actor_name=user.full_name)
     return Response(status_code=204)

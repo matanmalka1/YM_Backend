@@ -44,6 +44,7 @@ class BusinessNoteService:
         *,
         note: str,
         created_by: int,
+        actor_name: str | None = None,
     ) -> EntityNote:
         self._assert_business_belongs_to_client(client_id, business_id)
         return self.note_service.add_note(
@@ -51,6 +52,8 @@ class BusinessNoteService:
             entity_id=business_id,
             note=note,
             created_by=created_by,
+            actor_name=actor_name,
+            client_record_id=client_id,
         )
 
     def update_note(
@@ -61,6 +64,7 @@ class BusinessNoteService:
         *,
         note: str,
         actor_id: int,
+        actor_name: str | None = None,
     ) -> EntityNote:
         self._assert_business_belongs_to_client(client_id, business_id)
         return self.note_service.update_note(
@@ -69,15 +73,27 @@ class BusinessNoteService:
             entity_id=business_id,
             note=note,
             actor_id=actor_id,
+            actor_name=actor_name,
+            client_record_id=client_id,
         )
 
-    def delete_note(self, client_id: int, business_id: int, note_id: int, *, actor_id: int) -> None:
+    def delete_note(
+        self,
+        client_id: int,
+        business_id: int,
+        note_id: int,
+        *,
+        actor_id: int,
+        actor_name: str | None = None,
+    ) -> None:
         self._assert_business_belongs_to_client(client_id, business_id)
         self.note_service.delete_note(
             note_id=note_id,
             entity_type=_ENTITY_TYPE,
             entity_id=business_id,
             actor_id=actor_id,
+            actor_name=actor_name,
+            client_record_id=client_id,
         )
 
     def _assert_business_belongs_to_client(self, client_id: int, business_id: int) -> None:
