@@ -100,7 +100,7 @@ def test_aging_report_service_skips_rows_without_matching_business(test_db):
     service = AgingReportService(test_db)
 
     service.charge_repo = SimpleNamespace(
-        get_aging_buckets_paginated=lambda as_of_date, *, page, page_size: (
+        get_aging_buckets_paginated=lambda _as_of_date, **_kwargs: (
             [
                 {
                     "client_record_id": 999_999,
@@ -114,7 +114,7 @@ def test_aging_report_service_skips_rows_without_matching_business(test_db):
             ],
             1,
         ),
-        get_aging_totals=lambda as_of_date: SimpleNamespace(
+        get_aging_totals=lambda _as_of_date: SimpleNamespace(
             total_clients=0,
             total_current=0,
             total_30_days=0,
@@ -123,7 +123,7 @@ def test_aging_report_service_skips_rows_without_matching_business(test_db):
             grand_total=0,
         ),
     )
-    service.client_record_repo = SimpleNamespace(list_by_ids=lambda ids: [])
+    service.client_record_repo = SimpleNamespace(list_by_ids=lambda _ids: [])
 
     report = service.generate_aging_report(as_of_date=date(2026, 3, 1))
 
@@ -135,7 +135,7 @@ def test_aging_report_service_skips_rows_without_matching_business(test_db):
 def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
     service = AdvancePaymentReportService(test_db)
     service.repo = SimpleNamespace(
-        get_collections_aggregates=lambda year, month: [
+        get_collections_aggregates=lambda _year, _month: [
             SimpleNamespace(
                 client_record_id=7,
                 total_expected=Decimal("300.00"),
@@ -145,12 +145,12 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
         ]
     )
     service.client_record_repo = SimpleNamespace(
-        list_by_ids=lambda ids: [
+        list_by_ids=lambda _ids: [
             SimpleNamespace(id=7, legal_entity_id=70, office_client_number=101234)
         ]
     )
     service.legal_entity_repo = SimpleNamespace(
-        list_by_ids=lambda ids: [SimpleNamespace(id=70, official_name="Advance Client")]
+        list_by_ids=lambda _ids: [SimpleNamespace(id=70, official_name="Advance Client")]
     )
 
     report = service.get_collections_report(year=2026, month=3)

@@ -338,10 +338,10 @@ def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch
         id_number="670000050",
     )
 
-    def fail_batch(self, client_record_ids, year):
+    def fail_batch(self, _client_record_ids, _year):
         raise AssertionError("clients list must not load annual turnover")
 
-    def fail_scalar(self, client_record_id, year):
+    def fail_scalar(self, _client_record_id, _year):
         raise AssertionError("clients list must not load annual turnover")
 
     monkeypatch.setattr(

@@ -75,7 +75,7 @@ def test_get_summary_2026_no_fallback_warning(test_db):
 def test_get_summary_reports_registry_fallback_warning(test_db, monkeypatch):
     monkeypatch.setattr(
         "app.tax_calendar.services.tax_calendar_settings_calendar_service.missing_registry_years",
-        lambda start_year, end_year: [2027],
+        lambda _start_year, _end_year: [2027],
     )
     bootstrap_tax_calendar(test_db, start_year=2027, end_year=2027)
     test_db.commit()

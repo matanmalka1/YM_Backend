@@ -24,7 +24,14 @@ def test_auto_populate_response_contract_includes_skips_and_breakdown(
             pass
 
         def auto_populate(self, report_id, force=False, actor_id=None, actor_name=None):
-            calls.append({"report_id": report_id, "force": force, "actor_id": actor_id})
+            calls.append(
+                {
+                    "report_id": report_id,
+                    "force": force,
+                    "actor_id": actor_id,
+                    "actor_name": actor_name,
+                }
+            )
             return {
                 "annual_report_id": report_id,
                 "income_lines_created": 0,

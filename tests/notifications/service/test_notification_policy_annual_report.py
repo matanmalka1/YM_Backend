@@ -51,7 +51,7 @@ def _fake_db(report):
     ``db.get(...)``, so the double exposes ``scalars`` rather than only ``get``.
     """
     return SimpleNamespace(
-        get=lambda model, _pk: report,
+        get=lambda _model, _pk: report,
         scalars=lambda _stmt: _FakeScalarResult(report),
     )
 
@@ -77,13 +77,13 @@ def _db(report, last_notification=None):
         def __init__(self, _db):
             pass
 
-        def get_last_for_annual_report_trigger(self, *args):
+        def get_last_for_annual_report_trigger(self, *_args):
             return last_notification
 
     _nr_module.NotificationRepository = FakeRepo  # type: ignore[assignment]
 
     class DB:
-        def get(self, model, _pk):
+        def get(self, _model, _pk):
             return report
 
     try:
@@ -110,7 +110,7 @@ class _FakeDB:
             def __init__(self, _db):
                 pass
 
-            def get_last_for_annual_report_trigger(self, *args):
+            def get_last_for_annual_report_trigger(self, *_args):
                 return last
 
         _nr_module.NotificationRepository = FakeRepo  # type: ignore[assignment]
@@ -121,7 +121,7 @@ class _FakeDB:
 
         _nr_module.NotificationRepository = self._original  # type: ignore[assignment]
 
-    def get(self, model, _pk):
+    def get(self, _model, _pk):
         return self._report
 
     def scalars(self, _stmt):

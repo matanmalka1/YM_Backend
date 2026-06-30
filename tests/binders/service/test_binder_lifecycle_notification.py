@@ -133,10 +133,10 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
     idempotency_key = f"test_idem_{client.id}"
 
     svc = NotificationAutoSendService(test_db)
-    monkeypatch.setattr(svc.policy, "can_send", lambda *a, **kw: PolicyResult(blocked=False))
+    monkeypatch.setattr(svc.policy, "can_send", lambda *_a, **_kw: PolicyResult(blocked=False))
     # Stub renderer so context resolver doesn't need a real binder in DB
-    monkeypatch.setattr(svc.renderer, "render", lambda *a, **kw: ("body", "subject"))
-    monkeypatch.setattr(svc.resolver, "resolve", lambda **kw: {})
+    monkeypatch.setattr(svc.renderer, "render", lambda *_a, **_kw: ("body", "subject"))
+    monkeypatch.setattr(svc.resolver, "resolve", lambda **_kw: {})
 
     r1 = svc.auto_send(
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
@@ -179,9 +179,9 @@ def test_auto_send_idempotency_different_entity_id_returns_cached_record(
     key = f"test_hash_mismatch_{client.id}"
 
     svc = NotificationAutoSendService(test_db)
-    monkeypatch.setattr(svc.policy, "can_send", lambda *a, **kw: PolicyResult(blocked=False))
-    monkeypatch.setattr(svc.renderer, "render", lambda *a, **kw: ("body", "subject"))
-    monkeypatch.setattr(svc.resolver, "resolve", lambda **kw: {})
+    monkeypatch.setattr(svc.policy, "can_send", lambda *_a, **_kw: PolicyResult(blocked=False))
+    monkeypatch.setattr(svc.renderer, "render", lambda *_a, **_kw: ("body", "subject"))
+    monkeypatch.setattr(svc.resolver, "resolve", lambda **_kw: {})
 
     r1 = svc.auto_send(
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
