@@ -24,4 +24,6 @@ class EntityAuditLogResponse(BaseModel):
 
 
 class EntityAuditTrailResponse(PaginatedResponse[EntityAuditLogResponse]):
-    pass
+    # True when the audited entity is soft- or hard-deleted; history stays
+    # readable (§3a). Envelope-level — not repeated on every item.
+    entity_deleted: bool

@@ -16,6 +16,7 @@ from app.audit.audit_constants import (
     ACTION_UPDATED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_CLIENT,
+    entity_action,
 )
 from app.audit.repositories.audit_entity_audit_log_repository import (
     EntityAuditLogRepository,
@@ -62,14 +63,14 @@ def test_timeline_includes_client_record_changes_and_dedups_created(test_db, tes
         entity_type=ENTITY_CLIENT,
         entity_id=business.client_id,
         performed_by=test_user.id,
-        action=ACTION_CREATED,
+        action=entity_action(ENTITY_CLIENT, ACTION_CREATED),
         new_value='{"full_name": "Timeline Policy"}',
     )
     audit_repo.append(
         entity_type=ENTITY_CLIENT,
         entity_id=business.client_id,
         performed_by=test_user.id,
-        action=ACTION_UPDATED,
+        action=entity_action(ENTITY_CLIENT, ACTION_UPDATED),
         old_value='{"full_name": "Old"}',
         new_value='{"full_name": "New"}',
     )
@@ -80,7 +81,7 @@ def test_timeline_includes_client_record_changes_and_dedups_created(test_db, tes
     change_events = [e for e in events if e["event_type"] == "client_record_changed"]
     assert len(change_events) == 1  # 'created' is deduped against client_created
     metadata = change_events[0]["metadata"]
-    assert metadata["change_action"] == ACTION_UPDATED
+    assert metadata["change_action"] == entity_action(ENTITY_CLIENT, ACTION_UPDATED)
     assert metadata["performed_by_name"] == test_user.full_name
     # creation still surfaces once, via the synthetic client_created event
     assert _event_types(events).count("client_created") == 1
@@ -106,13 +107,13 @@ def test_timeline_includes_annual_report_audit_changes(test_db, test_user):
         entity_type=ENTITY_ANNUAL_REPORT,
         entity_id=report.id,
         performed_by=test_user.id,
-        action=ACTION_STATUS_CHANGED,  # deduped vs annual_report_status_changed
+        action=entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED),  # deduped
     )
     audit_repo.append(
         entity_type=ENTITY_ANNUAL_REPORT,
         entity_id=report.id,
         performed_by=test_user.id,
-        action=ACTION_UPDATED,
+        action=entity_action(ENTITY_ANNUAL_REPORT, ACTION_UPDATED),
         old_value='{"total_income": 1}',
         new_value='{"total_income": 2}',
     )
@@ -125,7 +126,7 @@ def test_timeline_includes_annual_report_audit_changes(test_db, test_user):
     metadata = change_events[0]["metadata"]
     assert metadata["entity_type"] == ENTITY_ANNUAL_REPORT
     assert metadata["entity_id"] == report.id
-    assert metadata["change_action"] == ACTION_UPDATED
+    assert metadata["change_action"] == entity_action(ENTITY_ANNUAL_REPORT, ACTION_UPDATED)
 
 
 def test_timeline_date_range_excludes_out_of_range_events(test_db):

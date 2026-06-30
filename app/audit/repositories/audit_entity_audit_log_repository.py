@@ -1,4 +1,9 @@
-"""Repository for EntityAuditLog entities."""
+"""Append-only repository for EntityAuditLog rows.
+
+Inherits :class:`AppendOnlyRepository` (NOT ``BaseRepository``): audit rows are
+immutable, so this repository exposes only ``append`` + read queries and has no
+``update``/``delete``/``soft_delete``/``hard_delete`` surface.
+"""
 
 from datetime import datetime
 from typing import Any
@@ -7,12 +12,12 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
-from app.common.repositories.base_repository import BaseRepository
+from app.common.repositories.append_only_repository import AppendOnlyRepository
 
 
-class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
+class EntityAuditLogRepository(AppendOnlyRepository):
     def __init__(self, db: Session):
-        self.db = db
+        super().__init__(db)
 
     def append(
         self,
@@ -123,6 +128,23 @@ class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
         )
         return self.db.scalar(select(func.count(EntityAuditLog.id)).where(*filters))
 
+    def list_by_entity(self, entity_type: str, entity_id: int) -> list[EntityAuditLog]:
+        """Every audit row for a single entity, newest first — unpaginated."""
+        return list(
+            self.db.scalars(
+                select(EntityAuditLog)
+                .where(
+                    EntityAuditLog.entity_type == entity_type,
+                    EntityAuditLog.entity_id == entity_id,
+                )
+                .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
+            ).all()
+        )
+
+    def list_by_entities(self, entity_type: str, entity_ids: list[int]) -> list[EntityAuditLog]:
+        """Every audit row for a set of entities of one type, newest first."""
+        return self.list_all_by_entities(entity_type, entity_ids)
+
     def list_all_by_entities(self, entity_type: str, entity_ids: list[int]) -> list[EntityAuditLog]:
         """Every audit row for a set of entities, newest first — unpaginated.
 
@@ -139,9 +161,45 @@ class EntityAuditLogRepository(BaseRepository[EntityAuditLog]):
             .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
         ).all()
 
+    def list_for_client_context(
+        self,
+        client_record_id: int,
+        *,
+        entity_types: list[str] | None = None,
+        business_ids: list[int] | None = None,
+        limit: int | None = None,
+    ) -> list[EntityAuditLog]:
+        """Audit rows whose ``metadata_json.client_record_id`` matches a client.
+
+        Uses the §8b PostgreSQL expression index
+        ``idx_entity_audit_client_ctx`` on ``((metadata_json->>'client_record_id'),
+        performed_at)``. The text comparison is consistent across dialects
+        (``.as_string()`` maps to ``->>`` on PostgreSQL JSONB and ``json_extract``
+        on SQLite). ``entity_types``/``business_ids`` narrow further.
+        """
+        stmt = select(EntityAuditLog).where(
+            EntityAuditLog.metadata_json["client_record_id"].as_string() == str(client_record_id)
+        )
+        if entity_types:
+            stmt = stmt.where(EntityAuditLog.entity_type.in_(entity_types))
+        if business_ids:
+            stmt = stmt.where(
+                EntityAuditLog.metadata_json["business_id"]
+                .as_string()
+                .in_([str(bid) for bid in business_ids])
+            )
+        stmt = stmt.order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
+        if limit is not None:
+            stmt = stmt.limit(limit)
+        return list(self.db.scalars(stmt).all())
+
     def list_recent(self, limit: int = 5) -> list[EntityAuditLog]:
         return self.db.scalars(
             select(EntityAuditLog)
             .order_by(EntityAuditLog.performed_at.desc(), EntityAuditLog.id.desc())
             .limit(limit)
         ).all()
+
+    def list_recent_activity(self, limit: int = 5) -> list[EntityAuditLog]:
+        """Most-recent audit rows across all entity types (dashboard feed)."""
+        return self.list_recent(limit)

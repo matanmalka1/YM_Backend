@@ -42,6 +42,7 @@ def get_entity_audit_trail(
         entity_id,
         page,
         page_size,
+        current_user=current_user,
         action=action,
         user_id=user_id,
         created_after=created_after,

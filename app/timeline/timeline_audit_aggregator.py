@@ -9,24 +9,32 @@ duplicates.
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import (
+    ACTION_CHARGE_ISSUED,
+    ACTION_CHARGE_PAID,
     ACTION_CREATED,
-    ACTION_ISSUED,
-    ACTION_PAID,
     ACTION_STATUS_CHANGED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_BUSINESS,
     ENTITY_CHARGE,
     ENTITY_CLIENT,
+    entity_action,
 )
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.timeline.timeline_client_builders import entity_audit_changed_event
 from app.users.repositories.user_repository import UserRepository
 
 # Actions already shown as dedicated, richer timeline events — skipped here.
+# Persisted action values are namespaced (e.g. "client.created").
 _DEDUP_ACTIONS = {
-    ENTITY_CLIENT: {ACTION_CREATED},  # client_created
-    ENTITY_ANNUAL_REPORT: {ACTION_STATUS_CHANGED},  # annual_report_status_changed
-    ENTITY_CHARGE: {ACTION_CREATED, ACTION_ISSUED, ACTION_PAID},  # charge_* events
+    ENTITY_CLIENT: {entity_action(ENTITY_CLIENT, ACTION_CREATED)},  # client_created
+    ENTITY_ANNUAL_REPORT: {
+        entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED)
+    },  # annual_report_status_changed
+    ENTITY_CHARGE: {
+        entity_action(ENTITY_CHARGE, ACTION_CREATED),
+        ACTION_CHARGE_ISSUED,
+        ACTION_CHARGE_PAID,
+    },  # charge_* events
     ENTITY_BUSINESS: set(),
 }
 

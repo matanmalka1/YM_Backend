@@ -7,8 +7,13 @@ from app.audit.audit_constants import (
     ACTION_DELETED,
     ACTION_UPDATED,
     ENTITY_CLIENT,
+    entity_action,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+
+CLIENT_CREATED = entity_action(ENTITY_CLIENT, ACTION_CREATED)
+CLIENT_UPDATED = entity_action(ENTITY_CLIENT, ACTION_UPDATED)
+CLIENT_DELETED = entity_action(ENTITY_CLIENT, ACTION_DELETED)
 
 
 def _seed_mixed_entries(test_db, user_a, user_b, client_record):
@@ -17,9 +22,28 @@ def _seed_mixed_entries(test_db, user_a, user_b, client_record):
     Returns a dict of the created entries keyed by a label.
     """
     writer = EntityAuditWriter(test_db)
-    created = writer.record_create(ENTITY_CLIENT, client_record.id, user_a.id)
-    updated = writer.record_update(ENTITY_CLIENT, client_record.id, user_b.id, new_value={"x": 1})
-    deleted = writer.record_delete(ENTITY_CLIENT, client_record.id, user_a.id)
+    created = writer.record_create(
+        ENTITY_CLIENT,
+        client_record.id,
+        user_a.id,
+        actor_display_name=user_a.full_name,
+        metadata_json={"client_record_id": client_record.id},
+    )
+    updated = writer.record_update(
+        ENTITY_CLIENT,
+        client_record.id,
+        user_b.id,
+        new_value={"phone": "0500000000"},
+        actor_display_name=user_b.full_name,
+        metadata_json={"client_record_id": client_record.id},
+    )
+    deleted = writer.record_delete(
+        ENTITY_CLIENT,
+        client_record.id,
+        user_a.id,
+        actor_display_name=user_a.full_name,
+        metadata_json={"client_record_id": client_record.id},
+    )
     # Deterministic ascending timestamps: created < updated < deleted.
     base = deleted.performed_at
     created.performed_at = base - timedelta(minutes=2)
@@ -35,7 +59,7 @@ def test_audit_filter_by_action(
     entries = _seed_mixed_entries(test_db, test_user, secretary_user, client_record)
 
     response = client.get(
-        f"/api/v1/audit/client/{client_record.id}?action={ACTION_UPDATED}",
+        f"/api/v1/audit/client/{client_record.id}?action={CLIENT_UPDATED}",
         headers=advisor_headers,
     )
 
@@ -109,7 +133,7 @@ def test_audit_filters_combined_with_and(
 
     # action=created AND user_id=test_user → only the create entry.
     response = client.get(
-        f"/api/v1/audit/client/{client_record.id}?action={ACTION_CREATED}&user_id={test_user.id}",
+        f"/api/v1/audit/client/{client_record.id}?action={CLIENT_CREATED}&user_id={test_user.id}",
         headers=advisor_headers,
     )
     assert response.status_code == 200
@@ -120,7 +144,7 @@ def test_audit_filters_combined_with_and(
     # action=created AND user_id=secretary_user → no rows (secretary did the update).
     none_resp = client.get(
         f"/api/v1/audit/client/{client_record.id}"
-        f"?action={ACTION_CREATED}&user_id={secretary_user.id}",
+        f"?action={CLIENT_CREATED}&user_id={secretary_user.id}",
         headers=advisor_headers,
     )
     assert none_resp.status_code == 200
@@ -136,7 +160,7 @@ def test_audit_filter_no_match_returns_empty(
     _seed_mixed_entries(test_db, test_user, secretary_user, client_record)
 
     response = client.get(
-        f"/api/v1/audit/client/{client_record.id}?action={ACTION_DELETED}&user_id={secretary_user.id}",
+        f"/api/v1/audit/client/{client_record.id}?action={CLIENT_DELETED}&user_id={secretary_user.id}",
         headers=advisor_headers,
     )
 

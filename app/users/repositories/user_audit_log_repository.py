@@ -3,12 +3,17 @@ from datetime import datetime
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.common.repositories.base_repository import BaseRepository
+from app.common.repositories.append_only_repository import AppendOnlyRepository
 from app.users.models.user_audit_log import AuditAction, AuditStatus, UserAuditLog
 
 
-class UserAuditLogRepository(BaseRepository):
-    """Data access layer for user audit logs."""
+class UserAuditLogRepository(AppendOnlyRepository):
+    """Append-only data access layer for user audit logs.
+
+    Inherits :class:`AppendOnlyRepository` (NOT ``BaseRepository``): auth/admin
+    audit rows are immutable — this repository exposes only ``create`` (append)
+    + ``list``/``count`` and has no update/delete surface.
+    """
 
     def __init__(self, db: Session):
         super().__init__(db)
@@ -70,8 +75,6 @@ class UserAuditLogRepository(BaseRepository):
         email: str | None = None,
         created_after: datetime | None = None,
         created_before: datetime | None = None,
-        *,
-        include_deleted: bool = False,
     ) -> int:
         stmt = self._build_query(
             action=action,

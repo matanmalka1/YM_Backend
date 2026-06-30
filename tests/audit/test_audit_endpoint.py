@@ -11,14 +11,30 @@ def _seed_three_audit_entries(test_db, test_user, client_record):
     Returns (first, second, third) ordered oldest → newest.
     """
     writer = EntityAuditWriter(test_db)
+    name = test_user.full_name
     first = writer.record_update(
-        ENTITY_CLIENT, client_record.id, test_user.id, new_value={"step": 1}
+        ENTITY_CLIENT,
+        client_record.id,
+        test_user.id,
+        new_value={"phone": "step-1"},
+        actor_display_name=name,
+        metadata_json={"client_record_id": client_record.id},
     )
     second = writer.record_update(
-        ENTITY_CLIENT, client_record.id, test_user.id, new_value={"step": 2}
+        ENTITY_CLIENT,
+        client_record.id,
+        test_user.id,
+        new_value={"phone": "step-2"},
+        actor_display_name=name,
+        metadata_json={"client_record_id": client_record.id},
     )
     third = writer.record_update(
-        ENTITY_CLIENT, client_record.id, test_user.id, new_value={"step": 3}
+        ENTITY_CLIENT,
+        client_record.id,
+        test_user.id,
+        new_value={"phone": "step-3"},
+        actor_display_name=name,
+        metadata_json={"client_record_id": client_record.id},
     )
     first.performed_at = third.performed_at - timedelta(minutes=2)
     second.performed_at = third.performed_at - timedelta(minutes=1)
@@ -37,8 +53,9 @@ def test_actor_display_name_snapshot_survives_user_rename(
         ENTITY_CLIENT,
         client_record.id,
         test_user.id,
-        new_value={"x": 1},
+        new_value={"full_name": original_name},
         actor_display_name=original_name,
+        metadata_json={"client_record_id": client_record.id},
     )
     test_db.commit()
 

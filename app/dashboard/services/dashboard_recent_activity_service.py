@@ -6,6 +6,8 @@ from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
 from app.audit.audit_constants import (
+    ACTION_CHARGE_ISSUED,
+    ACTION_CHARGE_PAID,
     ACTION_CREATED,
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,
@@ -13,13 +15,12 @@ from app.audit.audit_constants import (
     ACTION_INCOME_ADDED,
     ACTION_INCOME_DELETED,
     ACTION_INCOME_UPDATED,
-    ACTION_ISSUED,
-    ACTION_PAID,
     ACTION_STATUS_CHANGED,
     ACTION_UPDATED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_CHARGE,
     ENTITY_CLIENT,
+    entity_action,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
@@ -40,38 +41,39 @@ _ENTITY_LABELS = {
     ENTITY_CLIENT: "לקוח",
 }
 
+# Keyed by the namespaced persisted action value (e.g. "client.created").
 _ACTION_LABELS = {
-    ACTION_CREATED: {
-        ENTITY_ANNUAL_REPORT: "נוצר דוח שנתי חדש",
-        ENTITY_CHARGE: "נוצר חיוב חדש",
-        ENTITY_CLIENT: "נוצר לקוח חדש",
-    },
-    ACTION_UPDATED: {
-        ENTITY_ANNUAL_REPORT: "עודכן דוח שנתי",
-        ENTITY_CHARGE: "עודכן חיוב",
-        ENTITY_CLIENT: "עודכן לקוח",
-    },
-    ACTION_ISSUED: {ENTITY_CHARGE: "נפתח חיוב חדש"},
-    ACTION_PAID: {ENTITY_CHARGE: "חיוב סומן כשולם"},
-    ACTION_STATUS_CHANGED: {
-        ENTITY_ANNUAL_REPORT: "עודכן סטטוס דוח שנתי",
-        ENTITY_CHARGE: "עודכן סטטוס חיוב",
-        ENTITY_CLIENT: "עודכן סטטוס לקוח",
-    },
-    ACTION_INCOME_ADDED: {ENTITY_ANNUAL_REPORT: "נוספה שורת הכנסה בדוח שנתי"},
-    ACTION_INCOME_UPDATED: {ENTITY_ANNUAL_REPORT: "עודכנה שורת הכנסה בדוח שנתי"},
-    ACTION_INCOME_DELETED: {ENTITY_ANNUAL_REPORT: "נמחקה שורת הכנסה בדוח שנתי"},
-    ACTION_EXPENSE_ADDED: {ENTITY_ANNUAL_REPORT: "נוספה שורת הוצאה בדוח שנתי"},
-    ACTION_EXPENSE_UPDATED: {ENTITY_ANNUAL_REPORT: "עודכנה שורת הוצאה בדוח שנתי"},
-    ACTION_EXPENSE_DELETED: {ENTITY_ANNUAL_REPORT: "נמחקה שורת הוצאה בדוח שנתי"},
+    entity_action(ENTITY_ANNUAL_REPORT, ACTION_CREATED): "נוצר דוח שנתי חדש",
+    entity_action(ENTITY_CHARGE, ACTION_CREATED): "נוצר חיוב חדש",
+    entity_action(ENTITY_CLIENT, ACTION_CREATED): "נוצר לקוח חדש",
+    entity_action(ENTITY_ANNUAL_REPORT, ACTION_UPDATED): "עודכן דוח שנתי",
+    entity_action(ENTITY_CHARGE, ACTION_UPDATED): "עודכן חיוב",
+    entity_action(ENTITY_CLIENT, ACTION_UPDATED): "עודכן לקוח",
+    ACTION_CHARGE_ISSUED: "נפתח חיוב חדש",
+    ACTION_CHARGE_PAID: "חיוב סומן כשולם",
+    entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED): "עודכן סטטוס דוח שנתי",
+    entity_action(ENTITY_CHARGE, ACTION_STATUS_CHANGED): "עודכן סטטוס חיוב",
+    entity_action(ENTITY_CLIENT, ACTION_STATUS_CHANGED): "עודכן סטטוס לקוח",
+    ACTION_INCOME_ADDED: "נוספה שורת הכנסה בדוח שנתי",
+    ACTION_INCOME_UPDATED: "עודכנה שורת הכנסה בדוח שנתי",
+    ACTION_INCOME_DELETED: "נמחקה שורת הכנסה בדוח שנתי",
+    ACTION_EXPENSE_ADDED: "נוספה שורת הוצאה בדוח שנתי",
+    ACTION_EXPENSE_UPDATED: "עודכנה שורת הוצאה בדוח שנתי",
+    ACTION_EXPENSE_DELETED: "נמחקה שורת הוצאה בדוח שנתי",
 }
 
 _ACTIVITY_TYPES = {
-    ACTION_CREATED: "created",
-    ACTION_ISSUED: "charge",
-    ACTION_PAID: "done",
-    ACTION_STATUS_CHANGED: "done",
-    ACTION_UPDATED: "updated",
+    entity_action(ENTITY_ANNUAL_REPORT, ACTION_CREATED): "created",
+    entity_action(ENTITY_CHARGE, ACTION_CREATED): "created",
+    entity_action(ENTITY_CLIENT, ACTION_CREATED): "created",
+    ACTION_CHARGE_ISSUED: "charge",
+    ACTION_CHARGE_PAID: "done",
+    entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED): "done",
+    entity_action(ENTITY_CHARGE, ACTION_STATUS_CHANGED): "done",
+    entity_action(ENTITY_CLIENT, ACTION_STATUS_CHANGED): "done",
+    entity_action(ENTITY_ANNUAL_REPORT, ACTION_UPDATED): "updated",
+    entity_action(ENTITY_CHARGE, ACTION_UPDATED): "updated",
+    entity_action(ENTITY_CLIENT, ACTION_UPDATED): "updated",
     ACTION_INCOME_ADDED: "created",
     ACTION_INCOME_UPDATED: "updated",
     ACTION_INCOME_DELETED: "updated",
@@ -193,9 +195,9 @@ class RecentActivityService:
         if row.note and not row.note.startswith("{") and "=" not in row.note:
             return row.note
 
-        label_by_entity = _ACTION_LABELS.get(row.action, {})
-        if row.entity_type in label_by_entity:
-            return label_by_entity[row.entity_type]
+        label = _ACTION_LABELS.get(row.action)
+        if label:
+            return label
 
         entity = _ENTITY_LABELS.get(row.entity_type, "רשומה")
         return f"בוצעה פעולה ב{entity}"
