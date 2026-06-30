@@ -25,6 +25,8 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import ACTION_TAX_CALENDAR_GENERATED, ENTITY_TAX_CALENDAR
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import DeadlineRuleType, ObligationType
 from app.tax_calendar.integrations.tax_rules_registry import get_registry_due_date
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
@@ -284,4 +286,25 @@ def generate_for_year_range(
         total_created += yr.created
         total_skipped += yr.skipped
     entry_repo.flush()
-    return YearRangeResult(entries_created=total_created, entries_skipped=total_skipped)
+    result = YearRangeResult(entries_created=total_created, entries_skipped=total_skipped)
+    EntityAuditWriter(db).record_action(
+        ENTITY_TAX_CALENDAR,
+        start_year,
+        None,
+        ACTION_TAX_CALENDAR_GENERATED,
+        new_value={
+            "start_year": start_year,
+            "end_year": end_year,
+            "entries_created": result.entries_created,
+            "entries_skipped": result.entries_skipped,
+        },
+        actor_type="system",
+        actor_display_name="מערכת",
+        metadata_json={
+            "start_year": start_year,
+            "end_year": end_year,
+            "entries_created": result.entries_created,
+            "entries_skipped": result.entries_skipped,
+        },
+    )
+    return result

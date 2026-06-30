@@ -12,6 +12,7 @@ from app.audit.audit_constants import (
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.dashboard.services.dashboard_recent_activity_service import (
+    _ACTION_LABELS,
     _ACTIVITY_TYPES,
     RecentActivityService,
 )
@@ -89,3 +90,29 @@ def test_recent_activity_uses_metadata_client_context_for_vat_rows(test_db, test
     assert {item["client_name"] for item in items} == {"Dashboard VAT Client"}
     assert all(item["label"] == "נוצר תיק מע״מ" for item in items)
     assert all(item["href"].startswith("/tax/vat/") for item in items)
+
+
+# --- Phase 7: dashboard recent-activity is EntityAuditLog-only; lock the contract ---
+
+# The locked activity_type union the frontend recent-activity item schema renders.
+# A future action rename must not silently introduce a new value or drop a row to a
+# generic fallback — both are caught here. (plan §14: activity_type/label set unchanged.)
+_LOCKED_ACTIVITY_TYPES = frozenset({"created", "updated", "done", "charge"})
+
+
+def test_activity_type_union_is_locked():
+    assert set(_ACTIVITY_TYPES.values()) == _LOCKED_ACTIVITY_TYPES
+
+
+def test_every_labeled_action_has_an_explicit_activity_type():
+    # No action that the dashboard can label may fall through to the "updated"
+    # default in _serialize — every labeled action declares its activity_type.
+    missing = [action for action in _ACTION_LABELS if action not in _ACTIVITY_TYPES]
+    assert missing == [], f"actions missing an explicit activity_type: {missing}"
+
+
+def test_every_typed_action_has_a_label():
+    # Symmetric guard: every action with an activity_type also has a display label,
+    # so no typed action falls through to the generic "בוצעה פעולה ב..." fallback.
+    missing = [action for action in _ACTIVITY_TYPES if action not in _ACTION_LABELS]
+    assert missing == [], f"actions missing a display label: {missing}"

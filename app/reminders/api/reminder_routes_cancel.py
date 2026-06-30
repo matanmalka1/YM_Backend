@@ -19,8 +19,12 @@ cancel_router = APIRouter()
 def cancel_reminder(
     reminder_id: PathId,
     db: DBSession,
-    _user: CurrentUser,
+    user: CurrentUser,
 ):
     service = ReminderService(db)
-    reminder = service.cancel_reminder(reminder_id)
+    reminder = service.cancel_reminder(
+        reminder_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )
     return service.to_response(reminder)

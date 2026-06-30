@@ -9,34 +9,15 @@ duplicates.
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import (
-    ACTION_CHARGE_ISSUED,
-    ACTION_CHARGE_PAID,
-    ACTION_CREATED,
-    ACTION_STATUS_CHANGED,
     ENTITY_ANNUAL_REPORT,
     ENTITY_BUSINESS,
     ENTITY_CHARGE,
     ENTITY_CLIENT,
-    entity_action,
 )
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.timeline.timeline_client_builders import entity_audit_changed_event
+from app.timeline.timeline_event_sources import suppressed_actions_for
 from app.users.repositories.user_repository import UserRepository
-
-# Actions already shown as dedicated, richer timeline events — skipped here.
-# Persisted action values are namespaced (e.g. "client.created").
-_DEDUP_ACTIONS = {
-    ENTITY_CLIENT: {entity_action(ENTITY_CLIENT, ACTION_CREATED)},  # client_created
-    ENTITY_ANNUAL_REPORT: {
-        entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED)
-    },  # annual_report_status_changed
-    ENTITY_CHARGE: {
-        entity_action(ENTITY_CHARGE, ACTION_CREATED),
-        ACTION_CHARGE_ISSUED,
-        ACTION_CHARGE_PAID,
-    },  # charge_* events
-    ENTITY_BUSINESS: set(),
-}
 
 
 def build_entity_audit_events(
@@ -57,11 +38,14 @@ def build_entity_audit_events(
 
     rows = []
     for entity_type, entity_ids in scopes:
-        dedup = _DEDUP_ACTIONS[entity_type]
+        # Suppression set (the audit actions a dedicated builder already owns) is
+        # derived from the explicit event-source registry — see
+        # ``timeline_event_sources``. One source per category, no hand-kept dict.
+        suppressed = suppressed_actions_for(entity_type)
         rows.extend(
             row
             for row in repo.list_all_by_entities(entity_type, entity_ids)
-            if row.action not in dedup
+            if row.action not in suppressed
         )
 
     if not rows:

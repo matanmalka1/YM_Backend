@@ -2,6 +2,12 @@ from __future__ import annotations
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import (
+    ACTION_REMINDER_CANCELED,
+    ACTION_REMINDER_CREATED,
+    ENTITY_REMINDER,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.repositories.client_identity_repository import ClientIdentityRepository
 from app.common.source_types import WorkQueueSourceType, normalize_source_domain
 from app.core.error_codes import ErrorCode
@@ -12,6 +18,8 @@ from app.reminders.schemas.reminder import ReminderCreateRequest, ReminderRespon
 from app.tasks.repositories.task_repository import TaskRepository
 from app.work_queue.work_queue_source_lookup import load_source_states
 
+_SYSTEM_ACTOR_DISPLAY = "מערכת"
+
 
 class ReminderService:
     def __init__(self, db: Session):
@@ -19,11 +27,46 @@ class ReminderService:
         self.reminder_repo = ReminderRepository(db)
         self.client_identity_repo = ClientIdentityRepository(db)
         self.task_repo = TaskRepository(db)
+        self._audit = EntityAuditWriter(db)
+
+    def _actor_kwargs(self, actor_id: int | None, actor_name: str | None) -> dict:
+        if actor_id is None:
+            return {
+                "actor_type": "system",
+                "actor_display_name": actor_name or _SYSTEM_ACTOR_DISPLAY,
+            }
+        return {"actor_display_name": actor_name}
+
+    def _audit_snapshot(self, reminder: Reminder) -> dict:
+        return {
+            "status": reminder.status,
+            "fire_at": reminder.fire_at,
+            "action_type": reminder.action_type,
+            "source_domain": reminder.source_domain,
+            "source_id": reminder.source_id,
+            "target_task_id": reminder.target_task_id,
+            "notification_template_key": reminder.notification_template_key,
+            "failure_reason": reminder.failure_reason,
+        }
+
+    def _audit_metadata(self, reminder: Reminder) -> dict:
+        meta = {
+            "client_record_id": self._payload_client_record_id(reminder),
+            "source_domain": reminder.source_domain,
+            "source_id": reminder.source_id,
+            "target_task_id": reminder.target_task_id,
+            "action_type": reminder.action_type,
+        }
+        return {key: value for key, value in meta.items() if value is not None}
 
     def create_from_request(
-        self, request: ReminderCreateRequest, *, created_by_user_id: int
+        self,
+        request: ReminderCreateRequest,
+        *,
+        created_by_user_id: int,
+        actor_name: str | None = None,
     ) -> Reminder:
-        return self.reminder_repo.create(
+        reminder = self.reminder_repo.create(
             fire_at=request.fire_at,
             action_type=request.action_type,
             source_domain=request.source_domain,
@@ -33,6 +76,16 @@ class ReminderService:
             payload=request.payload,
             created_by_user_id=created_by_user_id,
         )
+        self._audit.record_action(
+            ENTITY_REMINDER,
+            reminder.id,
+            created_by_user_id,
+            ACTION_REMINDER_CREATED,
+            new_value=self._audit_snapshot(reminder),
+            actor_display_name=actor_name,
+            metadata_json=self._audit_metadata(reminder),
+        )
+        return reminder
 
     def get_reminders(
         self, *, status: str | None = None, page: int = 1, page_size: int = 20
@@ -45,7 +98,13 @@ class ReminderService:
     def get_reminder(self, reminder_id: int) -> Reminder | None:
         return self.reminder_repo.get_by_id(reminder_id)
 
-    def cancel_reminder(self, reminder_id: int) -> Reminder:
+    def cancel_reminder(
+        self,
+        reminder_id: int,
+        *,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> Reminder:
         reminder = self.reminder_repo.get_by_id(reminder_id)
         if reminder is None:
             raise NotFoundError("התזכורת לא נמצאה", ErrorCode.REMINDER_NOT_FOUND)
@@ -54,7 +113,21 @@ class ReminderService:
                 "ניתן לבטל רק טריגר מתוזמן",
                 ErrorCode.REMINDER_INVALID_STATUS,
             )
-        return self.reminder_repo.update_status(reminder_id, ReminderStatus.CANCELED)
+        old_status = reminder.status
+        updated = self.reminder_repo.update_status(reminder_id, ReminderStatus.CANCELED)
+        if updated is None:
+            raise NotFoundError("התזכורת לא נמצאה", ErrorCode.REMINDER_NOT_FOUND)
+        self._audit.record_action(
+            ENTITY_REMINDER,
+            reminder_id,
+            actor_id,
+            ACTION_REMINDER_CANCELED,
+            old_value={"status": old_status},
+            new_value={"status": updated.status},
+            metadata_json=self._audit_metadata(updated),
+            **self._actor_kwargs(actor_id, actor_name),
+        )
+        return updated
 
     def to_response(self, reminder: Reminder) -> ReminderResponse:
         return self.to_responses([reminder])[0]

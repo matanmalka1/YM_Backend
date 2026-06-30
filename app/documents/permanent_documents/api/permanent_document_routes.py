@@ -65,6 +65,7 @@ def upload_permanent_document(
         tax_year=tax_year,
         annual_report_id=annual_report_id,
         mime_type=file.content_type,
+        actor_display_name=user.full_name,
     )
     return PermanentDocumentResponseBuilder(db).build_one(document)
 
@@ -169,7 +170,12 @@ def delete_document(
     client_record_id: PathId, document_id: PathId, db: DBSession, user: CurrentUser
 ):
     """Soft-delete a permanent document (ADVISOR only)."""
-    PermanentDocumentService(db).delete_document(client_record_id, document_id)
+    PermanentDocumentService(db).delete_document(
+        client_record_id,
+        document_id,
+        actor_id=user.id,
+        actor_display_name=user.full_name,
+    )
 
 
 @router.put(
@@ -193,6 +199,7 @@ def replace_document(
         filename=file.filename or "document",
         uploaded_by=user.id,
         mime_type=file.content_type,
+        actor_display_name=user.full_name,
     )
     return PermanentDocumentResponseBuilder(db).build_one(doc)
 
@@ -224,6 +231,10 @@ def update_document(
 ):
     """Update document metadata (type, filename, tax year) without touching the file."""
     doc = PermanentDocumentService(db).update_document_metadata(
-        client_record_id, document_id, **payload.model_dump(exclude_unset=True)
+        client_record_id,
+        document_id,
+        actor_id=user.id,
+        actor_display_name=user.full_name,
+        **payload.model_dump(exclude_unset=True),
     )
     return PermanentDocumentResponseBuilder(db).build_one(doc)

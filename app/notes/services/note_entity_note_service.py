@@ -1,5 +1,12 @@
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import (
+    ACTION_NOTE_CREATED,
+    ACTION_NOTE_DELETED,
+    ACTION_NOTE_UPDATED,
+    ENTITY_NOTE,
+)
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ForbiddenError, NotFoundError
@@ -9,6 +16,7 @@ from app.users.repositories.user_repository import UserRepository
 
 _NOT_FOUND = ErrorCode.NOTE_NOT_FOUND
 _CLIENT_ENTITY_TYPE = "client"
+_SYSTEM_ACTOR_DISPLAY = "מערכת"
 
 
 class EntityNoteService:
@@ -17,6 +25,29 @@ class EntityNoteService:
         self.repo = EntityNoteRepository(db)
         self.user_repo = UserRepository(db)
         self.client_repo = ClientRecordRepository(db)
+        self._audit = EntityAuditWriter(db)
+
+    def _actor_kwargs(self, actor_id: int | None, actor_name: str | None) -> dict:
+        if actor_id is None:
+            return {
+                "actor_type": "system",
+                "actor_display_name": actor_name or _SYSTEM_ACTOR_DISPLAY,
+            }
+        return {"actor_display_name": actor_name}
+
+    def _audit_metadata(self, note: EntityNote, client_record_id: int | None = None) -> dict:
+        return {
+            "client_record_id": (
+                client_record_id
+                if client_record_id is not None
+                else note.entity_id
+                if note.entity_type == _CLIENT_ENTITY_TYPE
+                else None
+            ),
+            "note_id": note.id,
+            "entity_type": note.entity_type,
+            "entity_id": note.entity_id,
+        }
 
     def _assert_client_exists(self, client_id: int) -> None:
         if not self.client_repo.get_by_id(client_id):
@@ -69,6 +100,8 @@ class EntityNoteService:
         entity_id: int,
         note: str,
         created_by: int | None = None,
+        actor_name: str | None = None,
+        client_record_id: int | None = None,
     ) -> EntityNote:
         if entity_type == _CLIENT_ENTITY_TYPE:
             self._assert_client_exists(entity_id)
@@ -77,6 +110,15 @@ class EntityNoteService:
             entity_id=entity_id,
             note=note,
             created_by=created_by,
+        )
+        self._audit.record_action(
+            ENTITY_NOTE,
+            note_obj.id,
+            created_by,
+            ACTION_NOTE_CREATED,
+            new_value={"body": note_obj.note},
+            metadata_json=self._audit_metadata(note_obj, client_record_id),
+            **self._actor_kwargs(created_by, actor_name),
         )
         return self._attach_created_by_name(note_obj)
 
@@ -87,13 +129,26 @@ class EntityNoteService:
         entity_id: int,
         note: str,
         actor_id: int,
+        actor_name: str | None = None,
+        client_record_id: int | None = None,
     ) -> EntityNote:
         obj = self._get_or_raise(note_id, entity_type, entity_id)
         if obj.created_by != actor_id:
             raise ForbiddenError("אין הרשאה לעדכן הערה זו", ErrorCode.NOTE_FORBIDDEN)
+        old_value = {"body": obj.note}
         updated = self.repo.update(note_id, note=note)
         if not updated:
             raise NotFoundError(f"הערה {note_id} לא נמצאה", _NOT_FOUND)
+        self._audit.record_action(
+            ENTITY_NOTE,
+            updated.id,
+            actor_id,
+            ACTION_NOTE_UPDATED,
+            old_value=old_value,
+            new_value={"body": updated.note},
+            actor_display_name=actor_name,
+            metadata_json=self._audit_metadata(updated, client_record_id),
+        )
         return self._attach_created_by_name(updated)
 
     def delete_note(
@@ -102,6 +157,18 @@ class EntityNoteService:
         entity_type: str,
         entity_id: int,
         actor_id: int,
+        actor_name: str | None = None,
+        client_record_id: int | None = None,
     ) -> None:
-        self._get_or_raise(note_id, entity_type, entity_id)
+        note = self._get_or_raise(note_id, entity_type, entity_id)
+        old_value = {"body": note.note}
         self.repo.soft_delete(note_id, deleted_by=actor_id)
+        self._audit.record_action(
+            ENTITY_NOTE,
+            note.id,
+            actor_id,
+            ACTION_NOTE_DELETED,
+            old_value=old_value,
+            actor_display_name=actor_name,
+            metadata_json=self._audit_metadata(note, client_record_id),
+        )

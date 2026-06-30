@@ -130,4 +130,9 @@ def send_notification(
         invalid_code=ErrorCode.NOTIFICATION_INVALID_IDEMPOTENCY_KEY,
     )
     svc = NotificationService(db)
-    return svc.send(body, triggered_by=user.id, idempotency_key=idempotency_key)
+    return svc.send(
+        body,
+        triggered_by=user.id,
+        idempotency_key=idempotency_key,
+        actor_name=user.full_name,
+    )

@@ -3,7 +3,15 @@ from datetime import date
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.audit.audit_constants import ENTITY_CLIENT
+from app.audit.audit_constants import (
+    ACTION_LEGAL_ENTITY_CREATED,
+    ACTION_PERSON_CREATED,
+    ACTION_PERSON_LEGAL_ENTITY_LINK_CREATED,
+    ENTITY_CLIENT,
+    ENTITY_LEGAL_ENTITY,
+    ENTITY_PERSON,
+    ENTITY_PERSON_LEGAL_ENTITY_LINK,
+)
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.models.business import Business
 from app.businesses.services.business_client_business_service import ClientBusinessService
@@ -188,7 +196,7 @@ class CreateClientService:
             vat_exempt_ceiling=effective_vat_exempt_ceiling,
             advance_rate=advance_rate,
         )
-        self.person_repo.ensure_owner(
+        person, created_person, link, created_link = self.person_repo.ensure_owner(
             legal_entity_id=legal_entity.id,
             full_name=full_name,
             id_number=id_number,
@@ -230,6 +238,70 @@ class CreateClientService:
                 "office_client_number": client_record.office_client_number,
             },
         )
+        legal_meta = {"client_record_id": client_record.id, "legal_entity_id": legal_entity.id}
+        self._audit.record_action(
+            ENTITY_LEGAL_ENTITY,
+            legal_entity.id,
+            actor_id,
+            ACTION_LEGAL_ENTITY_CREATED,
+            actor_display_name=actor_name,
+            metadata_json=legal_meta,
+            new_value={
+                "id_number": legal_entity.id_number,
+                "id_number_type": legal_entity.id_number_type,
+                "official_name": legal_entity.official_name,
+                "entity_type": legal_entity.entity_type,
+                "vat_reporting_frequency": legal_entity.vat_reporting_frequency,
+                "advance_payment_frequency": legal_entity.advance_payment_frequency,
+                "vat_exempt_ceiling": legal_entity.vat_exempt_ceiling,
+                "advance_rate": legal_entity.advance_rate,
+            },
+        )
+        if created_person:
+            person_meta = {
+                "client_record_id": client_record.id,
+                "legal_entity_id": legal_entity.id,
+                "person_id": person.id,
+            }
+            self._audit.record_action(
+                ENTITY_PERSON,
+                person.id,
+                actor_id,
+                ACTION_PERSON_CREATED,
+                actor_display_name=actor_name,
+                metadata_json=person_meta,
+                new_value={
+                    "full_name": person.full_name,
+                    "id_number": person.id_number,
+                    "id_number_type": person.id_number_type,
+                    "phone": person.phone,
+                    "email": person.email,
+                    "address_street": person.address_street,
+                    "address_building_number": person.address_building_number,
+                    "address_apartment": person.address_apartment,
+                    "address_city": person.address_city,
+                    "address_zip_code": person.address_zip_code,
+                },
+            )
+        if created_link and link is not None:
+            self._audit.record_action(
+                ENTITY_PERSON_LEGAL_ENTITY_LINK,
+                link.id,
+                actor_id,
+                ACTION_PERSON_LEGAL_ENTITY_LINK_CREATED,
+                actor_display_name=actor_name,
+                metadata_json={
+                    "client_record_id": client_record.id,
+                    "legal_entity_id": legal_entity.id,
+                    "person_id": person.id,
+                    "link_id": link.id,
+                },
+                new_value={
+                    "person_id": person.id,
+                    "legal_entity_id": legal_entity.id,
+                    "role": link.role,
+                },
+            )
         return client_record
 
     def create_from_request(

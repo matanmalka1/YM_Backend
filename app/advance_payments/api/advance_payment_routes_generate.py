@@ -34,5 +34,7 @@ def generate_advance_payment_schedule(
         request.year,
         period_months_count=request.period_months_count,
         reference_date=request.reference_date,
+        actor_id=user.id,
+        actor_name=user.full_name,
     )
     return GenerateScheduleResponse(created=len(created), skipped=skipped)

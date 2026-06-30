@@ -6,6 +6,8 @@ import re
 
 from sqlalchemy.orm import Session
 
+from app.audit.audit_constants import ACTION_NOTIFICATION_SENT, ENTITY_NOTIFICATION
+from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.config import settings
 from app.core.error_codes import ErrorCode
@@ -103,6 +105,7 @@ class NotificationSendService:
         self.policy = NotificationPolicyService()
         self.renderer = NotificationTemplateRenderer()
         self.resolver = NotificationContextResolver(db)
+        self._audit = EntityAuditWriter(db)
         live = settings.APP_ENV in ("staging", "production")
         self._email = EmailChannel(
             enabled=settings.NOTIFICATIONS_ENABLED and live,
@@ -112,6 +115,27 @@ class NotificationSendService:
             from_name=settings.EMAIL_FROM_NAME,
         )
         self._delivery = NotificationDeliveryService()
+
+    def _audit_metadata(self, notification) -> dict:
+        meta = {
+            "client_record_id": notification.client_record_id,
+            "business_id": notification.business_id,
+            "trigger": notification.trigger,
+            "channel": notification.channel,
+            "entity_type": notification.entity_type,
+            "entity_id": notification.entity_id,
+            "binder_id": notification.binder_id,
+            "annual_report_id": notification.annual_report_id,
+            "signature_request_id": notification.signature_request_id,
+        }
+        return {key: value for key, value in meta.items() if value is not None}
+
+    def _audit_snapshot(self, notification) -> dict:
+        return {
+            "status": notification.status,
+            "recipient": notification.recipient,
+            "subject_snapshot": notification.subject_snapshot,
+        }
 
     # ── Preview ───────────────────────────────────────────────────────────────
 
@@ -203,6 +227,7 @@ class NotificationSendService:
         request: NotificationSendRequest,
         triggered_by: int,
         idempotency_key: str,
+        actor_name: str | None = None,
     ) -> NotificationResult:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
             raise AppError(
@@ -415,7 +440,17 @@ class NotificationSendService:
         )
 
         if ok:
-            self.repo.mark_sent(n.id)
+            sent = self.repo.mark_sent(n.id)
+            if sent is not None:
+                self._audit.record_action(
+                    ENTITY_NOTIFICATION,
+                    sent.id,
+                    triggered_by,
+                    ACTION_NOTIFICATION_SENT,
+                    new_value=self._audit_snapshot(sent),
+                    actor_display_name=actor_name,
+                    metadata_json=self._audit_metadata(sent),
+                )
             return NotificationResult(
                 status="sent",
                 notification_id=n.id,

@@ -106,6 +106,7 @@ def create_correspondence(
         created_by=user.id,
         contact_id=request.contact_id,
         notes=request.notes,
+        actor_name=user.full_name,
     )
     return CorrespondenceResponse.model_validate(entry)
 
@@ -125,6 +126,8 @@ def update_correspondence(
     entry = CorrespondenceService(db).update_entry(
         correspondence_id,
         client_record_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
         **request.model_dump(exclude_unset=True),
     )
     return CorrespondenceResponse.model_validate(entry)
@@ -142,4 +145,9 @@ def delete_correspondence(
     db: DBSession,
     user: CurrentUser,
 ):
-    CorrespondenceService(db).delete_entry(correspondence_id, client_record_id, actor_id=user.id)
+    CorrespondenceService(db).delete_entry(
+        correspondence_id,
+        client_record_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )

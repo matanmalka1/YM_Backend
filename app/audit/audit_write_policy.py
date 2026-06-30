@@ -26,11 +26,17 @@ from dataclasses import dataclass, field
 from typing import Any, NoReturn
 
 from app.audit.audit_constants import (
+    ACTION_ADVANCE_PAYMENT_CREATED,
+    ACTION_ADVANCE_PAYMENT_DELETED,
+    ACTION_ADVANCE_PAYMENT_UPDATED,
     ACTION_ANNEX_LINE_ADDED,
     ACTION_ANNEX_LINE_DELETED,
     ACTION_ANNEX_LINE_UPDATED,
     ACTION_ANNUAL_REPORT_DEADLINE_UPDATED,
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
+    ACTION_AUTHORITY_CONTACT_CREATED,
+    ACTION_AUTHORITY_CONTACT_DELETED,
+    ACTION_AUTHORITY_CONTACT_UPDATED,
     ACTION_BINDER_CREATED,
     ACTION_BINDER_HANDED_OVER,
     ACTION_BINDER_INTAKE_UPDATED,
@@ -42,8 +48,15 @@ from app.audit.audit_constants import (
     ACTION_CHARGE_CANCELED,
     ACTION_CHARGE_ISSUED,
     ACTION_CHARGE_PAID,
+    ACTION_CORRESPONDENCE_CREATED,
+    ACTION_CORRESPONDENCE_DELETED,
+    ACTION_CORRESPONDENCE_UPDATED,
     ACTION_CREATED,
     ACTION_DELETED,
+    ACTION_DOCUMENT_DELETED,
+    ACTION_DOCUMENT_REPLACED,
+    ACTION_DOCUMENT_UPDATED,
+    ACTION_DOCUMENT_UPLOADED,
     ACTION_ENTITY_TYPE_CHANGED,
     ACTION_EXPENSE_ADDED,
     ACTION_EXPENSE_DELETED,
@@ -51,6 +64,21 @@ from app.audit.audit_constants import (
     ACTION_INCOME_ADDED,
     ACTION_INCOME_DELETED,
     ACTION_INCOME_UPDATED,
+    ACTION_INVOICE_CREATED,
+    ACTION_LEGAL_ENTITY_CREATED,
+    ACTION_LEGAL_ENTITY_UPDATED,
+    ACTION_NOTE_CREATED,
+    ACTION_NOTE_DELETED,
+    ACTION_NOTE_UPDATED,
+    ACTION_NOTIFICATION_SENT,
+    ACTION_PERSON_CREATED,
+    ACTION_PERSON_LEGAL_ENTITY_LINK_CREATED,
+    ACTION_PERSON_LEGAL_ENTITY_LINK_DELETED,
+    ACTION_PERSON_UPDATED,
+    ACTION_REMINDER_CANCELED,
+    ACTION_REMINDER_CREATED,
+    ACTION_REMINDER_FAILED,
+    ACTION_REMINDER_FIRED,
     ACTION_RESTORED,
     ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
     ACTION_SIGNATURE_REQUEST_CANCELED,
@@ -61,6 +89,13 @@ from app.audit.audit_constants import (
     ACTION_SIGNATURE_REQUEST_SIGNED,
     ACTION_SIGNATURE_REQUEST_VIEWED,
     ACTION_STATUS_CHANGED,
+    ACTION_TASK_ASSIGNED,
+    ACTION_TASK_CANCELED,
+    ACTION_TASK_COMPLETED,
+    ACTION_TASK_CREATED,
+    ACTION_TASK_DELETED,
+    ACTION_TASK_UPDATED,
+    ACTION_TAX_CALENDAR_GENERATED,
     ACTION_UPDATED,
     ACTION_VAT_INVOICE_AMOUNT_CHANGED,
     ACTION_VAT_INVOICE_CREATED,
@@ -192,6 +227,152 @@ _BINDER_META = frozenset({"client_record_id", "binder_id", "binder_number"})
 # {"value": ...}; metadata carries client context + binder/intake/field identity (§8/§10b).
 _BINDER_INTAKE_META = frozenset({"client_record_id", "binder_id", "intake_id", "field_name"})
 
+_LEGAL_ENTITY_META = frozenset({"client_record_id", "legal_entity_id"})
+_LEGAL_ENTITY_FIELDS = frozenset(
+    {
+        "id_number",
+        "id_number_type",
+        "official_name",
+        "entity_type",
+        "vat_reporting_frequency",
+        "advance_payment_frequency",
+        "vat_exempt_ceiling",
+        "advance_rate",
+        "advance_rate_updated_at",
+        "annual_revenue",
+    }
+)
+_PERSON_META = frozenset({"client_record_id", "legal_entity_id", "person_id"})
+_PERSON_FIELDS = frozenset(
+    {
+        "full_name",
+        "id_number",
+        "id_number_type",
+        "phone",
+        "email",
+        "address_street",
+        "address_building_number",
+        "address_apartment",
+        "address_city",
+        "address_zip_code",
+    }
+)
+_PERSON_LINK_META = frozenset({"client_record_id", "legal_entity_id", "person_id", "link_id"})
+_PERSON_LINK_FIELDS = frozenset({"person_id", "legal_entity_id", "role"})
+_AUTHORITY_CONTACT_META = frozenset({"client_record_id", "contact_id"})
+_AUTHORITY_CONTACT_FIELDS = frozenset({"contact_type", "name", "office", "phone", "email", "notes"})
+_ADVANCE_PAYMENT_META = frozenset(
+    {"client_record_id", "period", "tax_year", "annual_report_id", "source"}
+)
+_ADVANCE_PAYMENT_FIELDS = frozenset(
+    {
+        "period",
+        "period_months_count",
+        "due_date",
+        "expected_amount",
+        "paid_amount",
+        "payment_method",
+        "annual_report_id",
+        "notes",
+        "advance_rate",
+        "turnover_amount",
+        "calculated_amount",
+        "override_amount",
+        "status",
+        "paid_at",
+    }
+)
+_DOCUMENT_META = frozenset(
+    {
+        "client_record_id",
+        "business_id",
+        "annual_report_id",
+        "document_type",
+        "tax_year",
+        "version",
+        "mime_type",
+        "file_size_bytes",
+    }
+)
+_DOCUMENT_FIELDS = frozenset(
+    {
+        "document_type",
+        "original_filename",
+        "tax_year",
+        "status",
+        "version",
+        "file_size_bytes",
+        "mime_type",
+        "is_deleted",
+    }
+)
+_INVOICE_META = frozenset({"client_record_id", "business_id", "annual_report_id", "invoice_id"})
+_INVOICE_FIELDS = frozenset(
+    {"charge_id", "provider", "external_invoice_id", "document_url", "issued_at"}
+)
+_NOTE_META = frozenset({"client_record_id", "note_id", "entity_type", "entity_id"})
+_NOTE_FIELDS = frozenset({"body", "is_pinned"})
+_TASK_META = frozenset(
+    {
+        "client_record_id",
+        "source_domain",
+        "source_id",
+        "assigned_to_user_id",
+        "assigned_role",
+    }
+)
+_TASK_FIELDS = frozenset(
+    {
+        "title",
+        "description",
+        "status",
+        "priority",
+        "due_date",
+        "assigned_to_user_id",
+        "assigned_role",
+        "source_domain",
+        "source_id",
+        "client_record_id",
+        "action_key",
+        "action_payload",
+    }
+)
+_CORRESPONDENCE_META = frozenset({"client_record_id", "business_id", "contact_id"})
+_CORRESPONDENCE_FIELDS = frozenset(
+    {"correspondence_type", "subject", "occurred_at", "business_id", "contact_id", "notes"}
+)
+_NOTIFICATION_META = frozenset(
+    {
+        "client_record_id",
+        "business_id",
+        "trigger",
+        "channel",
+        "entity_type",
+        "entity_id",
+        "binder_id",
+        "annual_report_id",
+        "signature_request_id",
+    }
+)
+_NOTIFICATION_FIELDS = frozenset({"status", "recipient", "subject_snapshot"})
+_REMINDER_META = frozenset(
+    {"client_record_id", "source_domain", "source_id", "target_task_id", "action_type"}
+)
+_REMINDER_FIELDS = frozenset(
+    {
+        "status",
+        "fire_at",
+        "action_type",
+        "source_domain",
+        "source_id",
+        "target_task_id",
+        "notification_template_key",
+        "failure_reason",
+    }
+)
+_TAX_CALENDAR_META = frozenset({"start_year", "end_year", "entries_created", "entries_skipped"})
+_TAX_CALENDAR_FIELDS = frozenset({"start_year", "end_year", "entries_created", "entries_skipped"})
+
 
 @dataclass(frozen=True)
 class ActionPolicy:
@@ -248,6 +429,73 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "business_id"}),
         metadata_allowed=_BUSINESS_META,
     ),
+    # legal_entity/person/link (created through client/business graph writes).
+    ACTION_LEGAL_ENTITY_CREATED: ActionPolicy(
+        value_fields=_LEGAL_ENTITY_FIELDS,
+        metadata_required=frozenset({"client_record_id", "legal_entity_id"}),
+        metadata_allowed=_LEGAL_ENTITY_META,
+    ),
+    ACTION_LEGAL_ENTITY_UPDATED: ActionPolicy(
+        value_fields=_LEGAL_ENTITY_FIELDS,
+        metadata_required=frozenset({"client_record_id", "legal_entity_id"}),
+        metadata_allowed=_LEGAL_ENTITY_META,
+    ),
+    ACTION_PERSON_CREATED: ActionPolicy(
+        value_fields=_PERSON_FIELDS,
+        metadata_required=frozenset({"client_record_id", "legal_entity_id", "person_id"}),
+        metadata_allowed=_PERSON_META,
+    ),
+    ACTION_PERSON_UPDATED: ActionPolicy(
+        value_fields=_PERSON_FIELDS,
+        metadata_required=frozenset({"client_record_id", "legal_entity_id", "person_id"}),
+        metadata_allowed=_PERSON_META,
+    ),
+    ACTION_PERSON_LEGAL_ENTITY_LINK_CREATED: ActionPolicy(
+        value_fields=_PERSON_LINK_FIELDS,
+        metadata_required=frozenset(
+            {"client_record_id", "legal_entity_id", "person_id", "link_id"}
+        ),
+        metadata_allowed=_PERSON_LINK_META,
+    ),
+    ACTION_PERSON_LEGAL_ENTITY_LINK_DELETED: ActionPolicy(
+        value_fields=_PERSON_LINK_FIELDS,
+        metadata_required=frozenset(
+            {"client_record_id", "legal_entity_id", "person_id", "link_id"}
+        ),
+        metadata_allowed=_PERSON_LINK_META,
+    ),
+    # authority_contact
+    ACTION_AUTHORITY_CONTACT_CREATED: ActionPolicy(
+        value_fields=_AUTHORITY_CONTACT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "contact_id"}),
+        metadata_allowed=_AUTHORITY_CONTACT_META,
+    ),
+    ACTION_AUTHORITY_CONTACT_UPDATED: ActionPolicy(
+        value_fields=_AUTHORITY_CONTACT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "contact_id"}),
+        metadata_allowed=_AUTHORITY_CONTACT_META,
+    ),
+    ACTION_AUTHORITY_CONTACT_DELETED: ActionPolicy(
+        value_fields=_AUTHORITY_CONTACT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "contact_id"}),
+        metadata_allowed=_AUTHORITY_CONTACT_META,
+    ),
+    # advance_payment
+    ACTION_ADVANCE_PAYMENT_CREATED: ActionPolicy(
+        value_fields=_ADVANCE_PAYMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META,
+    ),
+    ACTION_ADVANCE_PAYMENT_UPDATED: ActionPolicy(
+        value_fields=_ADVANCE_PAYMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META,
+    ),
+    ACTION_ADVANCE_PAYMENT_DELETED: ActionPolicy(
+        value_fields=_ADVANCE_PAYMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META,
+    ),
     # charge
     entity_action(ENTITY_CHARGE, ACTION_CREATED): ActionPolicy(
         value_fields=frozenset({"amount", "charge_type"}),
@@ -271,6 +519,12 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
     ),
     entity_action(ENTITY_CHARGE, ACTION_DELETED): ActionPolicy(
         metadata_required=frozenset({"client_record_id"}), metadata_allowed=_CHARGE_META
+    ),
+    # invoice
+    ACTION_INVOICE_CREATED: ActionPolicy(
+        value_fields=_INVOICE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "invoice_id"}),
+        metadata_allowed=_INVOICE_META,
     ),
     # annual_report
     _ar(ACTION_CREATED): ActionPolicy(
@@ -451,6 +705,27 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "binder_id", "intake_id", "field_name"}),
         metadata_allowed=_BINDER_INTAKE_META,
     ),
+    # document
+    ACTION_DOCUMENT_UPLOADED: ActionPolicy(
+        value_fields=_DOCUMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "document_type", "version"}),
+        metadata_allowed=_DOCUMENT_META,
+    ),
+    ACTION_DOCUMENT_UPDATED: ActionPolicy(
+        value_fields=_DOCUMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "document_type", "version"}),
+        metadata_allowed=_DOCUMENT_META,
+    ),
+    ACTION_DOCUMENT_REPLACED: ActionPolicy(
+        value_fields=_DOCUMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "document_type", "version"}),
+        metadata_allowed=_DOCUMENT_META,
+    ),
+    ACTION_DOCUMENT_DELETED: ActionPolicy(
+        value_fields=_DOCUMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "document_type", "version"}),
+        metadata_allowed=_DOCUMENT_META,
+    ),
     # signature_request (evidence; per-action forensic metadata §8a).
     ACTION_SIGNATURE_REQUEST_CREATED: ActionPolicy(
         metadata_required=frozenset({"client_record_id", "signer_name"}),
@@ -483,6 +758,102 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
     ACTION_SIGNATURE_REQUEST_EXPIRED: ActionPolicy(
         metadata_required=frozenset({"client_record_id", "signer_name"}),
         metadata_allowed=_SIGNATURE_BASE_META | frozenset({"reason"}),
+    ),
+    # note
+    ACTION_NOTE_CREATED: ActionPolicy(
+        value_fields=_NOTE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "note_id", "entity_type", "entity_id"}),
+        metadata_allowed=_NOTE_META,
+    ),
+    ACTION_NOTE_UPDATED: ActionPolicy(
+        value_fields=_NOTE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "note_id", "entity_type", "entity_id"}),
+        metadata_allowed=_NOTE_META,
+    ),
+    ACTION_NOTE_DELETED: ActionPolicy(
+        value_fields=_NOTE_FIELDS,
+        metadata_required=frozenset({"client_record_id", "note_id", "entity_type", "entity_id"}),
+        metadata_allowed=_NOTE_META,
+    ),
+    # task
+    ACTION_TASK_CREATED: ActionPolicy(
+        value_fields=_TASK_FIELDS,
+        metadata_required=frozenset(),
+        metadata_allowed=_TASK_META,
+    ),
+    ACTION_TASK_UPDATED: ActionPolicy(
+        value_fields=_TASK_FIELDS,
+        metadata_required=frozenset(),
+        metadata_allowed=_TASK_META,
+    ),
+    ACTION_TASK_ASSIGNED: ActionPolicy(
+        value_fields=frozenset({"assigned_to_user_id"}),
+        metadata_required=frozenset(),
+        metadata_allowed=_TASK_META,
+    ),
+    ACTION_TASK_COMPLETED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
+        metadata_required=frozenset(),
+        metadata_allowed=_TASK_META,
+    ),
+    ACTION_TASK_CANCELED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
+        metadata_required=frozenset(),
+        metadata_allowed=_TASK_META,
+    ),
+    ACTION_TASK_DELETED: ActionPolicy(
+        value_fields=_TASK_FIELDS,
+        metadata_required=frozenset(),
+        metadata_allowed=_TASK_META,
+    ),
+    # correspondence
+    ACTION_CORRESPONDENCE_CREATED: ActionPolicy(
+        value_fields=_CORRESPONDENCE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_CORRESPONDENCE_META,
+    ),
+    ACTION_CORRESPONDENCE_UPDATED: ActionPolicy(
+        value_fields=_CORRESPONDENCE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_CORRESPONDENCE_META,
+    ),
+    ACTION_CORRESPONDENCE_DELETED: ActionPolicy(
+        value_fields=_CORRESPONDENCE_FIELDS,
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_CORRESPONDENCE_META,
+    ),
+    # notification
+    ACTION_NOTIFICATION_SENT: ActionPolicy(
+        value_fields=_NOTIFICATION_FIELDS,
+        metadata_required=frozenset({"client_record_id", "trigger", "channel"}),
+        metadata_allowed=_NOTIFICATION_META,
+    ),
+    # reminder
+    ACTION_REMINDER_CREATED: ActionPolicy(
+        value_fields=_REMINDER_FIELDS,
+        metadata_required=frozenset({"action_type"}),
+        metadata_allowed=_REMINDER_META,
+    ),
+    ACTION_REMINDER_CANCELED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
+        metadata_required=frozenset({"action_type"}),
+        metadata_allowed=_REMINDER_META,
+    ),
+    ACTION_REMINDER_FIRED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
+        metadata_required=frozenset({"action_type"}),
+        metadata_allowed=_REMINDER_META,
+    ),
+    ACTION_REMINDER_FAILED: ActionPolicy(
+        value_fields=frozenset({"status", "failure_reason"}),
+        metadata_required=frozenset({"action_type"}),
+        metadata_allowed=_REMINDER_META,
+    ),
+    # tax_calendar
+    ACTION_TAX_CALENDAR_GENERATED: ActionPolicy(
+        value_fields=_TAX_CALENDAR_FIELDS,
+        metadata_required=frozenset({"start_year", "end_year"}),
+        metadata_allowed=_TAX_CALENDAR_META,
     ),
 }
 

@@ -86,11 +86,12 @@ class PersonRepository(BaseRepository[Person]):
         id_number: str,
         id_number_type: IdNumberType,
         **fields,
-    ) -> None:
+    ) -> tuple[Person, bool, PersonLegalEntityLink | None, bool]:
         owner_id_number_type = (
             IdNumberType.OTHER if id_number_type == IdNumberType.CORPORATION else id_number_type
         )
         person = self.get_by_id_number(owner_id_number_type, id_number)
+        created_person = False
         if not person:
             person = self.create(
                 full_name=full_name,
@@ -98,5 +99,10 @@ class PersonRepository(BaseRepository[Person]):
                 id_number_type=owner_id_number_type,
                 **fields,
             )
+            created_person = True
+        link = None
+        created_link = False
         if not self.get_owner_for_legal_entity(legal_entity_id):
-            self.create_link(person_id=person.id, legal_entity_id=legal_entity_id)
+            link = self.create_link(person_id=person.id, legal_entity_id=legal_entity_id)
+            created_link = True
+        return person, created_person, link, created_link
