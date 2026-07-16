@@ -83,7 +83,7 @@ class AdvancePaymentCreateRequest(BaseModel):
     notes: str | None = Field(None, max_length=500)
 
     @model_validator(mode="after")
-    def validate_period_for_frequency(self) -> AdvancePaymentCreateRequest:
+    def validate_period_for_frequency(self) -> "AdvancePaymentCreateRequest":
         if self.period_months_count is None:
             return self
         if self.period_months_count not in SUPPORTED_PERIOD_MONTH_COUNTS:
