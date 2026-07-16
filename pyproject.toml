@@ -1,6 +1,9 @@
 [tool.ruff]
 line-length = 100
-target-version = "py314"
+# Must stay <= py313: Render's native Python runtime tops out at 3.13. Under
+# py314 the formatter strips the parentheses from `except (A, B):` (PEP 758),
+# which is a SyntaxError on 3.13 and crash-loops the deploy.
+target-version = "py313"
 exclude = [
   ".venv",
   "venv",
@@ -35,6 +38,30 @@ line-ending = "auto"
 
 [tool.pytest.ini_options]
 pythonpath = ["."]
+
+[tool.pyright]
+# Relative, so one tracked config serves both local runs and CI. Required
+# locally or imports (sentry_sdk, ...) fail to resolve. In CI there is no .venv:
+# pyright logs a harmless "subdirectory not found" note and takes the
+# interpreter from `--pythonpath` instead.
+# Note: an untracked pyrightconfig.json silently overrides this entire section.
+venvPath = "."
+venv = ".venv"
+include = ["app", "tests", "scripts"]
+extraPaths = [".", "tax_rules_config/app"]
+reportArgumentType = "none"
+reportAttributeAccessIssue = "none"
+reportOperatorIssue = "none"
+reportReturnType = "none"
+reportGeneralTypeIssues = "none"
+reportCallIssue = "none"
+reportOptionalMemberAccess = "none"
+reportOptionalSubscript = "none"
+reportOptionalOperand = "none"
+reportPossiblyUnboundVariable = "none"
+reportIndexIssue = "none"
+reportIncompatibleVariableOverride = "none"
+reportTypedDictNotRequiredAccess = "none"
 
 [tool.vulture]
 paths = ["app", "tests", "alembic"]

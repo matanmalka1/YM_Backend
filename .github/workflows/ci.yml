@@ -179,9 +179,10 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: pyright
-        # pyrightconfig.json pins an absolute local venvPath that does not
-        # exist in CI; --pythonpath points pyright at the CI interpreter so
-        # it resolves installed packages instead. The config disables most
-        # report* checks, so this is a lenient gate (undefined names, bad
-        # imports, syntax) rather than strict typing.
+        # Config lives in pyproject.toml [tool.pyright] so CI and local agree.
+        # Its venvPath points at .venv, which does not exist here — pyright logs
+        # a harmless "subdirectory not found" note and --pythonpath points it at
+        # the CI interpreter instead. That config disables most report* checks,
+        # so this is a lenient gate (undefined names, bad imports, syntax)
+        # rather than strict typing.
         run: pyright --pythonpath "$(which python)"

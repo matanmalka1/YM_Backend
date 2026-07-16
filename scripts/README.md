@@ -84,6 +84,7 @@ scripts/
 │   ├── check_missing_pagination.py
 │   ├── check_unused_routes.py
 │   ├── check_enum_sync.py
+│   ├── check_eager_annotations.py
 │   └── dump_schema.py
 ├── dev/
 │   ├── reset_dev_db.py
@@ -147,6 +148,14 @@ Compares Python `str, Enum` values against frontend `as const` arrays. Mapping i
 ```bash
 APP_ENV=development ENV_FILE=.env.development ./.venv/bin/python scripts/audit/check_enum_sync.py
 APP_ENV=development ENV_FILE=.env.development ./.venv/bin/python scripts/audit/check_enum_sync.py --enum VatType
+```
+
+### check_eager_annotations.py
+
+Finds annotations that raise `NameError` on Render's Python 3.13 but not on local 3.14, where PEP 649 defers evaluation — typically a `TYPE_CHECKING`-only import used in a runtime-evaluated annotation. CI runs 3.13.4, so a plain import catches these; this script exists to catch them locally before pushing. Fix is `from __future__ import annotations` in the reported file.
+
+```bash
+APP_ENV=test JWT_SECRET=x ./.venv/bin/python scripts/audit/check_eager_annotations.py
 ```
 
 ### dump_schema.py
