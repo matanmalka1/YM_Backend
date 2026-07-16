@@ -41,7 +41,7 @@ def _period_label(period: str, months_count: int) -> str:
         year_text, month_text = period.split("-")
         year = int(year_text)
         start_month = int(month_text)
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         return period
 
     if start_month not in _MONTH_HE:

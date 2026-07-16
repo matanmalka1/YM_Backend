@@ -218,7 +218,7 @@ class ReminderService:
             return None
         try:
             return int(raw)
-        except TypeError, ValueError:
+        except (TypeError, ValueError):
             return None
 
     def _parse_status(self, status: str | None) -> ReminderStatus:

@@ -48,7 +48,7 @@ def _has_pagination(route) -> bool:  # type: ignore[no-untyped-def]
         return False
     try:
         sig = inspect.signature(endpoint)
-    except ValueError, TypeError:
+    except (ValueError, TypeError):
         return False
     return any(p.lower() in PAGINATION_PARAMS for p in sig.parameters)
 
