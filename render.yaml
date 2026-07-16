@@ -6,7 +6,7 @@ services:
     startCommand: alembic upgrade head && python scripts/dev/bootstrap_tax_calendar.py && gunicorn -k uvicorn.workers.UvicornWorker app.main:app --bind 0.0.0.0:$PORT
     envVars:
       - key: PYTHON_VERSION
-        value: "3.14.3"
+        value: "3.13.4"
 
       - key: APP_ENV
         value: production
