@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: ceda17e5f31d
+Revision ID: a913d071eff1
 Revises: 
-Create Date: 2026-06-30 17:33:13.169994
+Create Date: 2026-07-16 12:11:07.045767
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'ceda17e5f31d'
+revision: str = 'a913d071eff1'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -188,13 +188,6 @@ def upgrade() -> None:
     op.create_index('idx_entity_audit_performer_perf', 'entity_audit_logs', ['performed_by', 'performed_at'], unique=False)
     op.create_index(op.f('ix_entity_audit_logs_entity_id'), 'entity_audit_logs', ['entity_id'], unique=False)
     op.create_index(op.f('ix_entity_audit_logs_entity_type'), 'entity_audit_logs', ['entity_type'], unique=False)
-    # §8b PostgreSQL expression index for metadata_json->>'client_record_id' lookups
-    # (timeline/dashboard client-context queries). Not expressible via autogenerate;
-    # PostgreSQL-only — SQLite dev/test uses create_all and may table-scan.
-    op.execute(
-        "CREATE INDEX idx_entity_audit_client_ctx ON entity_audit_logs "
-        "((metadata_json->>'client_record_id'), performed_at)"
-    )
     op.create_table('entity_notes',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('entity_type', sa.String(), nullable=False),
@@ -1053,7 +1046,6 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_entity_notes_entity_id'), table_name='entity_notes')
     op.drop_index('idx_entity_notes_type_id', table_name='entity_notes')
     op.drop_table('entity_notes')
-    op.execute("DROP INDEX IF EXISTS idx_entity_audit_client_ctx")
     op.drop_index(op.f('ix_entity_audit_logs_entity_type'), table_name='entity_audit_logs')
     op.drop_index(op.f('ix_entity_audit_logs_entity_id'), table_name='entity_audit_logs')
     op.drop_index('idx_entity_audit_performer_perf', table_name='entity_audit_logs')
