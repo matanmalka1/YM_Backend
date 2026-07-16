@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
 
 from app.businesses.schemas.business_schemas import ClientBusinessCreateRequest

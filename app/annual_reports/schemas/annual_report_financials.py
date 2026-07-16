@@ -1,5 +1,7 @@
 """Schemas for income/expense lines, financial summary, and tax calculation."""
 
+from __future__ import annotations
+
 from decimal import Decimal
 from typing import Literal
 

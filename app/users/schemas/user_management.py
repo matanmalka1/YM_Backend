@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, EmailStr, Field, model_validator
 
 from app.core.api_types import ApiDateTime, NonBlankStr, PaginatedResponse

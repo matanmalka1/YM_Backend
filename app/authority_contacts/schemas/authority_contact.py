@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pydantic import BaseModel, EmailStr, model_validator
 
 from app.authority_contacts.models.authority_contact import ContactType

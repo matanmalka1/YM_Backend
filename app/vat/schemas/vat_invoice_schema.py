@@ -1,5 +1,7 @@
 """Pydantic schemas for VAT Invoice entities."""
 
+from __future__ import annotations
+
 from datetime import date
 from decimal import Decimal
 
