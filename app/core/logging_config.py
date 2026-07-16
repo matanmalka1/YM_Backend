@@ -9,6 +9,8 @@ Provides consistent log format with:
 - Stack traces for errors
 """
 
+from __future__ import annotations
+
 import json
 import logging
 import sys
