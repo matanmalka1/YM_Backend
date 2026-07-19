@@ -1,69 +1,82 @@
-from typing import Literal
+import datetime as dt
+from enum import Enum as PyEnum
 
 from pydantic import BaseModel, Field
 
-from app.core.api_types import ApiDecimal
+from app.core.api_types import ApiDecimal, PaginatedResponse
 
 
-class SearchResult(BaseModel):
-    """Single search result."""
+class SearchItemType(str, PyEnum):
+    """Entity types that appear as rows in a client's item feed.
 
-    result_type: Literal["client", "binder"]
-    client_record_id: int
+    Deliberately excludes `client`: the client is the feed's subject, not a row in it.
+    Every member is also a `LinkedEntity`, which owns the route each row links to.
+    """
+
+    BINDER = "binder"
+    DOCUMENT = "document"
+    VAT_WORK_ITEM = "vat_work_item"
+    ANNUAL_REPORT = "annual_report"
+    ADVANCE_PAYMENT = "advance_payment"
+    CHARGE = "charge"
+    TASK = "task"
+    NOTIFICATION = "notification"
+
+
+class SearchClientMatch(BaseModel):
+    """A client the typed term resolved to, offered for selection."""
+
+    id: int
     office_client_number: int | None = None
-    client_name: str
+    name: str
     id_number: str | None = None
-    client_status: str | None = None
-    binder_id: int | None = None
-    binder_number: str | None = None
-
-
-class DocumentSearchResult(BaseModel):
-    """Single document search result."""
-
-    id: int
-    client_record_id: int
-    office_client_number: int | None = None
-    client_name: str
-    business_id: int | None = None
-    business_name: str | None = None
-    document_type: str
-    original_filename: str | None = None
-    tax_year: int | None = None
-
-
-class OperationalSearchItem(BaseModel):
-    result_type: Literal["task", "vat_work_item", "annual_report", "charge", "advance_payment"]
-    id: int
-    client_record_id: int
-    office_client_number: int
-    client_name: str
-    title: str
-    detail: str | None = None
     status: str
-    amount: ApiDecimal | None = None
+    matched_binder_numbers: list[str] = Field(default_factory=list)
     href: str
 
 
-class OperationalSearchGroup(BaseModel):
-    items: list[OperationalSearchItem] = Field(default_factory=list)
+class SearchItem(BaseModel):
+    """One item belonging to the selected client, in the one shape every type shares.
+
+    `status` is nullable because documents carry no work status; their type is shown
+    in its place. `amount` is set only by the money-carrying types. `occurred_on` is the
+    date the row is anchored to (due date, upload date, issue date), so a mixed feed can
+    be read chronologically.
+    """
+
+    result_type: SearchItemType
+    id: int
+    client_record_id: int
+    office_client_number: int | None = None
+    client_name: str
+    title: str
+    detail: str | None = None
+    status: str | None = None
+    amount: ApiDecimal | None = None
+    occurred_on: dt.date | None = None
+    href: str
+
+
+class SearchItemGroup(BaseModel):
+    """Preview rows for one type plus the exact total behind them."""
+
+    items: list[SearchItem] = Field(default_factory=list)
     total: int = 0
 
 
-class OperationalSearchResults(BaseModel):
-    tasks: OperationalSearchGroup = Field(default_factory=OperationalSearchGroup)
-    vat_work_items: OperationalSearchGroup = Field(default_factory=OperationalSearchGroup)
-    annual_reports: OperationalSearchGroup = Field(default_factory=OperationalSearchGroup)
-    charges: OperationalSearchGroup = Field(default_factory=OperationalSearchGroup)
-    advance_payments: OperationalSearchGroup = Field(default_factory=OperationalSearchGroup)
+class SearchItemGroups(BaseModel):
+    binders: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    documents: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    vat_work_items: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    annual_reports: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    advance_payments: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    charges: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    tasks: SearchItemGroup = Field(default_factory=SearchItemGroup)
+    notifications: SearchItemGroup = Field(default_factory=SearchItemGroup)
 
 
 class SearchResponse(BaseModel):
-    """Search results response."""
+    """Both search phases in one payload: which client, then everything of that client."""
 
-    results: list[SearchResult]
-    documents: list[DocumentSearchResult] = Field(default_factory=list)
-    operational: OperationalSearchResults = Field(default_factory=OperationalSearchResults)
-    page: int
-    page_size: int
-    total: int
+    clients: PaginatedResponse[SearchClientMatch]
+    items: SearchItemGroups = Field(default_factory=SearchItemGroups)

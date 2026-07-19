@@ -1,18 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Literal
 
-from sqlalchemy import String, and_, cast, func, or_, select
+from sqlalchemy import String, and_, cast, exists, func, or_, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import Select
 
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType
 from app.common.repositories.base_repository import BaseRepository
-from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.legal_entities.models.legal_entity import LegalEntity
 
 
@@ -33,21 +30,31 @@ class SearchFilters:
             self.binder_number or self.binder_location_status or self.binder_capacity_status
         )
 
+    @property
+    def is_empty(self) -> bool:
+        return not any(
+            (
+                self.search,
+                self.client_record_id,
+                self.id_number,
+                self.client_status,
+                self.entity_type,
+                self.has_binder_filter,
+            )
+        )
+
 
 @dataclass(frozen=True)
-class PrimarySearchRow:
-    result_type: Literal["client", "binder"]
-    client_record_id: int
-    office_client_number: int
-    client_name: str
-    id_number: str
-    client_status: ClientStatus
-    binder_id: int | None
-    binder_number: str | None
+class ClientMatchRow:
+    id: int
+    office_client_number: int | None
+    name: str
+    id_number: str | None
+    status: ClientStatus
 
 
 class SearchResultRepository:
-    """Cross-domain read projections for unified search."""
+    """Resolves the typed term and advanced filters to the clients they identify."""
 
     def __init__(self, db: Session):
         self._db = db
@@ -84,10 +91,44 @@ class SearchResultRepository:
             stmt = stmt.where(Binder.capacity_status == filters.binder_capacity_status)
         return stmt
 
-    def matching_client_ids(self, filters: SearchFilters) -> Select[tuple[int]]:
-        """Return the advanced-filter client scope used by secondary result groups."""
+    @staticmethod
+    def _term_match(term: str):
+        """The term identifies a client by any of its public identifiers.
+
+        A binder number counts as an identifier: it is how the office locates a client
+        from physical material, so it resolves to the client that owns the binder.
+        """
+        pattern = f"%{term}%"
+        return or_(
+            LegalEntity.official_name.ilike(pattern),
+            LegalEntity.id_number.ilike(pattern),
+            cast(ClientRecord.office_client_number, String).ilike(pattern),
+            exists(
+                select(Binder.id).where(
+                    Binder.client_record_id == ClientRecord.id,
+                    Binder.deleted_at.is_(None),
+                    Binder.location_status != BinderLocationStatus.HANDED_OVER,
+                    Binder.binder_number.ilike(pattern),
+                )
+            ),
+        )
+
+    def search_clients(
+        self, filters: SearchFilters, page: int, page_size: int
+    ) -> tuple[list[ClientMatchRow], int]:
+        """Clients matching the term and advanced filters, one row per client."""
+        if filters.is_empty:
+            return [], 0
+
         stmt = (
-            select(ClientRecord.id)
+            select(
+                ClientRecord.id,
+                ClientRecord.office_client_number,
+                LegalEntity.official_name.label("name"),
+                LegalEntity.id_number,
+                ClientRecord.status,
+            )
+            .select_from(ClientRecord)
             .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
             .where(ClientRecord.deleted_at.is_(None))
         )
@@ -95,96 +136,44 @@ class SearchResultRepository:
             stmt = stmt.join(Binder, self._binder_join_conditions(filters))
             stmt = self._apply_binder_filters(stmt, filters)
         stmt = self._apply_client_filters(stmt, filters)
-        return stmt.distinct()
-
-    def search_primary(
-        self, filters: SearchFilters, page: int, page_size: int
-    ) -> tuple[list[PrimarySearchRow], int]:
-        stmt = (
-            select(
-                ClientRecord.id.label("client_record_id"),
-                ClientRecord.office_client_number,
-                ClientRecord.status.label("client_status"),
-                LegalEntity.official_name.label("client_name"),
-                LegalEntity.id_number,
-                Binder.id.label("binder_id"),
-                Binder.binder_number,
-            )
-            .select_from(ClientRecord)
-            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
-            .join(
-                Binder,
-                self._binder_join_conditions(filters),
-                isouter=not filters.has_binder_filter,
-            )
-            .where(ClientRecord.deleted_at.is_(None))
-        )
-        stmt = self._apply_client_filters(stmt, filters)
-        stmt = self._apply_binder_filters(stmt, filters)
-
         if filters.search:
-            pattern = f"%{filters.search.strip()}%"
-            stmt = stmt.where(
-                or_(
-                    LegalEntity.official_name.ilike(pattern),
-                    LegalEntity.id_number.ilike(pattern),
-                    cast(ClientRecord.office_client_number, String).ilike(pattern),
-                    Binder.binder_number.ilike(pattern),
-                )
-            )
+            stmt = stmt.where(self._term_match(filters.search.strip()))
+        stmt = stmt.distinct()
 
         total = int(self._db.scalar(select(func.count()).select_from(stmt.subquery())) or 0)
-        stmt = stmt.order_by(
-            LegalEntity.official_name.asc(),
-            Binder.binder_number.asc().nulls_last(),
-            ClientRecord.id,
-        )
+        stmt = stmt.order_by(LegalEntity.official_name.asc(), ClientRecord.id)
         stmt = BaseRepository.apply_pagination(stmt, page, page_size)
-        rows = self._db.execute(stmt).all()
-        return (
-            [
-                PrimarySearchRow(
-                    result_type="binder" if row.binder_id is not None else "client",
-                    client_record_id=row.client_record_id,
-                    office_client_number=row.office_client_number,
-                    client_name=row.client_name,
-                    id_number=row.id_number,
-                    client_status=row.client_status,
-                    binder_id=row.binder_id,
-                    binder_number=row.binder_number,
-                )
-                for row in rows
-            ],
-            total,
-        )
-
-    def search_documents(
-        self,
-        *,
-        query: str | None,
-        filename: str | None,
-        client_scope: Select[tuple[int]],
-        limit: int,
-    ) -> list[PermanentDocument]:
-        stmt = select(PermanentDocument).where(
-            PermanentDocument.client_record_id.in_(client_scope),
-            PermanentDocument.is_deleted.is_(False),
-            PermanentDocument.superseded_by.is_(None),
-        )
-        if query:
-            pattern = f"%{query.strip()}%"
-            stmt = stmt.where(
-                or_(
-                    PermanentDocument.original_filename.ilike(pattern),
-                    cast(PermanentDocument.document_type, String).ilike(pattern),
-                )
+        return [
+            ClientMatchRow(
+                id=row.id,
+                office_client_number=row.office_client_number,
+                name=row.name,
+                id_number=row.id_number,
+                status=row.status,
             )
-        if filename:
-            stmt = stmt.where(PermanentDocument.original_filename.ilike(f"%{filename.strip()}%"))
-        return list(
-            self._db.scalars(
-                stmt.order_by(
-                    PermanentDocument.uploaded_at.desc(), PermanentDocument.id.desc()
-                ).limit(limit)
-            ).all()
-        )
+            for row in self._db.execute(stmt).all()
+        ], total
+
+    def matched_binder_numbers(
+        self, client_ids: list[int], term: str | None
+    ) -> dict[int, list[str]]:
+        """Binder numbers that made each client match, so the choice is explainable.
+
+        Empty when the term is not a binder number — there is nothing to explain then.
+        """
+        if not client_ids or not term:
+            return {}
+        rows = self._db.execute(
+            select(Binder.client_record_id, Binder.binder_number)
+            .where(
+                Binder.client_record_id.in_(client_ids),
+                Binder.deleted_at.is_(None),
+                Binder.location_status != BinderLocationStatus.HANDED_OVER,
+                Binder.binder_number.ilike(f"%{term.strip()}%"),
+            )
+            .order_by(Binder.binder_number)
+        ).all()
+        matches: dict[int, list[str]] = {}
+        for client_record_id, binder_number in rows:
+            matches.setdefault(client_record_id, []).append(binder_number)
+        return matches

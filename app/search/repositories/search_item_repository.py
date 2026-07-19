@@ -1,248 +1,281 @@
 from __future__ import annotations
 
+import datetime as dt
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from decimal import Decimal
+from typing import Any
 
-from sqlalchemy import String, cast, exists, func, or_, select
+from sqlalchemy import ColumnElement, func, select
 from sqlalchemy.orm import Session
-from sqlalchemy.sql import Select
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.binders.models.binder import Binder, BinderLocationStatus
+from app.binders.models.binder import Binder
 from app.charges.models.charge import Charge
 from app.clients.models.client_record import ClientRecord
+from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.legal_entities.models.legal_entity import LegalEntity
+from app.notifications.models.notification import TRIGGER_LABELS, Notification
 from app.tasks.models.task import Task
 from app.vat.models.vat_work_item import VatWorkItem
-
-_ITEM_LIMIT = 5
 
 
 @dataclass(frozen=True)
 class SearchItemRow:
+    """One item of any type, already carrying its owning client's identity.
+
+    `status` is None for types with no work status (documents). `occurred_on` is the date
+    the row is anchored to — the same column the type is ordered by, so the feed reads
+    chronologically within a type.
+    """
+
     id: int
     client_record_id: int
-    office_client_number: int
+    office_client_number: int | None
     client_name: str
-    status: str
     key: str
+    status: str | None = None
     detail: str | None = None
     amount: Decimal | None = None
+    occurred_on: dt.date | None = None
+
+
+def _as_date(value: dt.datetime | dt.date | None) -> dt.date | None:
+    if value is None:
+        return None
+    return value.date() if isinstance(value, dt.datetime) else value
 
 
 class SearchItemRepository:
+    """Reads one client's items across every domain, in one shared row shape.
+
+    Every query is anchored to a single `client_record_id`: the search flow resolves a
+    client first, and the item feed then shows that client's records in full. There is
+    no text filter here — narrowing happens by type in the UI.
+    """
+
     def __init__(self, db: Session):
         self._db = db
 
-    @staticmethod
-    def _client_scope(stmt, model, client_scope: Select[tuple[int]]):
-        stmt = stmt.join(ClientRecord, ClientRecord.id == model.client_record_id)
-        stmt = stmt.join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id).where(
-            ClientRecord.deleted_at.is_(None), ClientRecord.id.in_(client_scope)
+    def _search(
+        self,
+        model: Any,
+        *,
+        client_record_id: int,
+        active: Sequence[ColumnElement[bool]],
+        order_by: Sequence[Any],
+        mapper: Callable[[Any], SearchItemRow],
+        limit: int,
+        offset: int,
+    ) -> tuple[list[SearchItemRow], int]:
+        conditions = [
+            model.client_record_id == client_record_id,
+            ClientRecord.deleted_at.is_(None),
+            *active,
+        ]
+        rows_stmt = (
+            select(
+                model,
+                ClientRecord.office_client_number.label("office_client_number"),
+                LegalEntity.official_name.label("client_name"),
+            )
+            .join(ClientRecord, ClientRecord.id == model.client_record_id)
+            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
+            .where(*conditions)
+            .order_by(*order_by)
+            .limit(limit)
+            .offset(offset)
         )
-        return stmt
+        count_stmt = (
+            select(func.count(model.id))
+            .select_from(model)
+            .join(ClientRecord, ClientRecord.id == model.client_record_id)
+            .where(*conditions)
+        )
+        total = int(self._db.scalar(count_stmt) or 0)
+        rows = [mapper(result) for result in self._db.execute(rows_stmt).all()]
+        return rows, total
 
-    @staticmethod
-    def _identity_match(term: str):
-        pattern = f"%{term}%"
-        return or_(
-            func.lower(LegalEntity.official_name).like(pattern),
-            func.lower(LegalEntity.id_number).like(pattern),
-            cast(ClientRecord.office_client_number, String).like(pattern),
-            exists(
-                select(Binder.id).where(
-                    Binder.client_record_id == ClientRecord.id,
-                    Binder.deleted_at.is_(None),
-                    Binder.location_status != BinderLocationStatus.HANDED_OVER,
-                    func.lower(Binder.binder_number).like(pattern),
-                )
+    def search_binders(
+        self, client_record_id: int, *, limit: int, offset: int = 0
+    ) -> tuple[list[SearchItemRow], int]:
+        return self._search(
+            Binder,
+            client_record_id=client_record_id,
+            active=[Binder.deleted_at.is_(None)],
+            order_by=[Binder.binder_number.desc(), Binder.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
+                id=result.Binder.id,
+                client_record_id=result.Binder.client_record_id,
+                office_client_number=result.office_client_number,
+                client_name=result.client_name,
+                key=result.Binder.binder_number,
+                status=result.Binder.location_status.value,
+                detail=result.Binder.notes,
+                occurred_on=_as_date(result.Binder.period_start),
             ),
         )
 
-    def _rows(self, stmt, count_stmt, mapper) -> tuple[list[SearchItemRow], int]:
-        total = self._db.scalar(count_stmt) or 0
-        rows = list(self._db.execute(stmt.limit(_ITEM_LIMIT)).all())
-        return [mapper(row) for row in rows], total
-
-    @staticmethod
-    def _select(model):
-        return select(
-            model,
-            ClientRecord.office_client_number.label("office_client_number"),
-            LegalEntity.official_name.label("client_name"),
-        )
-
-    def search_tasks(
-        self, term: str | None, client_scope: Select[tuple[int]]
+    def search_documents(
+        self, client_record_id: int, *, limit: int, offset: int = 0
     ) -> tuple[list[SearchItemRow], int]:
-        base = self._client_scope(self._select(Task), Task, client_scope).where(
-            Task.deleted_at.is_(None)
-        )
-        count = self._client_scope(
-            select(func.count(Task.id)).select_from(Task), Task, client_scope
-        ).where(Task.deleted_at.is_(None))
-        if term:
-            pattern = f"%{term}%"
-            match = or_(
-                self._identity_match(term),
-                func.lower(Task.title).like(pattern),
-                func.lower(func.coalesce(Task.description, "")).like(pattern),
-                cast(Task.id, String).like(pattern),
-            )
-            base = base.where(match)
-            count = count.where(match)
-        return self._rows(
-            base.order_by(Task.updated_at.desc(), Task.id.desc()),
-            count,
-            lambda result: SearchItemRow(
-                id=result.Task.id,
-                client_record_id=result.Task.client_record_id,
+        return self._search(
+            PermanentDocument,
+            client_record_id=client_record_id,
+            active=[
+                PermanentDocument.is_deleted.is_(False),
+                PermanentDocument.superseded_by.is_(None),
+            ],
+            order_by=[PermanentDocument.uploaded_at.desc(), PermanentDocument.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
+                id=result.PermanentDocument.id,
+                client_record_id=result.PermanentDocument.client_record_id,
                 office_client_number=result.office_client_number,
                 client_name=result.client_name,
-                status=result.Task.status.value,
-                key=result.Task.title,
-                detail=result.Task.description,
+                key=result.PermanentDocument.original_filename
+                or result.PermanentDocument.document_type.value,
+                detail=result.PermanentDocument.document_type.value,
+                occurred_on=_as_date(result.PermanentDocument.uploaded_at),
             ),
         )
 
     def search_vat(
-        self, term: str | None, client_scope: Select[tuple[int]]
+        self, client_record_id: int, *, limit: int, offset: int = 0
     ) -> tuple[list[SearchItemRow], int]:
-        base = self._client_scope(self._select(VatWorkItem), VatWorkItem, client_scope).where(
-            VatWorkItem.deleted_at.is_(None)
-        )
-        count = self._client_scope(
-            select(func.count(VatWorkItem.id)).select_from(VatWorkItem),
+        return self._search(
             VatWorkItem,
-            client_scope,
-        ).where(VatWorkItem.deleted_at.is_(None))
-        if term:
-            pattern = f"%{term}%"
-            match = or_(
-                self._identity_match(term),
-                VatWorkItem.period.like(pattern),
-                cast(VatWorkItem.id, String).like(pattern),
-            )
-            base = base.where(match)
-            count = count.where(match)
-        return self._rows(
-            base.order_by(VatWorkItem.period.desc(), VatWorkItem.id.desc()),
-            count,
-            lambda result: SearchItemRow(
+            client_record_id=client_record_id,
+            active=[VatWorkItem.deleted_at.is_(None)],
+            order_by=[VatWorkItem.period.desc(), VatWorkItem.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
                 id=result.VatWorkItem.id,
                 client_record_id=result.VatWorkItem.client_record_id,
                 office_client_number=result.office_client_number,
                 client_name=result.client_name,
-                status=result.VatWorkItem.status.value,
                 key=result.VatWorkItem.period,
+                status=result.VatWorkItem.status.value,
                 amount=result.VatWorkItem.final_vat_amount
                 if result.VatWorkItem.final_vat_amount is not None
                 else result.VatWorkItem.net_vat,
+                occurred_on=_as_date(result.VatWorkItem.due_date_effective),
             ),
         )
 
     def search_annual_reports(
-        self, term: str | None, client_scope: Select[tuple[int]]
+        self, client_record_id: int, *, limit: int, offset: int = 0
     ) -> tuple[list[SearchItemRow], int]:
-        base = self._client_scope(self._select(AnnualReport), AnnualReport, client_scope).where(
-            AnnualReport.deleted_at.is_(None)
-        )
-        count = self._client_scope(
-            select(func.count(AnnualReport.id)).select_from(AnnualReport),
+        return self._search(
             AnnualReport,
-            client_scope,
-        ).where(AnnualReport.deleted_at.is_(None))
-        if term:
-            pattern = f"%{term}%"
-            match = or_(
-                self._identity_match(term),
-                cast(AnnualReport.tax_year, String).like(pattern),
-                cast(AnnualReport.id, String).like(pattern),
-                func.lower(func.coalesce(AnnualReport.ita_reference, "")).like(pattern),
-            )
-            base = base.where(match)
-            count = count.where(match)
-        return self._rows(
-            base.order_by(AnnualReport.tax_year.desc(), AnnualReport.id.desc()),
-            count,
-            lambda result: SearchItemRow(
+            client_record_id=client_record_id,
+            active=[AnnualReport.deleted_at.is_(None)],
+            order_by=[AnnualReport.tax_year.desc(), AnnualReport.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
                 id=result.AnnualReport.id,
                 client_record_id=result.AnnualReport.client_record_id,
                 office_client_number=result.office_client_number,
                 client_name=result.client_name,
-                status=result.AnnualReport.status.value,
                 key=str(result.AnnualReport.tax_year),
+                status=result.AnnualReport.status.value,
                 detail=result.AnnualReport.ita_reference,
-            ),
-        )
-
-    def search_charges(
-        self, term: str | None, client_scope: Select[tuple[int]]
-    ) -> tuple[list[SearchItemRow], int]:
-        base = self._client_scope(self._select(Charge), Charge, client_scope).where(
-            Charge.deleted_at.is_(None)
-        )
-        count = self._client_scope(
-            select(func.count(Charge.id)).select_from(Charge), Charge, client_scope
-        ).where(Charge.deleted_at.is_(None))
-        if term:
-            pattern = f"%{term}%"
-            match = or_(
-                self._identity_match(term),
-                cast(Charge.id, String).like(pattern),
-                func.lower(func.coalesce(Charge.description, "")).like(pattern),
-                func.coalesce(Charge.period, "").like(pattern),
-            )
-            base = base.where(match)
-            count = count.where(match)
-        return self._rows(
-            base.order_by(Charge.created_at.desc(), Charge.id.desc()),
-            count,
-            lambda result: SearchItemRow(
-                id=result.Charge.id,
-                client_record_id=result.Charge.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
-                status=result.Charge.status.value,
-                key=result.Charge.period or str(result.Charge.id),
-                detail=result.Charge.description,
-                amount=result.Charge.amount,
+                occurred_on=_as_date(result.AnnualReport.filing_deadline),
             ),
         )
 
     def search_advance_payments(
-        self, term: str | None, client_scope: Select[tuple[int]]
+        self, client_record_id: int, *, limit: int, offset: int = 0
     ) -> tuple[list[SearchItemRow], int]:
-        base = self._client_scope(self._select(AdvancePayment), AdvancePayment, client_scope).where(
-            AdvancePayment.deleted_at.is_(None)
-        )
-        count = self._client_scope(
-            select(func.count(AdvancePayment.id)).select_from(AdvancePayment),
+        return self._search(
             AdvancePayment,
-            client_scope,
-        ).where(AdvancePayment.deleted_at.is_(None))
-        if term:
-            pattern = f"%{term}%"
-            match = or_(
-                self._identity_match(term),
-                AdvancePayment.period.like(pattern),
-                cast(AdvancePayment.id, String).like(pattern),
-                func.lower(func.coalesce(AdvancePayment.notes, "")).like(pattern),
-            )
-            base = base.where(match)
-            count = count.where(match)
-        return self._rows(
-            base.order_by(AdvancePayment.period.desc(), AdvancePayment.id.desc()),
-            count,
-            lambda result: SearchItemRow(
+            client_record_id=client_record_id,
+            active=[AdvancePayment.deleted_at.is_(None)],
+            order_by=[AdvancePayment.period.desc(), AdvancePayment.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
                 id=result.AdvancePayment.id,
                 client_record_id=result.AdvancePayment.client_record_id,
                 office_client_number=result.office_client_number,
                 client_name=result.client_name,
-                status=result.AdvancePayment.status.value,
                 key=result.AdvancePayment.period,
+                status=result.AdvancePayment.status.value,
                 detail=result.AdvancePayment.notes,
                 amount=result.AdvancePayment.expected_amount,
+                occurred_on=_as_date(result.AdvancePayment.due_date),
+            ),
+        )
+
+    def search_charges(
+        self, client_record_id: int, *, limit: int, offset: int = 0
+    ) -> tuple[list[SearchItemRow], int]:
+        return self._search(
+            Charge,
+            client_record_id=client_record_id,
+            active=[Charge.deleted_at.is_(None)],
+            order_by=[Charge.created_at.desc(), Charge.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
+                id=result.Charge.id,
+                client_record_id=result.Charge.client_record_id,
+                office_client_number=result.office_client_number,
+                client_name=result.client_name,
+                key=result.Charge.period or str(result.Charge.id),
+                status=result.Charge.status.value,
+                detail=result.Charge.description,
+                amount=result.Charge.amount,
+                occurred_on=_as_date(result.Charge.issued_at or result.Charge.created_at),
+            ),
+        )
+
+    def search_tasks(
+        self, client_record_id: int, *, limit: int, offset: int = 0
+    ) -> tuple[list[SearchItemRow], int]:
+        return self._search(
+            Task,
+            client_record_id=client_record_id,
+            active=[Task.deleted_at.is_(None)],
+            order_by=[Task.updated_at.desc(), Task.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
+                id=result.Task.id,
+                client_record_id=result.Task.client_record_id,
+                office_client_number=result.office_client_number,
+                client_name=result.client_name,
+                key=result.Task.title,
+                status=result.Task.status.value,
+                detail=result.Task.description,
+                occurred_on=_as_date(result.Task.due_date or result.Task.updated_at),
+            ),
+        )
+
+    def search_notifications(
+        self, client_record_id: int, *, limit: int, offset: int = 0
+    ) -> tuple[list[SearchItemRow], int]:
+        return self._search(
+            Notification,
+            client_record_id=client_record_id,
+            active=[],
+            order_by=[Notification.created_at.desc(), Notification.id.desc()],
+            limit=limit,
+            offset=offset,
+            mapper=lambda result: SearchItemRow(
+                id=result.Notification.id,
+                client_record_id=result.Notification.client_record_id,
+                office_client_number=result.office_client_number,
+                client_name=result.client_name,
+                key=TRIGGER_LABELS[result.Notification.trigger],
+                status=result.Notification.status.value,
+                detail=result.Notification.subject_snapshot or result.Notification.recipient,
+                occurred_on=_as_date(result.Notification.created_at),
             ),
         )

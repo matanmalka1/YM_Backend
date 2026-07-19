@@ -11819,7 +11819,7 @@
           "search"
         ],
         "summary": "Search",
-        "description": "Unified search for clients and binders.",
+        "description": "Resolve the term to clients, and preview the selected client's items by type.",
         "operationId": "search_api_v1_search_get",
         "parameters": [
           {
@@ -11951,19 +11951,97 @@
             }
           },
           {
-            "name": "filename",
+            "name": "page",
             "in": "query",
             "required": false,
             "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
+              "type": "integer",
+              "minimum": 1,
+              "default": 1,
+              "title": "Page"
+            }
+          },
+          {
+            "name": "page_size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "maximum": 200,
+              "minimum": 1,
+              "default": 20,
+              "title": "Page Size"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchResponse"
                 }
-              ],
-              "title": "Filename"
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/search/items": {
+      "get": {
+        "tags": [
+          "search"
+        ],
+        "summary": "List Items",
+        "description": "One client's items of a single type, paginated — an expanded preview group.",
+        "operationId": "list_items_api_v1_search_items_get",
+        "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "result_type",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/SearchItemType"
             }
           },
           {
@@ -11996,7 +12074,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchResponse"
+                  "$ref": "#/components/schemas/PaginatedResponse_SearchItem_"
                 }
               }
             }
@@ -26763,90 +26841,6 @@
         ],
         "title": "DocumentScope"
       },
-      "DocumentSearchResult": {
-        "properties": {
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "office_client_number": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Office Client Number"
-          },
-          "client_name": {
-            "type": "string",
-            "title": "Client Name"
-          },
-          "business_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Id"
-          },
-          "business_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Name"
-          },
-          "document_type": {
-            "type": "string",
-            "title": "Document Type"
-          },
-          "original_filename": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Original Filename"
-          },
-          "tax_year": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax Year"
-          }
-        },
-        "type": "object",
-        "required": [
-          "id",
-          "client_record_id",
-          "client_name",
-          "document_type"
-        ],
-        "title": "DocumentSearchResult",
-        "description": "Single document search result."
-      },
       "DocumentStatus": {
         "type": "string",
         "enum": [
@@ -29086,126 +29080,6 @@
         "title": "ObligationType",
         "description": "Regulatory obligation category for TaxCalendarEntry.\n\nNATIONAL_INSURANCE is reserved but not yet wired to a DeadlineRuleType\n(intentionally unsupported in PR 1 of the tax-calendar foundation)."
       },
-      "OperationalSearchGroup": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/OperationalSearchItem"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "OperationalSearchGroup"
-      },
-      "OperationalSearchItem": {
-        "properties": {
-          "result_type": {
-            "type": "string",
-            "enum": [
-              "task",
-              "vat_work_item",
-              "annual_report",
-              "charge",
-              "advance_payment"
-            ],
-            "title": "Result Type"
-          },
-          "id": {
-            "type": "integer",
-            "title": "Id"
-          },
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "office_client_number": {
-            "type": "integer",
-            "title": "Office Client Number"
-          },
-          "client_name": {
-            "type": "string",
-            "title": "Client Name"
-          },
-          "title": {
-            "type": "string",
-            "title": "Title"
-          },
-          "detail": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Detail"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "amount": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Amount"
-          },
-          "href": {
-            "type": "string",
-            "title": "Href"
-          }
-        },
-        "type": "object",
-        "required": [
-          "result_type",
-          "id",
-          "client_record_id",
-          "office_client_number",
-          "client_name",
-          "title",
-          "status",
-          "href"
-        ],
-        "title": "OperationalSearchItem"
-      },
-      "OperationalSearchResults": {
-        "properties": {
-          "tasks": {
-            "$ref": "#/components/schemas/OperationalSearchGroup"
-          },
-          "vat_work_items": {
-            "$ref": "#/components/schemas/OperationalSearchGroup"
-          },
-          "annual_reports": {
-            "$ref": "#/components/schemas/OperationalSearchGroup"
-          },
-          "charges": {
-            "$ref": "#/components/schemas/OperationalSearchGroup"
-          },
-          "advance_payments": {
-            "$ref": "#/components/schemas/OperationalSearchGroup"
-          }
-        },
-        "type": "object",
-        "title": "OperationalSearchResults"
-      },
       "OperationalSignalsResponse": {
         "properties": {
           "client_record_id": {
@@ -29226,6 +29100,68 @@
           "missing_documents"
         ],
         "title": "OperationalSignalsResponse"
+      },
+      "PaginatedResponse_SearchClientMatch_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchClientMatch"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "PaginatedResponse[SearchClientMatch]"
+      },
+      "PaginatedResponse_SearchItem_": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "page_size": {
+            "type": "integer",
+            "title": "Page Size"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "items",
+          "page",
+          "page_size",
+          "total"
+        ],
+        "title": "PaginatedResponse[SearchItem]"
       },
       "PasswordResetRequest": {
         "properties": {
@@ -30324,57 +30260,72 @@
         ],
         "title": "ScheduleEntryResponse"
       },
-      "SearchResponse": {
+      "SearchClientMatch": {
         "properties": {
-          "results": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "office_client_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office Client Number"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "id_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id Number"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "matched_binder_numbers": {
             "items": {
-              "$ref": "#/components/schemas/SearchResult"
+              "type": "string"
             },
             "type": "array",
-            "title": "Results"
+            "title": "Matched Binder Numbers"
           },
-          "documents": {
-            "items": {
-              "$ref": "#/components/schemas/DocumentSearchResult"
-            },
-            "type": "array",
-            "title": "Documents"
-          },
-          "operational": {
-            "$ref": "#/components/schemas/OperationalSearchResults"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
+          "href": {
+            "type": "string",
+            "title": "Href"
           }
         },
         "type": "object",
         "required": [
-          "results",
-          "page",
-          "page_size",
-          "total"
+          "id",
+          "name",
+          "status",
+          "href"
         ],
-        "title": "SearchResponse",
-        "description": "Search results response."
+        "title": "SearchClientMatch",
+        "description": "A client the typed term resolved to, offered for selection."
       },
-      "SearchResult": {
+      "SearchItem": {
         "properties": {
           "result_type": {
-            "type": "string",
-            "enum": [
-              "client",
-              "binder"
-            ],
-            "title": "Result Type"
+            "$ref": "#/components/schemas/SearchItemType"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
           },
           "client_record_id": {
             "type": "integer",
@@ -30395,7 +30346,11 @@
             "type": "string",
             "title": "Client Name"
           },
-          "id_number": {
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
             "anyOf": [
               {
                 "type": "string"
@@ -30404,9 +30359,9 @@
                 "type": "null"
               }
             ],
-            "title": "Id Number"
+            "title": "Detail"
           },
-          "client_status": {
+          "status": {
             "anyOf": [
               {
                 "type": "string"
@@ -30415,39 +30370,131 @@
                 "type": "null"
               }
             ],
-            "title": "Client Status"
+            "title": "Status"
           },
-          "binder_id": {
+          "amount": {
             "anyOf": [
               {
-                "type": "integer"
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Binder Id"
+            "title": "Amount"
           },
-          "binder_number": {
+          "occurred_on": {
             "anyOf": [
               {
-                "type": "string"
+                "type": "string",
+                "format": "date"
               },
               {
                 "type": "null"
               }
             ],
-            "title": "Binder Number"
+            "title": "Occurred On"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
           }
         },
         "type": "object",
         "required": [
           "result_type",
+          "id",
           "client_record_id",
-          "client_name"
+          "client_name",
+          "title",
+          "href"
         ],
-        "title": "SearchResult",
-        "description": "Single search result."
+        "title": "SearchItem",
+        "description": "One item belonging to the selected client, in the one shape every type shares.\n\n`status` is nullable because documents carry no work status; their type is shown\nin its place. `amount` is set only by the money-carrying types. `occurred_on` is the\ndate the row is anchored to (due date, upload date, issue date), so a mixed feed can\nbe read chronologically."
+      },
+      "SearchItemGroup": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SearchItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "SearchItemGroup",
+        "description": "Preview rows for one type plus the exact total behind them."
+      },
+      "SearchItemGroups": {
+        "properties": {
+          "binders": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "documents": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "vat_work_items": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "annual_reports": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "advance_payments": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "charges": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "tasks": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          },
+          "notifications": {
+            "$ref": "#/components/schemas/SearchItemGroup"
+          }
+        },
+        "type": "object",
+        "title": "SearchItemGroups"
+      },
+      "SearchItemType": {
+        "type": "string",
+        "enum": [
+          "binder",
+          "document",
+          "vat_work_item",
+          "annual_report",
+          "advance_payment",
+          "charge",
+          "task",
+          "notification"
+        ],
+        "title": "SearchItemType",
+        "description": "Entity types that appear as rows in a client's item feed.\n\nDeliberately excludes `client`: the client is the feed's subject, not a row in it.\nEvery member is also a `LinkedEntity`, which owns the route each row links to."
+      },
+      "SearchResponse": {
+        "properties": {
+          "clients": {
+            "$ref": "#/components/schemas/PaginatedResponse_SearchClientMatch_"
+          },
+          "items": {
+            "$ref": "#/components/schemas/SearchItemGroups"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clients"
+        ],
+        "title": "SearchResponse",
+        "description": "Both search phases in one payload: which client, then everything of that client."
       },
       "SeasonSummaryResponse": {
         "properties": {
