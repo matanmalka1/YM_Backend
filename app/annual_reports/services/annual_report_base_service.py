@@ -62,8 +62,8 @@ class AnnualReportBaseService:
         """
         Project ORM instances to AnnualReportResponse, populating client context
         and allowed transitions. Used by detail/single paths.
-        Reports are now client-scoped; business_name is resolved from the client's
-        primary business (first non-deleted business) for display purposes.
+        Reports are client-scoped; identity fields resolve from the client's legal
+        entity (annual reports have no per-business link).
         """
         if not reports:
             return []
@@ -78,7 +78,6 @@ class AnnualReportBaseService:
                 obj.office_client_number = record.office_client_number
                 obj.client_name = legal_entity.official_name
                 obj.client_id_number = legal_entity.id_number
-                obj.business_name = legal_entity.official_name
             allowed = VALID_TRANSITIONS.get(r.status, set())
             obj.available_transitions = [
                 status for status in AnnualReportStatus if status in allowed
