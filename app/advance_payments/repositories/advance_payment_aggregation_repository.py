@@ -147,9 +147,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
                 client_name=client_name,
                 id_number=id_number,
             )
-            for payment, office_client_number, client_name, id_number in self.db.execute(
-                stmt
-            ).all()
+            for payment, office_client_number, client_name, id_number in self.db.execute(stmt).all()
         ]
         return rows, int(total or 0)
 
