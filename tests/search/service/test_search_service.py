@@ -26,7 +26,7 @@ def test_binder_result_uses_client_name_instead_of_business_name(
         client_record_id=client.id,
     )
 
-    binder_results = [result for result in results if result["result_type"] == "binder"]
-    assert total == 2
-    assert len(binder_results) == 1
-    assert binder_results[0]["client_name"] == "אבי הראל"
+    assert total == 1
+    assert len(results) == 1
+    assert results[0]["result_type"] == "binder"
+    assert results[0]["client_name"] == "אבי הראל"
