@@ -160,6 +160,16 @@ class AdvancePaymentService:
             client_record_id, year, status=status, page=page, page_size=page_size
         )
 
+    def get_payment_for_client(self, client_record_id: int, payment_id: int) -> AdvancePayment:
+        self._get_record_or_raise(client_record_id)
+        payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
+        if payment is None:
+            raise NotFoundError(
+                f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
+                ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
+            )
+        return payment
+
     # ─── Create ───────────────────────────────────────────────────────────────
 
     def create_payment_for_client(
