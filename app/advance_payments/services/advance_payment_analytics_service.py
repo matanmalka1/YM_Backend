@@ -29,7 +29,7 @@ from app.core.exceptions import NotFoundError
 class AdvancePaymentOverviewEnrichedRow:
     payment: AdvancePayment
     office_client_number: int | None
-    business_name: str
+    client_name: str
     id_number: str | None
     live_turnover: Decimal | None
     advance_rate: Decimal | None
@@ -86,7 +86,7 @@ class AdvancePaymentAnalyticsService:
             AdvancePaymentOverviewEnrichedRow(
                 payment=row.payment,
                 office_client_number=row.office_client_number,
-                business_name=row.business_name,
+                client_name=row.client_name,
                 id_number=row.id_number,
                 live_turnover=live_turnover_map.get(
                     (row.payment.client_record_id, row.payment.period)

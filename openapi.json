@@ -19827,9 +19827,9 @@
             ],
             "title": "Office Client Number"
           },
-          "business_name": {
+          "client_name": {
             "type": "string",
-            "title": "Business Name"
+            "title": "Client Name"
           },
           "id_number": {
             "anyOf": [
@@ -19992,7 +19992,7 @@
         "required": [
           "id",
           "client_record_id",
-          "business_name",
+          "client_name",
           "period",
           "period_months_count",
           "due_date",
@@ -20075,17 +20075,6 @@
           "client_record_id": {
             "type": "integer",
             "title": "Client Record Id"
-          },
-          "business_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Name"
           },
           "period": {
             "type": "string",

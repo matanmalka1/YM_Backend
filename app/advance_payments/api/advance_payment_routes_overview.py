@@ -65,7 +65,7 @@ def list_advance_payments_overview(
             id=row.payment.id,
             client_record_id=row.payment.client_record_id,
             office_client_number=row.office_client_number,
-            business_name=row.business_name,
+            client_name=row.client_name,
             id_number=row.id_number,
             period=row.payment.period,
             period_months_count=row.payment.period_months_count,
