@@ -29034,6 +29034,126 @@
         "title": "ObligationType",
         "description": "Regulatory obligation category for TaxCalendarEntry.\n\nNATIONAL_INSURANCE is reserved but not yet wired to a DeadlineRuleType\n(intentionally unsupported in PR 1 of the tax-calendar foundation)."
       },
+      "OperationalSearchGroup": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OperationalSearchItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "OperationalSearchGroup"
+      },
+      "OperationalSearchItem": {
+        "properties": {
+          "result_type": {
+            "type": "string",
+            "enum": [
+              "task",
+              "vat_work_item",
+              "annual_report",
+              "charge",
+              "advance_payment"
+            ],
+            "title": "Result Type"
+          },
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "office_client_number": {
+            "type": "integer",
+            "title": "Office Client Number"
+          },
+          "client_name": {
+            "type": "string",
+            "title": "Client Name"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "href": {
+            "type": "string",
+            "title": "Href"
+          }
+        },
+        "type": "object",
+        "required": [
+          "result_type",
+          "id",
+          "client_record_id",
+          "office_client_number",
+          "client_name",
+          "title",
+          "status",
+          "href"
+        ],
+        "title": "OperationalSearchItem"
+      },
+      "OperationalSearchResults": {
+        "properties": {
+          "tasks": {
+            "$ref": "#/components/schemas/OperationalSearchGroup"
+          },
+          "vat_work_items": {
+            "$ref": "#/components/schemas/OperationalSearchGroup"
+          },
+          "annual_reports": {
+            "$ref": "#/components/schemas/OperationalSearchGroup"
+          },
+          "charges": {
+            "$ref": "#/components/schemas/OperationalSearchGroup"
+          },
+          "advance_payments": {
+            "$ref": "#/components/schemas/OperationalSearchGroup"
+          }
+        },
+        "type": "object",
+        "title": "OperationalSearchResults"
+      },
       "OperationalSignalsResponse": {
         "properties": {
           "client_record_id": {
@@ -30168,6 +30288,9 @@
             "type": "array",
             "title": "Documents"
           },
+          "operational": {
+            "$ref": "#/components/schemas/OperationalSearchResults"
+          },
           "page": {
             "type": "integer",
             "title": "Page"
@@ -30195,6 +30318,10 @@
         "properties": {
           "result_type": {
             "type": "string",
+            "enum": [
+              "client",
+              "binder"
+            ],
             "title": "Result Type"
           },
           "client_record_id": {

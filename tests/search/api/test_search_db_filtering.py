@@ -10,16 +10,24 @@ from app.documents.permanent_documents.models.permanent_document import (
     PermanentDocumentType,
 )
 from app.search.services.search_service import SearchService
+from app.tasks.models.task import Task
 
 
-def _make_binder(db, client_record_id: int, binder_number: str, user_id: int) -> Binder:
+def _make_binder(
+    db,
+    client_record_id: int,
+    binder_number: str,
+    user_id: int,
+    *,
+    capacity_status: BinderCapacityStatus = BinderCapacityStatus.OPEN,
+) -> Binder:
     b = Binder(
         client_record_id=client_record_id,
         binder_number=binder_number,
         period_start=date.today(),
         created_by=user_id,
         location_status=BinderLocationStatus.IN_OFFICE,
-        capacity_status=BinderCapacityStatus.OPEN,
+        capacity_status=capacity_status,
     )
     db.add(b)
     db.commit()
@@ -76,6 +84,30 @@ def test_global_search_by_client_name_returns_client_results(
     assert any(result["client_record_id"] == crm_client.id for result in data["results"])
 
 
+def test_search_endpoint_returns_operational_task_group(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    crm_client, _business = create_client_with_business(full_name="Operational Search Client")
+    task = Task(
+        title="Unique operational follow-up",
+        client_record_id=crm_client.id,
+        created_by_user_id=test_user.id,
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    response = client.get(
+        f"/api/v1/search?search=operational&client_record_id={crm_client.id}",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    group = response.json()["operational"]["tasks"]
+    assert group["total"] == 1
+    assert group["items"][0]["id"] == task.id
+    assert group["items"][0]["href"].endswith(f"task_id={task.id}")
+
+
 def test_client_search_bulk_loads_legal_entities(test_db, create_client_with_business):
     for i in range(20):
         create_client_with_business(
@@ -130,6 +162,93 @@ def test_search_binder_number_filter(
     binder_results = [r for r in data["results"] if r["result_type"] == "binder"]
     assert len(binder_results) >= 1
     assert all("ALPHA" in r["binder_number"].upper() for r in binder_results)
+
+
+def test_combined_client_and_binder_filters_are_intersected(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    matching, _ = create_client_with_business(
+        full_name="Matching Active Full",
+        id_number="MATCH-100",
+        status=ClientStatus.ACTIVE,
+    )
+    wrong_status, _ = create_client_with_business(
+        full_name="Frozen Full",
+        id_number="FROZEN-200",
+        status=ClientStatus.FROZEN,
+    )
+    wrong_capacity, _ = create_client_with_business(
+        full_name="Active Open",
+        id_number="OPEN-300",
+        status=ClientStatus.ACTIVE,
+    )
+    _make_binder(
+        test_db,
+        matching.id,
+        "MATCH-FULL",
+        test_user.id,
+        capacity_status=BinderCapacityStatus.FULL,
+    )
+    _make_binder(
+        test_db,
+        wrong_status.id,
+        "FROZEN-FULL",
+        test_user.id,
+        capacity_status=BinderCapacityStatus.FULL,
+    )
+    _make_binder(test_db, wrong_capacity.id, "ACTIVE-OPEN", test_user.id)
+
+    response = client.get(
+        "/api/v1/search?client_status=active&binder_capacity_status=full",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total"] == 1
+    assert [row["client_record_id"] for row in data["results"]] == [matching.id]
+
+
+def test_free_text_matches_client_without_becoming_a_binder_number_filter(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    crm_client, _ = create_client_with_business(full_name="Unique Client Name")
+    _make_binder(test_db, crm_client.id, "UNRELATED-777", test_user.id)
+
+    response = client.get(
+        "/api/v1/search?search=Unique%20Client",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    rows = response.json()["results"]
+    assert len(rows) == 1
+    assert rows[0]["client_record_id"] == crm_client.id
+    assert rows[0]["binder_number"] == "UNRELATED-777"
+
+
+def test_binder_number_free_text_returns_owning_client_operational_items(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    crm_client, _ = create_client_with_business(full_name="Binder Operational Owner")
+    _make_binder(test_db, crm_client.id, "OPS-BINDER-991", test_user.id)
+    task = Task(
+        title="Task with unrelated title",
+        client_record_id=crm_client.id,
+        created_by_user_id=test_user.id,
+    )
+    test_db.add(task)
+    test_db.commit()
+
+    response = client.get(
+        "/api/v1/search?search=OPS-BINDER-991",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    group = response.json()["operational"]["tasks"]
+    assert group["total"] == 1
+    assert [item["id"] for item in group["items"]] == [task.id]
 
 
 def _make_document(
@@ -218,6 +337,80 @@ def test_search_documents_with_different_client_record_id_does_not_leak(
 
     assert response.status_code == 200
     assert response.json()["documents"] == []
+
+
+def test_document_results_respect_advanced_client_filters(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    active_client, active_business = create_client_with_business(
+        full_name="Active Document Owner",
+        status=ClientStatus.ACTIVE,
+    )
+    frozen_client, frozen_business = create_client_with_business(
+        full_name="Frozen Document Owner",
+        status=ClientStatus.FROZEN,
+    )
+    active_document = _make_document(
+        test_db,
+        client_record_id=active_client.id,
+        business_id=active_business.id,
+        filename="shared_filtered_document.pdf",
+        user_id=test_user.id,
+    )
+    _make_document(
+        test_db,
+        client_record_id=frozen_client.id,
+        business_id=frozen_business.id,
+        filename="shared_filtered_document.pdf",
+        user_id=test_user.id,
+    )
+
+    response = client.get(
+        "/api/v1/search?filename=shared_filtered&client_status=active",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    assert [document["id"] for document in response.json()["documents"]] == [active_document.id]
+
+
+def test_operational_results_respect_advanced_client_filters(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    active_client, _ = create_client_with_business(
+        full_name="Active Task Owner",
+        status=ClientStatus.ACTIVE,
+    )
+    frozen_client, _ = create_client_with_business(
+        full_name="Frozen Task Owner",
+        status=ClientStatus.FROZEN,
+    )
+    active_task = Task(
+        title="Shared filtered task",
+        client_record_id=active_client.id,
+        created_by_user_id=test_user.id,
+    )
+    test_db.add_all(
+        [
+            active_task,
+            Task(
+                title="Shared filtered task",
+                client_record_id=frozen_client.id,
+                created_by_user_id=test_user.id,
+            ),
+        ]
+    )
+    test_db.commit()
+
+    response = client.get(
+        "/api/v1/search?search=shared%20filtered&client_status=active",
+        headers=advisor_headers,
+    )
+
+    assert response.status_code == 200
+    group = response.json()["operational"]["tasks"]
+    assert group["total"] == 1
+    assert [item["id"] for item in group["items"]] == [active_task.id]
 
 
 def test_search_openapi_uses_search_and_client_record_id_params(client):

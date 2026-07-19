@@ -47,10 +47,21 @@ def search(
         page=page,
         page_size=page_size,
     )
+    operational = service.search_operational_items(
+        search,
+        client_record_id,
+        id_number=id_number,
+        client_status=client_status,
+        entity_type=entity_type,
+        binder_number=binder_number,
+        binder_location_status=binder_location_status,
+        binder_capacity_status=binder_capacity_status,
+    )
 
     return SearchResponse(
         results=[SearchResult(**r) for r in results],
         documents=documents,
+        operational=operational,
         page=page,
         page_size=page_size,
         total=total,

@@ -1,21 +1,19 @@
+from dataclasses import asdict
+
 from sqlalchemy.orm import Session
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
-from app.binders.repositories.binder_repository import BinderRepository
 from app.clients.client_enums import ClientStatus
-from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import EntityType
-from app.core.pagination import paginate_sequence
-from app.legal_entities.models.legal_entity import LegalEntity
-from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
-from app.search.schemas.search import DocumentSearchResult
+from app.search.repositories.search_item_repository import SearchItemRepository, SearchItemRow
+from app.search.repositories.search_result_repository import SearchFilters, SearchResultRepository
+from app.search.schemas.search import (
+    DocumentSearchResult,
+    OperationalSearchGroup,
+    OperationalSearchItem,
+    OperationalSearchResults,
+)
 from app.search.services.search_document_search_service import DocumentSearchService
-
-# Safety ceiling for mixed searches that must be resolved in memory.
-# Pure client-only searches already use DB-level pagination and are not affected.
-# Known architectural debt — see CLAUDE.md.
-_MIXED_SEARCH_BINDER_LIMIT = 1000
-_MIXED_SEARCH_CLIENT_LIMIT = 500
 
 
 class SearchService:
@@ -23,13 +21,85 @@ class SearchService:
 
     def __init__(self, db: Session):
         self.db = db
-        self.client_record_repo = ClientRecordRepository(db)
-        self.legal_entity_repo = LegalEntityRepository(db)
-        self.binder_repo = BinderRepository(db)
+        self.item_repo = SearchItemRepository(db)
+        self.result_repo = SearchResultRepository(db)
 
-    def _legal_entity_map(self, legal_entity_ids: list[int]) -> dict[int, LegalEntity]:
-        entities = self.legal_entity_repo.list_by_ids(list(set(legal_entity_ids)))
-        return {entity.id: entity for entity in entities}
+    @staticmethod
+    def _item(row: SearchItemRow, result_type: str) -> OperationalSearchItem:
+        titles = {
+            "task": row.key,
+            "vat_work_item": f'דוח מע"מ {row.key}',
+            "annual_report": f"דוח שנתי {row.key}",
+            "charge": f"חיוב #{row.id}",
+            "advance_payment": f"מקדמה {row.key}",
+        }
+        hrefs = {
+            "task": f"/tasks?task_id={row.id}",
+            "vat_work_item": f"/tax/vat/{row.id}",
+            "annual_report": f"/clients/{row.client_record_id}/annual-reports/{row.id}",
+            "charge": f"/charges?charge_id={row.id}",
+            "advance_payment": (
+                f"/clients/{row.client_record_id}/advance-payments?advance_payment_id={row.id}"
+            ),
+        }
+        return OperationalSearchItem(
+            result_type=result_type,
+            id=row.id,
+            client_record_id=row.client_record_id,
+            office_client_number=row.office_client_number,
+            client_name=row.client_name,
+            title=titles[result_type],
+            detail=row.detail,
+            status=row.status,
+            amount=row.amount,
+            href=hrefs[result_type],
+        )
+
+    def search_operational_items(
+        self,
+        search: str | None,
+        client_record_id: int | None,
+        *,
+        id_number: str | None = None,
+        client_status: ClientStatus | None = None,
+        entity_type: EntityType | None = None,
+        binder_number: str | None = None,
+        binder_location_status: BinderLocationStatus | None = None,
+        binder_capacity_status: BinderCapacityStatus | None = None,
+    ) -> OperationalSearchResults:
+        term = search.strip().lower() if search else ""
+        if not term and client_record_id is None:
+            return OperationalSearchResults()
+
+        scope = self.result_repo.matching_client_ids(
+            SearchFilters(
+                client_record_id=client_record_id,
+                id_number=id_number,
+                client_status=client_status,
+                entity_type=entity_type,
+                binder_number=binder_number,
+                binder_location_status=binder_location_status,
+                binder_capacity_status=binder_capacity_status,
+            )
+        )
+
+        def group(rows_and_total, result_type: str) -> OperationalSearchGroup:
+            rows, total = rows_and_total
+            return OperationalSearchGroup(
+                items=[self._item(row, result_type) for row in rows], total=total
+            )
+
+        return OperationalSearchResults(
+            tasks=group(self.item_repo.search_tasks(term or None, scope), "task"),
+            vat_work_items=group(self.item_repo.search_vat(term or None, scope), "vat_work_item"),
+            annual_reports=group(
+                self.item_repo.search_annual_reports(term or None, scope), "annual_report"
+            ),
+            charges=group(self.item_repo.search_charges(term or None, scope), "charge"),
+            advance_payments=group(
+                self.item_repo.search_advance_payments(term or None, scope), "advance_payment"
+            ),
+        )
 
     def search(
         self,
@@ -45,137 +115,34 @@ class SearchService:
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[dict], int, list[DocumentSearchResult]]:
-        doc_service = DocumentSearchService(self.db)
-        document_query = search or filename
-        if client_record_id is not None and document_query:
-            documents = doc_service.list_client_documents(client_record_id, document_query)
-        elif search or filename:
-            documents = doc_service.search_documents(search or "", filename=filename)
-        else:
-            documents = []
-
-        has_client_filter = bool(
-            search or client_record_id or id_number or client_status or entity_type
+        filters = SearchFilters(
+            search=search,
+            client_record_id=client_record_id,
+            id_number=id_number,
+            client_status=client_status,
+            entity_type=entity_type,
+            binder_number=binder_number,
+            binder_location_status=binder_location_status,
+            binder_capacity_status=binder_capacity_status,
         )
-        has_binder_filter = bool(
+        client_scope = self.result_repo.matching_client_ids(filters)
+        documents = (
+            DocumentSearchService(self.db).search_documents(search, filename, client_scope)
+            if search or filename
+            else []
+        )
+        has_primary_filter = bool(
             search
             or client_record_id
+            or id_number
+            or client_status
+            or entity_type
             or binder_number
             or binder_location_status
             or binder_capacity_status
         )
+        if not has_primary_filter:
+            return [], 0, documents
 
-        # --- Pure client-only search: DB-level pagination ---
-        if has_client_filter and not has_binder_filter:
-            records, total = self.client_record_repo.search(
-                search=search,
-                client_id=client_record_id,
-                id_number=id_number,
-                status=client_status,
-                entity_type=entity_type,
-                page=page,
-                page_size=page_size,
-            )
-            legal_map = self._legal_entity_map([record.legal_entity_id for record in records])
-            binder_map = self.binder_repo.map_active_by_clients([record.id for record in records])
-            return (
-                [
-                    {
-                        "result_type": "client",
-                        "client_record_id": record.id,
-                        "office_client_number": record.office_client_number,
-                        "client_name": legal_map[record.legal_entity_id].official_name
-                        if legal_map.get(record.legal_entity_id)
-                        else "לא ידוע",
-                        "id_number": legal_map[record.legal_entity_id].id_number
-                        if legal_map.get(record.legal_entity_id)
-                        else None,
-                        "client_status": record.status,
-                        "binder_id": binder_map[record.id].id if record.id in binder_map else None,
-                        "binder_number": binder_map[record.id].binder_number
-                        if record.id in binder_map
-                        else None,
-                    }
-                    for record in records
-                ],
-                total,
-                documents,
-            )
-
-        # --- Mixed / binder-number search: build full result set then paginate ---
-        # Bounded by _MIXED_SEARCH_*_LIMIT. Results beyond ceiling are excluded.
-        results: list[dict] = []
-
-        if has_client_filter:
-            all_records, _ = self.client_record_repo.search(
-                search=search,
-                client_id=client_record_id,
-                id_number=id_number,
-                status=client_status,
-                entity_type=entity_type,
-                page=1,
-                page_size=_MIXED_SEARCH_CLIENT_LIMIT,
-            )
-            legal_map = self._legal_entity_map([record.legal_entity_id for record in all_records])
-            client_binder_map = self.binder_repo.map_active_by_clients(
-                [record.id for record in all_records]
-            )
-            for record in all_records:
-                b = client_binder_map.get(record.id)
-                legal_entity = legal_map.get(record.legal_entity_id)
-                results.append(
-                    {
-                        "result_type": "client",
-                        "client_record_id": record.id,
-                        "office_client_number": record.office_client_number,
-                        "client_name": legal_entity.official_name if legal_entity else "לא ידוע",
-                        "id_number": legal_entity.id_number if legal_entity else None,
-                        "client_status": record.status,
-                        "binder_id": b.id if b else None,
-                        "binder_number": b.binder_number if b else None,
-                    }
-                )
-
-        if has_binder_filter:
-            db_binder_number = binder_number or (
-                search if not (client_record_id or id_number) else None
-            )
-            include_handed_over = binder_location_status == BinderLocationStatus.HANDED_OVER
-            binders = self.binder_repo.list_active(
-                binder_number=db_binder_number,
-                location_status=binder_location_status.value if binder_location_status else None,
-                capacity_status=binder_capacity_status.value if binder_capacity_status else None,
-                page=1,
-                page_size=_MIXED_SEARCH_BINDER_LIMIT,
-                include_handed_over=include_handed_over,
-            )
-            if client_record_id is not None:
-                binders = [
-                    binder for binder in binders if binder.client_record_id == client_record_id
-                ]
-            binder_cr_ids = [b.client_record_id for b in binders]
-            records = {
-                record.id: record for record in self.client_record_repo.list_by_ids(binder_cr_ids)
-            }
-            cr_to_legal = {record.id: record.legal_entity_id for record in records.values()}
-            legal_entity_ids = list(cr_to_legal.values())
-            legal_map = self._legal_entity_map(legal_entity_ids)
-            for binder in binders:
-                record = records.get(binder.client_record_id)
-                legal_id = cr_to_legal.get(binder.client_record_id)
-                legal_entity = legal_map.get(legal_id) if legal_id else None
-                results.append(
-                    {
-                        "result_type": "binder",
-                        "client_record_id": binder.client_record_id,
-                        "office_client_number": record.office_client_number if record else None,
-                        "client_name": legal_entity.official_name if legal_entity else "לא ידוע",
-                        "id_number": legal_entity.id_number if legal_entity else None,
-                        "client_status": record.status if record else None,
-                        "binder_id": binder.id,
-                        "binder_number": binder.binder_number,
-                    }
-                )
-
-        total = len(results)
-        return paginate_sequence(results, page, page_size), total, documents
+        rows, total = self.result_repo.search_primary(filters, page, page_size)
+        return [asdict(row) for row in rows], total, documents
