@@ -38,6 +38,10 @@ class DocumentsCard(BaseModel):
     present_count: int
 
 
+class TasksCard(BaseModel):
+    open_count: int
+
+
 class ClientStatusCardResponse(BaseModel):
     client_id: int
     year: int
@@ -47,3 +51,4 @@ class ClientStatusCardResponse(BaseModel):
     advance_payments: AdvancePaymentsCard
     binders: BindersCard
     documents: DocumentsCard
+    tasks: TasksCard
