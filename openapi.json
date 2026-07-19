@@ -21119,17 +21119,6 @@
             ],
             "title": "Client Id Number"
           },
-          "business_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Name"
-          },
           "tax_year": {
             "type": "integer",
             "title": "Tax Year"
@@ -21762,17 +21751,6 @@
               }
             ],
             "title": "Client Id Number"
-          },
-          "business_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Business Name"
           },
           "tax_year": {
             "type": "integer",

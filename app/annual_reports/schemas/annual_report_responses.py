@@ -18,7 +18,6 @@ class AnnualReportResponse(BaseModel):
     office_client_number: int | None = None
     client_name: str | None = None
     client_id_number: str | None = None
-    business_name: str | None = None
     tax_year: int
     client_type: ClientAnnualFilingType
     form_type: PrimaryAnnualReportForm
