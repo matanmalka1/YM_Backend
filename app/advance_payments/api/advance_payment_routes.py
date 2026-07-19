@@ -37,6 +37,13 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 
 
+def _to_row(payment, live_turnover=None) -> AdvancePaymentRow:
+    row = AdvancePaymentRow.model_validate(payment)
+    row.live_turnover = live_turnover
+    row.missing_turnover = payment.turnover_amount is None and live_turnover is None
+    return row
+
+
 @router.get(
     "",
     response_model=AdvancePaymentListResponse,
@@ -65,17 +72,14 @@ def list_advance_payments(
         turnover_repo.get_turnover_for_many(client_record_id, period_list) if period_list else {}
     )
 
-    def _to_row(p) -> AdvancePaymentRow:
+    def _to_list_row(p) -> AdvancePaymentRow:
         live, _ = (
             live_map.get(p.period, (None, None)) if p.turnover_amount is None else (None, None)
         )
-        row = AdvancePaymentRow.model_validate(p)
-        row.live_turnover = live
-        row.missing_turnover = p.turnover_amount is None and live is None
-        return row
+        return _to_row(p, live)
 
     return AdvancePaymentListResponse(
-        items=[_to_row(p) for p in items],
+        items=[_to_list_row(p) for p in items],
         page=page,
         page_size=page_size,
         total=total,
@@ -152,6 +156,27 @@ def get_annual_kpis(
     service = AdvancePaymentAnalyticsService(db)
     data = service.get_annual_kpis_for_client(client_record_id=client_record_id, year=year)
     return AnnualKPIResponse(**data)
+
+
+@router.get(
+    "/{payment_id}",
+    response_model=AdvancePaymentRow,
+    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+)
+def get_advance_payment(
+    client_record_id: PathId,
+    payment_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+):
+    payment = AdvancePaymentService(db).get_payment_for_client(client_record_id, payment_id)
+    live_turnover = None
+    if payment.turnover_amount is None:
+        live_map = TurnoverLookupRepository(db).get_turnover_for_many(
+            client_record_id, [(payment.period, payment.period_months_count)]
+        )
+        live_turnover, _ = live_map.get(payment.period, (None, None))
+    return _to_row(payment, live_turnover)
 
 
 @router.patch(
