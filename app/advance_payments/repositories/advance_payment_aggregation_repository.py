@@ -20,7 +20,7 @@ from app.legal_entities.models.legal_entity import LegalEntity
 class AdvancePaymentOverviewRow:
     payment: AdvancePayment
     office_client_number: int | None
-    business_name: str
+    client_name: str
     id_number: str | None
 
 
@@ -127,7 +127,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
                 select(
                     AdvancePayment,
                     ClientRecord.office_client_number,
-                    func.coalesce(LegalEntity.official_name, "").label("business_name"),
+                    func.coalesce(LegalEntity.official_name, "").label("client_name"),
                     LegalEntity.id_number,
                 ),
                 AdvancePayment,
@@ -144,10 +144,10 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             AdvancePaymentOverviewRow(
                 payment=payment,
                 office_client_number=office_client_number,
-                business_name=business_name,
+                client_name=client_name,
                 id_number=id_number,
             )
-            for payment, office_client_number, business_name, id_number in self.db.execute(
+            for payment, office_client_number, client_name, id_number in self.db.execute(
                 stmt
             ).all()
         ]

@@ -23,7 +23,6 @@ from app.utils.time_utils import israel_today
 class AdvancePaymentRow(BaseModel):
     id: int
     client_record_id: int
-    business_name: str | None = None
     period: str
     period_months_count: int
     due_date: date
@@ -133,7 +132,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     id: int
     client_record_id: int
     office_client_number: int | None = None
-    business_name: str
+    client_name: str
     id_number: str | None = None
     period: str
     period_months_count: int
