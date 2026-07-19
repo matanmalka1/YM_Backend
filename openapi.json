@@ -25917,6 +25917,9 @@
           },
           "documents": {
             "$ref": "#/components/schemas/DocumentsCard"
+          },
+          "tasks": {
+            "$ref": "#/components/schemas/TasksCard"
           }
         },
         "type": "object",
@@ -25928,7 +25931,8 @@
           "charges",
           "advance_payments",
           "binders",
-          "documents"
+          "documents",
+          "tasks"
         ],
         "title": "ClientStatusCardResponse"
       },
@@ -32549,6 +32553,19 @@
         "additionalProperties": false,
         "type": "object",
         "title": "TaskUpdateRequest"
+      },
+      "TasksCard": {
+        "properties": {
+          "open_count": {
+            "type": "integer",
+            "title": "Open Count"
+          }
+        },
+        "type": "object",
+        "required": [
+          "open_count"
+        ],
+        "title": "TasksCard"
       },
       "TaxCalculationResponse": {
         "properties": {

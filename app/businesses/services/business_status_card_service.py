@@ -17,6 +17,7 @@ from app.businesses.schemas.business_status_card import (
     ChargesCard,
     ClientStatusCardResponse,
     DocumentsCard,
+    TasksCard,
     VatSummaryCard,
 )
 from app.charges.models.charge import ChargeStatus
@@ -25,6 +26,8 @@ from app.clients.services.client_service import get_client_or_raise
 from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
+from app.tasks.models.task import TaskStatus
+from app.tasks.repositories.task_repository import TaskRepository
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_work_item import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
@@ -46,6 +49,7 @@ class StatusCardService:
         self._advance_repo = AdvancePaymentRepository(db)
         self._binder_repo = BinderRepository(db)
         self._doc_repo = PermanentDocumentRepository(db)
+        self._task_repo = TaskRepository(db)
 
     def get_status_card(
         self,
@@ -63,6 +67,7 @@ class StatusCardService:
             advance_payments=self._advance_payments_card(client_record.id, resolved_year),
             binders=self._binders_card(client_record.id),
             documents=self._documents_card(client_record.id),
+            tasks=self._tasks_card(client_record.id),
         )
 
     def _vat_card(self, client_record_id: int, year: int) -> VatSummaryCard:
@@ -123,3 +128,12 @@ class StatusCardService:
     def _documents_card(self, client_record_id: int) -> DocumentsCard:
         total, present = self._doc_repo.count_present_by_client_record(client_record_id)
         return DocumentsCard(total_count=total, present_count=present)
+
+    def _tasks_card(self, client_record_id: int) -> TasksCard:
+        _, open_count = self._task_repo.list_by_client_id(
+            client_record_id=client_record_id,
+            status=TaskStatus.OPEN,
+            page=1,
+            page_size=1,
+        )
+        return TasksCard(open_count=open_count)
