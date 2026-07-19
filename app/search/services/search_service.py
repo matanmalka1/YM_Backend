@@ -2,7 +2,6 @@ from sqlalchemy.orm import Session
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
-from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import EntityType
@@ -26,7 +25,6 @@ class SearchService:
         self.db = db
         self.client_record_repo = ClientRecordRepository(db)
         self.legal_entity_repo = LegalEntityRepository(db)
-        self.business_repo = BusinessRepository(db)
         self.binder_repo = BinderRepository(db)
 
     def _legal_entity_map(self, legal_entity_ids: list[int]) -> dict[int, LegalEntity]:
@@ -162,21 +160,16 @@ class SearchService:
             cr_to_legal = {record.id: record.legal_entity_id for record in records.values()}
             legal_entity_ids = list(cr_to_legal.values())
             legal_map = self._legal_entity_map(legal_entity_ids)
-            businesses = self.business_repo.list_by_legal_entity_ids(legal_entity_ids)
-            legal_to_business = {b.legal_entity_id: b for b in businesses}
             for binder in binders:
                 record = records.get(binder.client_record_id)
                 legal_id = cr_to_legal.get(binder.client_record_id)
-                business = legal_to_business.get(legal_id) if legal_id else None
                 legal_entity = legal_map.get(legal_id) if legal_id else None
                 results.append(
                     {
                         "result_type": "binder",
                         "client_record_id": binder.client_record_id,
                         "office_client_number": record.office_client_number if record else None,
-                        "client_name": business.full_name
-                        if business
-                        else (legal_entity.official_name if legal_entity else "לא ידוע"),
+                        "client_name": legal_entity.official_name if legal_entity else "לא ידוע",
                         "id_number": legal_entity.id_number if legal_entity else None,
                         "client_status": record.status if record else None,
                         "binder_id": binder.id,
