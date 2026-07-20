@@ -21,6 +21,11 @@ Period handling:
 Design notes:
     - ``period`` and ``period_months_count`` are used instead of separate month
       and year fields for consistency with VAT handling.
+    - ``turnover_amount`` is a frozen snapshot, never a live view of VAT. Once
+      written it does not follow later amendments to the VAT return it came
+      from, because the advance was paid against the figure known at the time.
+      ``turnover_source`` and ``turnover_snapshot_at`` record where and when it
+      was frozen.
     - ``paid_at`` stores the actual payment timestamp for auditability.
     - ``payment_method`` is an enum; direct debit is the most common option for
       advance payments.
@@ -73,6 +78,14 @@ class PaymentMethod(str, PyEnum):
     OTHER = "other"
 
 
+class TurnoverSource(str, PyEnum):
+    """Where ``turnover_amount`` was snapshotted from."""
+
+    MANUAL = "manual"  # Typed by an advisor
+    VAT_FILED = "vat_filed"  # Snapshotted from a filed VAT return
+    VAT_PENDING = "vat_pending"  # Snapshotted from a VAT return not yet filed
+
+
 class AdvancePayment(SoftDeletableMixin, Base):
     """SQLAlchemy model for a client's advance tax payment record."""
 
@@ -114,6 +127,14 @@ class AdvancePayment(SoftDeletableMixin, Base):
         Numeric(12, 2), nullable=False, default=Decimal("0.00")
     )
     override_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+
+    # Provenance of turnover_amount. turnover_source is NULL exactly when
+    # turnover_amount is NULL. turnover_snapshot_at is additionally NULL on rows
+    # backfilled by migration 8a1c47d0b3e2, whose snapshot time is unknowable.
+    turnover_source: Mapped[TurnoverSource | None] = mapped_column(
+        pg_enum(TurnoverSource), nullable=True
+    )
+    turnover_snapshot_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # ── Status & payment ──────────────────────────────────────────────────────
     status: Mapped[AdvancePaymentStatus] = mapped_column(

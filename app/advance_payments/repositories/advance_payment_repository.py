@@ -35,6 +35,8 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         notes: str | None = None,
         advance_rate=None,
         turnover_amount=None,
+        turnover_source=None,
+        turnover_snapshot_at=None,
         calculated_amount=None,
         override_amount=None,
         status: AdvancePaymentStatus = AdvancePaymentStatus.PENDING,
@@ -53,6 +55,8 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             status=status,
             advance_rate=advance_rate,
             turnover_amount=turnover_amount,
+            turnover_source=turnover_source,
+            turnover_snapshot_at=turnover_snapshot_at,
             calculated_amount=calculated_amount if calculated_amount is not None else Decimal("0"),
             override_amount=override_amount,
         )

@@ -3,12 +3,15 @@ import logging
 from fastapi import APIRouter, Depends, Query, status
 
 from app.advance_payments.api.advance_payment_responses import (
+    ADVANCE_PAYMENT_BULK_REFRESH_TURNOVER_RESPONSES,
     ADVANCE_PAYMENT_CREATE_RESPONSES,
+    ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES,
     ADVANCE_PAYMENT_UPDATE_RESPONSES,
 )
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
+    TurnoverResolution,
 )
 from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentCreateRequest,
@@ -16,7 +19,10 @@ from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentRow,
     AdvancePaymentUpdateRequest,
     AnnualKPIResponse,
-    PrefillTurnoverResponse,
+    AvailableTurnover,
+    BulkRefreshTurnoverRequest,
+    BulkRefreshTurnoverResponse,
+    RefreshTurnoverRequest,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
@@ -37,10 +43,11 @@ router = APIRouter(
 logger = logging.getLogger(__name__)
 
 
-def _to_row(payment, live_turnover=None) -> AdvancePaymentRow:
+def _to_row(payment, resolution: TurnoverResolution | None = None) -> AdvancePaymentRow:
+    """Only unsnapshotted periods advertise an available turnover."""
     row = AdvancePaymentRow.model_validate(payment)
-    row.live_turnover = live_turnover
-    row.missing_turnover = payment.turnover_amount is None and live_turnover is None
+    row.available_turnover = AvailableTurnover.from_resolution(resolution)
+    row.missing_turnover = payment.turnover_amount is None and row.available_turnover is None
     return row
 
 
@@ -68,15 +75,10 @@ def list_advance_payments(
     )
     turnover_repo = TurnoverLookupRepository(db)
     period_list = [(p.period, p.period_months_count) for p in items if p.turnover_amount is None]
-    live_map = (
-        turnover_repo.get_turnover_for_many(client_record_id, period_list) if period_list else {}
-    )
+    resolved = turnover_repo.resolve_turnover_for_client(client_record_id, period_list)
 
     def _to_list_row(p) -> AdvancePaymentRow:
-        live, _ = (
-            live_map.get(p.period, (None, None)) if p.turnover_amount is None else (None, None)
-        )
-        return _to_row(p, live)
+        return _to_row(p, resolved.get(p.period) if p.turnover_amount is None else None)
 
     return AdvancePaymentListResponse(
         items=[_to_list_row(p) for p in items],
@@ -117,28 +119,33 @@ def create_advance_payment(
     return AdvancePaymentRow.model_validate(payment)
 
 
-@router.get(
-    "/prefill-turnover",
-    response_model=PrefillTurnoverResponse,
+@router.post(
+    "/refresh-turnover",
+    response_model=BulkRefreshTurnoverResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+    responses=ADVANCE_PAYMENT_BULK_REFRESH_TURNOVER_RESPONSES,
 )
-def get_prefill_turnover(
+def refresh_advance_payment_turnover_bulk(
     client_record_id: PathId,
+    request: BulkRefreshTurnoverRequest,
     db: DBSession,
     user: CurrentUser,
-    period: str = Query(..., pattern=r"^\d{4}-(0[1-9]|1[0-2])$"),
-    period_months_count: int = Query(..., ge=1, le=2),
 ):
-    t, vid, src = AdvancePaymentService(db).get_prefill_turnover_for_client(
-        client_record_id, period, period_months_count
+    """Snapshot every listed period that has a fully filed VAT return.
+
+    Not atomic: periods that cannot be snapshotted are counted, not raised, so
+    one period without a return does not block its neighbours.
+    """
+    result = AdvancePaymentService(db).refresh_turnover_bulk(
+        client_record_id,
+        request.payment_ids,
+        actor_id=user.id,
+        actor_name=user.full_name,
     )
-    return PrefillTurnoverResponse(
-        period=period,
-        period_months_count=period_months_count,
-        turnover_amount=t,
-        vat_work_item_id=vid,
-        source=src,
+    return BulkRefreshTurnoverResponse(
+        refreshed=result.refreshed,
+        skipped_no_vat=result.skipped_no_vat,
+        skipped_not_filed=result.skipped_not_filed,
     )
 
 
@@ -170,13 +177,12 @@ def get_advance_payment(
     user: CurrentUser,
 ):
     payment = AdvancePaymentService(db).get_payment_for_client(client_record_id, payment_id)
-    live_turnover = None
+    resolution = None
     if payment.turnover_amount is None:
-        live_map = TurnoverLookupRepository(db).get_turnover_for_many(
-            client_record_id, [(payment.period, payment.period_months_count)]
+        resolution = TurnoverLookupRepository(db).resolve_turnover(
+            client_record_id, payment.period, payment.period_months_count
         )
-        live_turnover, _ = live_map.get(payment.period, (None, None))
-    return _to_row(payment, live_turnover)
+    return _to_row(payment, resolution)
 
 
 @router.patch(
@@ -220,6 +226,29 @@ def update_advance_payment(
                 payment_id,
                 payment.period,
             )
+    return AdvancePaymentRow.model_validate(payment)
+
+
+@router.post(
+    "/{payment_id}/refresh-turnover",
+    response_model=AdvancePaymentRow,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES,
+)
+def refresh_advance_payment_turnover(
+    client_record_id: PathId,
+    payment_id: PathId,
+    request: RefreshTurnoverRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    payment = AdvancePaymentService(db).refresh_turnover_from_vat(
+        client_record_id,
+        payment_id,
+        confirm_pending=request.confirm_pending,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )
     return AdvancePaymentRow.model_validate(payment)
 
 

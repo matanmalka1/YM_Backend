@@ -2,7 +2,7 @@ from datetime import date
 from decimal import Decimal
 from itertools import count
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
+from app.advance_payments.models.advance_payment import AdvancePaymentStatus, TurnoverSource
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -147,27 +147,32 @@ def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db):
     _filed_vat_item(test_db, first.client_record_id, "2026-02", "200")
     second_jan = _filed_vat_item(test_db, second.client_record_id, "2026-01", "300")
 
-    result = TurnoverLookupRepository(test_db).get_turnover_for_many_clients(
+    result = TurnoverLookupRepository(test_db).resolve_turnover_for_clients(
         {
             first.client_record_id: [("2026-01", 2)],
             second.client_record_id: [("2026-01", 1)],
         }
     )
 
-    assert result[(first.client_record_id, "2026-01")] == (Decimal("300"), first_jan.id)
-    assert result[(second.client_record_id, "2026-01")] == (
-        Decimal("300"),
-        second_jan.id,
-    )
+    first_resolution = result[(first.client_record_id, "2026-01")]
+    assert first_resolution.amount == Decimal("300")
+    assert first_resolution.source == TurnoverSource.VAT_FILED
+    assert first_resolution.vat_work_item_ids[0] == first_jan.id
+
+    second_resolution = result[(second.client_record_id, "2026-01")]
+    assert second_resolution.amount == Decimal("300")
+    assert second_resolution.vat_work_item_ids == [second_jan.id]
 
 
 def test_turnover_lookup_expands_periods_across_year_boundary(test_db):
     business = _business(test_db, 6)
     dec = _filed_vat_item(test_db, business.client_record_id, "2026-12", "100")
-    _filed_vat_item(test_db, business.client_record_id, "2027-01", "200")
+    jan = _filed_vat_item(test_db, business.client_record_id, "2027-01", "200")
 
-    result = TurnoverLookupRepository(test_db).get_turnover_for_many_clients(
+    result = TurnoverLookupRepository(test_db).resolve_turnover_for_clients(
         {business.client_record_id: [("2026-12", 2)]}
     )
 
-    assert result[(business.client_record_id, "2026-12")] == (Decimal("300"), dec.id)
+    resolution = result[(business.client_record_id, "2026-12")]
+    assert resolution.amount == Decimal("300")
+    assert resolution.vat_work_item_ids == [dec.id, jan.id]

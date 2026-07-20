@@ -128,7 +128,7 @@ NON_LIST_SUFFIXES: tuple[str, ...] = (
     "/download-url",
     "/signals",
     "/versions",
-    "/prefill-turnover",
+    "/refresh-turnover",
     "/kpi",
     "/deadline",
     "/amend",

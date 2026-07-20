@@ -1,18 +1,27 @@
-"""VAT turnover lookup for advance payment context."""
+"""VAT turnover lookup for advance payment context.
 
+One rule, one implementation: :meth:`TurnoverLookupRepository._resolve` decides
+what turnover an advance-payment period can draw from its VAT returns. The three
+public methods differ only in how many periods they ask about, never in the rule
+they apply.
+"""
+
+from dataclasses import dataclass
 from decimal import Decimal
-from typing import Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.advance_payments.models.advance_payment import TurnoverSource
 from app.common.repositories.base_repository import BaseRepository
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
-# Only FILED items represent settled, authoritative turnover figures.
-_FINAL_STATUSES = [VatWorkItemStatus.FILED]
-_PENDING_STATUSES = [VatWorkItemStatus.READY_FOR_REVIEW]
+# FILED items are settled figures; READY_FOR_REVIEW ones can still change before
+# filing, which is why they resolve to a weaker source and never to vat_filed.
+_FILED_STATUSES = (VatWorkItemStatus.FILED,)
+_UNFILED_STATUSES = (VatWorkItemStatus.READY_FOR_REVIEW,)
+_RESOLVABLE_STATUSES = (*_FILED_STATUSES, *_UNFILED_STATUSES)
 
 
 def _expand_period(period: str, months_count: int) -> list[str]:
@@ -27,152 +36,124 @@ def _expand_period(period: str, months_count: int) -> list[str]:
     return result
 
 
+@dataclass(frozen=True)
+class TurnoverResolution:
+    """What an advance-payment period can draw from its VAT returns.
+
+    ``source`` is ``None`` exactly when ``amount`` is ``None`` — the period is
+    unresolved. It is never :attr:`TurnoverSource.MANUAL`; that value describes a
+    figure an advisor typed, which by definition did not come from this lookup.
+    """
+
+    amount: Decimal | None
+    source: TurnoverSource | None
+    vat_work_item_ids: list[int]
+
+    @property
+    def is_resolved(self) -> bool:
+        return self.amount is not None
+
+
+_UNRESOLVED = TurnoverResolution(amount=None, source=None, vat_work_item_ids=[])
+
+
 class TurnoverLookupRepository(BaseRepository[VatWorkItem]):
-    """Read total_output_net from vat_work_items for advance payment period."""
+    """Resolve advance-payment periods against ``vat_work_items.total_output_net``."""
 
     def __init__(self, db: Session):
         self.db = db
 
-    def get_turnover_for_period(
+    # ── Public API ────────────────────────────────────────────────────────────
+
+    def resolve_turnover(
         self,
         client_record_id: int,
         period: str,
         period_months_count: int = 1,
-    ) -> tuple[Decimal | None, int | None]:
-        """Return (total_output_net, vat_work_item_id) for the period.
+    ) -> TurnoverResolution:
+        """Resolve a single period."""
+        resolved = self._resolve({client_record_id: [(period, period_months_count)]})
+        return resolved[(client_record_id, period)]
 
-        For bi-monthly advances, sums both months' vat_work_items.
-        Returns (None, None) if no filed/submitted vat_work_items found.
-        """
-        periods = _expand_period(period, period_months_count)
-
-        rows = self.db.execute(
-            select(VatWorkItem.id, VatWorkItem.total_output_net).where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.period.in_(periods),
-                VatWorkItem.status.in_(_FINAL_STATUSES),
-                VatWorkItem.deleted_at.is_(None),
-            )
-        ).all()
-        if not rows:
-            return None, None
-
-        total = sum(Decimal(str(r.total_output_net)) for r in rows)
-        # For snapshot FK, use first item (canonical period start)
-        primary_id = rows[0].id
-        return total, primary_id
-
-    def get_turnover_for_many(
+    def resolve_turnover_for_client(
         self,
         client_record_id: int,
         periods: list[tuple[str, int]],
-    ) -> dict[str, tuple[Decimal | None, int | None]]:
-        """Batch lookup: {period: (turnover, vat_work_item_id)}.
+    ) -> dict[str, TurnoverResolution]:
+        """Resolve many periods for one client, keyed by period."""
+        if not periods:
+            return {}
+        resolved = self._resolve({client_record_id: periods})
+        return {period: resolved[(client_record_id, period)] for period, _ in periods}
 
-        periods is list of (period_str, period_months_count).
-        """
-        all_periods = set()
-        for period, months_count in periods:
-            all_periods.update(_expand_period(period, months_count))
-
-        rows = self.db.execute(
-            select(VatWorkItem.id, VatWorkItem.period, VatWorkItem.total_output_net).where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.period.in_(all_periods),
-                VatWorkItem.status.in_(_FINAL_STATUSES),
-                VatWorkItem.deleted_at.is_(None),
-            )
-        ).all()
-        by_period = {r.period: (Decimal(str(r.total_output_net)), r.id) for r in rows}
-
-        result: dict[str, tuple[Decimal | None, int | None]] = {}
-        for period, months_count in periods:
-            sub_periods = _expand_period(period, months_count)
-            found = [by_period[p] for p in sub_periods if p in by_period]
-            if not found:
-                result[period] = (None, None)
-            else:
-                total = sum(turnover for turnover, _ in found)
-                primary_id = found[0][1]
-                result[period] = (total, primary_id)
-        return result
-
-    def get_turnover_for_many_clients(
+    def resolve_turnover_for_clients(
         self,
         periods_by_client: dict[int, list[tuple[str, int]]],
-    ) -> dict[tuple[int, str], tuple[Decimal | None, int | None]]:
-        """Batch lookup for multiple clients using grouped VAT rows."""
+    ) -> dict[tuple[int, str], TurnoverResolution]:
+        """Resolve many periods across many clients, keyed by (client, period)."""
+        return self._resolve(periods_by_client)
+
+    # ── The rule ──────────────────────────────────────────────────────────────
+
+    def _resolve(
+        self,
+        periods_by_client: dict[int, list[tuple[str, int]]],
+    ) -> dict[tuple[int, str], TurnoverResolution]:
+        """Resolve every requested period in one query.
+
+        A period resolves only when *every* month it covers has a VAT work item.
+        A half-covered bi-monthly period stays unresolved rather than reporting a
+        silently halved turnover. The source is ``vat_filed`` only when every
+        covered month is filed; one unfiled month among them makes the combined
+        figure worth no more than that weakest return, so it resolves to
+        ``vat_pending``.
+        """
         if not periods_by_client:
             return {}
 
-        all_periods = set()
-        client_ids = set(periods_by_client)
+        wanted_months: set[str] = set()
         for periods in periods_by_client.values():
             for period, months_count in periods:
-                all_periods.update(_expand_period(period, months_count))
+                wanted_months.update(_expand_period(period, months_count))
 
         rows = self.db.execute(
             select(
                 VatWorkItem.client_record_id,
                 VatWorkItem.period,
-                func.min(VatWorkItem.id).label("vat_work_item_id"),
-                func.coalesce(func.sum(VatWorkItem.total_output_net), 0).label("total_output_net"),
-            )
-            .where(
-                VatWorkItem.client_record_id.in_(client_ids),
-                VatWorkItem.period.in_(all_periods),
-                VatWorkItem.status.in_(_FINAL_STATUSES),
+                VatWorkItem.id,
+                VatWorkItem.total_output_net,
+                VatWorkItem.status,
+            ).where(
+                VatWorkItem.client_record_id.in_(periods_by_client),
+                VatWorkItem.period.in_(wanted_months),
+                VatWorkItem.status.in_(_RESOLVABLE_STATUSES),
                 VatWorkItem.deleted_at.is_(None),
             )
-            .group_by(VatWorkItem.client_record_id, VatWorkItem.period)
         ).all()
-        by_client_period = {
-            (row.client_record_id, row.period): (
-                Decimal(str(row.total_output_net)),
-                row.vat_work_item_id,
-            )
-            for row in rows
-        }
+        # (client, period) is unique among non-deleted work items, so one row each.
+        by_month = {(row.client_record_id, row.period): row for row in rows}
 
-        result: dict[tuple[int, str], tuple[Decimal | None, int | None]] = {}
+        resolved: dict[tuple[int, str], TurnoverResolution] = {}
         for client_record_id, periods in periods_by_client.items():
             for period, months_count in periods:
-                sub_periods = _expand_period(period, months_count)
-                found = [
-                    by_client_period[(client_record_id, sub_period)]
-                    for sub_period in sub_periods
-                    if (client_record_id, sub_period) in by_client_period
+                months = _expand_period(period, months_count)
+                covering = [
+                    by_month[(client_record_id, month)]
+                    for month in months
+                    if (client_record_id, month) in by_month
                 ]
-                if not found:
-                    result[(client_record_id, period)] = (None, None)
+                if len(covering) != len(months):
+                    resolved[(client_record_id, period)] = _UNRESOLVED
                     continue
-                total = sum(turnover for turnover, _ in found)
-                primary_id = found[0][1]
-                result[(client_record_id, period)] = (total, primary_id)
-        return result
-
-    def get_prefill_turnover(
-        self,
-        client_record_id: int,
-        period: str,
-        period_months_count: int = 1,  # accepted for API symmetry; VatWorkItem has no period_months_count col
-    ) -> tuple[Decimal | None, int | None, Literal["vat_filed", "vat_pending", "none"]]:
-        """Return (total_output_net, vat_work_item_id, source) for prefill.
-
-        Checks FILED first, then READY_FOR_REVIEW. Matches by period string only.
-        """
-        for statuses, source in [
-            (_FINAL_STATUSES, "vat_filed"),
-            (_PENDING_STATUSES, "vat_pending"),
-        ]:
-            row = self.db.execute(
-                select(VatWorkItem.id, VatWorkItem.total_output_net).where(
-                    VatWorkItem.client_record_id == client_record_id,
-                    VatWorkItem.period == period,
-                    VatWorkItem.status.in_(statuses),
-                    VatWorkItem.deleted_at.is_(None),
+                resolved[(client_record_id, period)] = TurnoverResolution(
+                    amount=sum(
+                        (Decimal(str(row.total_output_net)) for row in covering), Decimal("0")
+                    ),
+                    source=(
+                        TurnoverSource.VAT_FILED
+                        if all(row.status in _FILED_STATUSES for row in covering)
+                        else TurnoverSource.VAT_PENDING
+                    ),
+                    vat_work_item_ids=[row.id for row in covering],
                 )
-            ).first()
-            if row is not None:
-                return Decimal(str(row.total_output_net)), row.id, source
-        return None, None, "none"
+        return resolved

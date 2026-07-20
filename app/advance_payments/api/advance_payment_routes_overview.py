@@ -6,14 +6,44 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentOverviewResponse,
     AdvancePaymentOverviewRow,
+    AvailableTurnover,
     MonthBatchSummary,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
+    AdvancePaymentOverviewEnrichedRow,
 )
 from app.core.pagination import MAX_PAGE_SIZE
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
+
+
+def _to_overview_row(row: AdvancePaymentOverviewEnrichedRow) -> AdvancePaymentOverviewRow:
+    available = AvailableTurnover.from_resolution(row.available_turnover)
+    return AdvancePaymentOverviewRow(
+        id=row.payment.id,
+        client_record_id=row.payment.client_record_id,
+        office_client_number=row.office_client_number,
+        client_name=row.client_name,
+        id_number=row.id_number,
+        period=row.payment.period,
+        period_months_count=row.payment.period_months_count,
+        due_date=row.payment.due_date,
+        due_date_effective=row.payment.due_date_effective,
+        expected_amount=row.payment.expected_amount,
+        paid_amount=row.payment.paid_amount,
+        status=row.payment.status,
+        payment_method=row.payment.payment_method,
+        turnover_amount=row.payment.turnover_amount,
+        turnover_source=row.payment.turnover_source,
+        turnover_snapshot_at=row.payment.turnover_snapshot_at,
+        calculated_amount=row.payment.calculated_amount,
+        override_amount=row.payment.override_amount,
+        available_turnover=available,
+        missing_turnover=row.payment.turnover_amount is None and available is None,
+        advance_rate=row.advance_rate,
+    )
+
 
 overview_router = APIRouter(
     prefix="/advance-payments",
@@ -60,30 +90,7 @@ def list_advance_payments_overview(
         client_search=client_search,
     )
 
-    items = [
-        AdvancePaymentOverviewRow(
-            id=row.payment.id,
-            client_record_id=row.payment.client_record_id,
-            office_client_number=row.office_client_number,
-            client_name=row.client_name,
-            id_number=row.id_number,
-            period=row.payment.period,
-            period_months_count=row.payment.period_months_count,
-            due_date=row.payment.due_date,
-            due_date_effective=row.payment.due_date_effective,
-            expected_amount=row.payment.expected_amount,
-            paid_amount=row.payment.paid_amount,
-            status=row.payment.status,
-            payment_method=row.payment.payment_method,
-            turnover_amount=row.payment.turnover_amount,
-            calculated_amount=row.payment.calculated_amount,
-            override_amount=row.payment.override_amount,
-            live_turnover=row.live_turnover,
-            missing_turnover=(row.payment.turnover_amount is None and row.live_turnover is None),
-            advance_rate=row.advance_rate,
-        )
-        for row in rows
-    ]
+    items = [_to_overview_row(row) for row in rows]
     return AdvancePaymentOverviewResponse(
         items=items,
         page=page,

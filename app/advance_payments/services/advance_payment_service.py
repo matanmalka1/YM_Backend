@@ -1,6 +1,6 @@
+from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
-from typing import Literal
 
 from sqlalchemy.orm import Session
 
@@ -12,16 +12,19 @@ from app.advance_payments.advance_payment_constants import (
 from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
+    TurnoverSource,
 )
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
+    TurnoverResolution,
 )
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
+    ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
     ACTION_ADVANCE_PAYMENT_UPDATED,
     ENTITY_ADVANCE_PAYMENT,
 )
@@ -39,6 +42,19 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
 from app.utils.time_utils import israel_today, utcnow
 
 _SYSTEM_ACTOR_DISPLAY = "מערכת"
+
+
+@dataclass
+class BulkRefreshTurnoverResult:
+    """Outcome counts of a bulk turnover refresh.
+
+    Skips are split by reason because each one asks the advisor for a different
+    follow-up: chase the missing return, or wait for the pending one to be filed.
+    """
+
+    refreshed: int = 0
+    skipped_no_vat: int = 0
+    skipped_not_filed: int = 0
 
 
 class AdvancePaymentService:
@@ -72,6 +88,8 @@ class AdvancePaymentService:
             "notes": payment.notes,
             "advance_rate": payment.advance_rate,
             "turnover_amount": payment.turnover_amount,
+            "turnover_source": payment.turnover_source,
+            "turnover_snapshot_at": payment.turnover_snapshot_at,
             "calculated_amount": payment.calculated_amount,
             "override_amount": payment.override_amount,
             "status": payment.status,
@@ -242,6 +260,8 @@ class AdvancePaymentService:
             notes=notes,
             advance_rate=advance_rate,
             turnover_amount=turnover_amount,
+            turnover_source=None if turnover_amount is None else TurnoverSource.MANUAL,
+            turnover_snapshot_at=None if turnover_amount is None else utcnow(),
             calculated_amount=calculated_amount,
             override_amount=override_amount,
             status=self._derive_status(paid_amount, resolved_expected),
@@ -287,6 +307,16 @@ class AdvancePaymentService:
                 ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
         filtered = {k: v for k, v in fields.items() if k in self._ALLOWED_UPDATE_FIELDS}
+
+        # A hand-typed turnover must stop claiming VAT provenance, otherwise the
+        # record keeps showing a VAT source for a figure the advisor overwrote.
+        if "turnover_amount" in filtered:
+            filtered["turnover_source"] = (
+                None if filtered["turnover_amount"] is None else TurnoverSource.MANUAL
+            )
+            filtered["turnover_snapshot_at"] = (
+                None if filtered["turnover_amount"] is None else utcnow()
+            )
 
         calc_fields = {"turnover_amount", "override_amount"}
         if calc_fields & filtered.keys():
@@ -394,15 +424,131 @@ class AdvancePaymentService:
             created.append(payment)
         return created, skipped
 
-    # ─── Prefill ──────────────────────────────────────────────────────────────
+    # ─── Snapshot turnover from VAT ───────────────────────────────────────────
 
-    def get_prefill_turnover_for_client(
+    def refresh_turnover_from_vat(
         self,
         client_record_id: int,
-        period: str,
-        period_months_count: int,
-    ) -> tuple[Decimal | None, int | None, Literal["vat_filed", "vat_pending", "none"]]:
+        payment_id: int,
+        *,
+        confirm_pending: bool = False,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> AdvancePayment:
+        """Snapshot the period's VAT turnover onto the payment and recompute amounts.
+
+        Snapshotting from an unfiled VAT return requires ``confirm_pending``:
+        the figure can still change before filing, but the snapshot it produces
+        is indistinguishable from a settled one once written.
+        """
         self._get_record_or_raise(client_record_id)
-        return TurnoverLookupRepository(self.db).get_prefill_turnover(
-            client_record_id, period, period_months_count
+        payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
+        if not payment:
+            raise NotFoundError(
+                f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
+                ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
+            )
+
+        resolution = TurnoverLookupRepository(self.db).resolve_turnover(
+            client_record_id, payment.period, payment.period_months_count
         )
+        if not resolution.is_resolved:
+            raise NotFoundError(
+                f"לא נמצא דוח מע״מ לתקופה {payment.period}",
+                ErrorCode.ADVANCE_PAYMENT_VAT_TURNOVER_NOT_FOUND,
+            )
+        if resolution.source == TurnoverSource.VAT_PENDING and not confirm_pending:
+            raise ConflictError(
+                f"דוח המע״מ לתקופה {payment.period} טרם הוגש",
+                ErrorCode.ADVANCE_PAYMENT_VAT_NOT_FILED,
+            )
+
+        return self._apply_turnover_snapshot(
+            payment, resolution, actor_id=actor_id, actor_name=actor_name
+        )
+
+    def refresh_turnover_bulk(
+        self,
+        client_record_id: int,
+        payment_ids: list[int],
+        *,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> BulkRefreshTurnoverResult:
+        """Snapshot every listed period that has a fully filed VAT return.
+
+        Unfiled returns are never snapshotted in bulk: ``confirm_pending`` is a
+        judgement about one period's figure and cannot be given meaningfully for
+        a whole batch, so those periods are reported as skipped instead.
+
+        Not atomic by design. Each period is an independent business fact, so a
+        period without a VAT return must not prevent its neighbours from being
+        snapshotted. Ownership of every id is validated up front, before any
+        write, so a malformed request still fails whole.
+        """
+        self._get_record_or_raise(client_record_id)
+        payments = []
+        for payment_id in payment_ids:
+            payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
+            if not payment:
+                raise NotFoundError(
+                    f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
+                    ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
+                )
+            payments.append(payment)
+
+        resolved = TurnoverLookupRepository(self.db).resolve_turnover_for_client(
+            client_record_id, [(p.period, p.period_months_count) for p in payments]
+        )
+
+        result = BulkRefreshTurnoverResult()
+        for payment in payments:
+            resolution = resolved.get(payment.period)
+            if resolution is None or not resolution.is_resolved:
+                result.skipped_no_vat += 1
+                continue
+            if resolution.source == TurnoverSource.VAT_PENDING:
+                result.skipped_not_filed += 1
+                continue
+            self._apply_turnover_snapshot(
+                payment, resolution, actor_id=actor_id, actor_name=actor_name
+            )
+            result.refreshed += 1
+        return result
+
+    def _apply_turnover_snapshot(
+        self,
+        payment: AdvancePayment,
+        resolution: TurnoverResolution,
+        *,
+        actor_id: int | None,
+        actor_name: str | None,
+    ) -> AdvancePayment:
+        """Freeze a resolved turnover onto the payment and record why."""
+        calculated_amount, new_expected = self._compute_amounts(
+            resolution.amount, payment.advance_rate, payment.override_amount
+        )
+        old_snapshot = self._audit_snapshot(payment)
+        updated = self.repo.update_payment(
+            payment,
+            turnover_amount=resolution.amount,
+            turnover_source=resolution.source,
+            turnover_snapshot_at=utcnow(),
+            calculated_amount=calculated_amount,
+            expected_amount=new_expected,
+            status=self._derive_status(payment.paid_amount, new_expected),
+        )
+        self._audit.record_action(
+            ENTITY_ADVANCE_PAYMENT,
+            updated.id,
+            actor_id,
+            ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
+            old_value=old_snapshot,
+            new_value=self._audit_snapshot(updated),
+            metadata_json={
+                **self._audit_metadata(updated, source=resolution.source.value),
+                "vat_work_item_ids": resolution.vat_work_item_ids,
+            },
+            **self._actor_kwargs(actor_id, actor_name),
+        )
+        return updated

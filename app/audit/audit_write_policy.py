@@ -28,6 +28,7 @@ from typing import Any, NoReturn
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
+    ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
     ACTION_ADVANCE_PAYMENT_UPDATED,
     ACTION_ANNEX_LINE_ADDED,
     ACTION_ANNEX_LINE_DELETED,
@@ -262,7 +263,14 @@ _PERSON_LINK_FIELDS = frozenset({"person_id", "legal_entity_id", "role"})
 _AUTHORITY_CONTACT_META = frozenset({"client_record_id", "contact_id"})
 _AUTHORITY_CONTACT_FIELDS = frozenset({"contact_type", "name", "office", "phone", "email", "notes"})
 _ADVANCE_PAYMENT_META = frozenset(
-    {"client_record_id", "period", "tax_year", "annual_report_id", "source"}
+    {
+        "client_record_id",
+        "period",
+        "tax_year",
+        "annual_report_id",
+        "source",
+        "vat_work_item_ids",
+    }
 )
 _ADVANCE_PAYMENT_FIELDS = frozenset(
     {
@@ -276,6 +284,8 @@ _ADVANCE_PAYMENT_FIELDS = frozenset(
         "notes",
         "advance_rate",
         "turnover_amount",
+        "turnover_source",
+        "turnover_snapshot_at",
         "calculated_amount",
         "override_amount",
         "status",
@@ -494,6 +504,13 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
     ACTION_ADVANCE_PAYMENT_DELETED: ActionPolicy(
         value_fields=_ADVANCE_PAYMENT_FIELDS,
         metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META,
+    ),
+    ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED: ActionPolicy(
+        value_fields=_ADVANCE_PAYMENT_FIELDS,
+        metadata_required=frozenset(
+            {"client_record_id", "period", "tax_year", "source", "vat_work_item_ids"}
+        ),
         metadata_allowed=_ADVANCE_PAYMENT_META,
     ),
     # charge

@@ -8,16 +8,39 @@ from pydantic import BaseModel, Field, computed_field, model_validator
 
 from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
+    MAX_BULK_REFRESH_PAYMENTS,
     SUPPORTED_PERIOD_MONTH_COUNTS,
 )
 from app.advance_payments.models.advance_payment import (
     AdvancePaymentStatus,
     PaymentMethod,
+    TurnoverSource,
+)
+from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
+    TurnoverResolution,
 )
 from app.common.period_utils import parse_period_month
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.utils.time_utils import israel_today
+
+
+class AvailableTurnover(BaseModel):
+    """VAT turnover this period *could* be snapshotted from.
+
+    Not the payment's turnover. It is a discovery signal for an action the
+    advisor has not taken yet, and it feeds no amount on the record: only the
+    stored ``turnover_amount`` drives ``calculated_amount``/``expected_amount``.
+    """
+
+    amount: ApiDecimal
+    source: Literal[TurnoverSource.VAT_FILED, TurnoverSource.VAT_PENDING]
+
+    @classmethod
+    def from_resolution(cls, resolution: TurnoverResolution | None) -> AvailableTurnover | None:
+        if resolution is None or not resolution.is_resolved:
+            return None
+        return cls(amount=resolution.amount, source=resolution.source)
 
 
 class AdvancePaymentRow(BaseModel):
@@ -35,10 +58,12 @@ class AdvancePaymentRow(BaseModel):
     annual_report_id: int | None = None
     notes: str | None = None
     turnover_amount: ApiDecimal | None = None
+    turnover_source: TurnoverSource | None = None
+    turnover_snapshot_at: ApiDateTime | None = None
     advance_rate: ApiDecimal | None = None
     calculated_amount: ApiDecimal
     override_amount: ApiDecimal | None = None
-    live_turnover: ApiDecimal | None = None  # populated by router, not ORM
+    available_turnover: AvailableTurnover | None = None  # populated by router, not ORM
     missing_turnover: bool = False
     created_at: ApiDateTime
     updated_at: ApiDateTime | None = None
@@ -142,9 +167,11 @@ class AdvancePaymentOverviewRow(BaseModel):
     status: AdvancePaymentStatus
     payment_method: PaymentMethod | None = None
     turnover_amount: ApiDecimal | None = None
+    turnover_source: TurnoverSource | None = None
+    turnover_snapshot_at: ApiDateTime | None = None
     calculated_amount: ApiDecimal
     override_amount: ApiDecimal | None = None
-    live_turnover: ApiDecimal | None = None  # populated by service, not ORM
+    available_turnover: AvailableTurnover | None = None  # populated by service, not ORM
     missing_turnover: bool = False
     advance_rate: ApiDecimal | None = None  # snapshot from payment
 
@@ -211,9 +238,24 @@ class GenerateScheduleResponse(BaseModel):
     skipped: int
 
 
-class PrefillTurnoverResponse(BaseModel):
-    period: str
-    period_months_count: int
-    turnover_amount: ApiDecimal | None = None
-    vat_work_item_id: int | None = None
-    source: Literal["vat_filed", "vat_pending", "none"]
+class RefreshTurnoverRequest(BaseModel):
+    confirm_pending: bool = Field(
+        False,
+        description="אשר קיבוע מחזור מדוח מע״מ שטרם הוגש",
+    )
+
+
+class BulkRefreshTurnoverRequest(BaseModel):
+    """Explicit ids only: the caller states exactly which periods it is writing to.
+
+    There is deliberately no filter-based form — a filter can match rows the
+    advisor never saw, and this command writes to every row it matches.
+    """
+
+    payment_ids: list[int] = Field(..., min_length=1, max_length=MAX_BULK_REFRESH_PAYMENTS)
+
+
+class BulkRefreshTurnoverResponse(BaseModel):
+    refreshed: int
+    skipped_no_vat: int
+    skipped_not_filed: int

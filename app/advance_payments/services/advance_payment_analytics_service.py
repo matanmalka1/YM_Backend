@@ -1,5 +1,6 @@
 """Analytics, KPI, and overview service for AdvancePayment domain."""
 
+from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
@@ -18,6 +19,7 @@ from app.advance_payments.repositories.advance_payment_batch_repository import (
 )
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
+    TurnoverResolution,
 )
 from app.advance_payments.schemas.advance_payment import MonthBatchSummary
 from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -32,7 +34,7 @@ class AdvancePaymentOverviewEnrichedRow:
     office_client_number: int | None
     client_name: str
     id_number: str | None
-    live_turnover: Decimal | None
+    available_turnover: TurnoverResolution | None
     advance_rate: Decimal | None
 
 
@@ -79,9 +81,7 @@ class AdvancePaymentAnalyticsService:
             period_months_count=period_months_count,
         )
 
-        turnover_repo = TurnoverLookupRepository(self.db)
-        payments = [row.payment for row in rows]
-        live_turnover_map = self._build_live_turnover_map(payments, turnover_repo)
+        available = self._resolve_available_turnover([row.payment for row in rows])
 
         enriched = [
             AdvancePaymentOverviewEnrichedRow(
@@ -89,7 +89,7 @@ class AdvancePaymentAnalyticsService:
                 office_client_number=row.office_client_number,
                 client_name=row.client_name,
                 id_number=row.id_number,
-                live_turnover=live_turnover_map.get(
+                available_turnover=available.get(
                     (row.payment.client_record_id, row.payment.period)
                 ),
                 advance_rate=row.payment.advance_rate,
@@ -98,24 +98,18 @@ class AdvancePaymentAnalyticsService:
         ]
         return enriched, total
 
-    @staticmethod
-    def _build_live_turnover_map(
+    def _resolve_available_turnover(
+        self,
         payments: list[AdvancePayment],
-        turnover_repo: TurnoverLookupRepository,
-    ) -> dict[tuple[int, str], object | None]:
-        """Batch-fetch live turnover per (client_record_id, period)."""
-        from collections import defaultdict
-
+    ) -> dict[tuple[int, str], TurnoverResolution]:
+        """Resolve VAT turnover only for periods that have not been snapshotted."""
         by_client: dict[int, list[tuple[str, int]]] = defaultdict(list)
-        for p in payments:
-            if p.turnover_amount is None:
-                by_client[p.client_record_id].append((p.period, p.period_months_count))
-
-        result: dict[tuple[int, str], object | None] = {}
-        turnover_by_period = turnover_repo.get_turnover_for_many_clients(dict(by_client))
-        for key, (turnover, _) in turnover_by_period.items():
-            result[key] = turnover
-        return result
+        for payment in payments:
+            if payment.turnover_amount is None:
+                by_client[payment.client_record_id].append(
+                    (payment.period, payment.period_months_count)
+                )
+        return TurnoverLookupRepository(self.db).resolve_turnover_for_clients(dict(by_client))
 
     # ─── KPIs ─────────────────────────────────────────────────────────────────
 
