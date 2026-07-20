@@ -37,6 +37,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         turnover_amount=None,
         calculated_amount=None,
         override_amount=None,
+        status: AdvancePaymentStatus = AdvancePaymentStatus.PENDING,
     ) -> AdvancePayment:
         payment = AdvancePayment(
             client_record_id=client_record_id,
@@ -49,7 +50,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             annual_report_id=annual_report_id,
             tax_calendar_entry_id=tax_calendar_entry_id,
             notes=notes,
-            status=AdvancePaymentStatus.PENDING,
+            status=status,
             advance_rate=advance_rate,
             turnover_amount=turnover_amount,
             calculated_amount=calculated_amount if calculated_amount is not None else Decimal("0"),

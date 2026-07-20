@@ -23,6 +23,7 @@ from app.advance_payments.schemas.advance_payment import MonthBatchSummary
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
+from app.utils.time_utils import israel_today
 
 
 @dataclass(slots=True, frozen=True)
@@ -169,6 +170,7 @@ class AdvancePaymentAnalyticsService:
         rows = AdvancePaymentBatchRepository(self.db).batch_summary_by_month(
             year,
             client_record_id=client_record_id,
+            reference_date=israel_today(),
         )
         result: list[MonthBatchSummary] = []
         for r in rows:
@@ -188,6 +190,7 @@ class AdvancePaymentAnalyticsService:
                     pending_count=int(r.pending_count or 0),
                     paid_count=paid_count,
                     not_paid_count=client_count - paid_count,
+                    due_this_month_count=int(r.due_this_month_count or 0),
                     total_expected=total_expected,
                     total_paid=total_paid,
                     collection_rate=self._collection_rate(total_paid, total_expected),

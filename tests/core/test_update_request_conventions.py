@@ -112,7 +112,6 @@ def test_business_name_preserves_max_length():
         (ClientUpdateRequest, "status"),
         (CorrespondenceUpdateRequest, "subject"),
         (AuthorityContactUpdateRequest, "name"),
-        (AdvancePaymentUpdateRequest, "status"),
         (DeadlineUpdateRequest, "deadline_type"),
         (UserUpdateRequest, "role"),
         (UserUpdateRequest, "email"),

@@ -143,6 +143,16 @@ class AdvancePaymentService:
             expected = calculated
         return calculated, expected
 
+    @staticmethod
+    def _derive_status(paid_amount, expected_amount) -> AdvancePaymentStatus:
+        paid = Decimal(str(paid_amount or 0))
+        expected = Decimal(str(expected_amount or 0))
+        if paid == 0:
+            return AdvancePaymentStatus.PENDING
+        if paid >= expected:
+            return AdvancePaymentStatus.PAID
+        return AdvancePaymentStatus.PARTIAL
+
     # ─── List ─────────────────────────────────────────────────────────────────
 
     def list_payments_for_client(
@@ -234,6 +244,7 @@ class AdvancePaymentService:
             turnover_amount=turnover_amount,
             calculated_amount=calculated_amount,
             override_amount=override_amount,
+            status=self._derive_status(paid_amount, resolved_expected),
         )
         payment = mat.link_advance_payment(payment)
         self._audit.record_action(
@@ -252,7 +263,6 @@ class AdvancePaymentService:
     _ALLOWED_UPDATE_FIELDS = {
         "paid_amount",
         "expected_amount",
-        "status",
         "paid_at",
         "payment_method",
         "notes",
@@ -288,24 +298,11 @@ class AdvancePaymentService:
             )
             filtered["calculated_amount"] = calculated_amount
             filtered["expected_amount"] = new_expected
-            if "paid_amount" not in filtered and "status" not in filtered:
-                paid = payment.paid_amount
-                if paid == 0:
-                    filtered["status"] = AdvancePaymentStatus.PENDING
-                elif paid >= new_expected:
-                    filtered["status"] = AdvancePaymentStatus.PAID
-                else:
-                    filtered["status"] = AdvancePaymentStatus.PARTIAL
-
-        if "paid_amount" in filtered and "status" not in filtered:
-            paid = filtered["paid_amount"]
+        status_inputs = {"paid_amount", "expected_amount", "turnover_amount", "override_amount"}
+        if status_inputs & filtered.keys():
+            paid = filtered.get("paid_amount", payment.paid_amount)
             expected = filtered.get("expected_amount", payment.expected_amount)
-            if paid is None or paid == 0:
-                filtered["status"] = AdvancePaymentStatus.PENDING
-            elif paid >= expected:
-                filtered["status"] = AdvancePaymentStatus.PAID
-            else:
-                filtered["status"] = AdvancePaymentStatus.PARTIAL
+            filtered["status"] = self._derive_status(paid, expected)
 
         old_snapshot = self._audit_snapshot(payment)
         updated = self.repo.update_payment(payment, **filtered)

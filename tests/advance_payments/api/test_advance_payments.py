@@ -97,7 +97,7 @@ def test_update_advance_payment_success(client, test_db, advisor_headers):
     response = client.patch(
         f"/api/v1/clients/{business.client_record_id}/advance-payments/{payment.id}",
         headers=advisor_headers,
-        json={"paid_amount": 500.0, "status": "paid"},
+        json={"paid_amount": 500.0},
     )
 
     assert response.status_code == 200
@@ -107,7 +107,7 @@ def test_update_advance_payment_success(client, test_db, advisor_headers):
     assert data["updated_at"] is not None
 
 
-def test_update_advance_payment_invalid_status_returns_400(client, test_db, advisor_headers):
+def test_update_advance_payment_rejects_server_owned_status(client, test_db, advisor_headers):
     business = _create_business(test_db)
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
@@ -122,7 +122,7 @@ def test_update_advance_payment_invalid_status_returns_400(client, test_db, advi
     response = client.patch(
         f"/api/v1/clients/{business.client_record_id}/advance-payments/{payment.id}",
         headers=advisor_headers,
-        json={"status": "unknown"},
+        json={"status": "paid"},
     )
 
     assert response.status_code == 422
@@ -133,7 +133,7 @@ def test_update_advance_payment_not_found_returns_404(client, test_db, advisor_h
     response = client.patch(
         f"/api/v1/clients/{business.client_record_id}/advance-payments/999",
         headers=advisor_headers,
-        json={"status": "paid"},
+        json={"notes": "לא קיים"},
     )
 
     data = response.json()

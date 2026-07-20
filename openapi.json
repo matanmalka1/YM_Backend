@@ -20599,16 +20599,6 @@
             ],
             "title": "Expected Amount"
           },
-          "status": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/AdvancePaymentStatus"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
           "paid_at": {
             "anyOf": [
               {
@@ -28474,6 +28464,11 @@
           "not_paid_count": {
             "type": "integer",
             "title": "Not Paid Count",
+            "default": 0
+          },
+          "due_this_month_count": {
+            "type": "integer",
+            "title": "Due This Month Count",
             "default": 0
           },
           "total_expected": {

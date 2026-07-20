@@ -112,7 +112,6 @@ class AdvancePaymentCreateRequest(BaseModel):
 class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
     paid_amount: ApiDecimal | None = Field(None, ge=0)
     expected_amount: ApiDecimal | None = Field(None, ge=0)
-    status: AdvancePaymentStatus | None = None
     paid_at: ApiDateTime | None = None
     payment_method: PaymentMethod | None = None
     notes: str | None = Field(None, max_length=500)
@@ -121,8 +120,8 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
 
     @model_validator(mode="after")
     def _reject_null_for_required(self) -> AdvancePaymentUpdateRequest:
-        # paid_amount/expected_amount/status are non-nullable columns.
-        for field in ("paid_amount", "expected_amount", "status"):
+        # paid_amount/expected_amount are non-nullable columns.
+        for field in ("paid_amount", "expected_amount"):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")
         return self
@@ -192,6 +191,7 @@ class MonthBatchSummary(BaseModel):
     pending_count: int = 0
     paid_count: int = 0
     not_paid_count: int = 0
+    due_this_month_count: int = 0
     total_expected: ApiDecimal | None = None
     total_paid: ApiDecimal | None = None
     collection_rate: ApiDecimal = Decimal("0")

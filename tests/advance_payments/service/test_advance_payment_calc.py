@@ -166,6 +166,19 @@ class TestCreateSnapshots:
         assert payment.advance_rate == Decimal("2.0")
         assert payment.calculated_amount == Decimal("200.00")
 
+    def test_create_derives_status_from_paid_amount(self, test_db):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        payment = AdvancePaymentService(test_db).create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-10",
+            period_months_count=1,
+            turnover_amount=Decimal("40000"),
+            paid_amount=Decimal("250"),
+        )
+
+        assert payment.expected_amount == Decimal("1000.00")
+        assert payment.status == AdvancePaymentStatus.PARTIAL
+
 
 class TestUpdateRecompute:
     def test_patch_turnover_recomputes_amounts(self, test_db):
@@ -198,7 +211,6 @@ class TestUpdateRecompute:
             business.client_record_id,
             payment.id,
             paid_amount=Decimal("1000"),
-            status=AdvancePaymentStatus.PAID,
         )
         updated = svc.update_payment_for_client(
             business.client_record_id,
@@ -206,6 +218,26 @@ class TestUpdateRecompute:
             turnover_amount=Decimal("80000"),
         )
         assert updated.expected_amount == Decimal("2000.00")
+        assert updated.status == AdvancePaymentStatus.PARTIAL
+
+    def test_patch_expected_amount_rederives_status(self, test_db):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-11",
+            period_months_count=1,
+            turnover_amount=Decimal("40000"),
+            paid_amount=Decimal("1000"),
+        )
+        assert payment.status == AdvancePaymentStatus.PAID
+
+        updated = svc.update_payment_for_client(
+            business.client_record_id,
+            payment.id,
+            expected_amount=Decimal("2000"),
+        )
+
         assert updated.status == AdvancePaymentStatus.PARTIAL
 
 

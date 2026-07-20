@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import Integer, case, cast, func, select
 from sqlalchemy.orm import Session
 
@@ -22,8 +24,14 @@ class AdvancePaymentBatchRepository(BaseRepository):
         year: int | None,
         *,
         client_record_id: int | None = None,
+        reference_date: date,
     ) -> list:
-        today_expr = func.current_date()
+        month_start = reference_date.replace(day=1)
+        next_month_start = (
+            date(reference_date.year + 1, 1, 1)
+            if reference_date.month == 12
+            else date(reference_date.year, reference_date.month + 1, 1)
+        )
         start_month = advance_payment_start_month_expr()
         period_year = cast(func.substr(AdvancePayment.period, 1, 4), Integer)
         not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
@@ -48,7 +56,7 @@ class AdvancePaymentBatchRepository(BaseRepository):
                         func.sum(
                             case(
                                 (
-                                    (effective_due_date_expr < today_expr) & not_paid_expr,
+                                    (effective_due_date_expr < reference_date) & not_paid_expr,
                                     1,
                                 ),
                                 else_=0,
@@ -84,6 +92,20 @@ class AdvancePaymentBatchRepository(BaseRepository):
                         ),
                         0,
                     ).label("paid_count"),
+                    func.coalesce(
+                        func.sum(
+                            case(
+                                (
+                                    (effective_due_date_expr >= month_start)
+                                    & (effective_due_date_expr < next_month_start)
+                                    & not_paid_expr,
+                                    1,
+                                ),
+                                else_=0,
+                            )
+                        ),
+                        0,
+                    ).label("due_this_month_count"),
                 ),
                 AdvancePayment,
             )
