@@ -146,6 +146,7 @@ def refresh_advance_payment_turnover_bulk(
         refreshed=result.refreshed,
         skipped_no_vat=result.skipped_no_vat,
         skipped_not_filed=result.skipped_not_filed,
+        skipped_paid=result.skipped_paid,
     )
 
 

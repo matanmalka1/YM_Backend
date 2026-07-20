@@ -55,6 +55,7 @@ class BulkRefreshTurnoverResult:
     refreshed: int = 0
     skipped_no_vat: int = 0
     skipped_not_filed: int = 0
+    skipped_paid: int = 0
 
 
 class AdvancePaymentService:
@@ -477,9 +478,9 @@ class AdvancePaymentService:
     ) -> BulkRefreshTurnoverResult:
         """Snapshot every listed period that has a fully filed VAT return.
 
-        Unfiled returns are never snapshotted in bulk: ``confirm_pending`` is a
-        judgement about one period's figure and cannot be given meaningfully for
-        a whole batch, so those periods are reported as skipped instead.
+        Unfiled returns and already-settled payments are never snapshotted in
+        bulk: both are per-row judgements that cannot be given meaningfully for a
+        whole batch, so those periods are reported as skipped instead.
 
         Not atomic by design. Each period is an independent business fact, so a
         period without a VAT return must not prevent its neighbours from being
@@ -503,6 +504,13 @@ class AdvancePaymentService:
 
         result = BulkRefreshTurnoverResult()
         for payment in payments:
+            # A settled payment is skipped here even though the single-payment
+            # command still allows it. Snapshotting recomputes expected_amount and
+            # can drop a PAID row to PARTIAL — a per-row judgement, not something
+            # one click should do to a whole screenful of settled records.
+            if payment.status == AdvancePaymentStatus.PAID:
+                result.skipped_paid += 1
+                continue
             resolution = resolved.get(payment.period)
             if resolution is None or not resolution.is_resolved:
                 result.skipped_no_vat += 1

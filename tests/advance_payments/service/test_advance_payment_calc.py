@@ -397,6 +397,46 @@ class TestRefreshTurnoverBulk:
         assert pending.turnover_amount is None
         assert absent.turnover_amount is None
 
+    def test_never_flips_a_settled_payment(self, test_db, test_user):
+        """A settled row must not drop to PARTIAL because someone clicked once.
+
+        Recording a payment before its VAT return arrives is normal, so a PAID
+        row with no turnover is a realistic state, not a corner case.
+        """
+        business = _business(test_db, advance_rate=Decimal("10"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-11",
+            period_months_count=1,
+            paid_amount=Decimal("100"),
+        )
+        assert payment.status == AdvancePaymentStatus.PAID
+        _vat_item(test_db, business.client_record_id, "2026-11", Decimal("60000"), test_user.id)
+
+        result = svc.refresh_turnover_bulk(business.client_record_id, [payment.id])
+
+        assert (result.refreshed, result.skipped_paid) == (0, 1)
+        assert payment.status == AdvancePaymentStatus.PAID
+        assert payment.turnover_amount is None
+
+    def test_single_command_still_refreshes_a_settled_payment(self, test_db, test_user):
+        """The per-row command keeps the escape hatch the bulk one gives up."""
+        business = _business(test_db, advance_rate=Decimal("10"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-12",
+            period_months_count=1,
+            paid_amount=Decimal("100"),
+        )
+        _vat_item(test_db, business.client_record_id, "2026-12", Decimal("60000"), test_user.id)
+
+        updated = svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
+
+        assert updated.turnover_amount == Decimal("60000")
+        assert updated.status == AdvancePaymentStatus.PARTIAL
+
     def test_never_snapshots_pending_even_in_bulk(self, test_db, test_user):
         """confirm_pending is a per-period judgement and has no bulk equivalent."""
         business = _business(test_db, advance_rate=Decimal("10"))

@@ -259,3 +259,4 @@ class BulkRefreshTurnoverResponse(BaseModel):
     refreshed: int
     skipped_no_vat: int
     skipped_not_filed: int
+    skipped_paid: int

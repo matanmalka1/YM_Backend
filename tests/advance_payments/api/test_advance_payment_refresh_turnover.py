@@ -156,7 +156,12 @@ def test_bulk_refresh_reports_each_skip_reason(client, test_db, advisor_headers,
     )
 
     assert resp.status_code == 200
-    assert resp.json() == {"refreshed": 1, "skipped_no_vat": 1, "skipped_not_filed": 1}
+    assert resp.json() == {
+        "refreshed": 1,
+        "skipped_no_vat": 1,
+        "skipped_not_filed": 1,
+        "skipped_paid": 0,
+    }
 
 
 def test_bulk_refresh_rejects_empty_id_list(client, test_db, advisor_headers):
