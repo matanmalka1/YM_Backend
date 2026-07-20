@@ -43,7 +43,8 @@ def test_create_payment_success_sets_defaults(test_db):
 
     assert payment.id is not None
     assert payment.client_record_id == client_record.id
-    assert payment.status.value == "pending"
+    # Status is derived, never defaulted: 100 paid against 250.50 expected is partial.
+    assert payment.status.value == "partial"
     assert payment.expected_amount == Decimal("250.50")
     assert payment.paid_amount == Decimal("100.00")
     assert payment.due_date == date(2026, 3, 26)

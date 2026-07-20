@@ -78,6 +78,8 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("POST", "/api/v1/settings/tax-calendar/bootstrap"): {"400", "409"},
     # charges (reference impl, pre-existing)
     ("POST", "/api/v1/charges"): {"400", "500"},
+    # PATCH documents 400 for editing a charge that is no longer a draft.
+    ("PATCH", "/api/v1/charges/{charge_id}"): {"400"},
     ("POST", "/api/v1/charges/{charge_id}/cancel"): {"400", "409"},
     # clients
     ("POST", "/api/v1/clients"): {"400", "409"},
