@@ -5,6 +5,7 @@ from fastapi import APIRouter, Body, Depends, Query, Response, status
 from app.charges.api.charge_responses import (
     CHARGE_CANCEL_RESPONSES,
     CHARGE_CREATE_RESPONSES,
+    CHARGE_UPDATE_RESPONSES,
 )
 from app.charges.charge_response_builder import ChargeResponseBuilder
 from app.charges.models.charge import ChargeStatus
@@ -15,6 +16,7 @@ from app.charges.schemas.charge import (
     ChargeCreateRequest,
     ChargeListResponse,
     ChargeResponse,
+    ChargeUpdateRequest,
 )
 from app.charges.services.charge_billing_service import BillingService
 from app.charges.services.charge_bulk_billing_service import BulkBillingService
@@ -51,6 +53,27 @@ def create_charge(request: ChargeCreateRequest, db: DBSession, user: CurrentUser
         charge_type=request.charge_type,
         period=request.period,
         months_covered=request.months_covered,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )
+    return _response_builder(db).build(charge, user.role)
+
+
+@router.patch(
+    "/{charge_id}",
+    response_model=ChargeResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+    responses=CHARGE_UPDATE_RESPONSES,
+)
+def update_charge(
+    charge_id: PathId,
+    request: ChargeUpdateRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    charge = BillingService(db).update_charge(
+        charge_id,
+        patch=request.model_dump(exclude_unset=True),
         actor_id=user.id,
         actor_name=user.full_name,
     )

@@ -1,3 +1,6 @@
+from decimal import Decimal
+from enum import Enum
+
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import (
@@ -20,6 +23,7 @@ from app.charges.charge_messages import (
     CHARGE_INVALID_STATUS_ISSUE,
     CHARGE_INVALID_STATUS_PAY,
     CHARGE_NOT_FOUND,
+    CHARGE_UPDATE_INVALID_STATUS,
 )
 from app.charges.models.charge import Charge, ChargeStatus
 from app.charges.repositories.charge_repository import ChargeRepository
@@ -28,6 +32,15 @@ from app.clients.services.client_service import get_client_or_raise
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
+
+
+def _audit_value(value):
+    """JSON-safe rendering for audit diffs (Decimal amounts, enum charge_type)."""
+    if isinstance(value, Enum):
+        return value.value
+    if isinstance(value, Decimal):
+        return str(value)
+    return value
 
 
 def _charge_context(charge: Charge) -> dict:
@@ -96,6 +109,54 @@ class BillingService:
             },
         )
         return charge
+
+    def update_charge(
+        self,
+        charge_id: int,
+        patch: dict,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> Charge:
+        """Apply a partial update to a draft charge.
+
+        ``patch`` holds only the fields the client actually sent (exclude_unset),
+        so an absent key leaves the column untouched.
+        """
+        charge = self.charge_repo.get_by_id_for_update(charge_id)
+        if not charge:
+            raise NotFoundError(
+                CHARGE_NOT_FOUND.format(charge_id=charge_id), ErrorCode.CHARGE_NOT_FOUND
+            )
+        if charge.status != ChargeStatus.DRAFT:
+            raise AppError(
+                CHARGE_UPDATE_INVALID_STATUS.format(status=charge.status.value),
+                ErrorCode.CHARGE_INVALID_STATUS,
+            )
+
+        if "amount" in patch and patch["amount"] <= 0:
+            raise AppError(AMOUNT_MUST_BE_POSITIVE, ErrorCode.CHARGE_AMOUNT_INVALID)
+        if "business_id" in patch and patch["business_id"] is not None:
+            client_record = get_client_or_raise(self.db, charge.client_record_id)
+            self._validate_charge_scope(
+                charge.client_record_id, patch["business_id"], client_record.legal_entity_id
+            )
+
+        changed = {key: value for key, value in patch.items() if getattr(charge, key) != value}
+        if not changed:
+            return charge
+
+        old_value = {key: _audit_value(getattr(charge, key)) for key in changed}
+        updated = self.charge_repo.update_fields(charge_id, charge=charge, **changed)
+        self._audit.record_update(
+            ENTITY_CHARGE,
+            charge_id,
+            actor_id,
+            old_value=old_value,
+            new_value={key: _audit_value(value) for key, value in changed.items()},
+            actor_display_name=actor_name,
+            metadata_json=_charge_context(charge),
+        )
+        return updated or charge
 
     def issue_charge(
         self, charge_id: int, actor_id: int | None = None, actor_name: str | None = None

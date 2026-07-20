@@ -249,6 +249,20 @@ class ChargeRepository(BaseRepository[Charge]):
         entity = charge or self.get_by_id(charge_id)
         return self._update_status(entity, new_status, **additional_fields)
 
+    def update_fields(
+        self,
+        charge_id: int,
+        charge: Charge | None = None,
+        **fields,
+    ) -> Charge | None:
+        """Update editable charge fields without touching status.
+
+        Same pre-fetched-entity contract as ``update_status``: pass a locked
+        ``charge`` to reuse the lock from get_by_id_for_update().
+        """
+        entity = charge or self.get_by_id(charge_id)
+        return self._update_entity(entity, **fields)
+
     def stats_by_status(
         self,
         client_record_id: int | None = None,

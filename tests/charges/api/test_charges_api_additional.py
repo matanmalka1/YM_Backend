@@ -32,6 +32,7 @@ def test_get_charge_as_advisor_and_delete_paths(client, advisor_headers, test_db
     assert get_adv.status_code == 200
     assert "amount" in get_adv.json()
     assert [action["key"] for action in get_adv.json()["available_actions"]] == [
+        "edit_charge",
         "issue_charge",
         "cancel_charge",
         "delete_charge",

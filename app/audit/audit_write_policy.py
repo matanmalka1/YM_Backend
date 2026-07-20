@@ -502,6 +502,13 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id"}),
         metadata_allowed=_CHARGE_META,
     ),
+    entity_action(ENTITY_CHARGE, ACTION_UPDATED): ActionPolicy(
+        value_fields=frozenset(
+            {"amount", "charge_type", "period", "months_covered", "description", "business_id"}
+        ),
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_CHARGE_META,
+    ),
     ACTION_CHARGE_ISSUED: ActionPolicy(
         value_fields=_STATUS_ONLY,
         metadata_required=frozenset({"client_record_id"}),

@@ -1,8 +1,9 @@
 from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.charges.charge_constants import MONTHS_COVERED_MAX
+from app.charges.charge_messages import CHARGE_FIELD_NOT_NULLABLE
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
@@ -15,6 +16,33 @@ class ChargeCreateRequest(BaseModel):
     charge_type: ChargeType  # enum — לא str חופשי
     period: PeriodStr | None = None  # "YYYY-MM"
     months_covered: int = Field(1, ge=1, le=MONTHS_COVERED_MAX)  # monthly or bimonthly
+
+
+class ChargeUpdateRequest(BaseModel):
+    """Partial update for a draft charge.
+
+    Routes pass ``model_dump(exclude_unset=True)`` so an omitted field is left
+    untouched, while an explicit ``business_id: null`` clears the business scope.
+    """
+
+    business_id: int | None = None
+    amount: ApiDecimal | None = Field(None, gt=0)
+    charge_type: ChargeType | None = None
+    period: PeriodStr | None = None
+    months_covered: int | None = Field(None, ge=1, le=MONTHS_COVERED_MAX)
+    description: str | None = None
+
+    @field_validator("amount", "charge_type", "months_covered")
+    @classmethod
+    def _reject_explicit_null(cls, value: object) -> object:
+        """These map to NOT NULL columns, so an explicit null is a client error.
+
+        Defaults are not validated, so an omitted field still reaches the service
+        as "unset" and is left untouched.
+        """
+        if value is None:
+            raise ValueError(CHARGE_FIELD_NOT_NULLABLE)
+        return value
 
 
 class ChargeResponse(BaseModel):

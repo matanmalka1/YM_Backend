@@ -21,6 +21,7 @@ def test_draft_charge_includes_delete_action():
     actions = get_charge_actions(charge)
 
     assert [action.key for action in actions] == [
+        "edit_charge",
         "issue_charge",
         "cancel_charge",
         "delete_charge",
@@ -39,3 +40,17 @@ def test_issued_charge_returns_mark_paid_and_cancel():
     actions = get_charge_actions(charge)
 
     assert [action.key for action in actions] == ["mark_paid", "cancel_charge"]
+
+
+def test_canceled_charge_includes_delete_action():
+    charge = SimpleNamespace(id=23, status=ChargeStatus.CANCELED)
+
+    actions = get_charge_actions(charge)
+
+    assert [action.key for action in actions] == ["delete_charge"]
+
+
+def test_paid_charge_has_no_actions():
+    charge = SimpleNamespace(id=24, status=ChargeStatus.PAID)
+
+    assert get_charge_actions(charge) == []

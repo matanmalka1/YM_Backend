@@ -17,6 +17,11 @@ CHARGE_CREATE_RESPONSES = error_responses(
     internal_server_error_response(),
 )
 
+CHARGE_UPDATE_RESPONSES = error_responses(
+    bad_request_response(description="לא ניתן לערוך חיוב שאינו במצב טיוטה"),
+    not_found_response(description="החיוב המבוקש לא נמצא"),
+)
+
 CHARGE_CANCEL_RESPONSES = error_responses(
     bad_request_response(description="לא ניתן לבטל חיוב במצב הנוכחי"),
     not_found_response(description="החיוב המבוקש לא נמצא"),
