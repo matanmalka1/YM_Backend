@@ -96,6 +96,7 @@ def get_work_item(item_id: PathId, db: DBSession, current_user: CurrentUser):
         id_number_map=enriched["id_number_map"],
         status_map=enriched["status_map"],
         user_map=enriched["user_map"],
+        breakdown=enriched["breakdown"],
         user_role=current_user.role,
     )
 

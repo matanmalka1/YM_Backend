@@ -26,6 +26,24 @@ class VatWorkItemUpdateRequest(NonEmptyUpdateMixin):
     pending_materials_note: str | None = None
 
 
+class VatExpenseCategoryBreakdownResponse(BaseModel):
+    category: str
+    label: str
+    deduction_rate: ApiDecimal
+    net_amount: ApiDecimal
+    gross_vat: ApiDecimal
+    deductible_vat: ApiDecimal
+
+
+class VatBreakdownResponse(BaseModel):
+    income_net: ApiDecimal
+    total_output_vat: ApiDecimal
+    expenses: list[VatExpenseCategoryBreakdownResponse]
+    total_expense_net: ApiDecimal
+    total_gross_vat: ApiDecimal
+    total_input_vat: ApiDecimal
+
+
 class VatWorkItemResponse(BaseModel):
     id: int
     client_record_id: int
@@ -64,6 +82,7 @@ class VatWorkItemResponse(BaseModel):
     days_until_deadline: int | None = None
     is_overdue: bool | None = None
     available_actions: list[ActionDescriptor] = Field(default_factory=list)
+    breakdown: VatBreakdownResponse
 
     model_config = {"from_attributes": True}
 

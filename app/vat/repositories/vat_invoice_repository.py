@@ -31,6 +31,9 @@ class VatInvoiceRepository(BaseRepository[VatInvoice]):
         super().__init__(db)
         self._agg = VatInvoiceAggregationRepository(db)
 
+    def expense_breakdown(self, work_item_id: int):
+        return self._agg.expense_breakdown(work_item_id)
+
     # ── CRUD ─────────────────────────────────────────────────────────────────
 
     def create(

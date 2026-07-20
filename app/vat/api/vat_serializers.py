@@ -15,9 +15,15 @@ def serialize_enriched_work_item(
     id_number_map: dict,
     status_map: dict,
     user_map: dict,
+    breakdown,
     user_role: UserRole | str | None = None,
 ) -> VatWorkItemResponse:
-    data = VatWorkItemResponse.model_validate(item)
+    item_data = {
+        field_name: getattr(item, field_name)
+        for field_name in VatWorkItemResponse.model_fields
+        if hasattr(item, field_name)
+    }
+    data = VatWorkItemResponse.model_validate({**item_data, "breakdown": breakdown})
     data.office_client_number = office_client_number_map.get(item.client_record_id)
     data.client_name = name_map.get(item.client_record_id)
     data.client_id_number = id_number_map.get(item.client_record_id)
@@ -31,6 +37,7 @@ def serialize_enriched_work_item(
     data.assigned_to_name = user_map.get(item.assigned_to) if item.assigned_to else None
     data.filed_by_name = user_map.get(item.filed_by) if item.filed_by else None
     data.available_actions = get_vat_work_item_actions(item, user_role=user_role)
+    data.breakdown = breakdown
     return data
 
 
@@ -86,5 +93,6 @@ def serialize_work_item(
         id_number_map=enriched["id_number_map"],
         status_map=enriched["status_map"],
         user_map=enriched["user_map"],
+        breakdown=enriched["breakdown"],
         user_role=user_role,
     )

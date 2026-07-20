@@ -1,11 +1,19 @@
 """Enrichment helpers for VAT work item query results."""
 
+from decimal import Decimal
+
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.users.repositories.user_repository import UserRepository
+from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
+from app.vat.schemas.vat_report import (
+    VatBreakdownResponse,
+    VatExpenseCategoryBreakdownResponse,
+)
+from app.vat.vat_constants import CATEGORY_LABELS_SERVER
 from app.vat.vat_report_queries import (
     get_work_item,
     list_all_work_items,
@@ -43,6 +51,7 @@ def _build_client_maps(db, client_record_ids: list[int]) -> dict[str, dict]:
 def get_work_item_enriched(
     work_item_repo: VatWorkItemRepository,
     user_repo: UserRepository,
+    invoice_repo: VatInvoiceRepository,
     item_id: int,
 ) -> dict:
     """Return work item + client/user enrichment data."""
@@ -51,8 +60,27 @@ def get_work_item_enriched(
     users = user_repo.list_by_ids(user_ids) if user_ids else []
     user_map = {u.id: u.full_name for u in users}
     client_maps = _build_client_maps(work_item_repo.db, [item.client_record_id])
+    expense_rows = invoice_repo.expense_breakdown(item.id)
     return {
         "item": item,
+        "breakdown": VatBreakdownResponse(
+            income_net=item.total_output_net,
+            total_output_vat=item.total_output_vat,
+            expenses=[
+                VatExpenseCategoryBreakdownResponse(
+                    category=row.category,
+                    label=CATEGORY_LABELS_SERVER.get(row.category, row.category),
+                    deduction_rate=row.deduction_rate,
+                    net_amount=row.net_amount,
+                    gross_vat=row.gross_vat,
+                    deductible_vat=row.deductible_vat,
+                )
+                for row in expense_rows
+            ],
+            total_expense_net=item.total_input_net,
+            total_gross_vat=sum((row.gross_vat for row in expense_rows), start=Decimal("0")),
+            total_input_vat=item.total_input_vat,
+        ),
         **client_maps,
         "user_map": user_map,
     }

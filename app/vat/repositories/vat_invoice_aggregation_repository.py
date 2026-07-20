@@ -1,5 +1,6 @@
 """Aggregation queries for VatInvoice entities."""
 
+from dataclasses import dataclass
 from decimal import Decimal
 
 from sqlalchemy import case, func, select
@@ -9,6 +10,15 @@ from app.common.repositories.base_repository import BaseRepository
 from app.vat.models.vat_enums import DocumentType, InvoiceType, VatRateType
 from app.vat.models.vat_invoice import VatInvoice
 from app.vat.models.vat_work_item import VatWorkItem
+
+
+@dataclass(frozen=True)
+class VatExpenseCategoryBreakdown:
+    category: str
+    deduction_rate: Decimal
+    net_amount: Decimal
+    gross_vat: Decimal
+    deductible_vat: Decimal
 
 
 class VatInvoiceAggregationRepository(BaseRepository[VatInvoice]):
@@ -85,6 +95,41 @@ class VatInvoiceAggregationRepository(BaseRepository[VatInvoice]):
             grouped.get(InvoiceType.INCOME, Decimal("0")),
             grouped.get(InvoiceType.EXPENSE, Decimal("0")),
         )
+
+    def expense_breakdown(self, work_item_id: int) -> list[VatExpenseCategoryBreakdown]:
+        """Return signed expense amounts grouped by category and its stored deduction rate.
+
+        The deduction rate is part of the grouping key, not an aggregate: invoices in one
+        category can carry different stored rates (the rate is resolved at write time), and
+        collapsing them would make the displayed rate describe only some of the row's amounts.
+        """
+        rows = self.db.execute(
+            select(
+                VatInvoice.expense_category,
+                VatInvoice.deduction_rate,
+                func.sum(self._signed_amount(VatInvoice.net_amount)).label("net_amount"),
+                func.sum(self._signed_amount(VatInvoice.vat_amount)).label("gross_vat"),
+                func.sum(
+                    self._signed_amount(VatInvoice.vat_amount) * VatInvoice.deduction_rate
+                ).label("deductible_vat"),
+            )
+            .where(
+                VatInvoice.work_item_id == work_item_id,
+                VatInvoice.invoice_type == InvoiceType.EXPENSE,
+            )
+            .group_by(VatInvoice.expense_category, VatInvoice.deduction_rate)
+            .order_by(VatInvoice.expense_category, VatInvoice.deduction_rate)
+        ).all()
+        return [
+            VatExpenseCategoryBreakdown(
+                category=row.expense_category.value if row.expense_category else "other",
+                deduction_rate=Decimal(str(row.deduction_rate)),
+                net_amount=Decimal(str(row.net_amount or 0)),
+                gross_vat=Decimal(str(row.gross_vat or 0)),
+                deductible_vat=Decimal(str(row.deductible_vat or 0)),
+            )
+            for row in rows
+        ]
 
     def sum_income_net_by_client_year(self, client_record_id: int, year: int) -> Decimal:
         """Sum net_amount of INCOME invoices for a client across a tax year.

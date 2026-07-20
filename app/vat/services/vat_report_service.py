@@ -123,7 +123,7 @@ class VatReportService:
 
     def get_work_item_enriched(self, item_id: int) -> dict:
         return vat_report_enrichment.get_work_item_enriched(
-            self.work_item_repo, self.user_repo, item_id
+            self.work_item_repo, self.user_repo, self.invoice_repo, item_id
         )
 
     def get_client_items_enriched(

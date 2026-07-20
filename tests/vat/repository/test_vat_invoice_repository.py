@@ -462,6 +462,63 @@ def test_credit_notes_reduce_grouped_expense_totals(test_db):
     }
 
 
+def test_expense_breakdown_keeps_mixed_deduction_rates_as_separate_rows(test_db):
+    """A category holding two stored rates must not collapse into one row.
+
+    The rate is resolved at write time, so a mid-period rules change can leave two rates
+    under the same category. Collapsing them would attach one rate to both sets of amounts.
+    """
+    user = _user(test_db)
+    _, client_record_id = _business(test_db)
+
+    work_item_repo = VatWorkItemRepository(test_db)
+    invoice_repo = VatInvoiceRepository(test_db)
+
+    item = create_linked_vat_work_item(
+        test_db,
+        repo=work_item_repo,
+        client_record_id=client_record_id,
+        period="2026-11",
+        period_type=VatType.MONTHLY,
+        created_by=user.id,
+    )
+
+    invoice_repo.create(
+        work_item_id=item.id,
+        created_by=user.id,
+        invoice_type=InvoiceType.EXPENSE,
+        invoice_number="EXP-RATE-25",
+        invoice_date=datetime(2026, 11, 1),
+        counterparty_name="Vendor A",
+        net_amount=1000.0,
+        vat_amount=170.0,
+        expense_category=ExpenseCategory.VEHICLE,
+        deduction_rate=0.25,
+    )
+    invoice_repo.create(
+        work_item_id=item.id,
+        created_by=user.id,
+        invoice_type=InvoiceType.EXPENSE,
+        invoice_number="EXP-RATE-66",
+        invoice_date=datetime(2026, 11, 2),
+        counterparty_name="Vendor B",
+        net_amount=2000.0,
+        vat_amount=340.0,
+        expense_category=ExpenseCategory.VEHICLE,
+        deduction_rate=0.66,
+    )
+
+    rows = invoice_repo.expense_breakdown(item.id)
+
+    assert [(row.category, float(row.deduction_rate)) for row in rows] == [
+        ("vehicle", 0.25),
+        ("vehicle", 0.66),
+    ]
+    assert [float(row.net_amount) for row in rows] == [1000.0, 2000.0]
+    assert [float(row.gross_vat) for row in rows] == [170.0, 340.0]
+    assert [float(row.deductible_vat) for row in rows] == [42.5, 224.4]
+
+
 def test_update_and_delete_return_falsy_for_missing_invoice(test_db):
     repo = VatInvoiceRepository(test_db)
 

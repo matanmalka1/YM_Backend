@@ -34352,6 +34352,67 @@
         ],
         "title": "VatAutoPopulateSkippedItem"
       },
+      "VatBreakdownResponse": {
+        "properties": {
+          "income_net": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Income Net",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "total_output_vat": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Output Vat",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "expenses": {
+            "items": {
+              "$ref": "#/components/schemas/VatExpenseCategoryBreakdownResponse"
+            },
+            "type": "array",
+            "title": "Expenses"
+          },
+          "total_expense_net": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Expense Net",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "total_gross_vat": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Gross Vat",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "total_input_vat": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Total Input Vat",
+            "examples": [
+              "123.45"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "income_net",
+          "total_output_vat",
+          "expenses",
+          "total_expense_net",
+          "total_gross_vat",
+          "total_input_vat"
+        ],
+        "title": "VatBreakdownResponse"
+      },
       "VatClientSummaryResponse": {
         "properties": {
           "client_record_id": {
@@ -34587,6 +34648,60 @@
           "advance_payments"
         ],
         "title": "VatDashboardStats"
+      },
+      "VatExpenseCategoryBreakdownResponse": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "deduction_rate": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Deduction Rate",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "net_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Net Amount",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "gross_vat": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Gross Vat",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "deductible_vat": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Deductible Vat",
+            "examples": [
+              "123.45"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "label",
+          "deduction_rate",
+          "net_amount",
+          "gross_vat",
+          "deductible_vat"
+        ],
+        "title": "VatExpenseCategoryBreakdownResponse"
       },
       "VatGroupPeriod": {
         "properties": {
@@ -36015,6 +36130,9 @@
             },
             "type": "array",
             "title": "Available Actions"
+          },
+          "breakdown": {
+            "$ref": "#/components/schemas/VatBreakdownResponse"
           }
         },
         "type": "object",
@@ -36032,7 +36150,8 @@
           "is_overridden",
           "created_by",
           "created_at",
-          "updated_at"
+          "updated_at",
+          "breakdown"
         ],
         "title": "VatWorkItemResponse"
       },
