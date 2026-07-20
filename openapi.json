@@ -13807,13 +13807,14 @@
         }
       }
     },
-    "/api/v1/clients/{client_record_id}/advance-payments/prefill-turnover": {
-      "get": {
+    "/api/v1/clients/{client_record_id}/advance-payments/refresh-turnover": {
+      "post": {
         "tags": [
           "advance-payments"
         ],
-        "summary": "Get Prefill Turnover",
-        "operationId": "get_prefill_turnover_api_v1_clients__client_record_id__advance_payments_prefill_turnover_get",
+        "summary": "Refresh Advance Payment Turnover Bulk",
+        "description": "Snapshot every listed period that has a fully filed VAT return.\n\nNot atomic: periods that cannot be snapshotted are counted, not raised, so\none period without a return does not block its neighbours.",
+        "operationId": "refresh_advance_payment_turnover_bulk_api_v1_clients__client_record_id__advance_payments_refresh_turnover_post",
         "parameters": [
           {
             "name": "client_record_id",
@@ -13824,36 +13825,35 @@
               "minimum": 1,
               "title": "Client Record Id"
             }
-          },
-          {
-            "name": "period",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
-              "title": "Period"
-            }
-          },
-          {
-            "name": "period_months_count",
-            "in": "query",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "maximum": 2,
-              "minimum": 1,
-              "title": "Period Months Count"
-            }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkRefreshTurnoverRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/PrefillTurnoverResponse"
+                  "$ref": "#/components/schemas/BulkRefreshTurnoverResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -14210,6 +14210,109 @@
           },
           "404": {
             "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/refresh-turnover": {
+      "post": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Refresh Advance Payment Turnover",
+        "operationId": "refresh_advance_payment_turnover_api_v1_clients__client_record_id__advance_payments__payment_id__refresh_turnover_post",
+        "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefreshTurnoverRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancePaymentRow"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -20161,6 +20264,31 @@
             ],
             "title": "Turnover Amount"
           },
+          "turnover_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnoverSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "turnover_snapshot_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Snapshot At"
+          },
           "calculated_amount": {
             "type": "string",
             "format": "decimal",
@@ -20184,20 +20312,15 @@
             ],
             "title": "Override Amount"
           },
-          "live_turnover": {
+          "available_turnover": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
+                "$ref": "#/components/schemas/AvailableTurnover"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Live Turnover"
+            ]
           },
           "missing_turnover": {
             "type": "boolean",
@@ -20432,6 +20555,31 @@
             ],
             "title": "Turnover Amount"
           },
+          "turnover_source": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TurnoverSource"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "turnover_snapshot_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Turnover Snapshot At"
+          },
           "advance_rate": {
             "anyOf": [
               {
@@ -20470,20 +20618,15 @@
             ],
             "title": "Override Amount"
           },
-          "live_turnover": {
+          "available_turnover": {
             "anyOf": [
               {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
+                "$ref": "#/components/schemas/AvailableTurnover"
               },
               {
                 "type": "null"
               }
-            ],
-            "title": "Live Turnover"
+            ]
           },
           "missing_turnover": {
             "type": "boolean",
@@ -23024,6 +23167,33 @@
         "type": "object",
         "title": "AuthorityContactUpdateRequest"
       },
+      "AvailableTurnover": {
+        "properties": {
+          "amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Amount",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "vat_filed",
+              "vat_pending"
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "amount",
+          "source"
+        ],
+        "title": "AvailableTurnover",
+        "description": "VAT turnover this period *could* be snapshotted from.\n\nNot the payment's turnover. It is a discovery signal for an action the\nadvisor has not taken yet, and it feeds no amount on the record: only the\nstored ``turnover_amount`` drives ``calculated_amount``/``expected_amount``."
+      },
       "BinderCapacityStatus": {
         "type": "string",
         "enum": [
@@ -24239,6 +24409,53 @@
           "error"
         ],
         "title": "BulkChargeFailedItem"
+      },
+      "BulkRefreshTurnoverRequest": {
+        "properties": {
+          "payment_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 60,
+            "minItems": 1,
+            "title": "Payment Ids"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_ids"
+        ],
+        "title": "BulkRefreshTurnoverRequest",
+        "description": "Explicit ids only: the caller states exactly which periods it is writing to.\n\nThere is deliberately no filter-based form — a filter can match rows the\nadvisor never saw, and this command writes to every row it matches."
+      },
+      "BulkRefreshTurnoverResponse": {
+        "properties": {
+          "refreshed": {
+            "type": "integer",
+            "title": "Refreshed"
+          },
+          "skipped_no_vat": {
+            "type": "integer",
+            "title": "Skipped No Vat"
+          },
+          "skipped_not_filed": {
+            "type": "integer",
+            "title": "Skipped Not Filed"
+          },
+          "skipped_paid": {
+            "type": "integer",
+            "title": "Skipped Paid"
+          }
+        },
+        "type": "object",
+        "required": [
+          "refreshed",
+          "skipped_no_vat",
+          "skipped_not_filed",
+          "skipped_paid"
+        ],
+        "title": "BulkRefreshTurnoverResponse"
       },
       "BusinessCreateRequest": {
         "properties": {
@@ -29662,60 +29879,6 @@
         "type": "object",
         "title": "PermanentDocumentUpdateRequest"
       },
-      "PrefillTurnoverResponse": {
-        "properties": {
-          "period": {
-            "type": "string",
-            "title": "Period"
-          },
-          "period_months_count": {
-            "type": "integer",
-            "title": "Period Months Count"
-          },
-          "turnover_amount": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "decimal",
-                "examples": [
-                  "123.45"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Turnover Amount"
-          },
-          "vat_work_item_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Vat Work Item Id"
-          },
-          "source": {
-            "type": "string",
-            "enum": [
-              "vat_filed",
-              "vat_pending",
-              "none"
-            ],
-            "title": "Source"
-          }
-        },
-        "type": "object",
-        "required": [
-          "period",
-          "period_months_count",
-          "source"
-        ],
-        "title": "PrefillTurnoverResponse"
-      },
       "PrimaryAnnualReportForm": {
         "type": "string",
         "enum": [
@@ -29817,6 +29980,18 @@
           "access_token"
         ],
         "title": "RefreshResponse"
+      },
+      "RefreshTurnoverRequest": {
+        "properties": {
+          "confirm_pending": {
+            "type": "boolean",
+            "title": "Confirm Pending",
+            "description": "אשר קיבוע מחזור מדוח מע״מ שטרם הוגש",
+            "default": false
+          }
+        },
+        "type": "object",
+        "title": "RefreshTurnoverRequest"
       },
       "ReminderActionType": {
         "type": "string",
@@ -33738,6 +33913,16 @@
         ],
         "title": "TimelineEvent",
         "description": "Single timeline event."
+      },
+      "TurnoverSource": {
+        "type": "string",
+        "enum": [
+          "manual",
+          "vat_filed",
+          "vat_pending"
+        ],
+        "title": "TurnoverSource",
+        "description": "Where ``turnover_amount`` was snapshotted from."
       },
       "UserAuditLogListResponse": {
         "properties": {
