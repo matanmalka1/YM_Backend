@@ -70,4 +70,5 @@ class Task(Base):
         Index("idx_tasks_assigned_to_user_id", "assigned_to_user_id"),
         Index("idx_tasks_source", "source_domain", "source_id"),
         Index("idx_tasks_client_record_id", "client_record_id"),
+        Index("idx_tasks_title", "title"),
     )

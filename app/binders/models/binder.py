@@ -112,6 +112,7 @@ class Binder(Base):
             postgresql_where=text("deleted_at IS NULL"),
             sqlite_where=text("deleted_at IS NULL"),
         ),
+        Index("idx_binder_number", "binder_number"),
     )
 
     def __repr__(self):

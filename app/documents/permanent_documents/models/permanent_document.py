@@ -148,6 +148,7 @@ class PermanentDocument(Base):
             "document_type",
             "tax_year",
         ),
+        Index("ix_permanent_documents_original_filename", "original_filename"),
     )
 
     def __repr__(self):

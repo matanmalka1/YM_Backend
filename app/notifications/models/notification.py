@@ -153,6 +153,7 @@ class Notification(Base):
         Index("idx_notification_triggered_by", "triggered_by"),
         Index("idx_notification_idempotency", "idempotency_key"),
         Index("idx_notification_signature_request", "signature_request_id"),
+        Index("idx_notification_recipient", "recipient"),
     )
 
     def __repr__(self) -> str:

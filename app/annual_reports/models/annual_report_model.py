@@ -147,6 +147,7 @@ class AnnualReport(Base):
         ),
         Index("idx_annual_report_deadline", "filing_deadline"),
         Index("idx_annual_report_assigned", "assigned_to"),
+        Index("idx_annual_report_ita_reference", "ita_reference"),
     )
 
     def __repr__(self):
