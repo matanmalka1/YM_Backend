@@ -124,6 +124,7 @@ class TaskService(BaseService):
 
     def list(
         self,
+        client_record_id: int | None = None,
         status: TaskStatus | None = None,
         priority: TaskPriority | None = None,
         assigned_to_user_id: int | None = None,
@@ -136,35 +137,13 @@ class TaskService(BaseService):
         page_size: int = 20,
     ):
         return self.repo.list_active(
+            client_record_id=client_record_id,
             status=status,
             priority=priority,
             assigned_to_user_id=assigned_to_user_id,
             assigned_role=assigned_role,
             source_domain=source_domain,
             source_id=source_id,
-            due_before=due_before,
-            due_after=due_after,
-            page=page,
-            page_size=page_size,
-        )
-
-    def list_by_client(
-        self,
-        client_record_id: int,
-        status: TaskStatus | None = None,
-        assigned_to_user_id: int | None = None,
-        source_domain: WorkQueueSourceType | None = None,
-        due_before=None,
-        due_after=None,
-        page: int = 1,
-        page_size: int = 20,
-    ) -> tuple[list[Task], int]:
-        self._validate_client_exists(client_record_id)
-        return self.repo.list_by_client_id(
-            client_record_id=client_record_id,
-            status=status,
-            assigned_to_user_id=assigned_to_user_id,
-            source_domain=source_domain,
             due_before=due_before,
             due_after=due_after,
             page=page,

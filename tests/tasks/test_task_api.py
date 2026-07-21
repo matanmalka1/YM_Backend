@@ -291,6 +291,51 @@ def test_secretary_can_manage_tasks(client, secretary_headers):
     )
 
 
+# ── List — client_record_id filter ────────────────────────────────────────────
+
+
+def test_list_tasks_filters_by_client_record_id(client, test_db, advisor_headers):
+    biz = create_business(test_db)
+    client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={"title": "Client task 1", "client_record_id": biz.client_id},
+    )
+    client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={"title": "Client task 2", "client_record_id": biz.client_id},
+    )
+    client.post("/api/v1/tasks", headers=advisor_headers, json={"title": "Global task"})
+
+    resp = client.get(f"/api/v1/tasks?client_record_id={biz.client_id}", headers=advisor_headers)
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["total"] == 2
+    assert all(t["client_record_id"] == biz.client_id for t in data["items"])
+
+
+def test_list_tasks_client_record_id_cross_client_isolation(client, test_db, advisor_headers):
+    biz1 = create_business(test_db)
+    biz2 = create_business(test_db)
+    client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={"title": "Biz1 task", "client_record_id": biz1.client_id},
+    )
+    client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={"title": "Biz2 task", "client_record_id": biz2.client_id},
+    )
+
+    resp = client.get(f"/api/v1/tasks?client_record_id={biz1.client_id}", headers=advisor_headers)
+    assert resp.status_code == 200
+    items = resp.json()["items"]
+    assert len(items) == 1
+    assert items[0]["client_record_id"] == biz1.client_id
+
+
 # ── Pagination total > page_size ──────────────────────────────────────────────
 
 

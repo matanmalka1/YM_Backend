@@ -130,7 +130,7 @@ class StatusCardService:
         return DocumentsCard(total_count=total, present_count=present)
 
     def _tasks_card(self, client_record_id: int) -> TasksCard:
-        _, open_count = self._task_repo.list_by_client_id(
+        _, open_count = self._task_repo.list_active(
             client_record_id=client_record_id,
             status=TaskStatus.OPEN,
             page=1,

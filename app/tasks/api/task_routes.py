@@ -41,6 +41,7 @@ router = APIRouter(
 @router.get("", response_model=TaskListResponse)
 def list_tasks(
     db: DBSession,
+    client_record_id: int | None = Query(None),
     status: TaskStatus | None = Query(None),
     priority: TaskPriority | None = Query(None),
     assigned_to_user_id: int | None = Query(None),
@@ -54,6 +55,7 @@ def list_tasks(
 ):
     svc = TaskService(db)
     items, total = svc.list(
+        client_record_id=client_record_id,
         status=status,
         priority=priority,
         assigned_to_user_id=assigned_to_user_id,
