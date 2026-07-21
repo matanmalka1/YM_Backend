@@ -1,6 +1,6 @@
 """Phase one of search: resolving the typed term and filters to client records."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.clients.client_enums import ClientStatus
@@ -166,3 +166,70 @@ def test_bulk_client_resolution_avoids_per_row_legal_entity_loads(
     ]
     assert per_row_loads == []
     assert len(statements) <= 4
+
+
+def test_term_resolves_a_handed_over_binder_to_its_owner(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    """Where a binder is now does not change whose it is — the term identifies, it does not filter."""
+    owner, _ = create_client_with_business(full_name="Handed Over Owner")
+    binder = _make_binder(test_db, owner.id, "HANDED-4242", test_user.id)
+    binder.location_status = BinderLocationStatus.HANDED_OVER
+    test_db.commit()
+
+    response = client.get("/api/v1/search?search=HANDED-4242", headers=advisor_headers)
+
+    match = response.json()["clients"]["items"][0]
+    assert match["id"] == owner.id
+    assert match["matched_binder_numbers"] == ["HANDED-4242"]
+
+
+def test_binder_location_filter_still_narrows_after_a_term_match(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    """The term stopped filtering by location; the explicit filter must still do it."""
+    owner, _ = create_client_with_business(full_name="Location Filter Owner")
+    binder = _make_binder(test_db, owner.id, "LOCFILTER-1", test_user.id)
+    binder.location_status = BinderLocationStatus.HANDED_OVER
+    test_db.commit()
+
+    in_office = client.get(
+        "/api/v1/search?search=LOCFILTER-1&binder_location_status=in_office",
+        headers=advisor_headers,
+    )
+    handed_over = client.get(
+        "/api/v1/search?search=LOCFILTER-1&binder_location_status=handed_over",
+        headers=advisor_headers,
+    )
+
+    assert in_office.json()["clients"]["total"] == 0
+    assert [row["id"] for row in handed_over.json()["clients"]["items"]] == [owner.id]
+
+
+def test_a_deleted_binder_never_resolves_its_owner(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    """Soft delete still excludes — only the handed-over exclusion was dropped."""
+    owner, _ = create_client_with_business(full_name="Deleted Binder Owner")
+    binder = _make_binder(test_db, owner.id, "DELETED-9001", test_user.id)
+    binder.deleted_at = datetime.now(UTC)
+    test_db.commit()
+
+    response = client.get("/api/v1/search?search=DELETED-9001", headers=advisor_headers)
+
+    assert response.json()["clients"]["total"] == 0
+
+
+def test_a_term_combined_with_a_binder_filter_executes(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    """Regression: the term's binder EXISTS used to auto-correlate to the outer binder join."""
+    owner, _ = create_client_with_business(full_name="Combined Filter Owner")
+    _make_binder(test_db, owner.id, "COMBO-777", test_user.id)
+
+    response = client.get(
+        "/api/v1/search?search=COMBO-777&binder_number=COMBO", headers=advisor_headers
+    )
+
+    assert response.status_code == 200
+    assert [row["id"] for row in response.json()["clients"]["items"]] == [owner.id]

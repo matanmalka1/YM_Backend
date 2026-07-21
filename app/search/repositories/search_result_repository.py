@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sqlalchemy import String, and_, cast, exists, func, or_, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.clients.client_enums import ClientStatus
@@ -96,19 +96,24 @@ class SearchResultRepository:
         """The term identifies a client by any of its public identifiers.
 
         A binder number counts as an identifier: it is how the office locates a client
-        from physical material, so it resolves to the client that owns the binder.
+        from physical material, so it resolves to the client that owns the binder. Where
+        the binder is now does not change whose it is, so a handed-over binder resolves
+        to its owner too — the typed term identifies, it does not filter.
         """
         pattern = f"%{term}%"
+        # The binder inside the EXISTS is aliased because the outer statement joins `Binder`
+        # whenever a binder filter is present. Without the alias SQLAlchemy auto-correlates the
+        # subquery to that join, leaving it with no FROM clause and raising at execution time.
+        term_binder = aliased(Binder)
         return or_(
             LegalEntity.official_name.ilike(pattern),
             LegalEntity.id_number.ilike(pattern),
             cast(ClientRecord.office_client_number, String).ilike(pattern),
             exists(
-                select(Binder.id).where(
-                    Binder.client_record_id == ClientRecord.id,
-                    Binder.deleted_at.is_(None),
-                    Binder.location_status != BinderLocationStatus.HANDED_OVER,
-                    Binder.binder_number.ilike(pattern),
+                select(term_binder.id).where(
+                    term_binder.client_record_id == ClientRecord.id,
+                    term_binder.deleted_at.is_(None),
+                    term_binder.binder_number.ilike(pattern),
                 )
             ),
         )
@@ -159,6 +164,9 @@ class SearchResultRepository:
     ) -> dict[int, list[str]]:
         """Binder numbers that made each client match, so the choice is explainable.
 
+        Mirrors `_term_match` exactly, including handed-over binders: an explanation that
+        omits the binder the user typed is worse than none.
+
         Empty when the term is not a binder number — there is nothing to explain then.
         """
         if not client_ids or not term:
@@ -168,7 +176,6 @@ class SearchResultRepository:
             .where(
                 Binder.client_record_id.in_(client_ids),
                 Binder.deleted_at.is_(None),
-                Binder.location_status != BinderLocationStatus.HANDED_OVER,
                 Binder.binder_number.ilike(f"%{term.strip()}%"),
             )
             .order_by(Binder.binder_number)

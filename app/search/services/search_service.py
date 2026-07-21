@@ -68,18 +68,23 @@ class SearchService:
         rows, total = self._readers[result_type](client_record_id, limit=PREVIEW_LIMIT)
         return SearchItemGroup(items=[self._item(row, result_type) for row in rows], total=total)
 
-    def _selected_client_id(self, filters: SearchFilters, clients: list, total: int) -> int | None:
-        """The client whose items are shown.
+    def _resolved_client_id(self, filters: SearchFilters, clients: list, total: int) -> int | None:
+        """The client whose items are shown — only ever one client resolution returned.
 
-        An explicit `client_record_id` always wins. Otherwise a term that resolves to
-        exactly one client selects it, so the common case — typing a name or a binder
-        number — lands straight on that client's items without a second click.
+        A requested `client_record_id` also narrows resolution, so a total of exactly one
+        means the requested client survived every other filter. Any other total means the
+        request named a client the current filters exclude, and no feed belongs to it: a
+        stale selection carried in the URL must not outrank the filters beside it.
+
+        Without a request, a term resolving to exactly one client selects it, so the common
+        case — typing a name or a binder number — lands straight on that client's items
+        without a second click.
         """
+        if total != 1:
+            return None
         if filters.client_record_id is not None:
             return filters.client_record_id
-        if total == 1 and clients:
-            return clients[0].id
-        return None
+        return clients[0].id if clients else None
 
     def search(
         self,
@@ -124,21 +129,21 @@ class SearchService:
             total=total,
         )
 
-        selected_id = self._selected_client_id(filters, rows, total)
-        if selected_id is None:
+        resolved_client_id = self._resolved_client_id(filters, rows, total)
+        if resolved_client_id is None:
             return SearchResponse(clients=clients)
 
         return SearchResponse(
             clients=clients,
             items=SearchItemGroups(
-                binders=self._group(SearchItemType.BINDER, selected_id),
-                documents=self._group(SearchItemType.DOCUMENT, selected_id),
-                vat_work_items=self._group(SearchItemType.VAT_WORK_ITEM, selected_id),
-                annual_reports=self._group(SearchItemType.ANNUAL_REPORT, selected_id),
-                advance_payments=self._group(SearchItemType.ADVANCE_PAYMENT, selected_id),
-                charges=self._group(SearchItemType.CHARGE, selected_id),
-                tasks=self._group(SearchItemType.TASK, selected_id),
-                notifications=self._group(SearchItemType.NOTIFICATION, selected_id),
+                binders=self._group(SearchItemType.BINDER, resolved_client_id),
+                documents=self._group(SearchItemType.DOCUMENT, resolved_client_id),
+                vat_work_items=self._group(SearchItemType.VAT_WORK_ITEM, resolved_client_id),
+                annual_reports=self._group(SearchItemType.ANNUAL_REPORT, resolved_client_id),
+                advance_payments=self._group(SearchItemType.ADVANCE_PAYMENT, resolved_client_id),
+                charges=self._group(SearchItemType.CHARGE, resolved_client_id),
+                tasks=self._group(SearchItemType.TASK, resolved_client_id),
+                notifications=self._group(SearchItemType.NOTIFICATION, resolved_client_id),
             ),
         )
 
