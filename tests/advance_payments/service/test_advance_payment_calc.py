@@ -5,12 +5,14 @@ from decimal import Decimal
 from itertools import count
 
 import pytest
+from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import select
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus, TurnoverSource
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
 )
+from app.advance_payments.schemas.advance_payment import BulkRefreshTurnoverRequest
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
@@ -507,6 +509,32 @@ class TestRefreshTurnoverBulk:
             )
         ).all()
         assert {log.entity_id for log in logged} == {first.id, second.id}
+
+    def test_duplicate_ids_snapshot_and_audit_once(self, test_db, test_user):
+        """The API schema 422s duplicates; a direct caller still gets one write."""
+        business = _business(test_db, advance_rate=Decimal("10"))
+        payment = self._payment(test_db, business, "2026-11")
+        _vat_item(test_db, business.client_record_id, "2026-11", Decimal("40000"), test_user.id)
+        svc = AdvancePaymentService(test_db)
+
+        result = svc.refresh_turnover_bulk(
+            business.client_record_id, [payment.id, payment.id], actor_id=test_user.id
+        )
+        test_db.flush()
+
+        assert result.refreshed == 1
+        logged = test_db.scalars(
+            select(EntityAuditLog).where(
+                EntityAuditLog.entity_type == ENTITY_ADVANCE_PAYMENT,
+                EntityAuditLog.entity_id == payment.id,
+                EntityAuditLog.action == ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
+            )
+        ).all()
+        assert len(logged) == 1
+
+    def test_request_schema_rejects_duplicate_ids(self):
+        with pytest.raises(PydanticValidationError):
+            BulkRefreshTurnoverRequest(payment_ids=[7, 7])
 
 
 class TestRefreshTurnoverFromVat:

@@ -488,8 +488,11 @@ class AdvancePaymentService:
         write, so a malformed request still fails whole.
         """
         self._get_record_or_raise(client_record_id)
+        # The API schema already rejects duplicate ids; this dedupe guards
+        # direct service callers so one period can never be snapshotted (and
+        # audited) twice within a single request.
         payments = []
-        for payment_id in payment_ids:
+        for payment_id in dict.fromkeys(payment_ids):
             payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
             if not payment:
                 raise NotFoundError(

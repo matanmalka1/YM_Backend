@@ -172,6 +172,19 @@ def test_bulk_refresh_rejects_empty_id_list(client, test_db, advisor_headers):
     assert resp.status_code == 422
 
 
+def test_bulk_refresh_rejects_duplicate_ids(client, test_db, advisor_headers):
+    business = _business(test_db)
+    payment = _payment(test_db, business, "2026-06")
+
+    resp = client.post(
+        _bulk_url(business),
+        json={"payment_ids": [payment.id, payment.id]},
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 422
+
+
 def test_bulk_refresh_404_for_another_clients_payment(client, test_db, advisor_headers):
     business = _business(test_db)
     other = _business(test_db)

@@ -4,7 +4,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
@@ -253,6 +253,15 @@ class BulkRefreshTurnoverRequest(BaseModel):
     """
 
     payment_ids: list[int] = Field(..., min_length=1, max_length=MAX_BULK_REFRESH_PAYMENTS)
+
+    @field_validator("payment_ids")
+    @classmethod
+    def _reject_duplicates(cls, ids: list[int]) -> list[int]:
+        # A duplicated id means the caller's view of the batch is wrong;
+        # silently deduplicating would hide that bug, so fail the request.
+        if len(set(ids)) != len(ids):
+            raise ValueError("payment_ids מכיל מזהים כפולים")
+        return ids
 
 
 class BulkRefreshTurnoverResponse(BaseModel):
