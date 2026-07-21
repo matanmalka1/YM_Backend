@@ -2,46 +2,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from sqlalchemy import String, and_, cast, exists, func, or_, select
+from sqlalchemy import String, cast, exists, func, or_, select
 from sqlalchemy.orm import Session, aliased
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder import Binder
 from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
-from app.common.enums import EntityType
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
-
-
-@dataclass(frozen=True)
-class SearchFilters:
-    search: str | None = None
-    client_record_id: int | None = None
-    id_number: str | None = None
-    client_status: ClientStatus | None = None
-    entity_type: EntityType | None = None
-    binder_number: str | None = None
-    binder_location_status: BinderLocationStatus | None = None
-    binder_capacity_status: BinderCapacityStatus | None = None
-
-    @property
-    def has_binder_filter(self) -> bool:
-        return bool(
-            self.binder_number or self.binder_location_status or self.binder_capacity_status
-        )
-
-    @property
-    def is_empty(self) -> bool:
-        return not any(
-            (
-                self.search,
-                self.client_record_id,
-                self.id_number,
-                self.client_status,
-                self.entity_type,
-                self.has_binder_filter,
-            )
-        )
 
 
 @dataclass(frozen=True)
@@ -54,42 +22,10 @@ class ClientMatchRow:
 
 
 class SearchResultRepository:
-    """Resolves the typed term and advanced filters to the clients they identify."""
+    """Resolves the typed term to the clients it identifies."""
 
     def __init__(self, db: Session):
         self._db = db
-
-    @staticmethod
-    def _binder_join_conditions(filters: SearchFilters):
-        conditions = [
-            Binder.client_record_id == ClientRecord.id,
-            Binder.deleted_at.is_(None),
-        ]
-        if filters.binder_location_status != BinderLocationStatus.HANDED_OVER:
-            conditions.append(Binder.location_status != BinderLocationStatus.HANDED_OVER)
-        return and_(*conditions)
-
-    @staticmethod
-    def _apply_client_filters(stmt, filters: SearchFilters):
-        if filters.client_record_id is not None:
-            stmt = stmt.where(ClientRecord.id == filters.client_record_id)
-        if filters.id_number:
-            stmt = stmt.where(LegalEntity.id_number.ilike(f"%{filters.id_number.strip()}%"))
-        if filters.client_status is not None:
-            stmt = stmt.where(ClientRecord.status == filters.client_status)
-        if filters.entity_type is not None:
-            stmt = stmt.where(LegalEntity.entity_type == filters.entity_type)
-        return stmt
-
-    @staticmethod
-    def _apply_binder_filters(stmt, filters: SearchFilters):
-        if filters.binder_number:
-            stmt = stmt.where(Binder.binder_number.ilike(f"%{filters.binder_number.strip()}%"))
-        if filters.binder_location_status is not None:
-            stmt = stmt.where(Binder.location_status == filters.binder_location_status)
-        if filters.binder_capacity_status is not None:
-            stmt = stmt.where(Binder.capacity_status == filters.binder_capacity_status)
-        return stmt
 
     @staticmethod
     def _term_match(term: str):
@@ -101,9 +37,6 @@ class SearchResultRepository:
         to its owner too — the typed term identifies, it does not filter.
         """
         pattern = f"%{term}%"
-        # The binder inside the EXISTS is aliased because the outer statement joins `Binder`
-        # whenever a binder filter is present. Without the alias SQLAlchemy auto-correlates the
-        # subquery to that join, leaving it with no FROM clause and raising at execution time.
         term_binder = aliased(Binder)
         return or_(
             LegalEntity.official_name.ilike(pattern),
@@ -119,12 +52,9 @@ class SearchResultRepository:
         )
 
     def search_clients(
-        self, filters: SearchFilters, page: int, page_size: int
+        self, term: str, page: int, page_size: int
     ) -> tuple[list[ClientMatchRow], int]:
-        """Clients matching the term and advanced filters, one row per client."""
-        if filters.is_empty:
-            return [], 0
-
+        """Clients the term identifies, one row per client."""
         stmt = (
             select(
                 ClientRecord.id,
@@ -135,15 +65,9 @@ class SearchResultRepository:
             )
             .select_from(ClientRecord)
             .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
-            .where(ClientRecord.deleted_at.is_(None))
+            .where(ClientRecord.deleted_at.is_(None), self._term_match(term.strip()))
+            .distinct()
         )
-        if filters.has_binder_filter:
-            stmt = stmt.join(Binder, self._binder_join_conditions(filters))
-            stmt = self._apply_binder_filters(stmt, filters)
-        stmt = self._apply_client_filters(stmt, filters)
-        if filters.search:
-            stmt = stmt.where(self._term_match(filters.search.strip()))
-        stmt = stmt.distinct()
 
         total = int(self._db.scalar(select(func.count()).select_from(stmt.subquery())) or 0)
         stmt = stmt.order_by(LegalEntity.official_name.asc(), ClientRecord.id)
@@ -162,7 +86,7 @@ class SearchResultRepository:
     def matched_binder_numbers(
         self, client_ids: list[int], term: str | None
     ) -> dict[int, list[str]]:
-        """Binder numbers that made each client match, so the choice is explainable.
+        """Binder numbers that made each client match, so the row is explainable.
 
         Mirrors `_term_match` exactly, including handed-over binders: an explanation that
         omits the binder the user typed is worse than none.

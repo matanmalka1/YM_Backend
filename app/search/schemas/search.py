@@ -6,10 +6,10 @@ from pydantic import BaseModel, Field
 from app.core.api_types import ApiDecimal, PaginatedResponse
 
 
-class SearchItemType(str, PyEnum):
-    """Entity types that appear as rows in a client's item feed.
+class SearchMatchType(str, PyEnum):
+    """Entity types that appear as match rows.
 
-    Deliberately excludes `client`: the client is the feed's subject, not a row in it.
+    Deliberately excludes `client`: a client is a resolution result, not a record row.
     Every member is also a `LinkedEntity`, which owns the route each row links to.
     """
 
@@ -24,7 +24,7 @@ class SearchItemType(str, PyEnum):
 
 
 class SearchClientMatch(BaseModel):
-    """A client the typed term resolved to, offered for selection."""
+    """A client the typed term resolved to."""
 
     id: int
     office_client_number: int | None = None
@@ -35,16 +35,16 @@ class SearchClientMatch(BaseModel):
     href: str
 
 
-class SearchItem(BaseModel):
-    """One item belonging to the selected client, in the one shape every type shares.
+class SearchMatch(BaseModel):
+    """One record the typed term matched, carrying its owning client's identity.
 
-    `status` is nullable because documents carry no work status; their type is shown
-    in its place. `amount` is set only by the money-carrying types. `occurred_on` is the
-    date the row is anchored to (due date, upload date, issue date), so a mixed feed can
-    be read chronologically.
+    A match row is meaningless without its client, so every row names it. `status` is
+    nullable because documents carry no work status. `amount` is set only by the
+    money-carrying types. `occurred_on` is the date the row is anchored to (due date,
+    upload date, issue date), so a type's matches read chronologically.
     """
 
-    result_type: SearchItemType
+    result_type: SearchMatchType
     id: int
     title: str
     detail: str | None = None
@@ -52,28 +52,31 @@ class SearchItem(BaseModel):
     amount: ApiDecimal | None = None
     occurred_on: dt.date | None = None
     href: str
+    client_record_id: int
+    client_name: str
+    client_office_number: int | None = None
 
 
-class SearchItemGroup(BaseModel):
+class SearchMatchGroup(BaseModel):
     """Preview rows for one type plus the exact total behind them."""
 
-    items: list[SearchItem] = Field(default_factory=list)
+    items: list[SearchMatch] = Field(default_factory=list)
     total: int = 0
 
 
-class SearchItemGroups(BaseModel):
-    binders: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    documents: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    vat_work_items: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    annual_reports: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    advance_payments: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    charges: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    tasks: SearchItemGroup = Field(default_factory=SearchItemGroup)
-    notifications: SearchItemGroup = Field(default_factory=SearchItemGroup)
+class SearchMatchGroups(BaseModel):
+    binders: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    documents: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    vat_work_items: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    annual_reports: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    advance_payments: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    charges: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    tasks: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
+    notifications: SearchMatchGroup = Field(default_factory=SearchMatchGroup)
 
 
 class SearchResponse(BaseModel):
-    """Both search phases in one payload: which client, then everything of that client."""
+    """Client resolution plus the record matches, side by side."""
 
     clients: PaginatedResponse[SearchClientMatch]
-    items: SearchItemGroups = Field(default_factory=SearchItemGroups)
+    matches: SearchMatchGroups = Field(default_factory=SearchMatchGroups)
