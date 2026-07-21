@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.common.entity_links import LinkedEntity, entity_route
 from app.core.api_types import PaginatedResponse
+from app.core.logging_config import get_logger
 from app.notifications.models.notification import TRIGGER_LABELS, NotificationTrigger
 from app.search.repositories.search_match_repository import (
     SearchMatchRepository,
@@ -18,9 +19,11 @@ from app.search.schemas.search import (
     SearchMatchType,
     SearchResponse,
 )
-from app.search.search_term_parser import parse_search_term
+from app.search.search_term_parser import ParsedSearchTerm, parse_search_term
 
 PREVIEW_LIMIT = 5
+
+logger = get_logger(__name__)
 
 _TITLE_BUILDERS: dict[SearchMatchType, Callable[[SearchMatchRow], str]] = {
     SearchMatchType.BINDER: lambda row: f"קלסר {row.key}",
@@ -70,6 +73,38 @@ class SearchService:
             client_office_number=row.client_office_number,
         )
 
+    @staticmethod
+    def _log_phase_one_usage(
+        term: ParsedSearchTerm,
+        client_total: int,
+        totals: dict[SearchMatchType, int],
+    ) -> None:
+        result_totals = {
+            result_type.value: totals.get(result_type, 0) for result_type in SearchMatchType
+        }
+        zero_result = client_total == 0 and not any(result_totals.values())
+        totals_message = ",".join(
+            f"{result_type}={total}" for result_type, total in result_totals.items()
+        )
+        logger.info(
+            "global_search_phase1_usage "
+            f"term_length={len(term.raw)} "
+            f"term_classification={term.classification} "
+            f"client_total={client_total} "
+            f"zero_result={str(zero_result).lower()} "
+            f"result_totals={totals_message}",
+            extra={
+                "structured_event": {
+                    "event": "global_search_phase1_usage",
+                    "term_length": len(term.raw),
+                    "term_classification": term.classification,
+                    "client_total": client_total,
+                    "result_totals": result_totals,
+                    "zero_result": zero_result,
+                }
+            },
+        )
+
     def search(self, search: str, page: int = 1, page_size: int = 20) -> SearchResponse:
         rows, total = self.result_repo.search_clients(search, page, page_size)
         binder_matches = self.result_repo.matched_binder_numbers([row.id for row in rows], search)
@@ -91,9 +126,8 @@ class SearchService:
             total=total,
         )
 
-        match_rows, totals = self.match_repo.search_matches(
-            parse_search_term(search), PREVIEW_LIMIT
-        )
+        parsed_term = parse_search_term(search)
+        match_rows, totals = self.match_repo.search_matches(parsed_term, PREVIEW_LIMIT)
         groups: dict[str, SearchMatchGroup] = {}
         for row in match_rows:
             group = groups.setdefault(
@@ -102,7 +136,9 @@ class SearchService:
             )
             group.items.append(self._match(row))
 
-        return SearchResponse(clients=clients, matches=SearchMatchGroups(**groups))
+        response = SearchResponse(clients=clients, matches=SearchMatchGroups(**groups))
+        self._log_phase_one_usage(parsed_term, total, totals)
+        return response
 
     def list_matches(
         self,

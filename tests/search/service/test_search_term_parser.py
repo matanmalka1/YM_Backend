@@ -5,6 +5,7 @@ from app.search.search_term_parser import parse_search_term
 
 def test_slash_period_normalizes_to_db_form():
     parsed = parse_search_term("03/2026")
+    assert parsed.classification == "period"
     assert parsed.period == "2026-03"
     assert parsed.activates_text is True
     assert parsed.integer is None
@@ -34,6 +35,7 @@ def test_period_shaped_term_still_activates_text_branches():
 
 def test_bare_integer_is_an_identifier_not_text():
     parsed = parse_search_term("307")
+    assert parsed.classification == "integer"
     assert parsed.integer == 307
     assert parsed.tax_year is None
     assert parsed.activates_text is False
@@ -62,6 +64,7 @@ def test_oversized_digit_run_carries_no_integer():
 
 def test_text_term_activates_only_text():
     parsed = parse_search_term("audit_2026.pdf")
+    assert parsed.classification == "text"
     assert parsed.period is None
     assert parsed.integer is None
     assert parsed.activates_text is True

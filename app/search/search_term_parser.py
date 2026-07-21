@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
+from typing import Literal
 
 _SLASH_PERIOD = re.compile(r"^(\d{1,2})/(\d{4})$")
 _DB_PERIOD = re.compile(r"^(\d{4})-(\d{2})$")
@@ -31,6 +32,7 @@ class ParsedSearchTerm:
     """What the trimmed term can match, expressed as independent capabilities."""
 
     raw: str
+    classification: Literal["period", "integer", "text"]
     period: str | None = None
     integer: int | None = None
     tax_year: int | None = None
@@ -56,7 +58,7 @@ def parse_search_term(term: str) -> ParsedSearchTerm:
     """Classify `term` (already trimmed by the API layer) into capabilities."""
     period = _normalized_period(term)
     if period is not None:
-        return ParsedSearchTerm(raw=term, period=period)
+        return ParsedSearchTerm(raw=term, classification="period", period=period)
 
     if _BARE_INTEGER.match(term):
         value = int(term)
@@ -65,9 +67,15 @@ def parse_search_term(term: str) -> ParsedSearchTerm:
         # A bare number is an identifier, never free text (D4): identifier-string
         # columns (binder number, ITA reference) still compare against the raw
         # digits, but titles, filenames and recipients do not.
-        return ParsedSearchTerm(raw=term, integer=integer, tax_year=tax_year, activates_text=False)
+        return ParsedSearchTerm(
+            raw=term,
+            classification="integer",
+            integer=integer,
+            tax_year=tax_year,
+            activates_text=False,
+        )
 
-    return ParsedSearchTerm(raw=term)
+    return ParsedSearchTerm(raw=term, classification="text")
 
 
 __all__ = ["ParsedSearchTerm", "parse_search_term"]
