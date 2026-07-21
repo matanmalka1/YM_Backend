@@ -111,6 +111,11 @@ def test_single_client_match_auto_selects_and_returns_every_type(
     assert [row["id"] for row in items["tasks"]["items"]] == [task.id]
     assert [row["id"] for row in items["notifications"]["items"]] == [notification.id]
     assert all(group["total"] == 1 for group in items.values())
+    assert {
+        "client_record_id",
+        "office_client_number",
+        "client_name",
+    }.isdisjoint(items["tasks"]["items"][0])
 
 
 def test_every_item_carries_a_deep_link_to_itself(

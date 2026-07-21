@@ -26,7 +26,7 @@ _TITLE_BUILDERS: dict[SearchItemType, Callable[[SearchItemRow], str]] = {
     SearchItemType.VAT_WORK_ITEM: lambda row: f'דוח מע"מ {row.key}',
     SearchItemType.ANNUAL_REPORT: lambda row: f"דוח שנתי {row.key}",
     SearchItemType.ADVANCE_PAYMENT: lambda row: f"מקדמה {row.key}",
-    SearchItemType.CHARGE: lambda row: f"חיוב #{row.id}",
+    SearchItemType.CHARGE: lambda row: f"חיוב #{row.key}",
     SearchItemType.TASK: lambda row: row.key,
     SearchItemType.NOTIFICATION: lambda row: row.key,
 }
@@ -36,7 +36,6 @@ class SearchService:
     """Resolves a typed term to a client, then serves that client's items by type."""
 
     def __init__(self, db: Session):
-        self.db = db
         self.item_repo = SearchItemRepository(db)
         self.result_repo = SearchResultRepository(db)
         self._readers: dict[SearchItemType, Callable[..., tuple[list[SearchItemRow], int]]] = {
@@ -55,9 +54,6 @@ class SearchService:
         return SearchItem(
             result_type=result_type,
             id=row.id,
-            client_record_id=row.client_record_id,
-            office_client_number=row.office_client_number,
-            client_name=row.client_name,
             title=_TITLE_BUILDERS[result_type](row),
             detail=row.detail,
             status=row.status,

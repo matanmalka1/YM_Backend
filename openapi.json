@@ -30671,25 +30671,6 @@
             "type": "integer",
             "title": "Id"
           },
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "office_client_number": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Office Client Number"
-          },
-          "client_name": {
-            "type": "string",
-            "title": "Client Name"
-          },
           "title": {
             "type": "string",
             "title": "Title"
@@ -30752,8 +30733,6 @@
         "required": [
           "result_type",
           "id",
-          "client_record_id",
-          "client_name",
           "title",
           "href"
         ],

@@ -15,7 +15,6 @@ from app.binders.models.binder import Binder
 from app.charges.models.charge import Charge
 from app.clients.models.client_record import ClientRecord
 from app.documents.permanent_documents.models.permanent_document import PermanentDocument
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.notifications.models.notification import TRIGGER_LABELS, Notification
 from app.tasks.models.task import Task
 from app.vat.models.vat_work_item import VatWorkItem
@@ -32,8 +31,6 @@ class SearchItemRow:
 
     id: int
     client_record_id: int
-    office_client_number: int | None
-    client_name: str
     key: str
     status: str | None = None
     detail: str | None = None
@@ -75,13 +72,8 @@ class SearchItemRepository:
             *active,
         ]
         rows_stmt = (
-            select(
-                model,
-                ClientRecord.office_client_number.label("office_client_number"),
-                LegalEntity.official_name.label("client_name"),
-            )
+            select(model)
             .join(ClientRecord, ClientRecord.id == model.client_record_id)
-            .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
             .where(*conditions)
             .order_by(*order_by)
             .limit(limit)
@@ -110,8 +102,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.Binder.id,
                 client_record_id=result.Binder.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=result.Binder.binder_number,
                 status=result.Binder.location_status.value,
                 detail=result.Binder.notes,
@@ -135,8 +125,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.PermanentDocument.id,
                 client_record_id=result.PermanentDocument.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=result.PermanentDocument.original_filename
                 or result.PermanentDocument.document_type.value,
                 detail=result.PermanentDocument.document_type.value,
@@ -157,8 +145,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.VatWorkItem.id,
                 client_record_id=result.VatWorkItem.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=result.VatWorkItem.period,
                 status=result.VatWorkItem.status.value,
                 amount=result.VatWorkItem.final_vat_amount
@@ -181,8 +167,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.AnnualReport.id,
                 client_record_id=result.AnnualReport.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=str(result.AnnualReport.tax_year),
                 status=result.AnnualReport.status.value,
                 detail=result.AnnualReport.ita_reference,
@@ -203,8 +187,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.AdvancePayment.id,
                 client_record_id=result.AdvancePayment.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=result.AdvancePayment.period,
                 status=result.AdvancePayment.status.value,
                 detail=result.AdvancePayment.notes,
@@ -226,9 +208,7 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.Charge.id,
                 client_record_id=result.Charge.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
-                key=result.Charge.period or str(result.Charge.id),
+                key=str(result.Charge.id),
                 status=result.Charge.status.value,
                 detail=result.Charge.description,
                 amount=result.Charge.amount,
@@ -249,8 +229,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.Task.id,
                 client_record_id=result.Task.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=result.Task.title,
                 status=result.Task.status.value,
                 detail=result.Task.description,
@@ -271,8 +249,6 @@ class SearchItemRepository:
             mapper=lambda result: SearchItemRow(
                 id=result.Notification.id,
                 client_record_id=result.Notification.client_record_id,
-                office_client_number=result.office_client_number,
-                client_name=result.client_name,
                 key=TRIGGER_LABELS[result.Notification.trigger],
                 status=result.Notification.status.value,
                 detail=result.Notification.subject_snapshot or result.Notification.recipient,

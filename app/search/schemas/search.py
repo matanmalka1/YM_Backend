@@ -46,9 +46,6 @@ class SearchItem(BaseModel):
 
     result_type: SearchItemType
     id: int
-    client_record_id: int
-    office_client_number: int | None = None
-    client_name: str
     title: str
     detail: str | None = None
     status: str | None = None
