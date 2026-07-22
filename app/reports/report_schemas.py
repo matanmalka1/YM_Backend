@@ -40,6 +40,7 @@ class AdvancePaymentReportItemResponse(BaseModel):
     client_record_id: int
     office_client_number: int | None = None
     client_name: str
+    client_id_number: str
     total_expected: ApiDecimal
     total_paid: ApiDecimal
     overdue_count: int
@@ -59,6 +60,8 @@ class AdvancePaymentCollectionsReportResponse(BaseModel):
 class AnnualReportStatusClientResponse(BaseModel):
     client_record_id: int
     client_name: str
+    client_id_number: str
+    office_client_number: int
     form_type: PrimaryAnnualReportForm | None = None
     filing_deadline: ApiDateTime | None = None
     days_until_deadline: int | None = None

@@ -19,7 +19,7 @@ class AnnualReportStatusReportService:
         today = israel_today()
         grouped: dict[str, list] = {s.value: [] for s in AnnualReportStatus}
 
-        for report, client_record_id, client_name in rows:
+        for report, client_record_id, client_name, client_id_number, office_client_number in rows:
             filing_deadline_date = None
             if report.filing_deadline:
                 filing_deadline_date = (
@@ -33,6 +33,8 @@ class AnnualReportStatusReportService:
                 {
                     "client_record_id": client_record_id,
                     "client_name": client_name,
+                    "client_id_number": client_id_number,
+                    "office_client_number": office_client_number,
                     "form_type": report.form_type.value if report.form_type else None,
                     "filing_deadline": report.filing_deadline,
                     "days_until_deadline": days_until,

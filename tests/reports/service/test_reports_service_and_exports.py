@@ -144,13 +144,14 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
             )
         ]
     )
-    service.client_record_repo = SimpleNamespace(
-        list_by_ids=lambda _ids: [
-            SimpleNamespace(id=7, legal_entity_id=70, office_client_number=101234)
-        ]
-    )
-    service.legal_entity_repo = SimpleNamespace(
-        list_by_ids=lambda _ids: [SimpleNamespace(id=70, official_name="Advance Client")]
+    service.client_identity_repo = SimpleNamespace(
+        get_display_map=lambda _ids: {
+            7: SimpleNamespace(
+                client_name="Advance Client",
+                office_client_number=101234,
+                id_number="123456789",
+            )
+        }
     )
 
     report = service.get_collections_report(year=2026, month=3)
@@ -160,6 +161,7 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
             "client_record_id": 7,
             "office_client_number": 101234,
             "client_name": "Advance Client",
+            "client_id_number": "123456789",
             "total_expected": 300.0,
             "total_paid": 120.0,
             "overdue_count": 2,

@@ -5,42 +5,25 @@ from sqlalchemy.orm import Session
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     AdvancePaymentAggregationRepository,
 )
-from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
+from app.clients.repositories.client_identity_repository import ClientIdentityRepository
 
 
 class AdvancePaymentReportService:
     def __init__(self, db: Session):
         self.repo = AdvancePaymentAggregationRepository(db)
-        self.client_record_repo = ClientRecordRepository(db)
-        self.legal_entity_repo = LegalEntityRepository(db)
+        self.client_identity_repo = ClientIdentityRepository(db)
 
     def get_collections_report(self, year: int, month: int | None) -> dict:
         rows = self.repo.get_collections_aggregates(year, month)
         client_record_ids = [row.client_record_id for row in rows]
-        records = {
-            record.id: record for record in self.client_record_repo.list_by_ids(client_record_ids)
-        }
-        legal_entity_ids = {record.legal_entity_id for record in records.values()}
-        legal_entities = {
-            entity.id: entity
-            for entity in self.legal_entity_repo.list_by_ids(list(legal_entity_ids))
-        }
+        client_profiles = self.client_identity_repo.get_display_map(client_record_ids)
 
         items = [
             {
                 "client_record_id": r.client_record_id,
-                "office_client_number": (
-                    records[r.client_record_id].office_client_number
-                    if r.client_record_id in records
-                    else None
-                ),
-                "client_name": (
-                    legal_entities[records[r.client_record_id].legal_entity_id].official_name
-                    if r.client_record_id in records
-                    and legal_entities.get(records[r.client_record_id].legal_entity_id)
-                    else f"לקוח #{r.client_record_id}"
-                ),
+                "office_client_number": client_profiles[r.client_record_id].office_client_number,
+                "client_name": client_profiles[r.client_record_id].client_name,
+                "client_id_number": client_profiles[r.client_record_id].id_number,
                 "total_expected": Decimal(r.total_expected or 0),
                 "total_paid": Decimal(r.total_paid or 0),
                 "overdue_count": int(r.overdue_count),

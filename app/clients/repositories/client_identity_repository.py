@@ -20,6 +20,7 @@ from app.legal_entities.models.person_legal_entity_link import (
 class ClientDisplayProfile:
     client_name: str
     office_client_number: int | None
+    id_number: str
 
 
 class ClientIdentityRepository(BaseRepository[ClientRecord]):
@@ -28,24 +29,34 @@ class ClientIdentityRepository(BaseRepository[ClientRecord]):
     def __init__(self, db: Session):
         super().__init__(db)
 
-    def get_display_map(self, client_record_ids: Iterable[int]) -> dict[int, ClientDisplayProfile]:
+    def get_display_map(
+        self,
+        client_record_ids: Iterable[int],
+        *,
+        include_deleted: bool = False,
+    ) -> dict[int, ClientDisplayProfile]:
         ids = list(set(client_record_ids))
         if not ids:
             return {}
 
-        rows = self.db.execute(
+        stmt = (
             select(
                 ClientRecord.id,
                 LegalEntity.official_name,
                 ClientRecord.office_client_number,
+                LegalEntity.id_number,
             )
             .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
-            .where(ClientRecord.id.in_(ids), ClientRecord.deleted_at.is_(None))
-        ).all()
+            .where(ClientRecord.id.in_(ids))
+        )
+        if not include_deleted:
+            stmt = stmt.where(ClientRecord.deleted_at.is_(None))
+        rows = self.db.execute(stmt).all()
         return {
             row.id: ClientDisplayProfile(
                 client_name=row.official_name,
                 office_client_number=row.office_client_number,
+                id_number=row.id_number,
             )
             for row in rows
         }

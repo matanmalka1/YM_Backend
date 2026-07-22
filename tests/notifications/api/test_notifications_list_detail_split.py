@@ -65,6 +65,9 @@ def test_list_rows_omit_detail_only_fields(client, test_db, advisor_headers):
     # The row still carries what the list UI renders.
     assert "status" in row
     assert "content_snapshot" in row
+    assert row["client_name"] == "List Detail Split list"
+    assert row["client_id_number"] == "LDS-list"
+    assert isinstance(row["office_client_number"], int)
 
 
 def test_detail_endpoint_returns_full_response(client, test_db, advisor_headers):

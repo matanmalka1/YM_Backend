@@ -100,8 +100,8 @@ class NotificationListItem(BaseModel):
 
     Contains the fields rendered by notification list rows across the
     notifications table, the bell drawer, and the per-client tab — including
-    the ``content_snapshot`` preview and ``business_name`` shown inline in the
-    compact lists. Routing references and delivery/debug fields
+    client identity fields for the global table and the ``content_snapshot``
+    preview and ``business_name`` shown inline in the compact lists. Routing references and delivery/debug fields
     (entity_*, channel, sent_at/failed_at, error_message, retry_count,
     triggered_by) stay on ``NotificationResponse`` and are served by
     ``GET /notifications/{notification_id}``.
@@ -110,6 +110,8 @@ class NotificationListItem(BaseModel):
     id: int
     client_record_id: int
     client_name: str | None = None
+    client_id_number: str | None = None
+    office_client_number: int | None = None
     business_name: str | None = None
     trigger: NotificationTrigger
     trigger_label: str = ""

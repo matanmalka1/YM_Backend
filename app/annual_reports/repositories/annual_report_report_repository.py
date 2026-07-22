@@ -206,12 +206,18 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
         return self.db.scalar(stmt)
 
     def list_by_tax_year_with_client(self, tax_year: int) -> list:
-        """Return (AnnualReport, client_record_id, LegalEntity.official_name) for status report."""
+        """Return annual reports with the client identity rendered by the status report."""
         from app.clients.models.client_record import ClientRecord
         from app.legal_entities.models.legal_entity import LegalEntity
 
         return self.db.execute(
-            select(AnnualReport, AnnualReport.client_record_id, LegalEntity.official_name)
+            select(
+                AnnualReport,
+                AnnualReport.client_record_id,
+                LegalEntity.official_name,
+                LegalEntity.id_number,
+                ClientRecord.office_client_number,
+            )
             .join(ClientRecord, ClientRecord.id == AnnualReport.client_record_id)
             .join(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
             .where(

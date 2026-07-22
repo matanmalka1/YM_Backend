@@ -139,6 +139,8 @@ def test_reports_advance_payments_endpoint_month_filter(client, test_db, advisor
     assert payload["total_gap"] == "500.00"
     assert "business_id" not in payload["items"][0]
     assert "business_name" not in payload["items"][0]
+    assert payload["items"][0]["office_client_number"] > 0
+    assert payload["items"][0]["client_id_number"] == "RPT-ADV"
     assert payload["items"][0]["overdue_count"] == 1
 
 
@@ -168,6 +170,8 @@ def test_reports_annual_reports_endpoint(client, test_db, advisor_headers, test_
     assert payload["statuses"][0]["status"] == "submitted"
     assert payload["statuses"][0]["count"] == 1
     assert payload["statuses"][0]["clients"][0]["client_name"] == crm_client.full_name
+    assert payload["statuses"][0]["clients"][0]["office_client_number"] > 0
+    assert payload["statuses"][0]["clients"][0]["client_id_number"] == "RPT-ANR"
     assert payload["statuses"][0]["clients"][0]["filing_deadline"].endswith("Z")
     assert "T" in payload["statuses"][0]["clients"][0]["filing_deadline"]
 

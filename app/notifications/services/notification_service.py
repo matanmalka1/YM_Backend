@@ -3,7 +3,10 @@ from __future__ import annotations
 from sqlalchemy.orm import Session
 
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.clients.repositories.client_identity_repository import (
+    ClientDisplayProfile,
+    ClientIdentityRepository,
+)
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.core.logging_config import get_logger
@@ -40,10 +43,11 @@ def _trigger_labels(notification: object) -> tuple[str, str]:
 def _enrich(
     notification: object,
     business_name_map: dict[int, str],
-    client_name_map: dict[int, str],
+    client_profile_map: dict[int, ClientDisplayProfile],
 ) -> NotificationResponse:
     resp = NotificationResponse.model_validate(notification)
-    resp.client_name = client_name_map.get(notification.client_record_id)  # type: ignore[attr-defined]
+    profile = client_profile_map.get(notification.client_record_id)  # type: ignore[attr-defined]
+    resp.client_name = profile.client_name if profile else None
     if notification.business_id is not None:  # type: ignore[attr-defined]
         resp.business_name = business_name_map.get(notification.business_id)  # type: ignore[attr-defined]
     resp.trigger_label, resp.domain_label = _trigger_labels(notification)
@@ -53,10 +57,14 @@ def _enrich(
 def _enrich_list_item(
     notification: object,
     business_name_map: dict[int, str],
-    client_name_map: dict[int, str],
+    client_profile_map: dict[int, ClientDisplayProfile],
 ) -> NotificationListItem:
     item = NotificationListItem.model_validate(notification)
-    item.client_name = client_name_map.get(notification.client_record_id)  # type: ignore[attr-defined]
+    profile = client_profile_map.get(notification.client_record_id)  # type: ignore[attr-defined]
+    if profile:
+        item.client_name = profile.client_name
+        item.client_id_number = profile.id_number
+        item.office_client_number = profile.office_client_number
     if notification.business_id is not None:  # type: ignore[attr-defined]
         item.business_name = business_name_map.get(notification.business_id)  # type: ignore[attr-defined]
     item.trigger_label, item.domain_label = _trigger_labels(notification)
@@ -68,7 +76,7 @@ class NotificationService:
         self.db = db
         self.repo = NotificationRepository(db)
         self.business_repo = BusinessRepository(db)
-        self.client_record_repo = ClientRecordRepository(db)
+        self.client_identity_repo = ClientIdentityRepository(db)
         self._send_svc = NotificationSendService(db)
 
     # ── Preview / Send (delegates to NotificationSendService) ─────────────────
@@ -122,8 +130,8 @@ class NotificationService:
             created_before=created_before,
         )
         business_name_map = self._build_business_name_map(items)
-        client_name_map = self._build_client_name_map(items)
-        return [_enrich_list_item(n, business_name_map, client_name_map) for n in items], total
+        client_profile_map = self._build_client_profile_map(items)
+        return [_enrich_list_item(n, business_name_map, client_profile_map) for n in items], total
 
     def get_detail(self, notification_id: int) -> NotificationResponse:
         notification = self.repo.get_by_id(notification_id)
@@ -134,8 +142,8 @@ class NotificationService:
                 status_code=404,
             )
         business_name_map = self._build_business_name_map([notification])
-        client_name_map = self._build_client_name_map([notification])
-        return _enrich(notification, business_name_map, client_name_map)
+        client_profile_map = self._build_client_profile_map([notification])
+        return _enrich(notification, business_name_map, client_profile_map)
 
     def get_summary(
         self,
@@ -150,9 +158,9 @@ class NotificationService:
 
     # ── Private helpers ───────────────────────────────────────────────────────
 
-    def _build_client_name_map(self, notifications: list) -> dict[int, str]:
+    def _build_client_profile_map(self, notifications: list) -> dict[int, ClientDisplayProfile]:
         ids = list({n.client_record_id for n in notifications})  # type: ignore[attr-defined]
-        return self.client_record_repo.get_official_names_by_ids(ids)
+        return self.client_identity_repo.get_display_map(ids, include_deleted=True)
 
     def _build_business_name_map(self, notifications: list) -> dict[int, str]:
         ids = [n.business_id for n in notifications if n.business_id is not None]  # type: ignore[attr-defined]

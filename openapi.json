@@ -20122,6 +20122,10 @@
             "type": "string",
             "title": "Client Name"
           },
+          "client_id_number": {
+            "type": "string",
+            "title": "Client Id Number"
+          },
           "total_expected": {
             "type": "string",
             "format": "decimal",
@@ -20155,6 +20159,7 @@
         "required": [
           "client_record_id",
           "client_name",
+          "client_id_number",
           "total_expected",
           "total_paid",
           "overdue_count",
@@ -22142,6 +22147,14 @@
             "type": "string",
             "title": "Client Name"
           },
+          "client_id_number": {
+            "type": "string",
+            "title": "Client Id Number"
+          },
+          "office_client_number": {
+            "type": "integer",
+            "title": "Office Client Number"
+          },
           "form_type": {
             "anyOf": [
               {
@@ -22182,7 +22195,9 @@
         "type": "object",
         "required": [
           "client_record_id",
-          "client_name"
+          "client_name",
+          "client_id_number",
+          "office_client_number"
         ],
         "title": "AnnualReportStatusClientResponse"
       },
@@ -28525,6 +28540,28 @@
             ],
             "title": "Client Name"
           },
+          "client_id_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Client Id Number"
+          },
+          "office_client_number": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Office Client Number"
+          },
           "business_name": {
             "anyOf": [
               {
@@ -28597,7 +28634,7 @@
           "created_at"
         ],
         "title": "NotificationListItem",
-        "description": "Thin DTO for notification list/table rows.\n\nContains the fields rendered by notification list rows across the\nnotifications table, the bell drawer, and the per-client tab — including\nthe ``content_snapshot`` preview and ``business_name`` shown inline in the\ncompact lists. Routing references and delivery/debug fields\n(entity_*, channel, sent_at/failed_at, error_message, retry_count,\ntriggered_by) stay on ``NotificationResponse`` and are served by\n``GET /notifications/{notification_id}``."
+        "description": "Thin DTO for notification list/table rows.\n\nContains the fields rendered by notification list rows across the\nnotifications table, the bell drawer, and the per-client tab — including\nclient identity fields for the global table and the ``content_snapshot``\npreview and ``business_name`` shown inline in the compact lists. Routing references and delivery/debug fields\n(entity_*, channel, sent_at/failed_at, error_message, retry_count,\ntriggered_by) stay on ``NotificationResponse`` and are served by\n``GET /notifications/{notification_id}``."
       },
       "NotificationListResponse": {
         "properties": {
