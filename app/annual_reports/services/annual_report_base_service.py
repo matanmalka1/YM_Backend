@@ -15,6 +15,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
+from app.utils.time_utils import israel_today
 
 if TYPE_CHECKING:
     from app.clients.repositories.client_record_repository import ClientRecordRepository
@@ -82,6 +83,7 @@ class AnnualReportBaseService:
             obj.available_transitions = [
                 status for status in AnnualReportStatus if status in allowed
             ]
+            self._apply_deadline_state(r, obj)
             result.append(obj)
         return result
 
@@ -104,5 +106,21 @@ class AnnualReportBaseService:
                 obj.office_client_number = record.office_client_number
                 obj.client_name = legal_entity.official_name
                 obj.client_id_number = legal_entity.id_number
+            self._apply_deadline_state(r, obj)
             result.append(obj)
         return result
+
+    @staticmethod
+    def _apply_deadline_state(
+        source: AnnualReport, target: AnnualReportResponse | AnnualReportListItem
+    ) -> None:
+        if source.filing_deadline is None:
+            return
+        days_until_deadline = (source.filing_deadline.date() - israel_today()).days
+        target.days_until_deadline = days_until_deadline
+        target.is_overdue = days_until_deadline < 0 and source.status in {
+            AnnualReportStatus.NOT_STARTED,
+            AnnualReportStatus.COLLECTING_DOCS,
+            AnnualReportStatus.IN_PREPARATION,
+            AnnualReportStatus.PENDING_CLIENT,
+        }

@@ -69,20 +69,30 @@ TRIGGER_LABELS: dict[NotificationTrigger, str] = {
 }
 
 TRIGGER_DOMAIN: dict[NotificationTrigger, str] = {
-    NotificationTrigger.BINDER_READY_FOR_HANDOVER: "binders",
-    NotificationTrigger.BINDER_MISSING_DOCUMENTS: "binders",
-    NotificationTrigger.BINDER_GENERAL_REMINDER: "binders",
-    NotificationTrigger.INVOICE_ISSUED: "charges",
-    NotificationTrigger.PAYMENT_REMINDER: "charges",
-    NotificationTrigger.VAT_DOCUMENTS_REMINDER: "vat",
-    NotificationTrigger.ANNUAL_REPORT_DOCUMENTS_REQUEST: "annual_reports",
-    NotificationTrigger.ANNUAL_REPORT_CLIENT_REMINDER: "annual_reports",
-    NotificationTrigger.SIGNATURE_REQUEST_SENT: "signatures",
-    NotificationTrigger.SIGNATURE_REQUEST_REMINDER: "signatures",
-    NotificationTrigger.CLIENT_MISSING_INFORMATION: "clients",
-    NotificationTrigger.CLIENT_DOCUMENTS_REQUEST: "clients",
-    NotificationTrigger.CLIENT_GENERAL_MESSAGE: "clients",
+    NotificationTrigger.BINDER_READY_FOR_HANDOVER: "קלסרים",
+    NotificationTrigger.BINDER_MISSING_DOCUMENTS: "קלסרים",
+    NotificationTrigger.BINDER_GENERAL_REMINDER: "קלסרים",
+    NotificationTrigger.INVOICE_ISSUED: "חיובים",
+    NotificationTrigger.PAYMENT_REMINDER: "חיובים",
+    NotificationTrigger.VAT_DOCUMENTS_REMINDER: "מע״מ",
+    NotificationTrigger.ANNUAL_REPORT_DOCUMENTS_REQUEST: "דוחות שנתיים",
+    NotificationTrigger.ANNUAL_REPORT_CLIENT_REMINDER: "דוחות שנתיים",
+    NotificationTrigger.SIGNATURE_REQUEST_SENT: "חתימות",
+    NotificationTrigger.SIGNATURE_REQUEST_REMINDER: "חתימות",
+    NotificationTrigger.CLIENT_MISSING_INFORMATION: "לקוחות",
+    NotificationTrigger.CLIENT_DOCUMENTS_REQUEST: "לקוחות",
+    NotificationTrigger.CLIENT_GENERAL_MESSAGE: "לקוחות",
 }
+
+CLIENT_LEVEL_MANUAL_NOTIFICATION_TRIGGERS = frozenset(
+    {
+        NotificationTrigger.CLIENT_MISSING_INFORMATION,
+        NotificationTrigger.CLIENT_DOCUMENTS_REQUEST,
+        NotificationTrigger.CLIENT_GENERAL_MESSAGE,
+        NotificationTrigger.BINDER_MISSING_DOCUMENTS,
+        NotificationTrigger.BINDER_GENERAL_REMINDER,
+    }
+)
 
 
 class Notification(Base):

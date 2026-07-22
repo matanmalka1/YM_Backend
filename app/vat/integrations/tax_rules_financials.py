@@ -13,5 +13,11 @@ def get_vat_deduction_rate_for_category(year: int, category: str):
     return get_vat_deduction_rate(category)
 
 
+def get_vat_deduction_rules_metadata():
+    from tax_rules import get_vat_deduction_rules
+
+    return get_vat_deduction_rules()
+
+
 def get_vat_rate_percent(year: int):
     return get_financial_value(year, "vat_rate_percent").value

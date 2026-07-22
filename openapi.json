@@ -12227,6 +12227,47 @@
         }
       }
     },
+    "/api/v1/notifications/metadata": {
+      "get": {
+        "tags": [
+          "notifications"
+        ],
+        "summary": "Get Notification Metadata",
+        "operationId": "get_notification_metadata_api_v1_notifications_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationMetadataResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/notifications": {
       "get": {
         "tags": [
@@ -16633,6 +16674,47 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vat/deduction-metadata": {
+      "get": {
+        "tags": [
+          "vat-reports"
+        ],
+        "summary": "Get Deduction Metadata",
+        "operationId": "get_deduction_metadata_api_v1_vat_deduction_metadata_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatDeductionMetadataResponse"
                 }
               }
             }
@@ -21250,6 +21332,22 @@
             ],
             "title": "Filing Deadline"
           },
+          "is_overdue": {
+            "type": "boolean",
+            "title": "Is Overdue",
+            "default": false
+          },
+          "days_until_deadline": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Deadline"
+          },
           "custom_deadline_note": {
             "anyOf": [
               {
@@ -21704,6 +21802,22 @@
             ],
             "title": "Filing Deadline"
           },
+          "is_overdue": {
+            "type": "boolean",
+            "title": "Is Overdue",
+            "default": false
+          },
+          "days_until_deadline": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Deadline"
+          },
           "submitted_at": {
             "anyOf": [
               {
@@ -21882,6 +21996,22 @@
               }
             ],
             "title": "Filing Deadline"
+          },
+          "is_overdue": {
+            "type": "boolean",
+            "title": "Is Overdue",
+            "default": false
+          },
+          "days_until_deadline": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Deadline"
           },
           "custom_deadline_note": {
             "anyOf": [
@@ -22358,6 +22488,36 @@
               }
             ],
             "title": "Final Balance"
+          },
+          "credit_points_value": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Credit Points Value"
+          },
+          "donation_credit": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Donation Credit"
           },
           "credit_points": {
             "anyOf": [
@@ -28667,6 +28827,22 @@
         ],
         "title": "NotificationListResponse"
       },
+      "NotificationMetadataResponse": {
+        "properties": {
+          "triggers": {
+            "items": {
+              "$ref": "#/components/schemas/NotificationTriggerOption"
+            },
+            "type": "array",
+            "title": "Triggers"
+          }
+        },
+        "type": "object",
+        "required": [
+          "triggers"
+        ],
+        "title": "NotificationMetadataResponse"
+      },
       "NotificationPreviewRequest": {
         "properties": {
           "client_record_id": {
@@ -29214,6 +29390,33 @@
           "client_general_message"
         ],
         "title": "NotificationTrigger"
+      },
+      "NotificationTriggerOption": {
+        "properties": {
+          "value": {
+            "$ref": "#/components/schemas/NotificationTrigger"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "domain_label": {
+            "type": "string",
+            "title": "Domain Label"
+          },
+          "client_level_manual": {
+            "type": "boolean",
+            "title": "Client Level Manual"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "domain_label",
+          "client_level_manual"
+        ],
+        "title": "NotificationTriggerOption"
       },
       "ObligationType": {
         "type": "string",
@@ -33041,7 +33244,7 @@
           },
           "warnings": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/TaxCalendarWarning"
             },
             "type": "array",
             "title": "Warnings"
@@ -33465,7 +33668,7 @@
           },
           "warnings": {
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/TaxCalendarWarning"
             },
             "type": "array",
             "title": "Warnings"
@@ -33478,6 +33681,101 @@
           "warnings"
         ],
         "title": "TaxCalendarSummaryResponse"
+      },
+      "TaxCalendarWarning": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "enum": [
+              "count_mismatch",
+              "registry_data_missing",
+              "bootstrap_count_mismatch"
+            ],
+            "title": "Code"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "obligation_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Obligation Type"
+          },
+          "expected": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected"
+          },
+          "found": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found"
+          },
+          "tax_year_after": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Year After"
+          },
+          "tax_year_before": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tax Year Before"
+          },
+          "expected_per_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Per Year"
+          }
+        },
+        "type": "object",
+        "required": [
+          "code"
+        ],
+        "title": "TaxCalendarWarning"
       },
       "TaxPreviewRequest": {
         "properties": {
@@ -34588,6 +34886,52 @@
           "advance_payments"
         ],
         "title": "VatDashboardStats"
+      },
+      "VatDeductionCategoryMetadata": {
+        "properties": {
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "rate": {
+            "type": "number",
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Rate"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "condition": {
+            "type": "string",
+            "title": "Condition"
+          }
+        },
+        "type": "object",
+        "required": [
+          "category",
+          "rate",
+          "label",
+          "condition"
+        ],
+        "title": "VatDeductionCategoryMetadata"
+      },
+      "VatDeductionMetadataResponse": {
+        "properties": {
+          "categories": {
+            "items": {
+              "$ref": "#/components/schemas/VatDeductionCategoryMetadata"
+            },
+            "type": "array",
+            "title": "Categories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "categories"
+        ],
+        "title": "VatDeductionMetadataResponse"
       },
       "VatExpenseCategoryBreakdownResponse": {
         "properties": {

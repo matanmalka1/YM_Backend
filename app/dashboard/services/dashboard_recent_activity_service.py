@@ -48,6 +48,7 @@ from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.repositories.client_record_read_repository import get_full_records_bulk
+from app.common.entity_links import LinkedEntity, entity_route
 
 _ACTIVITY_LIMIT = 5
 # Fetches more than displayed to allow merging audit + binder rows before trimming to _ACTIVITY_LIMIT.
@@ -234,22 +235,25 @@ class RecentActivityService:
         return f"בוצעה פעולה ב{entity}"
 
     def _href(self, row: EntityAuditLog) -> str:
-        if row.entity_type == ENTITY_ANNUAL_REPORT:
-            return f"/tax/reports/{row.entity_id}"
-        if row.entity_type == ENTITY_CHARGE:
-            return f"/charges?charge_id={row.entity_id}"
-        if row.entity_type == ENTITY_CLIENT:
-            return f"/clients/{row.entity_id}"
-        if row.entity_type == ENTITY_BINDER:
-            return f"/binders?binder_id={row.entity_id}"
+        linked_entities = {
+            ENTITY_ANNUAL_REPORT: LinkedEntity.ANNUAL_REPORT,
+            ENTITY_CHARGE: LinkedEntity.CHARGE,
+            ENTITY_CLIENT: LinkedEntity.CLIENT,
+            ENTITY_BINDER: LinkedEntity.BINDER,
+            ENTITY_VAT_WORK_ITEM: LinkedEntity.VAT_WORK_ITEM,
+        }
+        if linked_entity := linked_entities.get(row.entity_type):
+            return entity_route(linked_entity, row.entity_id)
         if row.entity_type == ENTITY_BINDER_INTAKE and isinstance(row.metadata_json, dict):
             binder_id = row.metadata_json.get("binder_id")
-            return f"/binders?binder_id={binder_id}" if binder_id else "/binders"
-        if row.entity_type == ENTITY_VAT_WORK_ITEM:
-            return f"/tax/vat/{row.entity_id}"
+            return entity_route(LinkedEntity.BINDER, binder_id) if binder_id else "/binders"
         if row.entity_type == ENTITY_VAT_INVOICE and isinstance(row.metadata_json, dict):
             work_item_id = row.metadata_json.get("vat_work_item_id")
-            return f"/tax/vat/{work_item_id}" if work_item_id else "/tax/vat"
+            return (
+                entity_route(LinkedEntity.VAT_WORK_ITEM, work_item_id)
+                if work_item_id
+                else "/tax/vat"
+            )
         return "/"
 
     def _timestamp(self, row: EntityAuditLog):

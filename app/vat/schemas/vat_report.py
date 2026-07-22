@@ -175,6 +175,17 @@ class VatPeriodOptionsResponse(BaseModel):
     options: list[VatPeriodOptionResponse]
 
 
+class VatDeductionCategoryMetadata(BaseModel):
+    category: str
+    rate: float = Field(ge=0, le=1)
+    label: str
+    condition: str
+
+
+class VatDeductionMetadataResponse(BaseModel):
+    categories: list[VatDeductionCategoryMetadata]
+
+
 # ── Status transitions ────────────────────────────────────────────────────────
 
 

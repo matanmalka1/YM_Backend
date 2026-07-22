@@ -368,3 +368,19 @@ def test_period_options_bimonthly_uses_odd_months_and_marks_opened(
     opened = {option["period"]: option["is_opened"] for option in body["options"]}
     assert opened["2026-03"] is True
     assert opened["2026-01"] is False
+
+
+def test_vat_deduction_metadata_uses_canonical_tax_rules(
+    client, advisor_headers, secretary_headers
+):
+    for headers in (advisor_headers, secretary_headers):
+        response = client.get("/api/v1/vat/deduction-metadata", headers=headers)
+        assert response.status_code == 200
+        categories = {item["category"]: item for item in response.json()["categories"]}
+        assert categories["travel"] == {
+            "category": "travel",
+            "rate": 0.6667,
+            "label": "נסיעות",
+            "condition": "הוצאה מעורבת — 2/3 ניכוי.",
+        }
+        assert "רכב מסחרי" in categories["vehicle"]["condition"]

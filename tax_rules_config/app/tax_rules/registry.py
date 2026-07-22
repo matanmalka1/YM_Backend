@@ -40,7 +40,7 @@ from .types import (
     RateBracket,
 )
 from .validations import validate_profile
-from .vat_deduction import VAT_DEDUCTION_RATE_BY_CATEGORY
+from .vat_deduction import VAT_DEDUCTION_RATE_BY_CATEGORY, VAT_DEDUCTION_RULES
 
 # ── לוחות מועדים ─────────────────────────────────────────────────────────────
 
@@ -156,6 +156,11 @@ def get_annual_report_rule(entity_type: str, tax_year: int) -> dict | None:
 def get_vat_deduction_rate(category: str) -> float:
     """שיעור ניכוי תשומות לפי קטגוריה (0.0–1.0). מחזיר 0.0 אם לא נמצא."""
     return VAT_DEDUCTION_RATE_BY_CATEGORY.get(category, 0.0)
+
+
+def get_vat_deduction_rules():
+    """Return canonical VAT input-deduction metadata for API/UI consumers."""
+    return VAT_DEDUCTION_RULES
 
 
 def validate(profile: ClientTaxProfile) -> list[str]:

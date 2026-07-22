@@ -17,16 +17,15 @@ def test_returns_empty_for_non_advisor(test_db):
 
 def test_unpaid_charge_appears_as_overdue(test_db):
     biz = create_business(test_db)
-    test_db.add(
-        Charge(
-            client_record_id=biz.client_id,
-            business_id=biz.id,
-            amount=500,
-            charge_type=ChargeType.OTHER,
-            status=ChargeStatus.ISSUED,
-            issued_at=date.today() - timedelta(days=31),
-        )
+    charge = Charge(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        amount=500,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today() - timedelta(days=31),
     )
+    test_db.add(charge)
     test_db.commit()
 
     items = DashboardAttentionService(test_db).build(user_role=UserRole.ADVISOR)
@@ -36,7 +35,7 @@ def test_unpaid_charge_appears_as_overdue(test_db):
     assert charge_items[0]["urgency"] == WorkQueueUrgency.OVERDUE
     assert charge_items[0]["amount"] == "500.00"
     assert "₪" not in charge_items[0]["amount"]
-    assert charge_items[0]["href"] == "/charges"
+    assert charge_items[0]["href"] == f"/charges?charge_id={charge.id}"
 
 
 def test_max_7_items_are_included(test_db):

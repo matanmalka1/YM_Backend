@@ -17,12 +17,16 @@ from app.infrastructure.idempotency.dependency import (
     normalize_idempotency_key_header,
 )
 from app.notifications.models.notification import (
+    CLIENT_LEVEL_MANUAL_NOTIFICATION_TRIGGERS,
+    TRIGGER_DOMAIN,
+    TRIGGER_LABELS,
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
 from app.notifications.schemas.notification_schemas import (
     NotificationListResponse,
+    NotificationMetadataResponse,
     NotificationPreviewRequest,
     NotificationPreviewResponse,
     NotificationResponse,
@@ -39,6 +43,21 @@ router = APIRouter(
     tags=["notifications"],
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
+
+
+@router.get("/metadata", response_model=NotificationMetadataResponse)
+def get_notification_metadata():
+    return NotificationMetadataResponse(
+        triggers=[
+            {
+                "value": trigger,
+                "label": TRIGGER_LABELS[trigger],
+                "domain_label": TRIGGER_DOMAIN[trigger],
+                "client_level_manual": trigger in CLIENT_LEVEL_MANUAL_NOTIFICATION_TRIGGERS,
+            }
+            for trigger in NotificationTrigger
+        ]
+    )
 
 
 @router.get("", response_model=NotificationListResponse)

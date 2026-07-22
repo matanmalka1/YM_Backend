@@ -1,8 +1,20 @@
 from __future__ import annotations
 
 from datetime import date
+from typing import Literal
 
 from pydantic import BaseModel
+
+
+class TaxCalendarWarning(BaseModel):
+    code: Literal["count_mismatch", "registry_data_missing", "bootstrap_count_mismatch"]
+    year: int | None = None
+    obligation_type: str | None = None
+    expected: int | None = None
+    found: int | None = None
+    tax_year_after: int | None = None
+    tax_year_before: int | None = None
+    expected_per_year: int | None = None
 
 
 class DeadlineRuleResponse(BaseModel):
@@ -34,7 +46,7 @@ class TaxCalendarSummaryResponse(BaseModel):
     tax_year_before: int | None = None
     total_entries: int
     per_year: dict[int, dict[str, int]]
-    warnings: list[str]
+    warnings: list[TaxCalendarWarning]
 
 
 class TaxCalendarBootstrapRequest(BaseModel):
@@ -51,4 +63,4 @@ class TaxCalendarBootstrapResponse(BaseModel):
     entries_created: int
     entries_skipped: int
     total_entries_for_range: int
-    warnings: list[str]
+    warnings: list[TaxCalendarWarning]

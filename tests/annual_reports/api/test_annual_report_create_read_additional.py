@@ -55,7 +55,10 @@ def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_rep
         "taxable_income",
         "final_balance",
         "credit_points",
+        "credit_points_value",
+        "donation_credit",
     } <= detail["tax_calculation"].keys()
+    assert {"is_overdue", "days_until_deadline"} <= detail.keys()
     assert "available_transitions" in detail
     assert "tax_refund_amount" not in detail
     assert "tax_due_amount" not in detail

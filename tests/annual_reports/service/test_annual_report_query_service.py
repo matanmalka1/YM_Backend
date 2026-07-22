@@ -58,6 +58,8 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     reports_2025, total_2025 = service.list_reports(tax_year=2025, page=1, page_size=20)
     assert total_2025 == 1
     assert [r.id for r in reports_2025] == [report_a_2025.id]
+    assert reports_2025[0].is_overdue is False
+    assert reports_2025[0].days_until_deadline is not None
 
     all_reports, total_all = service.list_reports(
         page=1, page_size=20, sort_by="tax_year", order="desc"
@@ -76,6 +78,8 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     assert detail.tax_calculation is not None
     assert detail.tax_calculation.total_income == 0.0
     assert detail.tax_calculation.total_expenses == 0.0
+    assert detail.tax_calculation.credit_points_value == 6534.0
+    assert detail.tax_calculation.donation_credit == 0.0
     # Removed duplicate float copies (item 35) are gone.
     assert not hasattr(detail, "tax_refund_amount")
     assert not hasattr(detail, "tax_due_amount")

@@ -24,6 +24,8 @@ class AnnualReportResponse(BaseModel):
     status: AnnualReportStatus
     deadline_type: FilingDeadlineType
     filing_deadline: ApiDateTime | None = None
+    is_overdue: bool = False
+    days_until_deadline: int | None = None
     custom_deadline_note: str | None = None
     submitted_at: ApiDateTime | None = None
     ita_reference: str | None = None
@@ -65,6 +67,8 @@ class AnnualReportListItem(BaseModel):
     status: AnnualReportStatus
     deadline_type: FilingDeadlineType
     filing_deadline: ApiDateTime | None = None
+    is_overdue: bool = False
+    days_until_deadline: int | None = None
     submitted_at: ApiDateTime | None = None
     assessment_amount: ApiDecimal | None = None
     refund_due: ApiDecimal | None = None
@@ -114,6 +118,8 @@ class AnnualReportTaxCalculationResponse(BaseModel):
     profit: ApiDecimal | None = None
     tax_after_credits: ApiDecimal | None = None
     final_balance: ApiDecimal | None = None
+    credit_points_value: ApiDecimal | None = None
+    donation_credit: ApiDecimal | None = None
     # נקודות זיכוי — מצרף מ-AnnualReportCreditPointRepository
     credit_points: ApiDecimal | None = None
     pension_credit_points: ApiDecimal | None = None

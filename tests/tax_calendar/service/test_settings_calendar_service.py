@@ -59,8 +59,7 @@ def test_get_summary_correct_counts(test_db):
     assert set(summary["per_year"].keys()) == {2026, 2027}
     for year_data in summary["per_year"].values():
         assert sum(year_data.values()) == 37
-    # count-based warnings should be absent; only fallback warnings possible
-    count_warnings = [w for w in summary["warnings"] if "fallback" not in w]
+    count_warnings = [w for w in summary["warnings"] if w["code"] == "count_mismatch"]
     assert count_warnings == []
 
 
@@ -69,7 +68,7 @@ def test_get_summary_2026_no_fallback_warning(test_db):
     test_db.commit()
 
     summary = get_summary(test_db, tax_year_after=2026, tax_year_before=2026)
-    assert not any("fallback" in w for w in summary["warnings"])
+    assert not any(w["code"] == "registry_data_missing" for w in summary["warnings"])
 
 
 def test_get_summary_reports_registry_fallback_warning(test_db, monkeypatch):
@@ -82,7 +81,7 @@ def test_get_summary_reports_registry_fallback_warning(test_db, monkeypatch):
 
     summary = get_summary(test_db, tax_year_after=2027, tax_year_before=2027)
     assert summary["total_entries"] == 37
-    assert any("2027" in w and "fallback" in w for w in summary["warnings"])
+    assert {"code": "registry_data_missing", "year": 2027} in summary["warnings"]
 
 
 def test_bootstrap_2027_succeeds(test_db):
@@ -104,7 +103,8 @@ def test_get_summary_detects_missing_entry(test_db):
 
     summary = get_summary(test_db, tax_year_after=2026, tax_year_before=2026)
     assert len(summary["warnings"]) >= 1
-    assert "2026" in summary["warnings"][0]
+    assert summary["warnings"][0]["year"] == 2026
+    assert summary["warnings"][0]["code"] == "count_mismatch"
 
 
 def test_get_summary_empty_db_has_warnings(test_db):

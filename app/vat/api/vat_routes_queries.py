@@ -14,8 +14,10 @@ from app.vat.api.vat_serializers import (
     serialize_enriched_work_item,
     serialize_enriched_work_items,
 )
+from app.vat.integrations.tax_rules_financials import get_vat_deduction_rules_metadata
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.schemas.vat_report import (
+    VatDeductionMetadataResponse,
     VatPeriodOptionsResponse,
     VatWorkItemListResponse,
     VatWorkItemLookupResponse,
@@ -25,6 +27,25 @@ from app.vat.schemas.vat_report import (
 from app.vat.services.vat_report_service import VatReportService
 
 router = APIRouter(prefix="/vat", tags=["vat-reports"])
+
+
+@router.get(
+    "/deduction-metadata",
+    response_model=VatDeductionMetadataResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
+)
+def get_deduction_metadata():
+    return {
+        "categories": [
+            {
+                "category": rule.category,
+                "rate": rule.rate,
+                "label": rule.label_he,
+                "condition": rule.condition_he,
+            }
+            for rule in get_vat_deduction_rules_metadata()
+        ]
+    }
 
 
 @router.get(

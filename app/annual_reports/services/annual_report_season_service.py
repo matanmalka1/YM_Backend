@@ -51,6 +51,7 @@ class AnnualReportSeasonService(AnnualReportBaseService):
             pending_client=summary.get("pending_client", 0),
             submitted=summary.get("submitted", 0),
             closed=summary.get("closed", 0),
+            canceled=summary.get("canceled", 0),
             completion_rate=completion_rate,
             overdue_count=overdue_count,
         )

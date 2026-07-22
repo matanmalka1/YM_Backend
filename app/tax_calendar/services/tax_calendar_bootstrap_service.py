@@ -106,12 +106,18 @@ def bootstrap_tax_calendar(
         resolved_start, resolved_end
     )
 
-    warnings: list[str] = []
+    warnings: list[dict[str, object]] = []
     expected = EXPECTED_ENTRIES_PER_YEAR * num_years
     if total_in_range != expected:
         warnings.append(
-            f"Expected {expected} entries for {resolved_start}–{resolved_end} "
-            f"({EXPECTED_ENTRIES_PER_YEAR}/year), found {total_in_range}."
+            {
+                "code": "bootstrap_count_mismatch",
+                "tax_year_after": resolved_start,
+                "tax_year_before": resolved_end,
+                "expected": expected,
+                "found": total_in_range,
+                "expected_per_year": EXPECTED_ENTRIES_PER_YEAR,
+            }
         )
 
     return {

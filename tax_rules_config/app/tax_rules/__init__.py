@@ -18,6 +18,7 @@ from .registry import (
     get_obligations,
     get_periodic_calendar,
     get_vat_deduction_rate,
+    get_vat_deduction_rules,
     validate,
 )
 from .sources import SOURCES
@@ -42,5 +43,6 @@ __all__ = [
     "get_obligations",
     "get_periodic_calendar",
     "get_vat_deduction_rate",
+    "get_vat_deduction_rules",
     "validate",
 ]

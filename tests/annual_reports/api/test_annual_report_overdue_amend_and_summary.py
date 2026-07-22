@@ -56,9 +56,12 @@ def test_annual_report_schedule_complete_and_season_summary(
 ):
     c1 = client_factory()
     c2 = client_factory()
+    c3 = client_factory()
 
     report_id = annual_report_factory(actor=test_user, client=c1).id
     completed_report_id = annual_report_factory(actor=test_user, client=c2).id
+    canceled_report_id = annual_report_factory(actor=test_user, client=c3).id
+    AnnualReportService(test_db).repo.update(canceled_report_id, status=AnnualReportStatus.CANCELED)
 
     add_schedule_resp = client.post(
         f"/api/v1/annual-reports/{report_id}/schedules",
@@ -83,3 +86,4 @@ def test_annual_report_schedule_complete_and_season_summary(
     assert summary["tax_year"] == 2026
     assert summary["total"] >= 2
     assert summary["submitted"] >= 1
+    assert summary["canceled"] >= 1

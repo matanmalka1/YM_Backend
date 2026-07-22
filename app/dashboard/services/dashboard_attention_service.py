@@ -4,6 +4,7 @@ from datetime import date
 
 from sqlalchemy.orm import Session
 
+from app.common.source_types import source_route
 from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
 from app.work_queue.items.common import load_client_profiles
@@ -44,20 +45,7 @@ def _sort_key(item: WorkQueueItem) -> tuple:
 
 
 def _href(item: WorkQueueItem) -> str:
-    st = item.source_type
-    if st == WorkQueueSourceType.VAT_WORK_ITEM:
-        return f"/tax/vat/{item.source_id}"
-    if st == WorkQueueSourceType.ANNUAL_REPORT:
-        return f"/tax/reports/{item.source_id}"
-    if st == WorkQueueSourceType.ADVANCE_PAYMENT:
-        return "/tax/advance-payments"
-    if st == WorkQueueSourceType.CHARGE:
-        return "/charges"
-    if st == WorkQueueSourceType.BINDER:
-        return "/binders"
-    if st == WorkQueueSourceType.TASK:
-        return "/tasks"
-    return "/"
+    return source_route(item.source_type, item.source_id) or "/work-queue"
 
 
 def _reason(item: WorkQueueItem) -> str | None:

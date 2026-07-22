@@ -133,6 +133,17 @@ class NotificationSummaryResponse(BaseModel):
     total: int = 0
 
 
+class NotificationTriggerOption(BaseModel):
+    value: NotificationTrigger
+    label: str
+    domain_label: str
+    client_level_manual: bool
+
+
+class NotificationMetadataResponse(BaseModel):
+    triggers: list[NotificationTriggerOption]
+
+
 class NotificationListResponse(PaginatedResponse[NotificationListItem]):
     pass
 

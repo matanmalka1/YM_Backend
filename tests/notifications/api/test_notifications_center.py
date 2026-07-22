@@ -57,6 +57,27 @@ def test_list_notifications_accepts_page_size_25(client, test_db, advisor_header
     assert response.json()["page_size"] == 25
 
 
+def test_notification_metadata_is_backend_owned_and_available_to_operational_roles(
+    client, advisor_headers, secretary_headers
+):
+    for headers in (advisor_headers, secretary_headers):
+        response = client.get("/api/v1/notifications/metadata", headers=headers)
+        assert response.status_code == 200
+        options = {item["value"]: item for item in response.json()["triggers"]}
+        assert options["vat_documents_reminder"] == {
+            "value": "vat_documents_reminder",
+            "label": "תזכורת מסמכי מע״מ",
+            "domain_label": "מע״מ",
+            "client_level_manual": False,
+        }
+        assert options["client_general_message"]["client_level_manual"] is True
+
+
+def test_notification_metadata_requires_authentication(client):
+    response = client.get("/api/v1/notifications/metadata")
+    assert response.status_code == 401
+
+
 def test_list_notifications_accepts_page_size_50(client, test_db, advisor_headers):
     seeded = _client(test_db, "page-size-50")
     _notification(test_db, seeded.id)

@@ -28,10 +28,15 @@ def test_draft_charge_includes_delete_action():
     ]
 
 
-def test_secretary_charge_actions_are_empty():
+def test_secretary_receives_backend_supported_charge_actions():
     charge = SimpleNamespace(id=22, status=ChargeStatus.DRAFT)
 
-    assert get_charge_actions(charge, user_role=UserRole.SECRETARY) == []
+    assert [action.key for action in get_charge_actions(charge, user_role=UserRole.SECRETARY)] == [
+        "edit_charge",
+        "issue_charge",
+        "cancel_charge",
+        "delete_charge",
+    ]
 
 
 def test_issued_charge_returns_mark_paid_and_cancel():

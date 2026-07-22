@@ -148,6 +148,8 @@ class AnnualReportQueryService(AnnualReportBaseService):
             profit=tax.net_profit,
             tax_after_credits=tax.tax_after_credits,
             final_balance=tax.tax_after_credits - advances_paid,
+            credit_points_value=tax.credit_points_value,
+            donation_credit=tax.donation_credit,
             credit_points=credit_breakdown["credit_points"],
             pension_credit_points=credit_breakdown["pension_credit_points"],
             life_insurance_credit_points=credit_breakdown["life_insurance_credit_points"],

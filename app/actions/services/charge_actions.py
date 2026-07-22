@@ -30,7 +30,7 @@ def get_charge_actions(
     charge: Charge,
     user_role: UserRole | None = None,
 ) -> list[ActionDescriptor]:
-    if user_role is not None and user_role != UserRole.ADVISOR:
+    if user_role is not None and user_role not in (UserRole.ADVISOR, UserRole.SECRETARY):
         return []
 
     status = charge.status

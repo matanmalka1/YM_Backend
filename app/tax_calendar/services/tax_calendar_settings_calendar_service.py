@@ -57,7 +57,7 @@ def get_summary(
         per_year.setdefault(tax_year, {})[label] = count
         actual[(tax_year, obligation, period_months_count)] = count
 
-    warnings: list[str] = []
+    warnings: list[dict[str, object]] = []
     # Check all years in range, not just those with entries
     if tax_year_after is not None and tax_year_before is not None:
         years_to_check = range(tax_year_after, tax_year_before + 1)
@@ -68,23 +68,25 @@ def get_summary(
             found = actual.get((year, obtype, months), 0)
             if found != expected_count:
                 label = _summary_label(obtype, months)
-                warnings.append(f"Year {year}: {label} — expected {expected_count}, found {found}.")
+                warnings.append(
+                    {
+                        "code": "count_mismatch",
+                        "year": year,
+                        "obligation_type": label,
+                        "expected": expected_count,
+                        "found": found,
+                    }
+                )
 
     # Warn for years using DeadlineRule fallback (no official registry calendar)
     if tax_year_after is not None and tax_year_before is not None:
         for year in missing_registry_years(tax_year_after, tax_year_before):
-            warnings.append(
-                f"Year {year} uses fallback DeadlineRule dates because official "
-                f"tax calendar registry data is missing."
-            )
+            warnings.append({"code": "registry_data_missing", "year": year})
     elif per_year:
         all_years = sorted(per_year.keys())
         for year in missing_registry_years(all_years[0], all_years[-1]):
             if year in per_year:
-                warnings.append(
-                    f"Year {year} uses fallback DeadlineRule dates because official "
-                    f"tax calendar registry data is missing."
-                )
+                warnings.append({"code": "registry_data_missing", "year": year})
 
     total_entries = sum(c for year_data in per_year.values() for c in year_data.values())
 
