@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import date
 
-from sqlalchemy import func, select
+from sqlalchemy import case, func, or_, select
 from sqlalchemy.orm import Session
 
 from app.common.repositories.base_repository import BaseRepository
@@ -23,6 +23,7 @@ def _apply_filters(
     source_id: int | None = None,
     due_before: date | None = None,
     due_after: date | None = None,
+    search: str | None = None,
 ):
     if client_record_id is not None:
         stmt = stmt.where(Task.client_record_id == client_record_id)
@@ -42,6 +43,9 @@ def _apply_filters(
         stmt = stmt.where(Task.due_date <= due_before)
     if due_after is not None:
         stmt = stmt.where(Task.due_date >= due_after)
+    if search and search.strip():
+        pattern = f"%{search.strip()}%"
+        stmt = stmt.where(or_(Task.title.ilike(pattern), Task.description.ilike(pattern)))
     return stmt
 
 
@@ -73,6 +77,9 @@ class TaskRepository(BaseRepository[Task]):
         source_id: int | None = None,
         due_before: date | None = None,
         due_after: date | None = None,
+        search: str | None = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[Task], int]:
@@ -86,6 +93,7 @@ class TaskRepository(BaseRepository[Task]):
             source_id=source_id,
             due_before=due_before,
             due_after=due_after,
+            search=search,
         )
 
         base = _apply_filters(
@@ -99,9 +107,51 @@ class TaskRepository(BaseRepository[Task]):
         )
         total: int = self.db.scalar(count_stmt) or 0
 
-        data_stmt = self.apply_pagination(base.order_by(Task.created_at.desc()), page, page_size)
+        sort_columns = {
+            "created_at": Task.created_at,
+            "due_date": Task.due_date,
+            "priority": case(
+                (Task.priority == TaskPriority.URGENT, 4),
+                (Task.priority == TaskPriority.HIGH, 3),
+                (Task.priority == TaskPriority.NORMAL, 2),
+                else_=1,
+            ),
+            "title": Task.title,
+        }
+        sort_column = sort_columns[sort_by]
+        ordering = (sort_column.asc() if order == "asc" else sort_column.desc()).nulls_last()
+        data_stmt = self.apply_pagination(base.order_by(ordering, Task.id.desc()), page, page_size)
         items = list(self.db.scalars(data_stmt).all())
         return items, total
+
+    def summarize_active(
+        self,
+        *,
+        client_record_id: int | None = None,
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        assigned_to_user_id: int | None = None,
+        assigned_role: UserRole | None = None,
+        source_domain: WorkQueueSourceType | None = None,
+        source_id: int | None = None,
+        due_before: date | None = None,
+        due_after: date | None = None,
+        search: str | None = None,
+    ) -> dict[TaskStatus, int]:
+        stmt = _apply_filters(
+            select(Task.status, func.count(Task.id)).where(Task.deleted_at.is_(None)),
+            client_record_id=client_record_id,
+            status=status,
+            priority=priority,
+            assigned_to_user_id=assigned_to_user_id,
+            assigned_role=assigned_role,
+            source_domain=source_domain,
+            source_id=source_id,
+            due_before=due_before,
+            due_after=due_after,
+            search=search,
+        ).group_by(Task.status)
+        return {row.status: row[1] for row in self.db.execute(stmt).all()}
 
     def list_for_work_queue(self) -> list[Task]:
         stmt = select(Task).where(

@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.core.pagination import paginate_sequence
 from app.tasks.models.task import TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository
+from app.users.repositories.user_repository import UserRepository
 from app.utils.time_utils import israel_today
 from app.work_queue.items.billing_items import advance_payment_items, charge_items
 from app.work_queue.items.binder_items import binder_items
@@ -161,6 +162,7 @@ class WorkQueueService:
         self.db = db
         self.today = israel_today()
         self.task_repo = TaskRepository(self.db)
+        self.user_repo = UserRepository(self.db)
 
     def _context(self, *, include_client_identity: bool = True) -> WorkQueueContext:
         return WorkQueueContext(
@@ -321,6 +323,12 @@ class WorkQueueService:
             source_key(item.source_type, item.source_id): item for item in system_items
         }
         tasks = self.task_repo.list_for_work_queue()
+        assignee_ids = list(
+            {task.assigned_to_user_id for task in tasks if task.assigned_to_user_id is not None}
+        )
+        assignee_names = {
+            user.id: user.full_name for user in self.user_repo.list_by_ids(assignee_ids)
+        }
         linked_keys = {
             (source_type, task.source_id)
             for task in tasks
@@ -339,10 +347,13 @@ class WorkQueueService:
                 key = source_key(source_type, task_source_id)
                 source_item = system_by_key.get(key)
                 if source_item is not None and should_merge:
-                    self._attach_task(source_item, task_summary(task))
+                    self._attach_task(
+                        source_item,
+                        task_summary(task, assignee_names.get(task.assigned_to_user_id)),
+                    )
                     continue
 
-            standalone = task_item(ctx, task)
+            standalone = task_item(ctx, task, assignee_names.get(task.assigned_to_user_id))
             if source_type is not None and task_source_id is not None:
                 state = source_states.get((source_type.value, task_source_id))
                 if state is not None and client_record_id is not None:

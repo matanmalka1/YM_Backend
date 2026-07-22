@@ -43,6 +43,7 @@ class LinkedTaskSummary(BaseModel):
     due_date: date | None = None
     priority: str | None = None
     assigned_user_id: int | None = None
+    assigned_user_name: str | None = None
     assigned_role: UserRole | None = None
 
 

@@ -15,7 +15,7 @@ from app.work_queue.schemas.work_queue import (
 from app.work_queue.work_queue_actions import task_actions
 
 
-def task_summary(task) -> LinkedTaskSummary:
+def task_summary(task, assigned_user_name: str | None = None) -> LinkedTaskSummary:
     due = task.due_date
     return LinkedTaskSummary(
         id=task.id,
@@ -24,11 +24,12 @@ def task_summary(task) -> LinkedTaskSummary:
         due_date=due,
         priority=task.priority.value if hasattr(task.priority, "value") else task.priority,
         assigned_user_id=task.assigned_to_user_id,
+        assigned_user_name=assigned_user_name,
         assigned_role=task.assigned_role,
     )
 
 
-def task_item(ctx: WorkQueueContext, task) -> WorkQueueItem:
+def task_item(ctx: WorkQueueContext, task, assigned_user_name: str | None = None) -> WorkQueueItem:
     due = task.due_date
     item_urgency = urgency(due, ctx.today) if due is not None else WorkQueueUrgency.UPCOMING
     return WorkQueueItem(
@@ -52,6 +53,7 @@ def task_item(ctx: WorkQueueContext, task) -> WorkQueueItem:
             "priority": task.priority.value,
             "description": task.description,
             "assigned_to_user_id": task.assigned_to_user_id,
+            "assigned_to_user_name": assigned_user_name,
             "assigned_role": task.assigned_role,
             "action_key": task.action_key,
             "action_payload": task.action_payload,

@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import date, timedelta
 
 import pytest
 
@@ -350,6 +350,65 @@ def test_list_pagination_total_reflects_all_items(client, advisor_headers):
     assert len(data["items"]) == 3
     assert data["page"] == 1
     assert data["page_size"] == 3
+    assert data["summary"] == {"total": 5, "open": 5, "done": 0, "canceled": 0}
+
+
+def test_list_supports_search_sort_and_enriched_names(
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+):
+    biz = create_business(test_db)
+    test_db.commit()
+    client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={
+            "title": "Zulu documents",
+            "description": "needle",
+            "client_record_id": biz.client_id,
+            "assigned_to_user_id": test_user.id,
+        },
+    )
+    client.post("/api/v1/tasks", headers=advisor_headers, json={"title": "Alpha"})
+
+    resp = client.get(
+        "/api/v1/tasks?search=needle&sort_by=title&order=asc",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    row = resp.json()["items"][0]
+    assert row["assigned_to_user_name"] == test_user.full_name
+    assert row["client_name"].startswith("Task Test Client")
+    assert row["office_client_number"] is not None
+
+
+def test_linkable_sources_returns_client_system_work_with_existing_task_count(
+    client,
+    test_db,
+    advisor_headers,
+):
+    biz = create_business(test_db)
+    charge = create_charge(test_db, biz.client_id, biz.id)
+    charge.issued_at = date.today() - timedelta(days=31)
+    test_db.commit()
+    client.post(
+        "/api/v1/tasks",
+        headers=advisor_headers,
+        json={"title": "Linked", "source_domain": "charge", "source_id": charge.id},
+    )
+
+    resp = client.get(
+        f"/api/v1/tasks/linkable-sources?client_record_id={biz.client_id}",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    row = next(item for item in resp.json()["items"] if item["source_domain"] == "charge")
+    assert row["source_id"] == charge.id
+    assert row["linked_tasks_count"] == 1
 
 
 # ── assigned_role validation ──────────────────────────────────────────────────

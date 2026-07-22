@@ -135,3 +135,28 @@ def test_list_pagination(test_db):
     assert total == 5
     assert len(page1) == 3
     assert len(page2) == 2
+
+
+def test_list_searches_title_and_description_and_sorts_by_title(test_db):
+    _create(test_db, title="Zulu", description="מסמכים מיוחדים")
+    _create(test_db, title="Alpha", description="אחר")
+    _create(test_db, title="Beta", description="מסמכים נוספים")
+
+    items, total = TaskService(test_db).list(search="מסמכים", sort_by="title", order="asc")
+
+    assert total == 2
+    assert [item.title for item in items] == ["Beta", "Zulu"]
+
+
+def test_enriched_list_summary_ignores_only_status_filter(test_db):
+    open_id = _create(test_db, title="Open")
+    done_id = _create(test_db, title="Done")
+    TaskService(test_db).complete(done_id, completed_by_user_id=None)
+
+    items, total, summary = TaskService(test_db).list_enriched(status=TaskStatus.OPEN)
+
+    assert [item.id for item in items] == [open_id]
+    assert total == 1
+    assert summary.total == 2
+    assert summary.open == 1
+    assert summary.done == 1

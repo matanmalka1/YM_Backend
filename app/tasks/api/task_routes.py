@@ -5,6 +5,7 @@ from datetime import date
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.common.source_types import WorkQueueSourceType
+from app.core.api_types import SortOrder
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
@@ -23,6 +24,7 @@ from app.tasks.schemas.task import (
     TaskBulkAssignRequest,
     TaskBulkCompleteRequest,
     TaskCreateRequest,
+    TaskLinkableSourceListResponse,
     TaskListResponse,
     TaskResponse,
     TaskUpdateRequest,
@@ -50,11 +52,14 @@ def list_tasks(
     source_id: int | None = Query(None),
     due_before: date | None = Query(None),
     due_after: date | None = Query(None),
+    search: str | None = Query(None),
+    sort_by: str = Query("created_at", pattern="^(created_at|due_date|priority|title)$"),
+    order: SortOrder = Query(SortOrder.desc),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
     svc = TaskService(db)
-    items, total = svc.list(
+    items, total, summary = svc.list_enriched(
         client_record_id=client_record_id,
         status=status,
         priority=priority,
@@ -64,10 +69,15 @@ def list_tasks(
         source_id=source_id,
         due_before=due_before,
         due_after=due_after,
+        search=search,
+        sort_by=sort_by,
+        order=order.value,
         page=page,
         page_size=page_size,
     )
-    return TaskListResponse(items=items, page=page, page_size=page_size, total=total)
+    return TaskListResponse(
+        items=items, page=page, page_size=page_size, total=total, summary=summary
+    )
 
 
 @router.post(
@@ -127,13 +137,28 @@ def bulk_assign_tasks(
     )
 
 
+@router.get("/linkable-sources", response_model=TaskLinkableSourceListResponse)
+def list_linkable_task_sources(
+    db: DBSession,
+    client_record_id: int = Query(..., gt=0),
+    page: int = Query(1, ge=1),
+    page_size: int = Query(100, ge=1, le=MAX_PAGE_SIZE),
+):
+    items, total = TaskService(db).list_linkable_sources(
+        client_record_id,
+        page=page,
+        page_size=page_size,
+    )
+    return TaskLinkableSourceListResponse(items=items, total=total, page=page, page_size=page_size)
+
+
 @router.get(
     "/{task_id}",
     response_model=TaskResponse,
     responses=not_found_response(description="המשימה המבוקשת לא נמצאה"),
 )
 def get_task(db: DBSession, task_id: PathId):
-    return TaskService(db).get(task_id)
+    return TaskService(db).get_enriched(task_id)
 
 
 @router.patch(

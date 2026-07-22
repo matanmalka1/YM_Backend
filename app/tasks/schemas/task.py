@@ -75,11 +75,58 @@ class TaskResponse(BaseModel):
     canceled_at: ApiDateTime | None = None
     created_at: ApiDateTime
     updated_at: ApiDateTime
+    assigned_to_user_name: str | None = None
+    client_name: str | None = None
+    office_client_number: int | None = None
+    created_by_user_name: str | None = None
+    completed_by_user_name: str | None = None
+    canceled_by_user_name: str | None = None
 
     model_config = {"from_attributes": True}
 
 
-class TaskListResponse(PaginatedResponse[TaskResponse]):
+class TaskListSummary(BaseModel):
+    total: int
+    open: int
+    done: int
+    canceled: int
+
+
+class TaskListItemResponse(BaseModel):
+    id: int
+    title: str
+    description: str | None = None
+    status: TaskStatus
+    priority: TaskPriority
+    due_date: date | None = None
+    assigned_to_user_id: int | None = None
+    assigned_to_user_name: str | None = None
+    assigned_role: UserRole | None = None
+    source_domain: str | None = None
+    source_id: int | None = None
+    client_record_id: int | None = None
+    client_name: str | None = None
+    office_client_number: int | None = None
+    created_at: ApiDateTime
+
+    model_config = {"from_attributes": True}
+
+
+class TaskListResponse(PaginatedResponse[TaskListItemResponse]):
+    summary: TaskListSummary
+
+
+class TaskLinkableSourceResponse(BaseModel):
+    source_domain: str
+    source_id: int
+    title: str
+    type_label: str | None = None
+    client_name: str | None = None
+    due_date: date | None = None
+    linked_tasks_count: int = 0
+
+
+class TaskLinkableSourceListResponse(PaginatedResponse[TaskLinkableSourceResponse]):
     pass
 
 

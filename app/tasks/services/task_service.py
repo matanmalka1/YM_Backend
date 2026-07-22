@@ -14,6 +14,7 @@ from app.audit.audit_constants import (
     ENTITY_TASK,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.clients.repositories.client_identity_repository import ClientIdentityRepository
 from app.common.services.base_service import BaseService
 from app.common.source_types import WorkQueueSourceType, normalize_source_domain
 from app.core.error_codes import ErrorCode
@@ -25,10 +26,17 @@ from app.tasks.schemas.task import (
     TaskBulkActionResponse,
     TaskBulkFailure,
     TaskCreateRequest,
+    TaskLinkableSourceResponse,
+    TaskListItemResponse,
+    TaskListSummary,
+    TaskResponse,
     TaskUpdateRequest,
 )
 from app.users.models.user import UserRole
+from app.users.repositories.user_repository import UserRepository
 from app.utils.time_utils import utcnow
+from app.work_queue.schemas.work_queue import WorkQueueScope
+from app.work_queue.services.work_queue_service import WorkQueueService
 
 _TERMINAL = {TaskStatus.DONE, TaskStatus.CANCELED}
 
@@ -45,6 +53,8 @@ class TaskService(BaseService):
         super().__init__(db)
         self.repo = TaskRepository(db)
         self.source_repo = TaskSourceRepository(db)
+        self.client_identity_repo = ClientIdentityRepository(db)
+        self.user_repo = UserRepository(db)
         self._audit = EntityAuditWriter(db)
 
     def _audit_snapshot(self, task: Task) -> dict:
@@ -133,6 +143,9 @@ class TaskService(BaseService):
         source_id: int | None = None,
         due_before=None,
         due_after=None,
+        search: str | None = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
         page: int = 1,
         page_size: int = 20,
     ):
@@ -146,8 +159,150 @@ class TaskService(BaseService):
             source_id=source_id,
             due_before=due_before,
             due_after=due_after,
+            search=search,
+            sort_by=sort_by,
+            order=order,
             page=page,
             page_size=page_size,
+        )
+
+    def list_enriched(
+        self,
+        *,
+        client_record_id: int | None = None,
+        status: TaskStatus | None = None,
+        priority: TaskPriority | None = None,
+        assigned_to_user_id: int | None = None,
+        assigned_role: UserRole | None = None,
+        source_domain: WorkQueueSourceType | None = None,
+        source_id: int | None = None,
+        due_before=None,
+        due_after=None,
+        search: str | None = None,
+        sort_by: str = "created_at",
+        order: str = "desc",
+        page: int = 1,
+        page_size: int = 20,
+    ) -> tuple[list[TaskListItemResponse], int, TaskListSummary]:
+        filter_kwargs = {
+            "client_record_id": client_record_id,
+            "status": status,
+            "priority": priority,
+            "assigned_to_user_id": assigned_to_user_id,
+            "assigned_role": assigned_role,
+            "source_domain": source_domain,
+            "source_id": source_id,
+            "due_before": due_before,
+            "due_after": due_after,
+            "search": search,
+        }
+        tasks, total = self.repo.list_active(
+            **filter_kwargs,
+            sort_by=sort_by,
+            order=order,
+            page=page,
+            page_size=page_size,
+        )
+        summary_filters = {**filter_kwargs, "status": None}
+        counts = self.repo.summarize_active(**summary_filters)
+        summary_total = sum(counts.values())
+        return (
+            self._enrich_list_responses(tasks),
+            total,
+            TaskListSummary(
+                total=summary_total,
+                open=counts.get(TaskStatus.OPEN, 0),
+                done=counts.get(TaskStatus.DONE, 0),
+                canceled=counts.get(TaskStatus.CANCELED, 0),
+            ),
+        )
+
+    def _enrich_responses(self, tasks: list[Task]) -> list[TaskResponse]:
+        clients, users = self._enrichment_maps(tasks)
+        responses = []
+        for task in tasks:
+            client = (
+                clients.get(task.client_record_id) if task.client_record_id is not None else None
+            )
+            responses.append(
+                TaskResponse.model_validate(task).model_copy(
+                    update={
+                        "assigned_to_user_name": users.get(task.assigned_to_user_id),
+                        "client_name": client.client_name if client else None,
+                        "office_client_number": client.office_client_number if client else None,
+                        "created_by_user_name": users.get(task.created_by_user_id),
+                        "completed_by_user_name": users.get(task.completed_by_user_id),
+                        "canceled_by_user_name": users.get(task.canceled_by_user_id),
+                    }
+                )
+            )
+        return responses
+
+    def _enrich_list_responses(self, tasks: list[Task]) -> list[TaskListItemResponse]:
+        clients, users = self._enrichment_maps(tasks)
+        responses = []
+        for task in tasks:
+            client = (
+                clients.get(task.client_record_id) if task.client_record_id is not None else None
+            )
+            responses.append(
+                TaskListItemResponse.model_validate(task).model_copy(
+                    update={
+                        "assigned_to_user_name": users.get(task.assigned_to_user_id),
+                        "client_name": client.client_name if client else None,
+                        "office_client_number": client.office_client_number if client else None,
+                    }
+                )
+            )
+        return responses
+
+    def _enrichment_maps(self, tasks: list[Task]):
+        client_ids = {task.client_record_id for task in tasks if task.client_record_id is not None}
+        user_ids = {
+            user_id
+            for task in tasks
+            for user_id in (
+                task.assigned_to_user_id,
+                task.created_by_user_id,
+                task.completed_by_user_id,
+                task.canceled_by_user_id,
+            )
+            if user_id is not None
+        }
+        clients = self.client_identity_repo.get_display_map(client_ids, include_deleted=True)
+        users = {user.id: user.full_name for user in self.user_repo.list_by_ids(list(user_ids))}
+        return clients, users
+
+    def get_enriched(self, task_id: int) -> TaskResponse:
+        return self._enrich_responses([self.get(task_id)])[0]
+
+    def list_linkable_sources(
+        self,
+        client_record_id: int,
+        *,
+        page: int = 1,
+        page_size: int = 100,
+    ) -> tuple[list[TaskLinkableSourceResponse], int]:
+        result = WorkQueueService(self.db).list_items_with_total(
+            client_record_id=client_record_id,
+            scope=WorkQueueScope.SYSTEM,
+            page=page,
+            page_size=page_size,
+        )
+        return (
+            [
+                TaskLinkableSourceResponse(
+                    source_domain=item.source_type.value,
+                    source_id=item.source_id,
+                    title=item.title,
+                    type_label=item.type_label,
+                    client_name=item.client_name,
+                    due_date=item.due_date,
+                    linked_tasks_count=item.linked_tasks_count,
+                )
+                for item in result.items
+            ],
+            result.total,
         )
 
     def update(
