@@ -248,9 +248,13 @@ def test_system_source_actions_expose_only_safe_link_or_modal_actions():
 def test_source_routes_only_return_existing_frontend_targets():
     assert source_route(WorkQueueSourceType.VAT_WORK_ITEM, 11) == "/tax/vat/11"
     assert source_route(WorkQueueSourceType.ANNUAL_REPORT, 22) == "/tax/reports/22"
-    assert source_route(WorkQueueSourceType.CHARGE, 33) == "/charges?charge_id=33"
+    assert source_route(WorkQueueSourceType.CHARGE, 33) == "/charges/33"
     assert source_route(WorkQueueSourceType.BINDER, 44) == "/binders?binder_id=44"
     assert source_route(WorkQueueSourceType.ADVANCE_PAYMENT, 55) == "/tax/advance-payments"
+    assert (
+        source_route(WorkQueueSourceType.ADVANCE_PAYMENT, 55, 88)
+        == "/tax/advance-payments/88/55"
+    )
 
 
 # ── Pagination ────────────────────────────────────────────────────────────────

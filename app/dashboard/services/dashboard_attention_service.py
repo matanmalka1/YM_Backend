@@ -44,7 +44,7 @@ def _sort_key(item: WorkQueueItem) -> tuple:
 
 
 def _href(item: WorkQueueItem) -> str:
-    return source_route(item.source_type, item.source_id) or "/work-queue"
+    return source_route(item.source_type, item.source_id, item.client_record_id) or "/work-queue"
 
 
 def _reason(item: WorkQueueItem) -> str | None:

@@ -47,7 +47,7 @@ def test_unpaid_charge_appears_as_overdue(test_db):
     assert charge_items[0]["urgency"] == WorkQueueUrgency.OVERDUE
     assert charge_items[0]["amount"] == "500.00"
     assert "₪" not in charge_items[0]["amount"]
-    assert charge_items[0]["href"] == f"/charges?charge_id={charge.id}"
+    assert charge_items[0]["href"] == f"/charges/{charge.id}"
 
 
 def test_max_7_items_are_included(test_db):

@@ -4853,6 +4853,34 @@
             }
           },
           {
+            "name": "due_after",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Due After"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^(period|due)$",
+              "default": "period",
+              "title": "Order"
+            }
+          },
+          {
             "name": "page",
             "in": "query",
             "required": false,
@@ -4883,134 +4911,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TaxCalendarGroupListResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/tax-calendar/groups/{tax_calendar_entry_id}/items": {
-      "get": {
-        "tags": [
-          "tax-calendar"
-        ],
-        "summary": "Get Tax Calendar Group Items",
-        "operationId": "get_tax_calendar_group_items_api_v1_tax_calendar_groups__tax_calendar_entry_id__items_get",
-        "parameters": [
-          {
-            "name": "tax_calendar_entry_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "title": "Tax Calendar Entry Id"
-            }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "default": 1,
-              "title": "Page"
-            }
-          },
-          {
-            "name": "page_size",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "integer",
-              "maximum": 200,
-              "minimum": 1,
-              "default": 50,
-              "title": "Page Size"
-            }
-          },
-          {
-            "name": "client_search",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Client Search"
-            }
-          },
-          {
-            "name": "client_record_id",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Client Record Id"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/TaxCalendarGroupItemsResponse"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -33788,163 +33688,6 @@
           "deadline_rule_id"
         ],
         "title": "TaxCalendarEntryResponse"
-      },
-      "TaxCalendarGroupItem": {
-        "properties": {
-          "source_type": {
-            "type": "string",
-            "title": "Source Type"
-          },
-          "source_id": {
-            "type": "integer",
-            "title": "Source Id"
-          },
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "office_client_number": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Office Client Number"
-          },
-          "client_name": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Name"
-          },
-          "id_number": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Id Number"
-          },
-          "period": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Period"
-          },
-          "period_months_count": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Period Months Count"
-          },
-          "tax_year": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Tax Year"
-          },
-          "status": {
-            "type": "string",
-            "title": "Status"
-          },
-          "regulatory_due_date": {
-            "type": "string",
-            "format": "date",
-            "title": "Regulatory Due Date"
-          },
-          "effective_due_date": {
-            "type": "string",
-            "format": "date",
-            "title": "Effective Due Date"
-          },
-          "done": {
-            "type": "boolean",
-            "title": "Done"
-          },
-          "overdue": {
-            "type": "boolean",
-            "title": "Overdue"
-          }
-        },
-        "type": "object",
-        "required": [
-          "source_type",
-          "source_id",
-          "client_record_id",
-          "status",
-          "regulatory_due_date",
-          "effective_due_date",
-          "done",
-          "overdue"
-        ],
-        "title": "TaxCalendarGroupItem"
-      },
-      "TaxCalendarGroupItemsResponse": {
-        "properties": {
-          "items": {
-            "items": {
-              "$ref": "#/components/schemas/TaxCalendarGroupItem"
-            },
-            "type": "array",
-            "title": "Items"
-          },
-          "page": {
-            "type": "integer",
-            "title": "Page"
-          },
-          "page_size": {
-            "type": "integer",
-            "title": "Page Size"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "tax_calendar_entry_id": {
-            "type": "integer",
-            "title": "Tax Calendar Entry Id"
-          },
-          "obligation_type": {
-            "type": "string",
-            "title": "Obligation Type"
-          }
-        },
-        "type": "object",
-        "required": [
-          "items",
-          "page",
-          "page_size",
-          "total",
-          "tax_calendar_entry_id",
-          "obligation_type"
-        ],
-        "title": "TaxCalendarGroupItemsResponse"
       },
       "TaxCalendarGroupListResponse": {
         "properties": {

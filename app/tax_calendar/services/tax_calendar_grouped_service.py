@@ -52,6 +52,8 @@ def list_groups_paginated(
     client_record_id: int | None = None,
     client_search: str | None = None,
     status: str = "all",
+    due_after: date | None = None,
+    order: str = "period",
     page: int = 1,
     page_size: int = 25,
 ) -> TaxCalendarGroupListResponse:
@@ -65,6 +67,10 @@ def list_groups_paginated(
         client_search=client_search,
     )
     groups = _filter_groups_by_status(groups, status)
+    if due_after is not None:
+        groups = [group for group in groups if group.effective_due_date_min >= due_after]
+    if order == "due":
+        groups = sorted(groups, key=lambda group: group.effective_due_date_min)
     total = len(groups)
     summary = TaxCalendarGroupsSummary(
         groups=total,

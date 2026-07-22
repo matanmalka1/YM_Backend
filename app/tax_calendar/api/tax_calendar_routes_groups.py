@@ -1,14 +1,10 @@
+from datetime import date
+
 from fastapi import APIRouter, Depends, Query
 
 from app.common.enums import ObligationType
-from app.core.openapi_responses import not_found_response
-from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
-from app.core.path_params import PathId
-from app.tax_calendar.schemas.tax_calendar_grouped import (
-    TaxCalendarGroupItemsResponse,
-    TaxCalendarGroupListResponse,
-)
-from app.tax_calendar.services.tax_calendar_grouped_items_service import get_group_items
+from app.core.pagination import MAX_PAGE_SIZE
+from app.tax_calendar.schemas.tax_calendar_grouped import TaxCalendarGroupListResponse
 from app.tax_calendar.services.tax_calendar_grouped_service import list_groups_paginated
 from app.users.api.user_deps import DBSession, require_role
 from app.users.models.user import UserRole
@@ -30,6 +26,8 @@ def list_tax_calendar_groups(
     client_record_id: int | None = Query(None),
     client_search: str | None = Query(None),
     status: str = Query("all", pattern="^(all|open|overdue|done)$"),
+    due_after: date | None = Query(None),
+    order: str = Query("period", pattern="^(period|due)$"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
@@ -42,30 +40,8 @@ def list_tax_calendar_groups(
         client_record_id=client_record_id,
         client_search=client_search,
         status=status,
+        due_after=due_after,
+        order=order,
         page=page,
         page_size=page_size,
-    )
-
-
-@router.get(
-    "/groups/{tax_calendar_entry_id}/items",
-    response_model=TaxCalendarGroupItemsResponse,
-    dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses=not_found_response(description="הישות המבוקשת לא נמצאה"),
-)
-def get_tax_calendar_group_items(
-    tax_calendar_entry_id: PathId,
-    db: DBSession,
-    page: int = Query(1, ge=1),
-    page_size: int = Query(DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    client_search: str | None = Query(None),
-    client_record_id: int | None = Query(None),
-):
-    return get_group_items(
-        db,
-        tax_calendar_entry_id,
-        page=page,
-        page_size=page_size,
-        client_search=client_search,
-        client_record_id=client_record_id,
     )

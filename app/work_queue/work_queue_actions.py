@@ -15,16 +15,18 @@ def _disabled(action: ActionDescriptor, reason: str) -> ActionDescriptor:
     return action
 
 
-def source_link_action(source_type: WorkQueueSourceType, source_id: int) -> ActionDescriptor | None:
-    route = source_route(source_type, source_id)
+def source_link_action(
+    source_type: WorkQueueSourceType, source_id: int, client_record_id: int | None = None
+) -> ActionDescriptor | None:
+    route = source_route(source_type, source_id, client_record_id)
     if route is None:
         return None
     labels = {
         WorkQueueSourceType.VAT_WORK_ITEM: 'פתח דוח מע"מ',
         WorkQueueSourceType.ANNUAL_REPORT: "פתח דוח שנתי",
-        WorkQueueSourceType.ADVANCE_PAYMENT: "פתח מקדמות",
-        WorkQueueSourceType.CHARGE: "פתח חיובים",
-        WorkQueueSourceType.BINDER: "פתח קלסרים",
+        WorkQueueSourceType.ADVANCE_PAYMENT: "פתח מקדמה",
+        WorkQueueSourceType.CHARGE: "פתח חיוב",
+        WorkQueueSourceType.BINDER: "פתח קלסר",
     }
     keys = {
         WorkQueueSourceType.VAT_WORK_ITEM: "open_vat_work_item",
@@ -136,9 +138,10 @@ def create_linked_task_action() -> ActionDescriptor:
 def source_actions(
     source_type: WorkQueueSourceType,
     source_id: int,
+    client_record_id: int | None = None,
 ) -> list[ActionDescriptor]:
     actions = []
-    open_action = source_link_action(source_type, source_id)
+    open_action = source_link_action(source_type, source_id, client_record_id)
     if open_action is not None:
         actions.append(open_action)
     if source_type != WorkQueueSourceType.TASK:

@@ -29,12 +29,14 @@ def entity_route(
 ) -> str:
     """Return the frontend route that opens `entity_id`.
 
-    `client_record_id` is required by the client-scoped screens (advance payments,
-    documents) — those records are reachable only through their owning client's tab,
-    which loads the single record and opens it regardless of the tab's own filters.
-    Annual reports have both a global and a client-scoped detail screen; the
-    client-scoped one is used when the caller already knows the owning client, so the
-    user stays inside that client's context.
+    `client_record_id` is required by the client-scoped screens. An advance payment
+    opens the advance-payments detail page — keyed by both client and payment id, but
+    reached through the advance-payments list, not the client tab, so its breadcrumb
+    matches a charge opening through the charges list. A document is reached through its
+    owning client's tab, which loads the single record and opens it regardless of the
+    tab's own filters. Annual reports have both a global and a client-scoped detail
+    screen; the client-scoped one is used when the caller already knows the owning
+    client, so the user stays inside that client's context.
     """
     if entity is LinkedEntity.CLIENT:
         return f"/clients/{entity_id}"
@@ -48,9 +50,9 @@ def entity_route(
         return f"/clients/{client_record_id}/annual-reports/{entity_id}"
     if entity is LinkedEntity.ADVANCE_PAYMENT:
         _require_client(entity, client_record_id)
-        return f"/clients/{client_record_id}/advance-payments?advance_payment_id={entity_id}"
+        return f"/tax/advance-payments/{client_record_id}/{entity_id}"
     if entity is LinkedEntity.CHARGE:
-        return f"/charges?charge_id={entity_id}"
+        return f"/charges/{entity_id}"
     if entity is LinkedEntity.TASK:
         return f"/tasks?task_id={entity_id}"
     if entity is LinkedEntity.DOCUMENT:

@@ -296,6 +296,7 @@ class WorkQueueService:
             item.available_actions = source_actions(
                 item.source_type,
                 item.source_id,
+                item.client_record_id,
             )
 
         items = self._merge_tasks(

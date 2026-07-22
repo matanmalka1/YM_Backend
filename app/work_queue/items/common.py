@@ -183,7 +183,7 @@ class WorkQueueContext:
                 source_type=source_type.value,
                 source_id=source_id,
                 label=title,
-                route=source_route(source_type, source_id),
+                route=source_route(source_type, source_id, client_record_id),
             ),
             metadata=metadata,
         )

@@ -23,16 +23,22 @@ def normalize_source_domain(value: str | None) -> WorkQueueSourceType | None:
         return None
 
 
-def source_route(source_type: WorkQueueSourceType, source_id: int) -> str | None:
+def source_route(
+    source_type: WorkQueueSourceType, source_id: int, client_record_id: int | None = None
+) -> str | None:
     """Route for a queue row's source entity.
 
-    URL strings come from `entity_links`. Two source types deliberately diverge from
-    the canonical entity link: a queue row has no owning-client context, so an advance
-    payment falls back to its unscoped list, and a task needs no link at all because
+    URL strings come from `entity_links`. An advance payment deep-links to its
+    client-scoped detail page when the queue row's owning client is known, and falls
+    back to its unscoped list only when it is not. A task needs no link at all because
     the queue row is the task and is acted on in place.
     """
     if source_type == WorkQueueSourceType.ADVANCE_PAYMENT:
-        return "/tax/advance-payments"
+        if client_record_id is None:
+            return "/tax/advance-payments"
+        return entity_route(
+            LinkedEntity.ADVANCE_PAYMENT, source_id, client_record_id=client_record_id
+        )
     if source_type == WorkQueueSourceType.TASK:
         return None
     return entity_route(LinkedEntity(source_type.value), source_id)

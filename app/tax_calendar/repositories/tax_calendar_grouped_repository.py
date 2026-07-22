@@ -1,6 +1,3 @@
-from dataclasses import dataclass
-from typing import Any
-
 from sqlalchemy import String, case, cast, func, select
 from sqlalchemy.orm import Session
 
@@ -13,18 +10,6 @@ from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.vat.models.vat_work_item import VatWorkItem
-
-
-@dataclass(frozen=True)
-class GroupedItemRow:
-    row: Any
-    client: ClientRecord
-    legal_entity: LegalEntity
-
-    def __iter__(self):
-        yield self.row
-        yield self.client
-        yield self.legal_entity
 
 
 def _entry_sort_clauses():
@@ -184,72 +169,3 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
             | LegalEntity.id_number.ilike(like)
             | cast(ClientRecord.office_client_number, String).ilike(like)
         )
-
-    def get_entry(self, entry_id: int) -> TaxCalendarEntry | None:
-        return self.db.get(TaxCalendarEntry, entry_id)
-
-    def list_vat_items(
-        self,
-        entry_id: int,
-        *,
-        client_search: str | None = None,
-        client_record_id: int | None = None,
-    ) -> list[GroupedItemRow]:
-        return self._fetch_items(
-            VatWorkItem,
-            entry_id,
-            client_search=client_search,
-            client_record_id=client_record_id,
-        )
-
-    def list_advance_items(
-        self,
-        entry_id: int,
-        *,
-        client_search: str | None = None,
-        client_record_id: int | None = None,
-    ) -> list[GroupedItemRow]:
-        return self._fetch_items(
-            AdvancePayment,
-            entry_id,
-            client_search=client_search,
-            client_record_id=client_record_id,
-        )
-
-    def list_annual_items(
-        self,
-        entry_id: int,
-        *,
-        client_search: str | None = None,
-        client_record_id: int | None = None,
-    ) -> list[GroupedItemRow]:
-        return self._fetch_items(
-            AnnualReport,
-            entry_id,
-            client_search=client_search,
-            client_record_id=client_record_id,
-        )
-
-    def _fetch_items(
-        self,
-        model,
-        entry_id: int,
-        *,
-        client_search: str | None,
-        client_record_id: int | None,
-    ) -> list[GroupedItemRow]:
-        stmt = self._with_client(model).where(
-            model.tax_calendar_entry_id == entry_id,
-            model.deleted_at.is_(None),
-        )
-        if client_record_id is not None:
-            stmt = stmt.where(model.client_record_id == client_record_id)
-        stmt = self._apply_client_search(stmt, model, client_search)
-        rows = self.db.execute(stmt).all()
-        return [GroupedItemRow(row=r[0], client=r[1], legal_entity=r[2]) for r in rows]
-
-    def _with_client(self, model):
-        stmt = scope_to_active_clients_stmt(
-            select(model, ClientRecord, LegalEntity), model, join_legal_entity=True
-        )
-        return stmt.order_by(ClientRecord.office_client_number.asc(), model.id.asc())
