@@ -5,7 +5,6 @@ from datetime import date
 from sqlalchemy.orm import Session
 
 from app.common.source_types import source_route
-from app.users.models.user import UserRole
 from app.utils.time_utils import israel_today
 from app.work_queue.items.common import load_client_profiles
 from app.work_queue.schemas.work_queue import (
@@ -105,11 +104,8 @@ class DashboardAttentionService:
 
     def build(
         self,
-        user_role: UserRole | None = None,
         reference_date: date | None = None,
     ) -> list[dict]:
-        if user_role != UserRole.ADVISOR:
-            return []
         today = reference_date or israel_today()
         attention_urgencies = list(_ATTENTION_URGENCIES)
         all_items = WorkQueueService(self.db).list_items(

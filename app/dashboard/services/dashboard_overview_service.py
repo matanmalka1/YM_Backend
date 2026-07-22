@@ -44,11 +44,7 @@ class DashboardOverviewService:
 
         is_advisor = user_role == UserRole.ADVISOR
 
-        attention_items = (
-            self.attention_service.build(user_role=user_role, reference_date=reference_date)
-            if is_advisor
-            else []
-        )
+        attention_items = self.attention_service.build(reference_date=reference_date)
 
         open_charges_count, open_charges_amount_ils = self._open_charges_stats(is_advisor)
 
