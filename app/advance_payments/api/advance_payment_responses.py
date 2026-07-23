@@ -24,6 +24,11 @@ ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES = error_responses(
     conflict_response(description="דוח המע״מ לתקופה טרם הוגש"),
 )
 
+# Bulk mark-paid reports unpayable rows as skips, so it has no 404/409.
+ADVANCE_PAYMENT_BULK_MARK_PAID_RESPONSES = error_responses(
+    bad_request_response(description="רשימת המקדמות אינה תקינה"),
+)
+
 # Bulk refresh reports unsnapshottable periods as counts, so it has no 409 —
 # an unfiled return is a skip, not a conflict.
 ADVANCE_PAYMENT_BULK_REFRESH_TURNOVER_RESPONSES = error_responses(

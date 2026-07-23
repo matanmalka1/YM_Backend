@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field, computed_field, field_validator, model_va
 
 from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
+    MAX_BULK_MARK_PAID_PAYMENTS,
     MAX_BULK_REFRESH_PAYMENTS,
     SUPPORTED_PERIOD_MONTH_COUNTS,
 )
@@ -55,6 +56,7 @@ class AdvancePaymentRow(BaseModel):
     status: AdvancePaymentStatus
     paid_at: ApiDateTime | None = None
     payment_method: PaymentMethod | None = None
+    payment_reference: str | None = None
     annual_report_id: int | None = None
     notes: str | None = None
     turnover_amount: ApiDecimal | None = None
@@ -105,6 +107,7 @@ class AdvancePaymentCreateRequest(BaseModel):
     override_amount: ApiDecimal | None = Field(None, ge=0)
     paid_amount: ApiDecimal | None = Field(None, ge=0)
     payment_method: PaymentMethod | None = None
+    payment_reference: str | None = Field(None, max_length=100)
     annual_report_id: int | None = None
     notes: str | None = Field(None, max_length=500)
 
@@ -139,6 +142,7 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
     expected_amount: ApiDecimal | None = Field(None, ge=0)
     paid_at: ApiDateTime | None = None
     payment_method: PaymentMethod | None = None
+    payment_reference: str | None = Field(None, max_length=100)
     notes: str | None = Field(None, max_length=500)
     turnover_amount: ApiDecimal | None = Field(None, ge=0)
     override_amount: ApiDecimal | None = Field(None, ge=0)
@@ -166,6 +170,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     paid_amount: ApiDecimal
     status: AdvancePaymentStatus
     payment_method: PaymentMethod | None = None
+    payment_reference: str | None = None
     turnover_amount: ApiDecimal | None = None
     turnover_source: TurnoverSource | None = None
     turnover_snapshot_at: ApiDateTime | None = None
@@ -269,3 +274,38 @@ class BulkRefreshTurnoverResponse(BaseModel):
     skipped_no_vat: int
     skipped_not_filed: int
     skipped_paid: int
+
+
+class BulkMarkPaidRequest(BaseModel):
+    """Explicit ids only — same principle as ``BulkRefreshTurnoverRequest``.
+
+    Marks each listed payment as paid in full: ``paid_amount`` is topped up to
+    ``expected_amount`` (partial payments included — the client settled the
+    difference). Fully-paid rows are skipped, never rewritten.
+    """
+
+    payment_ids: list[int] = Field(..., min_length=1, max_length=MAX_BULK_MARK_PAID_PAYMENTS)
+    paid_at: ApiDateTime | None = Field(None, description="ברירת מחדל: עכשיו")
+    payment_method: PaymentMethod | None = None
+    reference_prefix: str | None = Field(
+        None,
+        max_length=80,
+        description="אם סופק, כל רשומה תקבל אסמכתא בצורת '<prefix>-<payment_id>'",
+    )
+
+    @field_validator("payment_ids")
+    @classmethod
+    def _reject_duplicates(cls, ids: list[int]) -> list[int]:
+        if len(set(ids)) != len(ids):
+            raise ValueError("payment_ids מכיל מזהים כפולים")
+        return ids
+
+
+class BulkMarkPaidSkippedItem(BaseModel):
+    id: int
+    reason: Literal["already_paid", "no_amount", "not_found"]
+
+
+class BulkMarkPaidResponse(BaseModel):
+    updated: list[int]
+    skipped: list[BulkMarkPaidSkippedItem]

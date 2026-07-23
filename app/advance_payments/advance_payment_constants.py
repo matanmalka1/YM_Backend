@@ -27,6 +27,10 @@ BIMONTHLY_START_MONTHS = (1, 3, 5, 7, 9, 11)
 # (and auditing) an unbounded number of records.
 MAX_BULK_REFRESH_PAYMENTS = 60
 
+# Bulk mark-paid covers one due-date batch on the org list — at most the office's
+# client count for one period. Same rationale as MAX_BULK_REFRESH_PAYMENTS.
+MAX_BULK_MARK_PAID_PAYMENTS = 200
+
 
 def get_period_start_months(period_months_count: int) -> list[int]:
     if period_months_count == BIMONTHLY_PERIOD_MONTHS_COUNT:

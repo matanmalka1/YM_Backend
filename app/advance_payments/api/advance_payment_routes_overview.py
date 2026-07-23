@@ -2,18 +2,26 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 
+from app.advance_payments.api.advance_payment_responses import (
+    ADVANCE_PAYMENT_BULK_MARK_PAID_RESPONSES,
+)
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentOverviewResponse,
     AdvancePaymentOverviewRow,
     AvailableTurnover,
+    BulkMarkPaidRequest,
+    BulkMarkPaidResponse,
+    BulkMarkPaidSkippedItem,
     MonthBatchSummary,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
     AdvancePaymentOverviewEnrichedRow,
 )
+from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.core.pagination import MAX_PAGE_SIZE
+from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -34,6 +42,7 @@ def _to_overview_row(row: AdvancePaymentOverviewEnrichedRow) -> AdvancePaymentOv
         paid_amount=row.payment.paid_amount,
         status=row.payment.status,
         payment_method=row.payment.payment_method,
+        payment_reference=row.payment.payment_reference,
         turnover_amount=row.payment.turnover_amount,
         turnover_source=row.payment.turnover_source,
         turnover_snapshot_at=row.payment.turnover_snapshot_at,
@@ -118,3 +127,38 @@ def list_advance_payment_batches(
         year,
         client_record_id=client_record_id,
     )
+
+
+@overview_router.post(
+    "/bulk-mark-paid",
+    response_model=BulkMarkPaidResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=ADVANCE_PAYMENT_BULK_MARK_PAID_RESPONSES,
+)
+def bulk_mark_paid(
+    request: BulkMarkPaidRequest,
+    db: DBSession,
+    user: CurrentUser,
+    idem: IdempotencyGuard = Depends(require_idempotency_key),
+):
+    """Org-level bulk: top up each listed payment to its expected amount.
+
+    ADVISOR-only (mutation), unlike the read routes on this router.
+    """
+    service = AdvancePaymentService(db)
+
+    def _run():
+        updated, skipped = service.bulk_mark_paid(
+            request.payment_ids,
+            paid_at=request.paid_at,
+            payment_method=request.payment_method,
+            reference_prefix=request.reference_prefix,
+            actor_id=user.id,
+            actor_name=user.full_name,
+        )
+        return BulkMarkPaidResponse(
+            updated=updated,
+            skipped=[BulkMarkPaidSkippedItem(id=pid, reason=reason) for pid, reason in skipped],
+        )
+
+    return idem.execute(payload=request.model_dump_json().encode(), fn=_run)

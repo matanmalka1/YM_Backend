@@ -85,6 +85,7 @@ class AdvancePaymentService:
             "expected_amount": payment.expected_amount,
             "paid_amount": payment.paid_amount,
             "payment_method": payment.payment_method,
+            "payment_reference": payment.payment_reference,
             "annual_report_id": payment.annual_report_id,
             "notes": payment.notes,
             "advance_rate": payment.advance_rate,
@@ -209,6 +210,7 @@ class AdvancePaymentService:
         expected_amount=None,
         paid_amount=None,
         payment_method=None,
+        payment_reference: str | None = None,
         annual_report_id: int | None = None,
         notes: str | None = None,
         turnover_amount=None,
@@ -256,6 +258,7 @@ class AdvancePaymentService:
             expected_amount=resolved_expected,
             paid_amount=paid_amount,
             payment_method=payment_method,
+            payment_reference=payment_reference,
             annual_report_id=annual_report_id,
             tax_calendar_entry_id=entry.id,
             notes=notes,
@@ -286,6 +289,7 @@ class AdvancePaymentService:
         "expected_amount",
         "paid_at",
         "payment_method",
+        "payment_reference",
         "notes",
         "turnover_amount",
         "override_amount",
@@ -348,6 +352,68 @@ class AdvancePaymentService:
             **self._actor_kwargs(actor_id, actor_name),
         )
         return updated
+
+    # ─── Bulk mark-paid ───────────────────────────────────────────────────────
+
+    def bulk_mark_paid(
+        self,
+        payment_ids: list[int],
+        *,
+        paid_at=None,
+        payment_method=None,
+        reference_prefix: str | None = None,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> tuple[list[int], list[tuple[int, str]]]:
+        """Top up each payment to its expected amount and mark it paid.
+
+        Partial payments are included by decision — the client settled the
+        difference. Fully-paid rows and rows with nothing due are skipped and
+        reported by reason. Returns (updated_ids, [(id, skip_reason), ...]).
+        """
+        if paid_at is None:
+            paid_at = utcnow()
+        payments = {p.id: p for p in self.repo.get_active_by_ids(payment_ids)}
+        updated: list[int] = []
+        skipped: list[tuple[int, str]] = []
+
+        for payment_id in payment_ids:
+            payment = payments.get(payment_id)
+            if payment is None:
+                skipped.append((payment_id, "not_found"))
+                continue
+            if payment.status == AdvancePaymentStatus.PAID:
+                skipped.append((payment_id, "already_paid"))
+                continue
+            if payment.expected_amount <= 0:
+                skipped.append((payment_id, "no_amount"))
+                continue
+
+            fields: dict = {
+                "paid_amount": payment.expected_amount,
+                "paid_at": paid_at,
+                "status": AdvancePaymentStatus.PAID,
+            }
+            if payment_method is not None:
+                fields["payment_method"] = payment_method
+            if reference_prefix:
+                fields["payment_reference"] = f"{reference_prefix}-{payment.id}"
+
+            old_snapshot = self._audit_snapshot(payment)
+            saved = self.repo.update_payment(payment, **fields)
+            self._audit.record_action(
+                ENTITY_ADVANCE_PAYMENT,
+                saved.id,
+                actor_id,
+                ACTION_ADVANCE_PAYMENT_UPDATED,
+                old_value=old_snapshot,
+                new_value=self._audit_snapshot(saved),
+                metadata_json=self._audit_metadata(saved, source="bulk_mark_paid"),
+                **self._actor_kwargs(actor_id, actor_name),
+            )
+            updated.append(saved.id)
+
+        return updated, skipped
 
     # ─── Delete ───────────────────────────────────────────────────────────────
 

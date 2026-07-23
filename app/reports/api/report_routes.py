@@ -51,6 +51,28 @@ def get_advance_payment_report(
     return service.get_collections_report(year, month)
 
 
+@router.get(
+    "/advance-payments/export",
+    response_class=FileResponse,
+    responses=binary_response_doc(EXCEL_MEDIA_TYPE, PDF_MEDIA_TYPE),
+)
+def export_advance_payment_report(
+    db: DBSession,
+    format: str = Query(..., pattern="^(excel|pdf)$"),
+    year: int = Query(...),
+    month: int | None = Query(None, ge=1, le=12),
+):
+    result = ReportsExportService(db).export_advance_payment_report(
+        export_format=format, year=year, month=month
+    )
+    return FileResponse(
+        path=result.filepath,
+        media_type=result.media_type,
+        filename=result.filename,
+        headers={"Content-Disposition": f'attachment; filename="{result.filename}"'},
+    )
+
+
 @router.get("/annual-reports", response_model=AnnualReportStatusReportResponse)
 def get_annual_report_status_report(
     db: DBSession,

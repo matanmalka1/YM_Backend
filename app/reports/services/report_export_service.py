@@ -1,7 +1,13 @@
 from __future__ import annotations
 
-from app.reports.exporters.excel_exporter import export_aging_report_to_excel
-from app.reports.exporters.pdf_exporter import export_aging_report_to_pdf
+from app.reports.exporters.excel_exporter import (
+    export_advance_payment_report_to_excel,
+    export_aging_report_to_excel,
+)
+from app.reports.exporters.pdf_exporter import (
+    export_advance_payment_report_to_pdf,
+    export_aging_report_to_pdf,
+)
 from app.reports.report_constants import EXPORT_TEMP_DIR
 
 
@@ -23,3 +29,11 @@ class ExportService:
     def export_aging_report_to_pdf(self, report_data: dict) -> dict[str, object]:
         """Export aging report to PDF format."""
         return export_aging_report_to_pdf(report_data, self.export_dir)
+
+    def export_advance_payment_report_to_excel(self, report_data: dict) -> dict[str, object]:
+        """Export the advance-payment collections report to Excel format."""
+        return export_advance_payment_report_to_excel(report_data, self.export_dir)
+
+    def export_advance_payment_report_to_pdf(self, report_data: dict) -> dict[str, object]:
+        """Export the advance-payment collections report to PDF format."""
+        return export_advance_payment_report_to_pdf(report_data, self.export_dir)

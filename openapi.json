@@ -11220,6 +11220,87 @@
         }
       }
     },
+    "/api/v1/reports/advance-payments/export": {
+      "get": {
+        "tags": [
+          "reports"
+        ],
+        "summary": "Export Advance Payment Report",
+        "operationId": "export_advance_payment_report_api_v1_reports_advance_payments_export_get",
+        "parameters": [
+          {
+            "name": "year",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Year"
+            }
+          },
+          {
+            "name": "month",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "integer",
+                  "maximum": 12,
+                  "minimum": 1
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Month"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "File download",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/reports/annual-reports": {
       "get": {
         "tags": [
@@ -14244,6 +14325,91 @@
                     "$ref": "#/components/schemas/MonthBatchSummary"
                   },
                   "title": "Response List Advance Payment Batches Api V1 Advance Payments Overview Batches Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/advance-payments/bulk-mark-paid": {
+      "post": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Bulk Mark Paid",
+        "description": "Org-level bulk: top up each listed payment to its expected amount.\n\nADVISOR-only (mutation), unlike the read routes on this router.",
+        "operationId": "bulk_mark_paid_api_v1_advance_payments_bulk_mark_paid_post",
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "title": "X-Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkMarkPaidRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkMarkPaidResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
                 }
               }
             }
@@ -24375,6 +24541,111 @@
           "error"
         ],
         "title": "BulkChargeFailedItem"
+      },
+      "BulkMarkPaidRequest": {
+        "properties": {
+          "payment_ids": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "maxItems": 200,
+            "minItems": 1,
+            "title": "Payment Ids"
+          },
+          "paid_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Paid At",
+            "description": "ברירת מחדל: עכשיו"
+          },
+          "payment_method": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PaymentMethod"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reference_prefix": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Prefix",
+            "description": "אם סופק, כל רשומה תקבל אסמכתא בצורת '<prefix>-<payment_id>'"
+          }
+        },
+        "type": "object",
+        "required": [
+          "payment_ids"
+        ],
+        "title": "BulkMarkPaidRequest",
+        "description": "Explicit ids only — same principle as ``BulkRefreshTurnoverRequest``.\n\nMarks each listed payment as paid in full: ``paid_amount`` is topped up to\n``expected_amount`` (partial payments included — the client settled the\ndifference). Fully-paid rows are skipped, never rewritten."
+      },
+      "BulkMarkPaidResponse": {
+        "properties": {
+          "updated": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Updated"
+          },
+          "skipped": {
+            "items": {
+              "$ref": "#/components/schemas/BulkMarkPaidSkippedItem"
+            },
+            "type": "array",
+            "title": "Skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated",
+          "skipped"
+        ],
+        "title": "BulkMarkPaidResponse"
+      },
+      "BulkMarkPaidSkippedItem": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "reason": {
+            "type": "string",
+            "enum": [
+              "already_paid",
+              "no_amount",
+              "not_found"
+            ],
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "reason"
+        ],
+        "title": "BulkMarkPaidSkippedItem"
       },
       "BulkRefreshTurnoverRequest": {
         "properties": {

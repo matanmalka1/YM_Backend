@@ -21,3 +21,15 @@ AGING_REPORT_HEADERS = [
     "תאריך עתיק",
     "ימים",
 ]
+
+ADVANCE_PAYMENT_EXPORT_FILENAME_PREFIX = "advance_payments_report"
+ADVANCE_PAYMENT_REPORT_TITLE = "דוח גביית מקדמות"
+ADVANCE_PAYMENT_REPORT_HEADERS = [
+    "מס׳ לקוח",
+    "שם לקוח",
+    "ת.ז / ח.פ",
+    "צפוי",
+    "שולם",
+    "פער",
+    "פיגורים",
+]
