@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from datetime import date
 
-from sqlalchemy import Integer, String, case, cast, func, select
+from sqlalchemy import Integer, String, asc, case, cast, desc, func, select
 from sqlalchemy.orm import Session
 
 from app.advance_payments.models.advance_payment import (
@@ -13,6 +13,7 @@ from app.advance_payments.models.advance_payment import (
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
+from app.core.api_types import SortOrder
 from app.legal_entities.models.legal_entity import LegalEntity
 
 
@@ -73,6 +74,16 @@ def _overview_filters(
     return filters
 
 
+def _overview_sort_col(sort_by: str):
+    if sort_by == "expected_amount":
+        return AdvancePayment.expected_amount
+    if sort_by == "paid_amount":
+        return AdvancePayment.paid_amount
+    if sort_by == "delta":
+        return AdvancePayment.expected_amount - AdvancePayment.paid_amount
+    return func.coalesce(LegalEntity.official_name, "")
+
+
 class AdvancePaymentAggregationRepository(BaseRepository):
     def __init__(self, db: Session):
         super().__init__(db)
@@ -104,6 +115,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         client_search: str | None = None,
         due_date: date | None = None,
         period_months_count: int | None = None,
+        sort_by: str = "client_name",
+        order: SortOrder | str = SortOrder.asc,
     ) -> tuple[list[AdvancePaymentOverviewRow], int]:
         filters = _overview_filters(
             year,
@@ -122,6 +135,9 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         )
         total = self.db.scalar(count_stmt)
 
+        order = SortOrder(order)
+        sort_col = _overview_sort_col(sort_by)
+        direction = desc if order is SortOrder.desc else asc
         stmt = (
             scope_to_active_clients_stmt(
                 select(
@@ -134,10 +150,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             )
             .outerjoin(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
             .where(*filters)
-            .order_by(
-                func.coalesce(LegalEntity.official_name, "").asc(),
-                AdvancePayment.period.asc(),
-            )
+            .order_by(direction(sort_col), AdvancePayment.id.asc())
         )
         stmt = self.apply_pagination(stmt, page, page_size)
         rows = [

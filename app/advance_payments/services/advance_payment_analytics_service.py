@@ -23,6 +23,7 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
 )
 from app.advance_payments.schemas.advance_payment import MonthBatchSummary
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.core.api_types import SortOrder
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.utils.time_utils import israel_today
@@ -65,6 +66,8 @@ class AdvancePaymentAnalyticsService:
         client_search: str | None = None,
         due_date: date | None = None,
         period_months_count: int | None = None,
+        sort_by: str = "client_name",
+        order: SortOrder | str = SortOrder.asc,
     ) -> tuple[list[AdvancePaymentOverviewEnrichedRow], int]:
         if statuses is None:
             statuses = list(AdvancePaymentStatus)
@@ -79,6 +82,8 @@ class AdvancePaymentAnalyticsService:
             client_search=client_search,
             due_date=due_date,
             period_months_count=period_months_count,
+            sort_by=sort_by,
+            order=order,
         )
 
         available = self._resolve_available_turnover([row.payment for row in rows])

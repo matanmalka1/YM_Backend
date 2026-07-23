@@ -20,6 +20,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentOverviewEnrichedRow,
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
+from app.core.api_types import SortOrder
 from app.core.pagination import MAX_PAGE_SIZE
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
@@ -72,6 +73,11 @@ def list_advance_payments_overview(
     client_record_id: int | None = Query(None),
     client_search: str | None = Query(None),
     status: list[AdvancePaymentStatus] | None = Query(None),
+    sort_by: str = Query(
+        "client_name",
+        pattern="^(client_name|expected_amount|paid_amount|delta)$",
+    ),
+    order: SortOrder = Query(SortOrder.asc),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
@@ -86,6 +92,8 @@ def list_advance_payments_overview(
         client_record_id=client_record_id,
         client_search=client_search,
         statuses=resolved_statuses,
+        sort_by=sort_by,
+        order=order,
         page=page,
         page_size=page_size,
     )
