@@ -1,12 +1,16 @@
 from datetime import date
-from types import SimpleNamespace
+from decimal import Decimal
 
 from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_income_line import IncomeSourceType
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.services.annual_report_readiness_service import (
-    AnnualReportReadinessService,
+from app.annual_reports.repositories.annual_report_detail_repository import (
+    AnnualReportDetailRepository,
+)
+from app.annual_reports.repositories.annual_report_income_repository import (
+    AnnualReportIncomeRepository,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.audit.audit_constants import (
@@ -253,7 +257,7 @@ def test_signature_request_audit_ordering_embedded_chronological_generic_newest_
 
 
 def test_signature_annual_report_auto_submit_system_audit_and_no_signature_duplicate(
-    client, test_db, advisor_headers, monkeypatch
+    client, test_db, advisor_headers
 ):
     business = _business(test_db)
     report = AnnualReportService(test_db).create_report(
@@ -264,15 +268,17 @@ def test_signature_annual_report_auto_submit_system_audit_and_no_signature_dupli
         created_by_name="Advisor",
         deadline_type="standard",
     )
-    test_db.execute(
+    report_entity = test_db.execute(
         select(AnnualReport).where(AnnualReport.id == report.id)
-    ).scalar_one().status = AnnualReportStatus.PENDING_CLIENT
-    test_db.flush()
-    monkeypatch.setattr(
-        AnnualReportReadinessService,
-        "get_readiness_check",
-        lambda self, report_id: SimpleNamespace(is_ready=True, issues=[]),
+    ).scalar_one()
+    report_entity.status = AnnualReportStatus.PENDING_CLIENT
+    report_entity.tax_due = Decimal("100.00")
+    AnnualReportIncomeRepository(test_db).create_for_report(
+        report.id,
+        IncomeSourceType.SALARY,
+        Decimal("1000.00"),
     )
+    test_db.flush()
 
     create_resp = client.post(
         "/api/v1/signature-requests",
@@ -303,6 +309,10 @@ def test_signature_annual_report_auto_submit_system_audit_and_no_signature_dupli
 
     approve_resp = client.post(f"/sign/{payload['signing_token']}/approve")
     assert approve_resp.status_code == 200
+    assert report_entity.status == AnnualReportStatus.SUBMITTED
+    detail = AnnualReportDetailRepository(test_db).get_by_report_id(report.id)
+    assert detail is not None
+    assert detail.client_approved_at is not None
 
     sibling = SignatureRequestRepository(test_db).get_by_id(sibling_payload["id"])
     assert sibling.status == SignatureRequestStatus.CANCELED

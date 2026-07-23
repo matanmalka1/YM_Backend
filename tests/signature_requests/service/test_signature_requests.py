@@ -1,14 +1,29 @@
 from datetime import date, timedelta
+from decimal import Decimal
 from types import SimpleNamespace
 
 import pytest
 
 import app.signature_requests.signature_request_validations as validations
+from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_income_line import IncomeSourceType
+from app.annual_reports.repositories.annual_report_detail_repository import (
+    AnnualReportDetailRepository,
+)
+from app.annual_reports.repositories.annual_report_income_repository import (
+    AnnualReportIncomeRepository,
+)
+from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
+from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.audit.audit_constants import (
+    ACTION_SIGNATURE_REQUEST_CANCELED,
     ACTION_SIGNATURE_REQUEST_CREATED,
     ACTION_SIGNATURE_REQUEST_EXPIRED,
     ACTION_SIGNATURE_REQUEST_SENT,
+    ACTION_STATUS_CHANGED,
+    ENTITY_ANNUAL_REPORT,
     ENTITY_SIGNATURE_REQUEST,
+    entity_action,
 )
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.businesses.models.business import Business
@@ -120,6 +135,94 @@ def test_service_get_by_token_returns_request(test_db, test_user):
     req = _create(repo, business, user_id=test_user.id, title="Token Lookup")
     repo.update(req.id, signing_token="lookup-token")
     assert SignatureRequestService(test_db).get_by_token("lookup-token").id == req.id
+
+
+def test_signed_annual_report_approval_is_preserved_and_retried(test_db, test_user):
+    business = _business(test_db, "retry")
+    report = AnnualReportService(test_db).create_report(
+        client_record_id=business.client_id,
+        tax_year=2026,
+        client_type="corporation",
+        created_by=test_user.id,
+        created_by_name=test_user.full_name,
+        deadline_type="standard",
+    )
+    report_entity = AnnualReportRepository(test_db).get_by_id(report.id)
+    report_entity.status = AnnualReportStatus.PENDING_CLIENT
+    test_db.flush()
+
+    service = SignatureRequestService(test_db)
+    signed_request = service.create_request(
+        client_record_id=business.client_id,
+        business_id=business.id,
+        created_by=test_user.id,
+        created_by_name=test_user.full_name,
+        sent_by=test_user.id,
+        sent_by_name=test_user.full_name,
+        expiry_days=14,
+        request_type=SignatureRequestType.ANNUAL_REPORT_APPROVAL.value,
+        title="Annual approval",
+        signer_name="Signer",
+        annual_report_id=report.id,
+    )
+    sibling = service.create_request(
+        client_record_id=business.client_id,
+        business_id=business.id,
+        created_by=test_user.id,
+        created_by_name=test_user.full_name,
+        sent_by=test_user.id,
+        sent_by_name=test_user.full_name,
+        expiry_days=14,
+        request_type=SignatureRequestType.ANNUAL_REPORT_APPROVAL.value,
+        title="Annual approval sibling",
+        signer_name="Signer",
+        annual_report_id=report.id,
+    )
+
+    service.sign_request(token=signed_request.signing_token)
+
+    assert signed_request.status == SignatureRequestStatus.SIGNED
+    assert signed_request.signing_token is None
+    assert report_entity.status == AnnualReportStatus.PENDING_CLIENT
+    detail = AnnualReportDetailRepository(test_db).get_by_report_id(report.id)
+    assert detail is not None
+    assert detail.client_approved_at == signed_request.signed_at
+    assert sibling.status == SignatureRequestStatus.PENDING_SIGNATURE
+
+    report_entity.tax_due = Decimal("100.00")
+    AnnualReportIncomeRepository(test_db).create_for_report(
+        report.id,
+        IncomeSourceType.SALARY,
+        Decimal("1000.00"),
+    )
+    test_db.flush()
+
+    first_retry = service.reconcile_signed_annual_report_approvals()
+    second_retry = service.reconcile_signed_annual_report_approvals()
+
+    assert first_retry.processed == 1
+    assert first_retry.submitted == 1
+    assert first_retry.failed == 0
+    assert second_retry.processed == 0
+    assert report_entity.status == AnnualReportStatus.SUBMITTED
+    assert sibling.status == SignatureRequestStatus.CANCELED
+
+    report_audit_rows = EntityAuditLogRepository(test_db).list_by_entity(
+        ENTITY_ANNUAL_REPORT, report.id
+    )
+    submitted_actions = [
+        row
+        for row in report_audit_rows
+        if row.action == entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED)
+        and isinstance(row.new_value, dict)
+        and row.new_value.get("status") == AnnualReportStatus.SUBMITTED.value
+    ]
+    assert len(submitted_actions) == 1
+
+    sibling_audit_rows = EntityAuditLogRepository(test_db).list_by_entity(
+        ENTITY_SIGNATURE_REQUEST, sibling.id
+    )
+    assert sum(row.action == ACTION_SIGNATURE_REQUEST_CANCELED for row in sibling_audit_rows) == 1
 
 
 def test_create_request_sets_pending_token_and_expiry(test_db, test_user):
