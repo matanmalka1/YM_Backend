@@ -19818,6 +19818,18 @@
               }
             ]
           },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
           "annual_report_id": {
             "anyOf": [
               {
@@ -20075,6 +20087,17 @@
                 "type": "null"
               }
             ]
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
           },
           "turnover_amount": {
             "anyOf": [
@@ -20350,6 +20373,17 @@
               }
             ]
           },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
+          },
           "annual_report_id": {
             "anyOf": [
               {
@@ -20598,6 +20632,18 @@
                 "type": "null"
               }
             ]
+          },
+          "payment_reference": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Reference"
           },
           "notes": {
             "anyOf": [

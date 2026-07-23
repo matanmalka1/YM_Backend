@@ -280,6 +280,7 @@ _ADVANCE_PAYMENT_FIELDS = frozenset(
         "expected_amount",
         "paid_amount",
         "payment_method",
+        "payment_reference",
         "annual_report_id",
         "notes",
         "advance_rate",

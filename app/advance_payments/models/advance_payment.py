@@ -146,6 +146,8 @@ class AdvancePayment(SoftDeletableMixin, Base):
     payment_method: Mapped[PaymentMethod | None] = mapped_column(
         pg_enum(PaymentMethod), nullable=True
     )
+    # Bank/authority reference (אסמכתה) of the payment, as reported by the client.
+    payment_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # ── Cross-domain links ────────────────────────────────────────────────────
     annual_report_id: Mapped[int | None] = mapped_column(

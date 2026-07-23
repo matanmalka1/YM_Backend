@@ -30,6 +30,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         expected_amount=None,
         paid_amount: Decimal | None = None,
         payment_method=None,
+        payment_reference: str | None = None,
         annual_report_id: int | None = None,
         tax_calendar_entry_id: int | None = None,
         notes: str | None = None,
@@ -49,6 +50,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             expected_amount=expected_amount if expected_amount is not None else Decimal("0"),
             paid_amount=paid_amount if paid_amount is not None else Decimal("0"),
             payment_method=payment_method,
+            payment_reference=payment_reference,
             annual_report_id=annual_report_id,
             tax_calendar_entry_id=tax_calendar_entry_id,
             notes=notes,
@@ -74,6 +76,19 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
                 AdvancePayment.deleted_at.is_(None),
             )
         ).first()
+
+    def get_active_by_ids(self, payment_ids: list[int]) -> list[AdvancePayment]:
+        """Active (non-deleted) payments by id, across clients — org-level bulk ops."""
+        if not payment_ids:
+            return []
+        return list(
+            self.db.scalars(
+                select(AdvancePayment).where(
+                    AdvancePayment.id.in_(payment_ids),
+                    AdvancePayment.deleted_at.is_(None),
+                )
+            ).all()
+        )
 
     def list_by_client_record_year(
         self,

@@ -111,6 +111,7 @@ def create_advance_payment(
         override_amount=request.override_amount,
         paid_amount=request.paid_amount,
         payment_method=request.payment_method,
+        payment_reference=request.payment_reference,
         annual_report_id=request.annual_report_id,
         notes=request.notes,
         actor_id=user.id,
