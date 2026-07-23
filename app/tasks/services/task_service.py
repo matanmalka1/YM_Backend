@@ -97,6 +97,20 @@ class TaskService(BaseService):
         created_by_user_id: int | None,
         actor_name: str | None = None,
     ) -> Task:
+        with self.transaction():
+            return self.create_in_transaction(
+                data,
+                created_by_user_id=created_by_user_id,
+                actor_name=actor_name,
+            )
+
+    def create_in_transaction(
+        self,
+        data: TaskCreateRequest,
+        created_by_user_id: int | None,
+        actor_name: str | None = None,
+    ) -> Task:
+        """Create and audit a task without committing the caller's transaction."""
         self._validate_source(data.source_domain, data.source_id)
         resolved_client_id = self._resolve_client_from_source(data.source_domain, data.source_id)
         if data.client_record_id is not None:
@@ -106,31 +120,30 @@ class TaskService(BaseService):
             final_client_id = data.client_record_id
         else:
             final_client_id = resolved_client_id
-        with self.transaction():
-            task = self.repo.create(
-                title=data.title,
-                created_by_user_id=created_by_user_id,
-                description=data.description,
-                priority=data.priority,
-                due_date=data.due_date,
-                assigned_to_user_id=data.assigned_to_user_id,
-                assigned_role=data.assigned_role,
-                source_domain=data.source_domain,
-                source_id=data.source_id,
-                client_record_id=final_client_id,
-                action_key=data.action_key,
-                action_payload=data.action_payload,
-            )
-            self._audit.record_action(
-                ENTITY_TASK,
-                task.id,
-                created_by_user_id,
-                ACTION_TASK_CREATED,
-                new_value=self._audit_snapshot(task),
-                metadata_json=self._audit_metadata(task),
-                **self._actor_kwargs(created_by_user_id, actor_name),
-            )
-            return task
+        task = self.repo.create(
+            title=data.title,
+            created_by_user_id=created_by_user_id,
+            description=data.description,
+            priority=data.priority,
+            due_date=data.due_date,
+            assigned_to_user_id=data.assigned_to_user_id,
+            assigned_role=data.assigned_role,
+            source_domain=data.source_domain,
+            source_id=data.source_id,
+            client_record_id=final_client_id,
+            action_key=data.action_key,
+            action_payload=data.action_payload,
+        )
+        self._audit.record_action(
+            ENTITY_TASK,
+            task.id,
+            created_by_user_id,
+            ACTION_TASK_CREATED,
+            new_value=self._audit_snapshot(task),
+            metadata_json=self._audit_metadata(task),
+            **self._actor_kwargs(created_by_user_id, actor_name),
+        )
+        return task
 
     def list(
         self,

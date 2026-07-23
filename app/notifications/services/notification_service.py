@@ -91,15 +91,17 @@ class NotificationService:
     def send(
         self,
         request: NotificationSendRequest,
-        triggered_by: int,
+        triggered_by: int | None,
         idempotency_key: str,
         actor_name: str | None = None,
+        retry_failed: bool = False,
     ) -> NotificationResult:
         return self._send_svc.send(
             request,
             triggered_by=triggered_by,
             idempotency_key=idempotency_key,
             actor_name=actor_name,
+            retry_failed=retry_failed,
         )
 
     # ── Read / list ───────────────────────────────────────────────────────────

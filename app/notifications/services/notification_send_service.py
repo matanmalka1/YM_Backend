@@ -225,9 +225,10 @@ class NotificationSendService:
     def send(
         self,
         request: NotificationSendRequest,
-        triggered_by: int,
+        triggered_by: int | None,
         idempotency_key: str,
         actor_name: str | None = None,
+        retry_failed: bool = False,
     ) -> NotificationResult:
         if request.trigger in _AUTO_ONLY_TRIGGERS:
             raise AppError(
@@ -351,7 +352,13 @@ class NotificationSendService:
                 )
             # A PENDING row means a prior attempt crashed mid-flight.
             # Fall through and let this request proceed normally.
-            if existing.status != NotificationStatus.PENDING:
+            retryable_statuses = {
+                NotificationStatus.FAILED,
+                NotificationStatus.SKIPPED,
+            }
+            if existing.status != NotificationStatus.PENDING and not (
+                retry_failed and existing.status in retryable_statuses
+            ):
                 return NotificationResult(
                     status=existing.status.value,  # type: ignore[arg-type]
                     notification_id=existing.id,
@@ -448,8 +455,15 @@ class NotificationSendService:
                     triggered_by,
                     ACTION_NOTIFICATION_SENT,
                     new_value=self._audit_snapshot(sent),
-                    actor_display_name=actor_name,
                     metadata_json=self._audit_metadata(sent),
+                    **(
+                        {
+                            "actor_type": "system",
+                            "actor_display_name": actor_name or "מערכת",
+                        }
+                        if triggered_by is None
+                        else {"actor_display_name": actor_name}
+                    ),
                 )
             return NotificationResult(
                 status="sent",
