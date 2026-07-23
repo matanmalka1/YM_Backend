@@ -15,6 +15,7 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
 )
 from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentCreateRequest,
+    AdvancePaymentDeleteRequest,
     AdvancePaymentListResponse,
     AdvancePaymentRow,
     AdvancePaymentUpdateRequest,
@@ -274,9 +275,14 @@ def refresh_advance_payment_turnover(
 def delete_advance_payment(
     client_record_id: PathId,
     payment_id: PathId,
+    body: AdvancePaymentDeleteRequest,
     db: DBSession,
     user: CurrentUser,
 ):
     AdvancePaymentService(db).delete_payment_for_client(
-        client_record_id, payment_id, actor_id=user.id, actor_name=user.full_name
+        client_record_id,
+        payment_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+        reason=body.reason,
     )

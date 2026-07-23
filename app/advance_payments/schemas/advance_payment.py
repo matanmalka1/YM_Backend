@@ -183,6 +183,18 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
         return self
 
 
+class AdvancePaymentDeleteRequest(BaseModel):
+    reason: str = Field(min_length=1, max_length=500)
+
+    @field_validator("reason")
+    @classmethod
+    def _strip_reason(cls, value: str) -> str:
+        stripped = value.strip()
+        if not stripped:
+            raise ValueError("נדרשת סיבת מחיקה")
+        return stripped
+
+
 class AdvancePaymentOverviewRow(BaseModel):
     id: int
     client_record_id: int

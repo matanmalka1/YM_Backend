@@ -13949,6 +13949,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvancePaymentDeleteRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "204": {
             "description": "Successful Response"
@@ -20103,6 +20113,21 @@
           "bimonthly"
         ],
         "title": "AdvancePaymentDashboardStats"
+      },
+      "AdvancePaymentDeleteRequest": {
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reason"
+        ],
+        "title": "AdvancePaymentDeleteRequest"
       },
       "AdvancePaymentFrequency": {
         "type": "string",

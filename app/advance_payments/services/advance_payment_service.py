@@ -423,6 +423,8 @@ class AdvancePaymentService:
         payment_id: int,
         actor_id: int,
         actor_name: str | None = None,
+        *,
+        reason: str,
     ) -> None:
         self._get_record_or_raise(client_record_id)
         payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
@@ -433,6 +435,8 @@ class AdvancePaymentService:
             )
         old_snapshot = self._audit_snapshot(payment)
         self.repo.soft_delete(payment_id, deleted_by=actor_id)
+        metadata = self._audit_metadata(payment)
+        metadata["reason"] = reason
         self._audit.record_action(
             ENTITY_ADVANCE_PAYMENT,
             payment.id,
@@ -440,7 +444,7 @@ class AdvancePaymentService:
             ACTION_ADVANCE_PAYMENT_DELETED,
             old_value=old_snapshot,
             actor_display_name=actor_name,
-            metadata_json=self._audit_metadata(payment),
+            metadata_json=metadata,
         )
 
     # ─── Generate schedule ────────────────────────────────────────────────────

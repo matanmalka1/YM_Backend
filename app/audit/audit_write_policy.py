@@ -504,8 +504,8 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
     ),
     ACTION_ADVANCE_PAYMENT_DELETED: ActionPolicy(
         value_fields=_ADVANCE_PAYMENT_FIELDS,
-        metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
-        metadata_allowed=_ADVANCE_PAYMENT_META,
+        metadata_required=frozenset({"client_record_id", "period", "tax_year", "reason"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META | frozenset({"reason"}),
     ),
     ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED: ActionPolicy(
         value_fields=_ADVANCE_PAYMENT_FIELDS,
