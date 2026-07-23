@@ -14221,6 +14221,26 @@
             }
           },
           {
+            "name": "timing_status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "overdue",
+                    "on_time"
+                  ],
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Timing Status"
+            }
+          },
+          {
             "name": "sort_by",
             "in": "query",
             "required": false,
@@ -20374,6 +20394,16 @@
               }
             ]
           },
+          "vat_turnover_mismatch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VatTurnoverMismatch"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "missing_turnover": {
             "type": "boolean",
             "title": "Missing Turnover",
@@ -20690,6 +20720,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/AvailableTurnover"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "vat_turnover_mismatch": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/VatTurnoverMismatch"
               },
               {
                 "type": "null"
@@ -36267,6 +36307,42 @@
           "periods_total"
         ],
         "title": "VatSummaryCard"
+      },
+      "VatTurnoverMismatch": {
+        "properties": {
+          "vat_amount": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Vat Amount",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "difference": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Difference",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "vat_filed",
+              "vat_pending"
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "vat_amount",
+          "difference",
+          "source"
+        ],
+        "title": "VatTurnoverMismatch",
+        "description": "The stored turnover disagrees with the period's current VAT figure.\n\nComputed server-side against ``VAT_TURNOVER_MISMATCH_TOLERANCE`` — the\nfrontend must render, never re-derive. ``None`` on a row means \"no\ndisagreement detectable\": no stored turnover, no VAT return, or a\ndifference within tolerance."
       },
       "VatType": {
         "type": "string",

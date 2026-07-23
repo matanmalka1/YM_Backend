@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import date
+from typing import Literal
 
 from sqlalchemy import Integer, String, asc, case, cast, desc, func, select
 from sqlalchemy.orm import Session
@@ -15,6 +16,7 @@ from app.clients.repositories.client_active_scope import scope_to_active_clients
 from app.common.repositories.base_repository import BaseRepository
 from app.core.api_types import SortOrder
 from app.legal_entities.models.legal_entity import LegalEntity
+from app.utils.time_utils import israel_today
 
 
 @dataclass(slots=True, frozen=True)
@@ -48,6 +50,7 @@ def _overview_filters(
     *,
     client_record_id: int | None,
     client_search: str | None,
+    timing_status: Literal["overdue", "on_time"] | None = None,
 ) -> list:
     filters = [
         advance_payment_year_range_filter(year),
@@ -71,6 +74,20 @@ def _overview_filters(
             | func.coalesce(LegalEntity.id_number, "").ilike(like)
             | cast(ClientRecord.office_client_number, String).ilike(like)
         )
+    if timing_status is not None:
+        effective_due_date_expr = func.coalesce(
+            AdvancePayment.due_date_effective, AdvancePayment.due_date
+        )
+        not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
+        today = israel_today()
+        if timing_status == "overdue":
+            filters.append(not_paid_expr)
+            filters.append(effective_due_date_expr < today)
+        else:
+            filters.append(
+                (AdvancePayment.status == AdvancePaymentStatus.PAID)
+                | (effective_due_date_expr >= today)
+            )
     return filters
 
 
@@ -117,6 +134,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         period_months_count: int | None = None,
         sort_by: str = "client_name",
         order: SortOrder | str = SortOrder.asc,
+        timing_status: Literal["overdue", "on_time"] | None = None,
     ) -> tuple[list[AdvancePaymentOverviewRow], int]:
         filters = _overview_filters(
             year,
@@ -126,6 +144,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             period_months_count,
             client_record_id=client_record_id,
             client_search=client_search,
+            timing_status=timing_status,
         )
 
         count_stmt = (
@@ -260,6 +279,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         period_months_count: int | None = None,
         client_record_id: int | None = None,
         client_search: str | None = None,
+        timing_status: Literal["overdue", "on_time"] | None = None,
     ) -> dict:
         filters = _overview_filters(
             year,
@@ -269,6 +289,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             period_months_count,
             client_record_id=client_record_id,
             client_search=client_search,
+            timing_status=timing_status,
         )
         stmt = (
             scope_to_active_clients_stmt(

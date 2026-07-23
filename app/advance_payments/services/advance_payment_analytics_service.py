@@ -4,6 +4,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
+from typing import Literal
 
 from sqlalchemy.orm import Session
 
@@ -21,7 +22,7 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
     TurnoverLookupRepository,
     TurnoverResolution,
 )
-from app.advance_payments.schemas.advance_payment import MonthBatchSummary
+from app.advance_payments.schemas.advance_payment import MonthBatchSummary, VatTurnoverMismatch
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.core.api_types import SortOrder
 from app.core.error_codes import ErrorCode
@@ -37,6 +38,7 @@ class AdvancePaymentOverviewEnrichedRow:
     id_number: str | None
     available_turnover: TurnoverResolution | None
     advance_rate: Decimal | None
+    vat_turnover_mismatch: VatTurnoverMismatch | None = None
 
 
 class AdvancePaymentAnalyticsService:
@@ -68,6 +70,7 @@ class AdvancePaymentAnalyticsService:
         period_months_count: int | None = None,
         sort_by: str = "client_name",
         order: SortOrder | str = SortOrder.asc,
+        timing_status: Literal["overdue", "on_time"] | None = None,
     ) -> tuple[list[AdvancePaymentOverviewEnrichedRow], int]:
         if statuses is None:
             statuses = list(AdvancePaymentStatus)
@@ -84,36 +87,45 @@ class AdvancePaymentAnalyticsService:
             period_months_count=period_months_count,
             sort_by=sort_by,
             order=order,
+            timing_status=timing_status,
         )
 
-        available = self._resolve_available_turnover([row.payment for row in rows])
+        resolutions = self._resolve_vat_turnover([row.payment for row in rows])
 
-        enriched = [
-            AdvancePaymentOverviewEnrichedRow(
-                payment=row.payment,
-                office_client_number=row.office_client_number,
-                client_name=row.client_name,
-                id_number=row.id_number,
-                available_turnover=available.get(
-                    (row.payment.client_record_id, row.payment.period)
-                ),
-                advance_rate=row.payment.advance_rate,
+        enriched = []
+        for row in rows:
+            resolution = resolutions.get((row.payment.client_record_id, row.payment.period))
+            # The resolution feeds exactly one signal (mirrors the detail routes'
+            # _to_row): unsnapshotted → available offer; snapshotted → mismatch.
+            snapshotted = row.payment.turnover_amount is not None
+            enriched.append(
+                AdvancePaymentOverviewEnrichedRow(
+                    payment=row.payment,
+                    office_client_number=row.office_client_number,
+                    client_name=row.client_name,
+                    id_number=row.id_number,
+                    available_turnover=None if snapshotted else resolution,
+                    vat_turnover_mismatch=VatTurnoverMismatch.from_comparison(
+                        row.payment.turnover_amount, resolution
+                    )
+                    if snapshotted
+                    else None,
+                    advance_rate=row.payment.advance_rate,
+                )
             )
-            for row in rows
-        ]
         return enriched, total
 
-    def _resolve_available_turnover(
+    def _resolve_vat_turnover(
         self,
         payments: list[AdvancePayment],
     ) -> dict[tuple[int, str], TurnoverResolution]:
-        """Resolve VAT turnover only for periods that have not been snapshotted."""
+        """Resolve every period's VAT turnover: the available-offer for
+        unsnapshotted rows and the mismatch check for snapshotted ones."""
         by_client: dict[int, list[tuple[str, int]]] = defaultdict(list)
         for payment in payments:
-            if payment.turnover_amount is None:
-                by_client[payment.client_record_id].append(
-                    (payment.period, payment.period_months_count)
-                )
+            by_client[payment.client_record_id].append(
+                (payment.period, payment.period_months_count)
+            )
         return TurnoverLookupRepository(self.db).resolve_turnover_for_clients(dict(by_client))
 
     # ─── KPIs ─────────────────────────────────────────────────────────────────
@@ -141,6 +153,7 @@ class AdvancePaymentAnalyticsService:
         period_months_count: int | None = None,
         client_record_id: int | None = None,
         client_search: str | None = None,
+        timing_status: Literal["overdue", "on_time"] | None = None,
     ) -> dict:
         if statuses is None:
             statuses = list(AdvancePaymentStatus)
@@ -152,6 +165,7 @@ class AdvancePaymentAnalyticsService:
             period_months_count=period_months_count,
             client_record_id=client_record_id,
             client_search=client_search,
+            timing_status=timing_status,
         )
         return {
             **data,

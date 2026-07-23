@@ -11,6 +11,7 @@ from app.advance_payments.advance_payment_constants import (
     MAX_BULK_MARK_PAID_PAYMENTS,
     MAX_BULK_REFRESH_PAYMENTS,
     SUPPORTED_PERIOD_MONTH_COUNTS,
+    VAT_TURNOVER_MISMATCH_TOLERANCE,
 )
 from app.advance_payments.models.advance_payment import (
     AdvancePaymentStatus,
@@ -44,6 +45,31 @@ class AvailableTurnover(BaseModel):
         return cls(amount=resolution.amount, source=resolution.source)
 
 
+class VatTurnoverMismatch(BaseModel):
+    """The stored turnover disagrees with the period's current VAT figure.
+
+    Computed server-side against ``VAT_TURNOVER_MISMATCH_TOLERANCE`` — the
+    frontend must render, never re-derive. ``None`` on a row means "no
+    disagreement detectable": no stored turnover, no VAT return, or a
+    difference within tolerance.
+    """
+
+    vat_amount: ApiDecimal
+    difference: ApiDecimal
+    source: Literal[TurnoverSource.VAT_FILED, TurnoverSource.VAT_PENDING]
+
+    @classmethod
+    def from_comparison(
+        cls, stored_turnover, resolution: TurnoverResolution | None
+    ) -> VatTurnoverMismatch | None:
+        if stored_turnover is None or resolution is None or not resolution.is_resolved:
+            return None
+        difference = abs(Decimal(stored_turnover) - resolution.amount)
+        if difference <= VAT_TURNOVER_MISMATCH_TOLERANCE:
+            return None
+        return cls(vat_amount=resolution.amount, difference=difference, source=resolution.source)
+
+
 class AdvancePaymentRow(BaseModel):
     id: int
     client_record_id: int
@@ -66,6 +92,7 @@ class AdvancePaymentRow(BaseModel):
     calculated_amount: ApiDecimal
     override_amount: ApiDecimal | None = None
     available_turnover: AvailableTurnover | None = None  # populated by router, not ORM
+    vat_turnover_mismatch: VatTurnoverMismatch | None = None  # populated by router, not ORM
     missing_turnover: bool = False
     created_at: ApiDateTime
     updated_at: ApiDateTime | None = None
@@ -177,6 +204,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     calculated_amount: ApiDecimal
     override_amount: ApiDecimal | None = None
     available_turnover: AvailableTurnover | None = None  # populated by service, not ORM
+    vat_turnover_mismatch: VatTurnoverMismatch | None = None  # populated by service, not ORM
     missing_turnover: bool = False
     advance_rate: ApiDecimal | None = None  # snapshot from payment
 

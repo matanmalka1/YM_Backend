@@ -1,4 +1,5 @@
 from datetime import date
+from typing import Literal
 
 from fastapi import APIRouter, Depends, Query
 
@@ -44,6 +45,7 @@ def _to_overview_row(row: AdvancePaymentOverviewEnrichedRow) -> AdvancePaymentOv
         status=row.payment.status,
         payment_method=row.payment.payment_method,
         payment_reference=row.payment.payment_reference,
+        vat_turnover_mismatch=row.vat_turnover_mismatch,
         turnover_amount=row.payment.turnover_amount,
         turnover_source=row.payment.turnover_source,
         turnover_snapshot_at=row.payment.turnover_snapshot_at,
@@ -73,6 +75,7 @@ def list_advance_payments_overview(
     client_record_id: int | None = Query(None),
     client_search: str | None = Query(None),
     status: list[AdvancePaymentStatus] | None = Query(None),
+    timing_status: Literal["overdue", "on_time"] | None = Query(None),
     sort_by: str = Query(
         "client_name",
         pattern="^(client_name|expected_amount|paid_amount|delta)$",
@@ -96,6 +99,7 @@ def list_advance_payments_overview(
         order=order,
         page=page,
         page_size=page_size,
+        timing_status=timing_status,
     )
     kpis = service.get_overview_kpis(
         year=year,
@@ -105,6 +109,7 @@ def list_advance_payments_overview(
         period_months_count=period_months_count,
         client_record_id=client_record_id,
         client_search=client_search,
+        timing_status=timing_status,
     )
 
     items = [_to_overview_row(row) for row in rows]

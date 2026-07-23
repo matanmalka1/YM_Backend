@@ -23,6 +23,7 @@ from app.advance_payments.schemas.advance_payment import (
     BulkRefreshTurnoverRequest,
     BulkRefreshTurnoverResponse,
     RefreshTurnoverRequest,
+    VatTurnoverMismatch,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
@@ -44,9 +45,19 @@ logger = logging.getLogger(__name__)
 
 
 def _to_row(payment, resolution: TurnoverResolution | None = None) -> AdvancePaymentRow:
-    """Only unsnapshotted periods advertise an available turnover."""
+    """The VAT resolution feeds exactly one signal, depending on snapshot state.
+
+    Unsnapshotted period → an *available* turnover (an action not yet taken).
+    Snapshotted period → a *mismatch* check against the current VAT figure.
+    Never both: they must not compete for the same slot in the UI.
+    """
     row = AdvancePaymentRow.model_validate(payment)
-    row.available_turnover = AvailableTurnover.from_resolution(resolution)
+    if payment.turnover_amount is None:
+        row.available_turnover = AvailableTurnover.from_resolution(resolution)
+    else:
+        row.vat_turnover_mismatch = VatTurnoverMismatch.from_comparison(
+            payment.turnover_amount, resolution
+        )
     row.missing_turnover = payment.turnover_amount is None and row.available_turnover is None
     return row
 
@@ -74,11 +85,13 @@ def list_advance_payments(
         page_size=page_size,
     )
     turnover_repo = TurnoverLookupRepository(db)
-    period_list = [(p.period, p.period_months_count) for p in items if p.turnover_amount is None]
+    # Every period gets resolved: unsnapshotted ones for the "available" offer,
+    # snapshotted ones for the mismatch check.
+    period_list = [(p.period, p.period_months_count) for p in items]
     resolved = turnover_repo.resolve_turnover_for_client(client_record_id, period_list)
 
     def _to_list_row(p) -> AdvancePaymentRow:
-        return _to_row(p, resolved.get(p.period) if p.turnover_amount is None else None)
+        return _to_row(p, resolved.get(p.period))
 
     return AdvancePaymentListResponse(
         items=[_to_list_row(p) for p in items],
@@ -179,11 +192,9 @@ def get_advance_payment(
     user: CurrentUser,
 ):
     payment = AdvancePaymentService(db).get_payment_for_client(client_record_id, payment_id)
-    resolution = None
-    if payment.turnover_amount is None:
-        resolution = TurnoverLookupRepository(db).resolve_turnover(
-            client_record_id, payment.period, payment.period_months_count
-        )
+    resolution = TurnoverLookupRepository(db).resolve_turnover(
+        client_record_id, payment.period, payment.period_months_count
+    )
     return _to_row(payment, resolution)
 
 

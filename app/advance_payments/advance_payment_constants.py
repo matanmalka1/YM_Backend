@@ -31,6 +31,11 @@ MAX_BULK_REFRESH_PAYMENTS = 60
 # client count for one period. Same rationale as MAX_BULK_REFRESH_PAYMENTS.
 MAX_BULK_MARK_PAID_PAYMENTS = 200
 
+# A stored turnover further than this from the period's current VAT figure is
+# flagged as a mismatch. 1 ILS absorbs rounding; anything above it is a real
+# disagreement the advisor should look at.
+VAT_TURNOVER_MISMATCH_TOLERANCE = Decimal("1.00")
+
 
 def get_period_start_months(period_months_count: int) -> list[int]:
     if period_months_count == BIMONTHLY_PERIOD_MONTHS_COUNT:
