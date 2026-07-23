@@ -11229,6 +11229,16 @@
         "operationId": "export_advance_payment_report_api_v1_reports_advance_payments_export_get",
         "parameters": [
           {
+            "name": "format",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^(excel|pdf)$",
+              "title": "Format"
+            }
+          },
+          {
             "name": "year",
             "in": "query",
             "required": true,
@@ -11261,6 +11271,12 @@
             "description": "File download",
             "content": {
               "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "application/pdf": {
                 "schema": {
                   "type": "string",
                   "format": "binary"
