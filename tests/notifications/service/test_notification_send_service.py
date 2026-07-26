@@ -1,11 +1,14 @@
 """Tests: NotificationSendService trigger validation and idempotency."""
 
 import pytest
+from sqlalchemy import func, select
 
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.audit.audit_constants import ACTION_NOTIFICATION_SENT, ENTITY_NOTIFICATION
+from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.core.exceptions import AppError
-from app.notifications.models.notification import NotificationTrigger
+from app.notifications.models.notification import Notification, NotificationTrigger
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.schemas.notification_schemas import NotificationSendRequest
 from app.notifications.services.notification_send_service import NotificationSendService
@@ -90,6 +93,75 @@ class TestSendTriggerValidation:
         with pytest.raises(AppError) as exc:
             svc.send(req, triggered_by=1, idempotency_key=idempotency_key)
         assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
+
+
+def test_system_send_can_retry_failed_delivery_without_duplicate_success(test_db, monkeypatch):
+    client = seed_client_identity(
+        test_db,
+        full_name="Reminder Notification Client",
+        id_number="REM-NOTIFICATION-001",
+        email="reminder-notification@test.com",
+    )
+    service = NotificationSendService(test_db)
+    outcomes = iter([(False, "temporary failure"), (True, None)])
+    delivery_calls = 0
+
+    def _deliver(**_kwargs):
+        nonlocal delivery_calls
+        delivery_calls += 1
+        return next(outcomes)
+
+    monkeypatch.setattr(service._delivery, "send", _deliver)
+    request = NotificationSendRequest(
+        client_record_id=client.id,
+        trigger=NotificationTrigger.CLIENT_GENERAL_MESSAGE,
+        overrides={"subject": "Reminder", "body": "Please respond"},
+    )
+    key = "reminder:123:notification"
+
+    first = service.send(
+        request,
+        triggered_by=None,
+        idempotency_key=key,
+        actor_name="מערכת",
+        retry_failed=True,
+    )
+    second = service.send(
+        request,
+        triggered_by=None,
+        idempotency_key=key,
+        actor_name="מערכת",
+        retry_failed=True,
+    )
+    third = service.send(
+        request,
+        triggered_by=None,
+        idempotency_key=key,
+        actor_name="מערכת",
+        retry_failed=True,
+    )
+
+    assert first.status == "failed"
+    assert second.status == "sent"
+    assert third.status == "sent"
+    assert third.notification_id == second.notification_id
+    assert delivery_calls == 2
+    assert (
+        test_db.scalar(
+            select(func.count(Notification.id)).where(Notification.idempotency_key == key)
+        )
+        == 2
+    )
+
+    audit = test_db.scalars(
+        select(EntityAuditLog).where(
+            EntityAuditLog.entity_type == ENTITY_NOTIFICATION,
+            EntityAuditLog.entity_id == second.notification_id,
+            EntityAuditLog.action == ACTION_NOTIFICATION_SENT,
+        )
+    ).one()
+    assert audit.actor_type == "system"
+    assert audit.actor_display_name == "מערכת"
 
 
 class TestAnnualReportSendIntegration:
