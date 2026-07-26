@@ -34,6 +34,10 @@ VERSIONS_DIR = ROOT_DIR / "alembic" / "versions"
 VENV_PYTHON = ROOT_DIR / ".venv" / "bin" / "python"
 VENV_ALEMBIC = ROOT_DIR / ".venv" / "bin" / "alembic"
 
+# Matches every enum type name declared in the migration, e.g.
+# sa.Enum('open', 'done', name='taskstatus') -> taskstatus
+ENUM_NAME_PATTERN = re.compile(r"(?:sa\.Enum|postgresql\.ENUM)\([^)]*name=[\"'](\w+)[\"']")
+
 ENV = {
     **os.environ,
     "APP_ENV": "development",
@@ -105,6 +109,37 @@ def _delete_migrations() -> None:
         print("       (no migration files found)")
 
 
+def inject_enum_drops(content: str) -> tuple[str, int]:
+    """Append `DROP TYPE` for every enum type created by upgrade().
+
+    Alembic creates a standalone Postgres enum TYPE per inline `sa.Enum` column,
+    but `op.drop_table` does not remove it, so a downgrade -> upgrade roundtrip
+    (what CI runs) fails with `type "..." already exists`. SQLite has no types,
+    so nothing to drop there.
+
+    Appends to the end of the file, which is the tail of `downgrade()` in the
+    alembic template — the statements must run after every `drop_table`.
+    """
+    if "DROP TYPE IF EXISTS" in content:
+        return content, 0
+
+    upgrade_src, _, _ = content.partition("def downgrade() -> None:")
+    names = sorted(set(ENUM_NAME_PATTERN.findall(upgrade_src)))
+    if not names:
+        return content, 0
+
+    block = [
+        "",
+        "    # Enum types created implicitly by sa.Enum in create_table. Postgres keeps",
+        "    # them as standalone objects that drop_table does not remove, so a",
+        "    # downgrade -> upgrade roundtrip would fail without this. Postgres-only:",
+        "    # SQLite has no enum types.",
+        '    if op.get_bind().dialect.name == "postgresql":',
+        *[f'        op.execute("DROP TYPE IF EXISTS {name}")' for name in names],
+    ]
+    return content.rstrip("\n") + "\n" + "\n".join(block) + "\n", len(names)
+
+
 def _autogenerate_migration() -> None:
     print("[3/5] Autogenerating fresh migration...")
     _run(
@@ -123,7 +158,8 @@ def _autogenerate_migration() -> None:
     if not migration_files:
         raise SystemExit("Migration file not found after autogenerate")
     migration_file = migration_files[-1]
-    content = migration_file.read_text()
+    original = migration_file.read_text()
+    content = original
     sequence_line = (
         '    op.execute("CREATE SEQUENCE IF NOT EXISTS client_office_number_seq START 100001")\n'
     )
@@ -144,8 +180,15 @@ def _autogenerate_migration() -> None:
                 content = content.replace(insert_after_down, insert_after_down + drop_line)
             else:
                 content = content.replace(downgrade_marker, downgrade_marker + drop_line)
-        migration_file.write_text(content)
         print(f"       injected sequence into {migration_file.name}")
+
+    # autogenerate never drops the enum types it implicitly creates
+    content, enum_count = inject_enum_drops(content)
+    if enum_count:
+        print(f"       injected {enum_count} enum type drops into {migration_file.name}")
+
+    if content != original:
+        migration_file.write_text(content)
 
 
 def _upgrade_and_check() -> None:

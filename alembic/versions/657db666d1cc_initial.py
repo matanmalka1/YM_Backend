@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 2f2c4539ec3b
+Revision ID: 657db666d1cc
 Revises: 
-Create Date: 2026-07-16 12:51:10.775009
+Create Date: 2026-07-26 12:23:38.495286
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '2f2c4539ec3b'
+revision: str = '657db666d1cc'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -329,6 +329,7 @@ def upgrade() -> None:
     op.create_index('idx_annual_report_calendar_entry_active', 'annual_reports', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_annual_report_client_record_year', 'annual_reports', ['client_record_id', 'tax_year'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_annual_report_deadline', 'annual_reports', ['filing_deadline'], unique=False)
+    op.create_index('idx_annual_report_ita_reference', 'annual_reports', ['ita_reference'], unique=False)
     op.create_index('idx_annual_report_status', 'annual_reports', ['status'], unique=False)
     op.create_index('idx_annual_report_tax_year_status_active', 'annual_reports', ['tax_year', 'status'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.create_index(op.f('ix_annual_reports_client_record_id'), 'annual_reports', ['client_record_id'], unique=False)
@@ -391,6 +392,7 @@ def upgrade() -> None:
     )
     op.create_index('idx_binder_capacity_status', 'binders', ['capacity_status'], unique=False)
     op.create_index('idx_binder_location_status', 'binders', ['location_status'], unique=False)
+    op.create_index('idx_binder_number', 'binders', ['binder_number'], unique=False)
     op.create_index('idx_binder_period_start', 'binders', ['period_start'], unique=False)
     op.create_index(op.f('ix_binders_client_record_id'), 'binders', ['client_record_id'], unique=False)
     op.create_index('uq_binder_number_per_client', 'binders', ['client_record_id', 'binder_number'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
@@ -429,6 +431,7 @@ def upgrade() -> None:
     op.create_index('idx_tasks_priority', 'tasks', ['priority'], unique=False)
     op.create_index('idx_tasks_source', 'tasks', ['source_domain', 'source_id'], unique=False)
     op.create_index('idx_tasks_status', 'tasks', ['status'], unique=False)
+    op.create_index('idx_tasks_title', 'tasks', ['title'], unique=False)
     op.create_table('vat_work_items',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_record_id', sa.Integer(), nullable=False),
@@ -492,9 +495,13 @@ def upgrade() -> None:
     sa.Column('advance_rate', sa.Numeric(precision=5, scale=2), nullable=True),
     sa.Column('calculated_amount', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('override_amount', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('withheld_amount', sa.Numeric(precision=12, scale=2), nullable=True),
+    sa.Column('turnover_source', sa.Enum('manual', 'vat_filed', 'vat_pending', name='turnoversource'), nullable=True),
+    sa.Column('turnover_snapshot_at', sa.DateTime(), nullable=True),
     sa.Column('status', sa.Enum('pending', 'paid', 'partial', name='advancepaymentstatus'), nullable=False),
     sa.Column('paid_at', sa.DateTime(), nullable=True),
     sa.Column('payment_method', sa.Enum('bank_transfer', 'credit_card', 'check', 'direct_debit', 'cash', 'other', name='paymentmethod'), nullable=True),
+    sa.Column('payment_reference', sa.String(length=100), nullable=True),
     sa.Column('annual_report_id', sa.Integer(), nullable=True),
     sa.Column('tax_calendar_entry_id', sa.Integer(), nullable=False),
     sa.Column('notes', sa.String(length=500), nullable=True),
@@ -703,6 +710,7 @@ def upgrade() -> None:
     op.create_index(op.f('ix_permanent_documents_business_id'), 'permanent_documents', ['business_id'], unique=False)
     op.create_index(op.f('ix_permanent_documents_client_record_id'), 'permanent_documents', ['client_record_id'], unique=False)
     op.create_index('ix_permanent_documents_client_record_type_year', 'permanent_documents', ['client_record_id', 'document_type', 'tax_year'], unique=False)
+    op.create_index('ix_permanent_documents_original_filename', 'permanent_documents', ['original_filename'], unique=False)
     op.create_index(op.f('ix_permanent_documents_tax_year'), 'permanent_documents', ['tax_year'], unique=False)
     op.create_table('vat_invoices',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
@@ -885,6 +893,7 @@ def upgrade() -> None:
     op.create_index('idx_notification_client_record_status', 'notifications', ['client_record_id', 'status'], unique=False)
     op.create_index('idx_notification_created_at', 'notifications', ['created_at'], unique=False)
     op.create_index('idx_notification_idempotency', 'notifications', ['idempotency_key'], unique=False)
+    op.create_index('idx_notification_recipient', 'notifications', ['recipient'], unique=False)
     op.create_index('idx_notification_signature_request', 'notifications', ['signature_request_id'], unique=False)
     op.create_index('idx_notification_status', 'notifications', ['status'], unique=False)
     op.create_index('idx_notification_trigger', 'notifications', ['trigger'], unique=False)
@@ -910,6 +919,7 @@ def downgrade() -> None:
     op.drop_index('idx_notification_trigger', table_name='notifications')
     op.drop_index('idx_notification_status', table_name='notifications')
     op.drop_index('idx_notification_signature_request', table_name='notifications')
+    op.drop_index('idx_notification_recipient', table_name='notifications')
     op.drop_index('idx_notification_idempotency', table_name='notifications')
     op.drop_index('idx_notification_created_at', table_name='notifications')
     op.drop_index('idx_notification_client_record_status', table_name='notifications')
@@ -944,6 +954,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_vat_invoices_business_activity_id'), table_name='vat_invoices')
     op.drop_table('vat_invoices')
     op.drop_index(op.f('ix_permanent_documents_tax_year'), table_name='permanent_documents')
+    op.drop_index('ix_permanent_documents_original_filename', table_name='permanent_documents')
     op.drop_index('ix_permanent_documents_client_record_type_year', table_name='permanent_documents')
     op.drop_index(op.f('ix_permanent_documents_client_record_id'), table_name='permanent_documents')
     op.drop_index(op.f('ix_permanent_documents_business_id'), table_name='permanent_documents')
@@ -995,6 +1006,7 @@ def downgrade() -> None:
     op.drop_index('ix_vat_work_items_active_due_client', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_vat_work_items_calendar_entry_active', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.drop_table('vat_work_items')
+    op.drop_index('idx_tasks_title', table_name='tasks')
     op.drop_index('idx_tasks_status', table_name='tasks')
     op.drop_index('idx_tasks_source', table_name='tasks')
     op.drop_index('idx_tasks_priority', table_name='tasks')
@@ -1005,6 +1017,7 @@ def downgrade() -> None:
     op.drop_index('uq_binder_number_per_client', table_name='binders', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.drop_index(op.f('ix_binders_client_record_id'), table_name='binders')
     op.drop_index('idx_binder_period_start', table_name='binders')
+    op.drop_index('idx_binder_number', table_name='binders')
     op.drop_index('idx_binder_location_status', table_name='binders')
     op.drop_index('idx_binder_capacity_status', table_name='binders')
     op.drop_table('binders')
@@ -1017,6 +1030,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_annual_reports_client_record_id'), table_name='annual_reports')
     op.drop_index('idx_annual_report_tax_year_status_active', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_annual_report_status', table_name='annual_reports')
+    op.drop_index('idx_annual_report_ita_reference', table_name='annual_reports')
     op.drop_index('idx_annual_report_deadline', table_name='annual_reports')
     op.drop_index('idx_annual_report_client_record_year', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_annual_report_calendar_entry_active', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
@@ -1078,12 +1092,13 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_deadline_rules_rule_type'), table_name='deadline_rules')
     op.drop_index('idx_deadline_rule_type_effective', table_name='deadline_rules')
     op.drop_table('deadline_rules')
+    # ### end Alembic commands ###
 
-    # Drop enum types created implicitly by sa.Enum in create_table.
-    # Postgres keeps these as standalone objects; drop_table does not remove
-    # them, so a downgrade->upgrade roundtrip would fail without this.
-    # SQLite has no enum types, so this is Postgres-only.
-    if op.get_bind().dialect.name == 'postgresql':
+    # Enum types created implicitly by sa.Enum in create_table. Postgres keeps
+    # them as standalone objects that drop_table does not remove, so a
+    # downgrade -> upgrade roundtrip would fail without this. Postgres-only:
+    # SQLite has no enum types.
+    if op.get_bind().dialect.name == "postgresql":
         op.execute("DROP TYPE IF EXISTS advance_payment_frequency")
         op.execute("DROP TYPE IF EXISTS advancepaymentstatus")
         op.execute("DROP TYPE IF EXISTS annualreportschedule")
@@ -1129,9 +1144,9 @@ def downgrade() -> None:
         op.execute("DROP TYPE IF EXISTS submissionmethod")
         op.execute("DROP TYPE IF EXISTS taskpriority")
         op.execute("DROP TYPE IF EXISTS taskstatus")
+        op.execute("DROP TYPE IF EXISTS turnoversource")
         op.execute("DROP TYPE IF EXISTS userrole")
         op.execute("DROP TYPE IF EXISTS vatdocumenttype")
         op.execute("DROP TYPE IF EXISTS vatratetype")
         op.execute("DROP TYPE IF EXISTS vattype")
         op.execute("DROP TYPE IF EXISTS vatworkitemstatus")
-    # ### end Alembic commands ###
