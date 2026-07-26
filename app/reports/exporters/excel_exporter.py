@@ -120,7 +120,9 @@ def export_advance_payment_report_to_excel(report_data: dict, export_dir: str) -
         if report_data.get("month")
         else str(report_data["year"])
     )
-    ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=len(ADVANCE_PAYMENT_REPORT_HEADERS))
+    ws.merge_cells(
+        start_row=1, start_column=1, end_row=1, end_column=len(ADVANCE_PAYMENT_REPORT_HEADERS)
+    )
     title_cell = ws.cell(row=1, column=1)
     title_cell.value = f"{ADVANCE_PAYMENT_REPORT_TITLE} - {period_label}"
     title_cell.font = Font(bold=True, size=14)
@@ -153,7 +155,7 @@ def export_advance_payment_report_to_excel(report_data: dict, export_dir: str) -
     ws.cell(row=row, column=5, value=report_data["total_paid"])
     ws.cell(row=row, column=6, value=report_data["total_withheld"])
     ws.cell(row=row, column=7, value=report_data["total_gap"])
-    ws.cell(row=row, column=8, value=f'{report_data["collection_rate"]}% גבייה')
+    ws.cell(row=row, column=8, value=f"{report_data['collection_rate']}% גבייה")
 
     adjust_column_widths(ws)
 
