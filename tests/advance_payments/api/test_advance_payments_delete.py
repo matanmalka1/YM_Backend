@@ -80,9 +80,7 @@ def test_delete_advance_payment_requires_reason(client, test_db, advisor_headers
     url = f"/api/v1/clients/{business.client_record_id}/advance-payments/{payment.id}"
 
     no_body = client.request("DELETE", url, headers=advisor_headers)
-    blank_reason = client.request(
-        "DELETE", url, headers=advisor_headers, json={"reason": "   "}
-    )
+    blank_reason = client.request("DELETE", url, headers=advisor_headers, json={"reason": "   "})
 
     assert no_body.status_code == 422
     assert blank_reason.status_code == 422

@@ -14608,6 +14608,133 @@
         }
       }
     },
+    "/api/v1/advance-payments/bulk-generate/preview": {
+      "get": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Preview Bulk Generate",
+        "description": "What an office-wide annual generation would cover.\n\nYear-independent on purpose: eligibility is a client property (active, with\na configured frequency), not a property of the year being generated.",
+        "operationId": "preview_bulk_generate_api_v1_advance_payments_bulk_generate_preview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkGeneratePreviewResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/advance-payments/bulk-generate": {
+      "post": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Bulk Generate Annual Schedules",
+        "description": "Generate annual schedules for one chunk of the office's eligible clients.\n\nCall repeatedly, passing back the returned ``next_cursor``, until it is\n``null``. The whole office cannot be one request: the frontend times out at\n15s and the office runs to hundreds of clients. Each chunk needs its own\nidempotency key, so retrying a failed chunk cannot double-create.",
+        "operationId": "bulk_generate_annual_schedules_api_v1_advance_payments_bulk_generate_post",
+        "parameters": [
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "title": "X-Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkGenerateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkGenerateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/clients/{client_record_id}/advance-payments/generate": {
       "post": {
         "tags": [
@@ -24800,6 +24927,120 @@
         ],
         "title": "BulkChargeFailedItem"
       },
+      "BulkGenerateFailedClient": {
+        "properties": {
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "client_name": {
+            "type": "string",
+            "title": "Client Name"
+          },
+          "reason": {
+            "type": "string",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_record_id",
+          "client_name",
+          "reason"
+        ],
+        "title": "BulkGenerateFailedClient"
+      },
+      "BulkGeneratePreviewResponse": {
+        "properties": {
+          "eligible_count": {
+            "type": "integer",
+            "title": "Eligible Count"
+          },
+          "ineligible": {
+            "items": {
+              "$ref": "#/components/schemas/IneligibleClient"
+            },
+            "type": "array",
+            "title": "Ineligible"
+          }
+        },
+        "type": "object",
+        "required": [
+          "eligible_count",
+          "ineligible"
+        ],
+        "title": "BulkGeneratePreviewResponse",
+        "description": "What an office-wide generation would cover, before it runs.\n\nServes the modal twice: the eligible count is the progress denominator\nshown up front, and ``ineligible`` is the exceptions list shown afterwards."
+      },
+      "BulkGenerateRequest": {
+        "properties": {
+          "year": {
+            "type": "integer",
+            "title": "Year"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Cursor",
+            "description": "מזהה הלקוח האחרון שעובד; השאר ריק בבקשה הראשונה של הריצה"
+          }
+        },
+        "type": "object",
+        "required": [
+          "year"
+        ],
+        "title": "BulkGenerateRequest"
+      },
+      "BulkGenerateResponse": {
+        "properties": {
+          "clients_processed": {
+            "type": "integer",
+            "title": "Clients Processed"
+          },
+          "created": {
+            "type": "integer",
+            "title": "Created"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          },
+          "failed": {
+            "items": {
+              "$ref": "#/components/schemas/BulkGenerateFailedClient"
+            },
+            "type": "array",
+            "title": "Failed"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "type": "object",
+        "required": [
+          "clients_processed",
+          "created",
+          "skipped",
+          "failed",
+          "next_cursor"
+        ],
+        "title": "BulkGenerateResponse",
+        "description": "One chunk's outcome. The caller repeats while ``next_cursor`` is set."
+      },
       "BulkMarkPaidRequest": {
         "properties": {
           "payment_ids": {
@@ -28952,6 +29193,30 @@
           "other"
         ],
         "title": "IncomeSourceType"
+      },
+      "IneligibleClient": {
+        "properties": {
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "client_name": {
+            "type": "string",
+            "title": "Client Name"
+          },
+          "reason": {
+            "type": "string",
+            "const": "frequency_not_set",
+            "title": "Reason"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_record_id",
+          "client_name",
+          "reason"
+        ],
+        "title": "IneligibleClient"
       },
       "InvoiceAttachRequest": {
         "properties": {

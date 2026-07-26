@@ -4,16 +4,25 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query
 
 from app.advance_payments.api.advance_payment_responses import (
+    ADVANCE_PAYMENT_BULK_GENERATE_RESPONSES,
     ADVANCE_PAYMENT_BULK_MARK_PAID_RESPONSES,
 )
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
+from app.advance_payments.repositories.advance_payment_generation_repository import (
+    AdvancePaymentGenerationRepository,
+)
 from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentOverviewResponse,
     AdvancePaymentOverviewRow,
     AvailableTurnover,
+    BulkGenerateFailedClient,
+    BulkGeneratePreviewResponse,
+    BulkGenerateRequest,
+    BulkGenerateResponse,
     BulkMarkPaidRequest,
     BulkMarkPaidResponse,
     BulkMarkPaidSkippedItem,
+    IneligibleClient,
     MonthBatchSummary,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
@@ -172,6 +181,76 @@ def bulk_mark_paid(
         return BulkMarkPaidResponse(
             updated=updated,
             skipped=[BulkMarkPaidSkippedItem(id=pid, reason=reason) for pid, reason in skipped],
+        )
+
+    return idem.execute(payload=request.model_dump_json().encode(), fn=_run)
+
+
+@overview_router.get(
+    "/bulk-generate/preview",
+    response_model=BulkGeneratePreviewResponse,
+)
+def preview_bulk_generate(db: DBSession, user: CurrentUser):
+    """What an office-wide annual generation would cover.
+
+    Year-independent on purpose: eligibility is a client property (active, with
+    a configured frequency), not a property of the year being generated.
+    """
+    repo = AdvancePaymentGenerationRepository(db)
+    return BulkGeneratePreviewResponse(
+        eligible_count=repo.count_eligible_clients(),
+        ineligible=[
+            IneligibleClient(
+                client_record_id=client_record_id,
+                client_name=client_name,
+                reason="frequency_not_set",
+            )
+            for client_record_id, client_name in repo.list_clients_without_frequency()
+        ],
+    )
+
+
+@overview_router.post(
+    "/bulk-generate",
+    response_model=BulkGenerateResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=ADVANCE_PAYMENT_BULK_GENERATE_RESPONSES,
+)
+def bulk_generate_annual_schedules(
+    request: BulkGenerateRequest,
+    db: DBSession,
+    user: CurrentUser,
+    idem: IdempotencyGuard = Depends(require_idempotency_key),
+):
+    """Generate annual schedules for one chunk of the office's eligible clients.
+
+    Call repeatedly, passing back the returned ``next_cursor``, until it is
+    ``null``. The whole office cannot be one request: the frontend times out at
+    15s and the office runs to hundreds of clients. Each chunk needs its own
+    idempotency key, so retrying a failed chunk cannot double-create.
+    """
+    service = AdvancePaymentService(db)
+
+    def _run():
+        result = service.bulk_generate_annual_schedules(
+            request.year,
+            cursor=request.cursor,
+            actor_id=user.id,
+            actor_name=user.full_name,
+        )
+        return BulkGenerateResponse(
+            clients_processed=result.clients_processed,
+            created=result.created,
+            skipped=result.skipped,
+            failed=[
+                BulkGenerateFailedClient(
+                    client_record_id=client_record_id,
+                    client_name=client_name,
+                    reason=reason,
+                )
+                for client_record_id, client_name, reason in result.failed
+            ],
+            next_cursor=result.next_cursor,
         )
 
     return idem.execute(payload=request.model_dump_json().encode(), fn=_run)

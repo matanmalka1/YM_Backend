@@ -1,4 +1,5 @@
-from dataclasses import dataclass
+import logging
+from dataclasses import dataclass, field
 from datetime import date
 from decimal import ROUND_HALF_UP, Decimal
 
@@ -6,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.advance_payments.advance_payment_constants import (
     BIMONTHLY_START_MONTHS,
+    BULK_GENERATE_CLIENT_CHUNK_SIZE,
     SUPPORTED_PERIOD_MONTH_COUNTS,
     get_period_start_months,
 )
@@ -13,6 +15,9 @@ from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
     TurnoverSource,
+)
+from app.advance_payments.repositories.advance_payment_generation_repository import (
+    AdvancePaymentGenerationRepository,
 )
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
@@ -34,14 +39,35 @@ from app.clients.repositories.client_record_repository import ClientRecordReposi
 from app.common.enums import AdvancePaymentFrequency, ObligationType
 from app.common.period_utils import parse_period_month, parse_period_year
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import ConflictError, ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.utils.time_utils import israel_today, utcnow
 
+logger = logging.getLogger(__name__)
+
 _SYSTEM_ACTOR_DISPLAY = "מערכת"
+
+# Marks audit entries written by the office-wide run, so a schedule created in
+# bulk is distinguishable from one an advisor generated for a single client.
+_BULK_GENERATE_AUDIT_SOURCE = "bulk_generate"
+
+
+@dataclass
+class BulkGenerateResult:
+    """One chunk of an office-wide generation.
+
+    ``next_cursor`` is ``None`` on the final chunk. ``failed`` carries the
+    clients whose own generation raised — reported, never swallowed.
+    """
+
+    clients_processed: int = 0
+    created: int = 0
+    skipped: int = 0
+    failed: list[tuple[int, str, str]] = field(default_factory=list)
+    next_cursor: int | None = None
 
 
 @dataclass
@@ -226,6 +252,7 @@ class AdvancePaymentService:
         withheld_amount=None,
         actor_id: int | None = None,
         actor_name: str | None = None,
+        audit_source: str | None = None,
     ) -> AdvancePayment:
         self._assert_client_allows_create(client_record_id)
         configured_count = self.default_period_months_count_for_client(client_record_id)
@@ -290,7 +317,7 @@ class AdvancePaymentService:
             actor_id,
             ACTION_ADVANCE_PAYMENT_CREATED,
             new_value=self._audit_snapshot(payment),
-            metadata_json=self._audit_metadata(payment),
+            metadata_json=self._audit_metadata(payment, source=audit_source),
             **self._actor_kwargs(actor_id, actor_name),
         )
         return payment
@@ -547,6 +574,7 @@ class AdvancePaymentService:
         reference_date: date | None = None,
         actor_id: int | None = None,
         actor_name: str | None = None,
+        audit_source: str | None = None,
     ) -> tuple[list[AdvancePayment], int]:
         if reference_date is None:
             reference_date = israel_today()
@@ -581,9 +609,71 @@ class AdvancePaymentService:
                 period_months_count=period_months_count,
                 actor_id=actor_id,
                 actor_name=actor_name,
+                audit_source=audit_source,
             )
             created.append(payment)
         return created, skipped
+
+    # ─── Office-wide generation ───────────────────────────────────────────────
+
+    def bulk_generate_annual_schedules(
+        self,
+        year: int,
+        *,
+        cursor: int | None = None,
+        actor_id: int | None = None,
+        actor_name: str | None = None,
+    ) -> BulkGenerateResult:
+        """Generate one chunk of the office's annual schedules.
+
+        The run is deliberately split across requests: the caller repeats with
+        the returned cursor until it comes back ``None``. Chunk boundaries are
+        chosen here, not by the caller — eligibility and ordering are domain
+        rules, and a caller-chosen batch could silently omit clients.
+
+        Per-client business failures are collected rather than raised, so one
+        misconfigured client cannot cost the chunk its other clients. A database
+        error still fails the whole chunk: the transaction is no longer
+        trustworthy at that point, and the caller can safely retry the same
+        chunk under the same idempotency key.
+        """
+        gen_repo = AdvancePaymentGenerationRepository(self.db)
+        client_ids = gen_repo.list_eligible_client_ids(
+            after_id=cursor, limit=BULK_GENERATE_CLIENT_CHUNK_SIZE
+        )
+        result = BulkGenerateResult()
+        if not client_ids:
+            return result
+
+        names = gen_repo.get_client_names(client_ids)
+        for client_record_id in client_ids:
+            try:
+                created, skipped = self.generate_annual_schedule(
+                    client_record_id,
+                    year,
+                    actor_id=actor_id,
+                    actor_name=actor_name,
+                    audit_source=_BULK_GENERATE_AUDIT_SOURCE,
+                )
+            except AppError as exc:
+                result.failed.append(
+                    (client_record_id, names.get(client_record_id, ""), exc.message)
+                )
+                logger.warning(
+                    "Office-wide advance generation skipped client %s for year %s: %s",
+                    client_record_id,
+                    year,
+                    exc.message,
+                )
+                continue
+            result.created += len(created)
+            result.skipped += skipped
+        result.clients_processed = len(client_ids)
+
+        # A short chunk means the keyset ran out — this was the last one.
+        if len(client_ids) == BULK_GENERATE_CLIENT_CHUNK_SIZE:
+            result.next_cursor = client_ids[-1]
+        return result
 
     # ─── Snapshot turnover from VAT ───────────────────────────────────────────
 

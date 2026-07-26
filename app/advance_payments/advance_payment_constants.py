@@ -31,6 +31,13 @@ MAX_BULK_REFRESH_PAYMENTS = 60
 # client count for one period. Same rationale as MAX_BULK_REFRESH_PAYMENTS.
 MAX_BULK_MARK_PAID_PAYMENTS = 200
 
+# Clients per chunk of an office-wide annual generation. The whole run cannot be
+# one request: the frontend's HTTP timeout is 15s and the office has hundreds of
+# clients, each costing up to 12 period materialisations plus inserts. The server
+# owns this number — the client only repeats the call until there is no cursor
+# left, so the batch size can be retuned here without touching the frontend.
+BULK_GENERATE_CLIENT_CHUNK_SIZE = 25
+
 # A stored turnover further than this from the period's current VAT figure is
 # flagged as a mismatch. 1 ILS absorbs rounding; anything above it is a real
 # disagreement the advisor should look at.

@@ -287,6 +287,47 @@ class GenerateScheduleResponse(BaseModel):
     skipped: int
 
 
+class IneligibleClient(BaseModel):
+    client_record_id: int
+    client_name: str
+    reason: Literal["frequency_not_set"]
+
+
+class BulkGeneratePreviewResponse(BaseModel):
+    """What an office-wide generation would cover, before it runs.
+
+    Serves the modal twice: the eligible count is the progress denominator
+    shown up front, and ``ineligible`` is the exceptions list shown afterwards.
+    """
+
+    eligible_count: int
+    ineligible: list[IneligibleClient]
+
+
+class BulkGenerateRequest(BaseModel):
+    year: int
+    cursor: int | None = Field(
+        None,
+        description="מזהה הלקוח האחרון שעובד; השאר ריק בבקשה הראשונה של הריצה",
+    )
+
+
+class BulkGenerateFailedClient(BaseModel):
+    client_record_id: int
+    client_name: str
+    reason: str
+
+
+class BulkGenerateResponse(BaseModel):
+    """One chunk's outcome. The caller repeats while ``next_cursor`` is set."""
+
+    clients_processed: int
+    created: int
+    skipped: int
+    failed: list[BulkGenerateFailedClient]
+    next_cursor: int | None
+
+
 class RefreshTurnoverRequest(BaseModel):
     confirm_pending: bool = Field(
         False,
