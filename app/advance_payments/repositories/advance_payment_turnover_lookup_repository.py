@@ -4,15 +4,20 @@ One rule, one implementation: :meth:`TurnoverLookupRepository._resolve` decides
 what turnover an advance-payment period can draw from its VAT returns. The three
 public methods differ only in how many periods they ask about, never in the rule
 they apply.
+
+:func:`vat_turnover_mismatch_expr` is the same rule expressed in SQL, for
+filtering a set the server never loads into Python. It lives here so the two
+forms are read and changed together.
 """
 
 from dataclasses import dataclass
 from decimal import Decimal
 
-from sqlalchemy import select
+from sqlalchemy import Integer, cast, func, literal, select
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import TurnoverSource
+from app.advance_payments.advance_payment_constants import VAT_TURNOVER_MISMATCH_TOLERANCE
+from app.advance_payments.models.advance_payment import AdvancePayment, TurnoverSource
 from app.common.repositories.base_repository import BaseRepository
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
@@ -157,3 +162,48 @@ class TurnoverLookupRepository(BaseRepository[VatWorkItem]):
                     vat_work_item_ids=[row.id for row in covering],
                 )
         return resolved
+
+
+def vat_turnover_mismatch_expr():
+    """The mismatch rule as a SQL predicate on ``AdvancePayment``.
+
+    Mirrors :meth:`TurnoverLookupRepository._resolve` plus
+    :meth:`VatTurnoverMismatch.from_comparison`: the row must carry a stored
+    turnover, *every* month the period covers must have a resolvable VAT work
+    item, and the summed VAT figure must differ from the stored one by more than
+    :data:`VAT_TURNOVER_MISMATCH_TOLERANCE`.
+
+    A Python-side check cannot back a filter: the overview is server-paginated,
+    so the set being narrowed is never all in memory. Change this and
+    ``_resolve`` together — a row the list filters in must be a row the detail
+    route flags.
+
+    Both months of a bi-monthly period fall in the period's own year
+    (bi-monthly periods start on an odd month), so months are compared within
+    the year rather than by building an end-period string, which has no
+    portable spelling across SQLite and Postgres.
+    """
+    payment_start_month = cast(func.substr(AdvancePayment.period, 6, 2), Integer)
+    vat_month = cast(func.substr(VatWorkItem.period, 6, 2), Integer)
+    covering = (
+        select(literal(1))
+        .select_from(VatWorkItem)
+        .where(
+            VatWorkItem.client_record_id == AdvancePayment.client_record_id,
+            VatWorkItem.deleted_at.is_(None),
+            VatWorkItem.status.in_(_RESOLVABLE_STATUSES),
+            func.substr(VatWorkItem.period, 1, 4) == func.substr(AdvancePayment.period, 1, 4),
+            vat_month >= payment_start_month,
+            vat_month <= payment_start_month + AdvancePayment.period_months_count - 1,
+        )
+        # One group: the WHERE already pins a single client. Grouping is explicit
+        # because SQLite rejects a HAVING clause without a GROUP BY.
+        .group_by(VatWorkItem.client_record_id)
+        .having(
+            func.count(VatWorkItem.id) == AdvancePayment.period_months_count,
+            func.abs(func.sum(VatWorkItem.total_output_net) - AdvancePayment.turnover_amount)
+            > VAT_TURNOVER_MISMATCH_TOLERANCE,
+        )
+        .correlate(AdvancePayment)
+    )
+    return AdvancePayment.turnover_amount.is_not(None) & covering.exists()

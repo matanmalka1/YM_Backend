@@ -11,6 +11,9 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
     advance_payment_start_month_expr,
     advance_payment_year_range_filter,
 )
+from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
+    vat_turnover_mismatch_expr,
+)
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 
@@ -76,6 +79,10 @@ class AdvancePaymentBatchRepository(BaseRepository):
                         ),
                         0,
                     ).label("snapshot_missing_count"),
+                    func.coalesce(
+                        func.sum(case((vat_turnover_mismatch_expr(), 1), else_=0)),
+                        0,
+                    ).label("vat_mismatch_count"),
                     func.coalesce(
                         func.sum(case((pending_expr, 1), else_=0)),
                         0,

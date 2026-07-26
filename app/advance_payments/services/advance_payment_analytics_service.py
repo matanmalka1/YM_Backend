@@ -71,6 +71,7 @@ class AdvancePaymentAnalyticsService:
         sort_by: str = "client_name",
         order: SortOrder | str = SortOrder.asc,
         timing_status: Literal["overdue", "on_time"] | None = None,
+        vat_mismatch: bool | None = None,
     ) -> tuple[list[AdvancePaymentOverviewEnrichedRow], int]:
         if statuses is None:
             statuses = list(AdvancePaymentStatus)
@@ -88,6 +89,7 @@ class AdvancePaymentAnalyticsService:
             sort_by=sort_by,
             order=order,
             timing_status=timing_status,
+            vat_mismatch=vat_mismatch,
         )
 
         resolutions = self._resolve_vat_turnover([row.payment for row in rows])
@@ -154,6 +156,7 @@ class AdvancePaymentAnalyticsService:
         client_record_id: int | None = None,
         client_search: str | None = None,
         timing_status: Literal["overdue", "on_time"] | None = None,
+        vat_mismatch: bool | None = None,
     ) -> dict:
         if statuses is None:
             statuses = list(AdvancePaymentStatus)
@@ -166,6 +169,7 @@ class AdvancePaymentAnalyticsService:
             client_record_id=client_record_id,
             client_search=client_search,
             timing_status=timing_status,
+            vat_mismatch=vat_mismatch,
         )
         return {
             **data,
@@ -199,6 +203,7 @@ class AdvancePaymentAnalyticsService:
                     period_months_count=int(r.period_months_count or 1),
                     client_count=client_count,
                     missing_turnover_count=int(r.snapshot_missing_count or 0),
+                    vat_mismatch_count=int(r.vat_mismatch_count or 0),
                     overdue_count=int(r.overdue_count or 0),
                     pending_count=int(r.pending_count or 0),
                     paid_count=paid_count,

@@ -86,6 +86,14 @@ def list_advance_payments_overview(
     client_search: str | None = Query(None),
     status: list[AdvancePaymentStatus] | None = Query(None),
     timing_status: Literal["overdue", "on_time"] | None = Query(None),
+    vat_mismatch: bool | None = Query(
+        None,
+        description=(
+            "Narrow to rows whose stored turnover disagrees with the period's "
+            "current VAT figure (or, when false, to rows that do not). Same rule "
+            "as the row's vat_turnover_mismatch field."
+        ),
+    ),
     sort_by: str = Query(
         "client_name",
         pattern="^(client_name|expected_amount|paid_amount|delta)$",
@@ -110,6 +118,7 @@ def list_advance_payments_overview(
         page=page,
         page_size=page_size,
         timing_status=timing_status,
+        vat_mismatch=vat_mismatch,
     )
     kpis = service.get_overview_kpis(
         year=year,
@@ -120,6 +129,7 @@ def list_advance_payments_overview(
         client_record_id=client_record_id,
         client_search=client_search,
         timing_status=timing_status,
+        vat_mismatch=vat_mismatch,
     )
 
     items = [_to_overview_row(row) for row in rows]

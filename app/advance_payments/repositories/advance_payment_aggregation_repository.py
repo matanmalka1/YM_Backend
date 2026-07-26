@@ -11,6 +11,9 @@ from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
 )
+from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
+    vat_turnover_mismatch_expr,
+)
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
@@ -51,6 +54,7 @@ def _overview_filters(
     client_record_id: int | None,
     client_search: str | None,
     timing_status: Literal["overdue", "on_time"] | None = None,
+    vat_mismatch: bool | None = None,
 ) -> list:
     filters = [
         advance_payment_year_range_filter(year),
@@ -88,6 +92,9 @@ def _overview_filters(
                 (AdvancePayment.status == AdvancePaymentStatus.PAID)
                 | (effective_due_date_expr >= today)
             )
+    if vat_mismatch is not None:
+        mismatch_expr = vat_turnover_mismatch_expr()
+        filters.append(mismatch_expr if vat_mismatch else ~mismatch_expr)
     return filters
 
 
@@ -135,6 +142,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         sort_by: str = "client_name",
         order: SortOrder | str = SortOrder.asc,
         timing_status: Literal["overdue", "on_time"] | None = None,
+        vat_mismatch: bool | None = None,
     ) -> tuple[list[AdvancePaymentOverviewRow], int]:
         filters = _overview_filters(
             year,
@@ -145,6 +153,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             client_record_id=client_record_id,
             client_search=client_search,
             timing_status=timing_status,
+            vat_mismatch=vat_mismatch,
         )
 
         count_stmt = (
@@ -281,6 +290,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         client_record_id: int | None = None,
         client_search: str | None = None,
         timing_status: Literal["overdue", "on_time"] | None = None,
+        vat_mismatch: bool | None = None,
     ) -> dict:
         filters = _overview_filters(
             year,
@@ -291,6 +301,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             client_record_id=client_record_id,
             client_search=client_search,
             timing_status=timing_status,
+            vat_mismatch=vat_mismatch,
         )
         stmt = (
             scope_to_active_clients_stmt(

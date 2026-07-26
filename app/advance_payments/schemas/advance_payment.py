@@ -263,6 +263,7 @@ class MonthBatchSummary(BaseModel):
     period_months_count: int = 1
     client_count: int
     missing_turnover_count: int
+    vat_mismatch_count: int = 0
     overdue_count: int
     pending_count: int = 0
     paid_count: int = 0

@@ -14346,6 +14346,24 @@
             }
           },
           {
+            "name": "vat_mismatch",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Narrow to rows whose stored turnover disagrees with the period's current VAT figure (or, when false, to rows that do not). Same rule as the row's vat_turnover_mismatch field.",
+              "title": "Vat Mismatch"
+            },
+            "description": "Narrow to rows whose stored turnover disagrees with the period's current VAT figure (or, when false, to rows that do not). Same rule as the row's vat_turnover_mismatch field."
+          },
+          {
             "name": "sort_by",
             "in": "query",
             "required": false,
@@ -29499,6 +29517,11 @@
           "missing_turnover_count": {
             "type": "integer",
             "title": "Missing Turnover Count"
+          },
+          "vat_mismatch_count": {
+            "type": "integer",
+            "title": "Vat Mismatch Count",
+            "default": 0
           },
           "overdue_count": {
             "type": "integer",
