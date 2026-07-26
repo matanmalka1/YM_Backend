@@ -4,6 +4,8 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
+from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 from app.signature_requests.models.signature_request import (
@@ -294,6 +296,30 @@ class SignatureRequestCrudMixin:
             SignatureRequest.annual_report_id == annual_report_id,
             SignatureRequest.status == SignatureRequestStatus.PENDING_SIGNATURE,
             SignatureRequest.deleted_at.is_(None),
+        )
+        return self.db.scalars(stmt).all()
+
+    def list_signed_annual_report_approvals_pending_submission(
+        self, *, limit: int = 100
+    ) -> list[SignatureRequest]:
+        """Lock signed approvals whose linked report still awaits the client."""
+        stmt = (
+            select(SignatureRequest)
+            .join(AnnualReport, AnnualReport.id == SignatureRequest.annual_report_id)
+            .where(
+                SignatureRequest.request_type == SignatureRequestType.ANNUAL_REPORT_APPROVAL,
+                SignatureRequest.status == SignatureRequestStatus.SIGNED,
+                SignatureRequest.signed_at.isnot(None),
+                SignatureRequest.deleted_at.is_(None),
+                AnnualReport.status == AnnualReportStatus.PENDING_CLIENT,
+                AnnualReport.deleted_at.is_(None),
+            )
+            .order_by(
+                SignatureRequest.signed_at.asc(),
+                SignatureRequest.id.asc(),
+            )
+            .limit(limit)
+            .with_for_update(skip_locked=True)
         )
         return self.db.scalars(stmt).all()
 

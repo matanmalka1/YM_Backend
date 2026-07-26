@@ -9,6 +9,7 @@ from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
 from app.signature_requests.services.signature_request_admin_service import expire_overdue_requests
+from app.signature_requests.services.signature_request_service import SignatureRequestService
 from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
 
 logger = get_logger(__name__)
@@ -26,6 +27,27 @@ def run_startup_expiry() -> None:
     except Exception:
         db.rollback()
         logger.exception("Startup signature expiry failed")
+        raise
+    finally:
+        db.close()
+
+
+def run_startup_annual_report_signature_reconciliation() -> None:
+    db = SessionLocal()
+    try:
+        result = SignatureRequestService(db).reconcile_signed_annual_report_approvals()
+        db.commit()
+        if result.processed:
+            logger.info(
+                "Annual-report signature reconciliation on startup: "
+                "processed=%d submitted=%d failed=%d",
+                result.processed,
+                result.submitted,
+                result.failed,
+            )
+    except Exception:
+        db.rollback()
+        logger.exception("Startup annual-report signature reconciliation failed")
         raise
     finally:
         db.close()
@@ -80,3 +102,21 @@ def _expiry_task(db) -> None:
 
 async def daily_expiry_job() -> None:
     await _run_job("daily_expiry_job", _expiry_task)
+
+
+def _annual_report_signature_reconciliation_task(db) -> None:
+    result = SignatureRequestService(db).reconcile_signed_annual_report_approvals()
+    if result.processed:
+        logger.info(
+            "Annual-report signature reconciliation: processed=%d submitted=%d failed=%d",
+            result.processed,
+            result.submitted,
+            result.failed,
+        )
+
+
+async def daily_annual_report_signature_reconciliation_job() -> None:
+    await _run_job(
+        "daily_annual_report_signature_reconciliation_job",
+        _annual_report_signature_reconciliation_task,
+    )

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import logging
-from datetime import date
+from dataclasses import dataclass
+from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
@@ -42,6 +43,13 @@ from app.signature_requests.signature_request_messages import (
 from app.signature_requests.signature_request_validations import get_or_raise
 
 _log = logging.getLogger(__name__)
+
+
+@dataclass(frozen=True)
+class AnnualReportApprovalReconciliationResult:
+    processed: int
+    submitted: int
+    failed: int
 
 
 class SignatureRequestService:
@@ -91,7 +99,14 @@ class SignatureRequestService:
     def decline_request(self, **kwargs):
         return signer_actions.decline_request(self.repo, **kwargs)
 
-    def _auto_advance_annual_report(self, annual_report_id: int, now) -> None:
+    def _auto_advance_annual_report(self, annual_report_id: int, approved_at: datetime) -> bool:
+        """Persist approval evidence, then submit inside an isolated savepoint.
+
+        The signed request and approval timestamp belong to the outer transaction
+        and must survive a failed report transition. The transition, its audit
+        row, and sibling cancellation are atomic inside the savepoint and can be
+        retried by the reconciliation job.
+        """
         try:
             from app.annual_reports.models.annual_report_enums import AnnualReportStatus
             from app.annual_reports.repositories.annual_report_detail_repository import (
@@ -102,21 +117,48 @@ class SignatureRequestService:
             )
 
             svc = AnnualReportService(self.db)
-            report = svc.repo.get_by_id(annual_report_id)
+            report = svc.repo.get_by_id_for_update(annual_report_id)
             if report is None or report.status != AnnualReportStatus.PENDING_CLIENT:
-                return
-            svc.transition_status(
-                report_id=annual_report_id,
-                new_status=AnnualReportStatus.SUBMITTED.value,
-                changed_by=None,
-                changed_by_name=SIGNATURE_REQUEST_SYSTEM_ACTOR,
-                note=AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,
-                actor_type="system",
-            )
+                return False
+
             detail_repo = AnnualReportDetailRepository(self.db)
-            detail_repo.update_meta(annual_report_id, client_approved_at=now)
+            detail = detail_repo.get_by_report_id(annual_report_id)
+            if detail is None or detail.client_approved_at is None:
+                detail_repo.update_meta(annual_report_id, client_approved_at=approved_at)
+
+            with self.db.begin_nested():
+                svc.transition_status(
+                    report_id=annual_report_id,
+                    new_status=AnnualReportStatus.SUBMITTED.value,
+                    changed_by=None,
+                    changed_by_name=SIGNATURE_REQUEST_SYSTEM_ACTOR,
+                    note=AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,
+                    actor_type="system",
+                )
+            return True
         except Exception:
             _log.exception(AUTO_ADVANCE_ANNUAL_REPORT_ERROR, annual_report_id)
+            return False
+
+    def reconcile_signed_annual_report_approvals(
+        self, *, limit: int = 100
+    ) -> AnnualReportApprovalReconciliationResult:
+        requests = self.repo.list_signed_annual_report_approvals_pending_submission(limit=limit)
+        submitted = 0
+        failed = 0
+        for request in requests:
+            if self._auto_advance_annual_report(
+                request.annual_report_id,
+                request.signed_at,
+            ):
+                submitted += 1
+            else:
+                failed += 1
+        return AnnualReportApprovalReconciliationResult(
+            processed=len(requests),
+            submitted=submitted,
+            failed=failed,
+        )
 
     # ── Advisor / system actions ──────────────────────────────────────────────
 
