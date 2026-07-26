@@ -157,6 +157,7 @@ def export_advance_payment_report_to_pdf(report_data: dict, export_dir: str) -> 
                 item["client_id_number"] or "",
                 f"{item['total_expected']:.2f}",
                 f"{item['total_paid']:.2f}",
+                f"{item['total_withheld']:.2f}",
                 f"{item['gap']:.2f}",
                 str(item["overdue_count"]),
             ]
@@ -169,6 +170,7 @@ def export_advance_payment_report_to_pdf(report_data: dict, export_dir: str) -> 
             "",
             f"{report_data['total_expected']:.2f}",
             f"{report_data['total_paid']:.2f}",
+            f"{report_data['total_withheld']:.2f}",
             f"{report_data['total_gap']:.2f}",
             f"{report_data['collection_rate']}%",
         ]

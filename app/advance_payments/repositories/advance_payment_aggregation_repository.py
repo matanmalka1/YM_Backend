@@ -207,6 +207,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
                 AdvancePayment.client_record_id,
                 func.coalesce(func.sum(AdvancePayment.expected_amount), 0).label("total_expected"),
                 func.coalesce(func.sum(AdvancePayment.paid_amount), 0).label("total_paid"),
+                func.coalesce(func.sum(AdvancePayment.withheld_amount), 0).label("total_withheld"),
                 func.coalesce(
                     func.sum(
                         case(

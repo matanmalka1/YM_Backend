@@ -289,6 +289,7 @@ _ADVANCE_PAYMENT_FIELDS = frozenset(
         "turnover_snapshot_at",
         "calculated_amount",
         "override_amount",
+        "withheld_amount",
         "status",
         "paid_at",
     }

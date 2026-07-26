@@ -9,8 +9,9 @@ Context:
     Tax Authority monthly or bi-monthly, based on a configured advance rate.
     based on a percentage of prior-year income.
     The expected amount is derived: turnover_amount × advance_rate / 100 =
-    calculated_amount. override_amount replaces the final expected_amount when
-    set.
+    calculated_amount (always gross). withheld_amount (ניכוי במקור) is then
+    subtracted to produce expected_amount, floored at zero. override_amount
+    replaces the final expected_amount when set, ignoring withheld_amount.
 
 Period handling:
     ``period`` follows the same ``YYYY-MM`` convention as ``VatWorkItem`` and
@@ -127,6 +128,9 @@ class AdvancePayment(SoftDeletableMixin, Base):
         Numeric(12, 2), nullable=False, default=Decimal("0.00")
     )
     override_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
+    # Withheld-at-source credit (ניכוי במקור), subtracted from calculated_amount
+    # to derive expected_amount. NULL means "none entered", treated as zero.
+    withheld_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
 
     # Provenance of turnover_amount. turnover_source is NULL exactly when
     # turnover_amount is NULL. turnover_snapshot_at is additionally NULL on rows

@@ -140,8 +140,9 @@ def export_advance_payment_report_to_excel(report_data: dict, export_dir: str) -
         ws.cell(row=row, column=3, value=item["client_id_number"])
         ws.cell(row=row, column=4, value=item["total_expected"])
         ws.cell(row=row, column=5, value=item["total_paid"])
-        ws.cell(row=row, column=6, value=item["gap"])
-        ws.cell(row=row, column=7, value=item["overdue_count"])
+        ws.cell(row=row, column=6, value=item["total_withheld"])
+        ws.cell(row=row, column=7, value=item["gap"])
+        ws.cell(row=row, column=8, value=item["overdue_count"])
         row += 1
 
     row += 1
@@ -150,8 +151,9 @@ def export_advance_payment_report_to_excel(report_data: dict, export_dir: str) -
     summary_cell.font = Font(bold=True)
     ws.cell(row=row, column=4, value=report_data["total_expected"])
     ws.cell(row=row, column=5, value=report_data["total_paid"])
-    ws.cell(row=row, column=6, value=report_data["total_gap"])
-    ws.cell(row=row, column=7, value=f'{report_data["collection_rate"]}% גבייה')
+    ws.cell(row=row, column=6, value=report_data["total_withheld"])
+    ws.cell(row=row, column=7, value=report_data["total_gap"])
+    ws.cell(row=row, column=8, value=f'{report_data["collection_rate"]}% גבייה')
 
     adjust_column_widths(ws)
 

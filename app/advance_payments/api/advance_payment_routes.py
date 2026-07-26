@@ -21,6 +21,8 @@ from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentUpdateRequest,
     AnnualKPIResponse,
     AvailableTurnover,
+    BulkRateUpdateRequest,
+    BulkRateUpdateResponse,
     BulkRefreshTurnoverRequest,
     BulkRefreshTurnoverResponse,
     RefreshTurnoverRequest,
@@ -34,6 +36,7 @@ from app.common.period_utils import parse_period_year
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
+from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 
@@ -123,6 +126,7 @@ def create_advance_payment(
         turnover_amount=request.turnover_amount,
         advance_rate=request.advance_rate,
         override_amount=request.override_amount,
+        withheld_amount=request.withheld_amount,
         paid_amount=request.paid_amount,
         payment_method=request.payment_method,
         payment_reference=request.payment_reference,
@@ -286,3 +290,37 @@ def delete_advance_payment(
         actor_name=user.full_name,
         reason=body.reason,
     )
+
+
+@router.post(
+    "/bulk-rate-update",
+    response_model=BulkRateUpdateResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=not_found_response(description="הלקוח המבוקש לא נמצא"),
+)
+def bulk_update_advance_rate(
+    client_record_id: PathId,
+    request: BulkRateUpdateRequest,
+    db: DBSession,
+    user: CurrentUser,
+    idem: IdempotencyGuard = Depends(require_idempotency_key),
+):
+    """Apply a new advance rate to the client's pending periods from a month onward.
+
+    ADVISOR-only. Reprices only PENDING rows at or after ``from_period`` and
+    rewrites the legal-entity default so future generations follow.
+    """
+    service = AdvancePaymentService(db)
+
+    def _run():
+        updated, skipped = service.bulk_update_rate_from_period(
+            client_record_id,
+            advance_rate=request.advance_rate,
+            from_period=request.from_period,
+            actor_id=user.id,
+            actor_role=user.role,
+            actor_name=user.full_name,
+        )
+        return BulkRateUpdateResponse(updated=updated, skipped=skipped)
+
+    return idem.execute(payload=request.model_dump_json().encode(), fn=_run)

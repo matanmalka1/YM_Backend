@@ -14109,6 +14109,101 @@
         }
       }
     },
+    "/api/v1/clients/{client_record_id}/advance-payments/bulk-rate-update": {
+      "post": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Bulk Update Advance Rate",
+        "description": "Apply a new advance rate to the client's pending periods from a month onward.\n\nADVISOR-only. Reprices only PENDING rows at or after ``from_period`` and\nrewrites the legal-entity default so future generations follow.",
+        "operationId": "bulk_update_advance_rate_api_v1_clients__client_record_id__advance_payments_bulk_rate_update_post",
+        "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "X-Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 8,
+              "maxLength": 128,
+              "title": "X-Idempotency-Key"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkRateUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkRateUpdateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/advance-payments/overview": {
       "get": {
         "tags": [
@@ -20024,6 +20119,22 @@
             ],
             "title": "Override Amount"
           },
+          "withheld_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ],
+                "ge": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withheld Amount"
+          },
           "paid_amount": {
             "anyOf": [
               {
@@ -20449,6 +20560,21 @@
             ],
             "title": "Advance Rate"
           },
+          "withheld_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withheld Amount"
+          },
           "delta": {
             "type": "string",
             "format": "decimal",
@@ -20741,6 +20867,21 @@
             ],
             "title": "Override Amount"
           },
+          "withheld_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withheld Amount"
+          },
           "available_turnover": {
             "anyOf": [
               {
@@ -20955,6 +21096,22 @@
               }
             ],
             "title": "Override Amount"
+          },
+          "withheld_amount": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "decimal",
+                "examples": [
+                  "123.45"
+                ],
+                "ge": 0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Withheld Amount"
           }
         },
         "additionalProperties": false,
@@ -24747,6 +24904,50 @@
           "reason"
         ],
         "title": "BulkMarkPaidSkippedItem"
+      },
+      "BulkRateUpdateRequest": {
+        "properties": {
+          "advance_rate": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Advance Rate",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "from_period": {
+            "type": "string",
+            "pattern": "^\\d{4}-(0[1-9]|1[0-2])$",
+            "title": "From Period",
+            "examples": [
+              "2026-06"
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "advance_rate",
+          "from_period"
+        ],
+        "title": "BulkRateUpdateRequest"
+      },
+      "BulkRateUpdateResponse": {
+        "properties": {
+          "updated": {
+            "type": "integer",
+            "title": "Updated"
+          },
+          "skipped": {
+            "type": "integer",
+            "title": "Skipped"
+          }
+        },
+        "type": "object",
+        "required": [
+          "updated",
+          "skipped"
+        ],
+        "title": "BulkRateUpdateResponse"
       },
       "BulkRefreshTurnoverRequest": {
         "properties": {

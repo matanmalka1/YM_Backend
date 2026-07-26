@@ -91,6 +91,7 @@ class AdvancePaymentRow(BaseModel):
     advance_rate: ApiDecimal | None = None
     calculated_amount: ApiDecimal
     override_amount: ApiDecimal | None = None
+    withheld_amount: ApiDecimal | None = None
     available_turnover: AvailableTurnover | None = None  # populated by router, not ORM
     vat_turnover_mismatch: VatTurnoverMismatch | None = None  # populated by router, not ORM
     missing_turnover: bool = False
@@ -132,6 +133,7 @@ class AdvancePaymentCreateRequest(BaseModel):
     turnover_amount: ApiDecimal | None = Field(None, ge=0)
     advance_rate: ApiDecimal | None = Field(None, ge=0)
     override_amount: ApiDecimal | None = Field(None, ge=0)
+    withheld_amount: ApiDecimal | None = Field(None, ge=0)
     paid_amount: ApiDecimal | None = Field(None, ge=0)
     payment_method: PaymentMethod | None = None
     payment_reference: str | None = Field(None, max_length=100)
@@ -173,6 +175,7 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
     notes: str | None = Field(None, max_length=500)
     turnover_amount: ApiDecimal | None = Field(None, ge=0)
     override_amount: ApiDecimal | None = Field(None, ge=0)
+    withheld_amount: ApiDecimal | None = Field(None, ge=0)
 
     @model_validator(mode="after")
     def _reject_null_for_required(self) -> AdvancePaymentUpdateRequest:
@@ -219,6 +222,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     vat_turnover_mismatch: VatTurnoverMismatch | None = None  # populated by service, not ORM
     missing_turnover: bool = False
     advance_rate: ApiDecimal | None = None  # snapshot from payment
+    withheld_amount: ApiDecimal | None = None
 
     @computed_field(return_type=ApiDecimal)
     @property
@@ -349,3 +353,14 @@ class BulkMarkPaidSkippedItem(BaseModel):
 class BulkMarkPaidResponse(BaseModel):
     updated: list[int]
     skipped: list[BulkMarkPaidSkippedItem]
+
+
+class BulkRateUpdateRequest(BaseModel):
+    advance_rate: ApiDecimal = Field(ge=0, le=100)
+    from_period: PeriodStr
+
+
+class BulkRateUpdateResponse(BaseModel):
+    # Repriced PENDING rows vs. rows left as-is (partial/paid at or after the period).
+    updated: int
+    skipped: int

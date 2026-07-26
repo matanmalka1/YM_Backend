@@ -16,6 +16,7 @@ from app.advance_payments.schemas.advance_payment import BulkRefreshTurnoverRequ
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
+    ACTION_ADVANCE_PAYMENT_UPDATED,
     ENTITY_ADVANCE_PAYMENT,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
@@ -23,6 +24,7 @@ from app.businesses.models.business import Business
 from app.common.enums import AdvancePaymentFrequency, VatType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, NotFoundError
+from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
@@ -138,6 +140,51 @@ class TestComputeAmounts:
         assert calc == Decimal("0.00")
         assert expected == Decimal("0.00")
 
+    def test_withheld_deducted_from_calculated(self, test_db):
+        svc = AdvancePaymentService(test_db)
+        calc, expected = svc._compute_amounts(
+            turnover_amount=Decimal("50000"),
+            advance_rate=Decimal("2.5"),
+            override_amount=None,
+            withheld_amount=Decimal("300"),
+        )
+        # calculated_amount stays gross — withheld never folds into it.
+        assert calc == Decimal("1250.00")
+        assert expected == Decimal("950.00")
+
+    def test_withheld_floors_expected_at_zero(self, test_db):
+        svc = AdvancePaymentService(test_db)
+        calc, expected = svc._compute_amounts(
+            turnover_amount=Decimal("1000"),
+            advance_rate=Decimal("2.5"),
+            override_amount=None,
+            withheld_amount=Decimal("500"),
+        )
+        assert calc == Decimal("25.00")
+        assert expected == Decimal("0.00")
+
+    def test_override_wins_over_withheld(self, test_db):
+        svc = AdvancePaymentService(test_db)
+        calc, expected = svc._compute_amounts(
+            turnover_amount=Decimal("50000"),
+            advance_rate=Decimal("2.5"),
+            override_amount=Decimal("1000"),
+            withheld_amount=Decimal("300"),
+        )
+        assert calc == Decimal("1250.00")
+        assert expected == Decimal("1000.00")
+
+    def test_no_withheld_behaves_as_before(self, test_db):
+        svc = AdvancePaymentService(test_db)
+        calc, expected = svc._compute_amounts(
+            turnover_amount=Decimal("50000"),
+            advance_rate=Decimal("2.5"),
+            override_amount=None,
+            withheld_amount=None,
+        )
+        assert calc == Decimal("1250.00")
+        assert expected == Decimal("1250.00")
+
 
 class TestCreateSnapshots:
     def test_create_snapshots_advance_rate_from_legal_entity(self, test_db):
@@ -188,6 +235,20 @@ class TestCreateSnapshots:
         )
         assert payment.advance_rate == Decimal("2.0")
         assert payment.calculated_amount == Decimal("200.00")
+
+    def test_create_deducts_withheld_from_expected(self, test_db):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-08",
+            period_months_count=1,
+            turnover_amount=Decimal("40000"),
+            withheld_amount=Decimal("200"),
+        )
+        assert payment.calculated_amount == Decimal("1000.00")
+        assert payment.expected_amount == Decimal("800.00")
+        assert payment.withheld_amount == Decimal("200.00")
 
     def test_create_derives_status_from_paid_amount(self, test_db):
         business = _business(test_db, advance_rate=Decimal("2.5"))
@@ -242,6 +303,25 @@ class TestUpdateRecompute:
         )
         assert updated.expected_amount == Decimal("2000.00")
         assert updated.status == AdvancePaymentStatus.PARTIAL
+
+    def test_patch_withheld_recomputes_expected(self, test_db):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-09",
+            period_months_count=1,
+            turnover_amount=Decimal("40000"),
+        )
+        assert payment.expected_amount == Decimal("1000.00")
+
+        updated = svc.update_payment_for_client(
+            business.client_record_id,
+            payment.id,
+            withheld_amount=Decimal("400"),
+        )
+        assert updated.calculated_amount == Decimal("1000.00")
+        assert updated.expected_amount == Decimal("600.00")
 
     def test_patch_expected_amount_rederives_status(self, test_db):
         business = _business(test_db, advance_rate=Decimal("2.5"))
@@ -746,3 +826,123 @@ class TestRefreshTurnoverFromVat:
         assert log.metadata_json["vat_work_item_ids"] == [item.id]
         assert log.old_value["turnover_amount"] is None
         assert Decimal(str(log.new_value["turnover_amount"])) == Decimal("60000")
+
+
+class TestBulkRateUpdate:
+    def _pending(self, svc, business, period):
+        return svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period=period,
+            period_months_count=1,
+            turnover_amount=Decimal("40000"),
+        )
+
+    def test_reprices_pending_from_period_and_updates_default(self, test_db, test_user):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        before = self._pending(svc, business, "2026-04")  # before from_period
+        may = self._pending(svc, business, "2026-05")
+        june = self._pending(svc, business, "2026-06")
+
+        updated, skipped = svc.bulk_update_rate_from_period(
+            business.client_record_id,
+            advance_rate=Decimal("3.0"),
+            from_period="2026-05",
+            actor_id=test_user.id,
+        )
+        test_db.flush()
+
+        assert (updated, skipped) == (2, 0)
+        for pid, rate, expected in (
+            (may.id, Decimal("3.00"), Decimal("1200.00")),
+            (june.id, Decimal("3.00"), Decimal("1200.00")),
+        ):
+            row = svc.repo.get_by_id(pid)
+            assert row.advance_rate == rate
+            assert row.expected_amount == expected
+        # The earlier period keeps its old rate/expected.
+        untouched = svc.repo.get_by_id(before.id)
+        assert untouched.advance_rate == Decimal("2.5")
+        assert untouched.expected_amount == Decimal("1000.00")
+        # Legal-entity default now follows so future generations inherit it.
+        le = LegalEntityRepository(test_db).get_by_id(
+            svc.client_repo.get_by_id(business.client_record_id).legal_entity_id
+        )
+        assert le.advance_rate == Decimal("3.0")
+
+    def test_skips_partial_and_paid_rows(self, test_db, test_user):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        pending = self._pending(svc, business, "2026-05")
+        partial = self._pending(svc, business, "2026-06")
+        svc.update_payment_for_client(
+            business.client_record_id, partial.id, paid_amount=Decimal("500")
+        )
+        paid = self._pending(svc, business, "2026-07")
+        svc.update_payment_for_client(
+            business.client_record_id, paid.id, paid_amount=Decimal("1000")
+        )
+
+        updated, skipped = svc.bulk_update_rate_from_period(
+            business.client_record_id,
+            advance_rate=Decimal("3.0"),
+            from_period="2026-05",
+            actor_id=test_user.id,
+        )
+        test_db.flush()
+
+        assert (updated, skipped) == (1, 2)
+        assert svc.repo.get_by_id(pending.id).advance_rate == Decimal("3.00")
+        # Partial/paid rows keep the old rate — no retroactive repricing.
+        assert svc.repo.get_by_id(partial.id).advance_rate == Decimal("2.5")
+        assert svc.repo.get_by_id(paid.id).advance_rate == Decimal("2.5")
+
+    def test_audits_repriced_rows_with_source(self, test_db, test_user):
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        may = self._pending(svc, business, "2026-05")
+
+        svc.bulk_update_rate_from_period(
+            business.client_record_id,
+            advance_rate=Decimal("3.0"),
+            from_period="2026-05",
+            actor_id=test_user.id,
+        )
+        test_db.flush()
+
+        logs = test_db.scalars(
+            select(EntityAuditLog).where(
+                EntityAuditLog.entity_type == ENTITY_ADVANCE_PAYMENT,
+                EntityAuditLog.entity_id == may.id,
+                EntityAuditLog.action == ACTION_ADVANCE_PAYMENT_UPDATED,
+            )
+        ).all()
+        assert any(log.metadata_json.get("source") == "bulk_rate_update" for log in logs)
+
+    def test_preserves_manual_expected_on_turnover_less_rows(self, test_db, test_user):
+        """A generated row has no turnover; its hand-entered expected must survive."""
+        business = _business(test_db, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        no_turnover = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-05",
+            period_months_count=1,
+        )
+        svc.update_payment_for_client(
+            business.client_record_id, no_turnover.id, expected_amount=Decimal("1800")
+        )
+
+        updated, skipped = svc.bulk_update_rate_from_period(
+            business.client_record_id,
+            advance_rate=Decimal("3.0"),
+            from_period="2026-05",
+            actor_id=test_user.id,
+        )
+        test_db.flush()
+
+        assert (updated, skipped) == (1, 0)
+        row = svc.repo.get_by_id(no_turnover.id)
+        assert row.expected_amount == Decimal("1800.00")
+        # The new rate is still stamped, so a later turnover refresh uses it.
+        assert row.advance_rate == Decimal("3.00")
+        assert row.calculated_amount == Decimal("0.00")

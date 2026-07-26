@@ -40,6 +40,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         turnover_snapshot_at=None,
         calculated_amount=None,
         override_amount=None,
+        withheld_amount=None,
         status: AdvancePaymentStatus = AdvancePaymentStatus.PENDING,
     ) -> AdvancePayment:
         payment = AdvancePayment(
@@ -61,6 +62,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             turnover_snapshot_at=turnover_snapshot_at,
             calculated_amount=calculated_amount if calculated_amount is not None else Decimal("0"),
             override_amount=override_amount,
+            withheld_amount=withheld_amount,
         )
         self.db.add(payment)
         self.db.flush()
@@ -127,6 +129,25 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         if client_record_id is not None:
             stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
         return list(self.db.scalars(stmt).all())
+
+    def list_from_period(self, client_record_id: int, from_period: str) -> list[AdvancePayment]:
+        """Active (non-deleted) advance payments for a client at or after ``from_period``.
+
+        Periods are ``YYYY-MM`` strings, so a lexical ``>=`` matches chronological
+        order. Callers partition by status themselves (bulk rate update reprices
+        only PENDING rows and reports the rest as skipped).
+        """
+        return list(
+            self.db.scalars(
+                select(AdvancePayment)
+                .where(
+                    AdvancePayment.client_record_id == client_record_id,
+                    AdvancePayment.period >= from_period,
+                    AdvancePayment.deleted_at.is_(None),
+                )
+                .order_by(AdvancePayment.period.asc())
+            ).all()
+        )
 
     def exists_for_period(self, client_record_id: int, period: str) -> bool:
         return self.db.scalar(

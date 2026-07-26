@@ -140,6 +140,7 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
                 client_record_id=7,
                 total_expected=Decimal("300.00"),
                 total_paid=Decimal("120.00"),
+                total_withheld=Decimal("10.00"),
                 overdue_count=2,
             )
         ]
@@ -164,6 +165,7 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
             "client_id_number": "123456789",
             "total_expected": 300.0,
             "total_paid": 120.0,
+            "total_withheld": 10.0,
             "overdue_count": 2,
             "gap": 180.0,
         }

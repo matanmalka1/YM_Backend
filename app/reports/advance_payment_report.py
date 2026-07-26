@@ -26,6 +26,7 @@ class AdvancePaymentReportService:
                 "client_id_number": client_profiles[r.client_record_id].id_number,
                 "total_expected": Decimal(r.total_expected or 0),
                 "total_paid": Decimal(r.total_paid or 0),
+                "total_withheld": Decimal(r.total_withheld or 0),
                 "overdue_count": int(r.overdue_count),
                 "gap": Decimal(r.total_expected or 0) - Decimal(r.total_paid or 0),
             }
@@ -34,6 +35,7 @@ class AdvancePaymentReportService:
 
         total_expected = sum(i["total_expected"] for i in items)
         total_paid = sum(i["total_paid"] for i in items)
+        total_withheld = sum(i["total_withheld"] for i in items)
         collection_rate = (
             (total_paid / total_expected * Decimal("100")).quantize(
                 Decimal("0.01"), rounding=ROUND_HALF_UP
@@ -48,6 +50,7 @@ class AdvancePaymentReportService:
             "month": month,
             "total_expected": total_expected,
             "total_paid": total_paid,
+            "total_withheld": total_withheld,
             "collection_rate": collection_rate,
             "total_gap": total_gap,
             "items": items,

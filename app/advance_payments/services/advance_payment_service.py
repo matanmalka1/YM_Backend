@@ -94,6 +94,7 @@ class AdvancePaymentService:
             "turnover_snapshot_at": payment.turnover_snapshot_at,
             "calculated_amount": payment.calculated_amount,
             "override_amount": payment.override_amount,
+            "withheld_amount": payment.withheld_amount,
             "status": payment.status,
             "paid_at": payment.paid_at,
         }
@@ -148,19 +149,25 @@ class AdvancePaymentService:
         turnover_amount,
         advance_rate,
         override_amount,
+        withheld_amount=None,
         fallback_expected=None,
     ) -> tuple[Decimal, Decimal]:
+        # calculated_amount always stays gross (turnover × rate) — withheld_amount
+        # is a deduction line applied only when deriving expected_amount, never
+        # folded into calculated_amount itself.
         calculated = Decimal("0.00")
         if turnover_amount is not None and advance_rate is not None:
             calculated = (
                 Decimal(str(turnover_amount)) * Decimal(str(advance_rate)) / 100
             ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
         if override_amount is not None:
+            # override_amount is the final say — it wins even over withheld_amount.
             expected = Decimal(str(override_amount))
         elif fallback_expected is not None and calculated == 0:
             expected = Decimal(str(fallback_expected))
         else:
-            expected = calculated
+            withheld = Decimal(str(withheld_amount or 0))
+            expected = max(Decimal("0.00"), calculated - withheld)
         return calculated, expected
 
     @staticmethod
@@ -216,6 +223,7 @@ class AdvancePaymentService:
         turnover_amount=None,
         advance_rate=None,
         override_amount=None,
+        withheld_amount=None,
         actor_id: int | None = None,
         actor_name: str | None = None,
     ) -> AdvancePayment:
@@ -241,7 +249,11 @@ class AdvancePaymentService:
             advance_rate = le.advance_rate if le else None
 
         calculated_amount, resolved_expected = self._compute_amounts(
-            turnover_amount, advance_rate, override_amount, expected_amount
+            turnover_amount,
+            advance_rate,
+            override_amount,
+            withheld_amount=withheld_amount,
+            fallback_expected=expected_amount,
         )
 
         mat = TaxCalendarMaterializationService(self.db)
@@ -268,6 +280,7 @@ class AdvancePaymentService:
             turnover_snapshot_at=None if turnover_amount is None else utcnow(),
             calculated_amount=calculated_amount,
             override_amount=override_amount,
+            withheld_amount=withheld_amount,
             status=self._derive_status(paid_amount, resolved_expected),
         )
         payment = mat.link_advance_payment(payment)
@@ -293,6 +306,7 @@ class AdvancePaymentService:
         "notes",
         "turnover_amount",
         "override_amount",
+        "withheld_amount",
     }
 
     def update_payment_for_client(
@@ -323,13 +337,14 @@ class AdvancePaymentService:
                 None if filtered["turnover_amount"] is None else utcnow()
             )
 
-        calc_fields = {"turnover_amount", "override_amount"}
+        calc_fields = {"turnover_amount", "override_amount", "withheld_amount"}
         if calc_fields & filtered.keys():
             effective_t = filtered.get("turnover_amount", payment.turnover_amount)
             effective_r = payment.advance_rate
             effective_o = filtered.get("override_amount", payment.override_amount)
+            effective_w = filtered.get("withheld_amount", payment.withheld_amount)
             calculated_amount, new_expected = self._compute_amounts(
-                effective_t, effective_r, effective_o
+                effective_t, effective_r, effective_o, withheld_amount=effective_w
             )
             filtered["calculated_amount"] = calculated_amount
             filtered["expected_amount"] = new_expected
@@ -413,6 +428,81 @@ class AdvancePaymentService:
             )
             updated.append(saved.id)
 
+        return updated, skipped
+
+    # ─── Bulk rate update ───────────────────────────────────────────────────────
+
+    def bulk_update_rate_from_period(
+        self,
+        client_record_id: int,
+        *,
+        advance_rate: Decimal,
+        from_period: str,
+        actor_id: int | None = None,
+        actor_role=None,
+        actor_name: str | None = None,
+    ) -> tuple[int, int]:
+        """Apply a new advance rate to a client's future unpaid periods.
+
+        Reprices only PENDING rows at or after ``from_period`` (partial rows are
+        already mid-settlement, paid rows are closed — both are reported as
+        skipped). Recomputes each row's expected amount from the new rate, then
+        rewrites the legal-entity default rate so newly generated periods inherit
+        it. Returns ``(updated, skipped)``.
+
+        Rows with no turnover have nothing to reprice (rate × nothing is nothing),
+        so their manually entered expected amount is preserved via
+        ``fallback_expected`` — the new rate is still stamped on the row so a later
+        turnover refresh computes from it.
+        """
+        self._get_record_or_raise(client_record_id)
+        rows = self.repo.list_from_period(client_record_id, from_period)
+        updated = 0
+        skipped = 0
+
+        for payment in rows:
+            if payment.status != AdvancePaymentStatus.PENDING:
+                skipped += 1
+                continue
+            calculated_amount, new_expected = self._compute_amounts(
+                payment.turnover_amount,
+                advance_rate,
+                payment.override_amount,
+                withheld_amount=payment.withheld_amount,
+                fallback_expected=payment.expected_amount,
+            )
+            old_snapshot = self._audit_snapshot(payment)
+            saved = self.repo.update_payment(
+                payment,
+                advance_rate=advance_rate,
+                calculated_amount=calculated_amount,
+                expected_amount=new_expected,
+                status=self._derive_status(payment.paid_amount, new_expected),
+            )
+            self._audit.record_action(
+                ENTITY_ADVANCE_PAYMENT,
+                saved.id,
+                actor_id,
+                ACTION_ADVANCE_PAYMENT_UPDATED,
+                old_value=old_snapshot,
+                new_value=self._audit_snapshot(saved),
+                metadata_json=self._audit_metadata(saved, source="bulk_rate_update"),
+                **self._actor_kwargs(actor_id, actor_name),
+            )
+            updated += 1
+
+        # The rate change is going-forward: the legal-entity default must follow
+        # so the next generated schedule seeds from it (stamp + LE audit are owned
+        # by ClientUpdateService). Imported locally to avoid a service import cycle.
+        from app.clients.services.client_update_service import ClientUpdateService
+
+        ClientUpdateService(self.db).update_client(
+            client_record_id,
+            advance_rate=advance_rate,
+            actor_id=actor_id,
+            actor_role=actor_role,
+            actor_name=actor_name,
+        )
         return updated, skipped
 
     # ─── Delete ───────────────────────────────────────────────────────────────
