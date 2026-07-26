@@ -273,6 +273,27 @@ class MonthBatchSummary(BaseModel):
     collection_rate: ApiDecimal = Decimal("0")
 
 
+class StaleCadenceSummary(BaseModel):
+    """Superseded-cadence rows standing in the new schedule's way.
+
+    ``pending`` is what a confirmed cleanup would remove (or has just removed,
+    reported as ``removed``); ``settled`` is what it never will.
+    """
+
+    removed: int = 0
+    pending: int = 0
+    settled: int = 0
+
+
+_CLEANUP_STALE_CADENCE_FIELD = Field(
+    False,
+    description=(
+        "מחק מקדמות עתידיות שטרם שולמו שנוצרו בתדירות הקודמת של הלקוח, "
+        "כדי שהלוח החדש ייווצר במקומן. ברירת מחדל: לא מוחק."
+    ),
+)
+
+
 class GenerateScheduleRequest(BaseModel):
     year: int
     period_months_count: int | None = Field(None, ge=1, le=2)
@@ -280,11 +301,13 @@ class GenerateScheduleRequest(BaseModel):
         None,
         description=("אם מסופק, ידלג על תקופות שתאריך היעד שלהן קודם לתאריך זה. ברירת מחדל: היום."),
     )
+    cleanup_stale_cadence: bool = _CLEANUP_STALE_CADENCE_FIELD
 
 
 class GenerateScheduleResponse(BaseModel):
     created: int
     skipped: int
+    stale_cadence: StaleCadenceSummary
 
 
 class IneligibleClient(BaseModel):
@@ -310,6 +333,7 @@ class BulkGenerateRequest(BaseModel):
         None,
         description="מזהה הלקוח האחרון שעובד; השאר ריק בבקשה הראשונה של הריצה",
     )
+    cleanup_stale_cadence: bool = _CLEANUP_STALE_CADENCE_FIELD
 
 
 class BulkGenerateFailedClient(BaseModel):
@@ -324,6 +348,7 @@ class BulkGenerateResponse(BaseModel):
     clients_processed: int
     created: int
     skipped: int
+    stale_cadence: StaleCadenceSummary
     failed: list[BulkGenerateFailedClient]
     next_cursor: int | None
 

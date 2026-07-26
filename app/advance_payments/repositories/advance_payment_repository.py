@@ -149,6 +149,29 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             ).all()
         )
 
+    def list_stale_cadence_for_year(
+        self, client_record_id: int, year: int, period_months_count: int
+    ) -> list[AdvancePayment]:
+        """Payments in ``year`` left over from a different reporting cadence.
+
+        A client whose frequency changed keeps rows whose ``period_months_count``
+        no longer matches the configured one. ``exists_for_period`` matches on the
+        ``YYYY-MM`` key alone, so those rows block the new schedule instead of
+        being replaced by it. Callers partition by status and due date themselves.
+        """
+        return list(
+            self.db.scalars(
+                select(AdvancePayment)
+                .where(
+                    AdvancePayment.client_record_id == client_record_id,
+                    advance_payment_year_range_filter(year),
+                    AdvancePayment.period_months_count != period_months_count,
+                    AdvancePayment.deleted_at.is_(None),
+                )
+                .order_by(AdvancePayment.period.asc())
+            ).all()
+        )
+
     def exists_for_period(self, client_record_id: int, period: str) -> bool:
         return self.db.scalar(
             select(

@@ -14741,6 +14741,7 @@
           "advance-payments"
         ],
         "summary": "Generate Advance Payment Schedule",
+        "description": "Generate a client's annual schedule.\n\n``cleanup_stale_cadence`` is opt-in. Without it a client whose frequency\nchanged gets a report of the superseded rows blocking the new schedule and\nnothing is deleted; the caller confirms and calls again with the flag.",
         "operationId": "generate_advance_payment_schedule_api_v1_clients__client_record_id__advance_payments_generate_post",
         "parameters": [
           {
@@ -24989,6 +24990,12 @@
             ],
             "title": "Cursor",
             "description": "מזהה הלקוח האחרון שעובד; השאר ריק בבקשה הראשונה של הריצה"
+          },
+          "cleanup_stale_cadence": {
+            "type": "boolean",
+            "title": "Cleanup Stale Cadence",
+            "description": "מחק מקדמות עתידיות שטרם שולמו שנוצרו בתדירות הקודמת של הלקוח, כדי שהלוח החדש ייווצר במקומן. ברירת מחדל: לא מוחק.",
+            "default": false
           }
         },
         "type": "object",
@@ -25010,6 +25017,9 @@
           "skipped": {
             "type": "integer",
             "title": "Skipped"
+          },
+          "stale_cadence": {
+            "$ref": "#/components/schemas/StaleCadenceSummary"
           },
           "failed": {
             "items": {
@@ -25035,6 +25045,7 @@
           "clients_processed",
           "created",
           "skipped",
+          "stale_cadence",
           "failed",
           "next_cursor"
         ],
@@ -28962,6 +28973,12 @@
             ],
             "title": "Reference Date",
             "description": "אם מסופק, ידלג על תקופות שתאריך היעד שלהן קודם לתאריך זה. ברירת מחדל: היום."
+          },
+          "cleanup_stale_cadence": {
+            "type": "boolean",
+            "title": "Cleanup Stale Cadence",
+            "description": "מחק מקדמות עתידיות שטרם שולמו שנוצרו בתדירות הקודמת של הלקוח, כדי שהלוח החדש ייווצר במקומן. ברירת מחדל: לא מוחק.",
+            "default": false
           }
         },
         "type": "object",
@@ -28979,12 +28996,16 @@
           "skipped": {
             "type": "integer",
             "title": "Skipped"
+          },
+          "stale_cadence": {
+            "$ref": "#/components/schemas/StaleCadenceSummary"
           }
         },
         "type": "object",
         "required": [
           "created",
-          "skipped"
+          "skipped",
+          "stale_cadence"
         ],
         "title": "GenerateScheduleResponse"
       },
@@ -33144,6 +33165,28 @@
           "to_stage"
         ],
         "title": "StageTransitionRequest"
+      },
+      "StaleCadenceSummary": {
+        "properties": {
+          "removed": {
+            "type": "integer",
+            "title": "Removed",
+            "default": 0
+          },
+          "pending": {
+            "type": "integer",
+            "title": "Pending",
+            "default": 0
+          },
+          "settled": {
+            "type": "integer",
+            "title": "Settled",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "StaleCadenceSummary",
+        "description": "Superseded-cadence rows standing in the new schedule's way.\n\n``pending`` is what a confirmed cleanup would remove (or has just removed,\nreported as ``removed``); ``settled`` is what it never will."
       },
       "StatusTransitionRequest": {
         "properties": {

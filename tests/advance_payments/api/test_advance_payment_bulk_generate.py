@@ -181,6 +181,31 @@ def test_bulk_generate_marks_the_audit_entries_as_bulk(client, test_db, advisor_
     assert all(entry.metadata_json.get("source") == "bulk_generate" for entry in entries)
 
 
+def test_bulk_generate_reports_stale_cadence_and_clears_it_on_confirm(
+    client, test_db, advisor_headers
+):
+    from app.legal_entities.models.legal_entity import LegalEntity
+
+    record = _client_record(test_db, frequency=AdvancePaymentFrequency.MONTHLY)
+    assert _generate(client, advisor_headers, {"year": FUTURE_YEAR}).json()["created"] == 12
+
+    legal_entity = test_db.get(LegalEntity, record.legal_entity_id)
+    legal_entity.advance_payment_frequency = AdvancePaymentFrequency.BIMONTHLY
+    test_db.commit()
+
+    reported = _generate(client, advisor_headers, {"year": FUTURE_YEAR})
+    assert reported.json()["created"] == 0
+    assert reported.json()["stale_cadence"] == {"removed": 0, "pending": 12, "settled": 0}
+
+    confirmed = _generate(
+        client, advisor_headers, {"year": FUTURE_YEAR, "cleanup_stale_cadence": True}
+    )
+    body = confirmed.json()
+    assert body["created"] == 6
+    assert body["stale_cadence"] == {"removed": 12, "pending": 0, "settled": 0}
+    assert test_db.query(AdvancePayment).filter(AdvancePayment.deleted_at.is_(None)).count() == 6
+
+
 def test_bulk_generate_is_advisor_only(client, test_db, secretary_headers):
     _client_record(test_db)
 

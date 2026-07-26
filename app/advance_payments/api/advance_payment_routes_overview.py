@@ -24,6 +24,7 @@ from app.advance_payments.schemas.advance_payment import (
     BulkMarkPaidSkippedItem,
     IneligibleClient,
     MonthBatchSummary,
+    StaleCadenceSummary,
 )
 from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
@@ -235,6 +236,7 @@ def bulk_generate_annual_schedules(
         result = service.bulk_generate_annual_schedules(
             request.year,
             cursor=request.cursor,
+            cleanup_stale_cadence=request.cleanup_stale_cadence,
             actor_id=user.id,
             actor_name=user.full_name,
         )
@@ -242,6 +244,11 @@ def bulk_generate_annual_schedules(
             clients_processed=result.clients_processed,
             created=result.created,
             skipped=result.skipped,
+            stale_cadence=StaleCadenceSummary(
+                removed=result.stale_removed,
+                pending=result.stale_pending,
+                settled=result.stale_settled,
+            ),
             failed=[
                 BulkGenerateFailedClient(
                     client_record_id=client_record_id,

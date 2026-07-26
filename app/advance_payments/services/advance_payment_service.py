@@ -54,6 +54,22 @@ _SYSTEM_ACTOR_DISPLAY = "מערכת"
 # bulk is distinguishable from one an advisor generated for a single client.
 _BULK_GENERATE_AUDIT_SOURCE = "bulk_generate"
 
+# Required audit metadata on advance_payment.deleted. Says what removed the row,
+# since no advisor typed a reason for this one.
+_STALE_CADENCE_DELETE_REASON = "ניקוי אוטומטי: תדירות המקדמות של הלקוח שונתה"
+
+
+@dataclass
+class StaleCadenceOutcome:
+    """Superseded-cadence rows blocking a year's schedule, split by what can be done.
+
+    ``pending`` rows a confirmed cleanup can remove; ``settled`` rows it never
+    will, because a paid or part-paid period is a fact, not a leftover.
+    """
+
+    pending: int = 0
+    settled: int = 0
+
 
 @dataclass
 class BulkGenerateResult:
@@ -66,6 +82,9 @@ class BulkGenerateResult:
     clients_processed: int = 0
     created: int = 0
     skipped: int = 0
+    stale_removed: int = 0
+    stale_pending: int = 0
+    stale_settled: int = 0
     failed: list[tuple[int, str, str]] = field(default_factory=list)
     next_cursor: int | None = None
 
@@ -550,8 +569,24 @@ class AdvancePaymentService:
                 f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
                 ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
+        self._soft_delete_payment(payment, actor_id=actor_id, actor_name=actor_name, reason=reason)
+
+    def _soft_delete_payment(
+        self,
+        payment: AdvancePayment,
+        *,
+        actor_id: int | None,
+        actor_name: str | None,
+        reason: str,
+    ) -> None:
+        """Soft-delete one payment and audit why.
+
+        Shared by the advisor's explicit delete and the stale-cadence cleanup;
+        ``reason`` is required metadata on ``advance_payment.deleted``, so every
+        path that removes a row has to say what removed it.
+        """
         old_snapshot = self._audit_snapshot(payment)
-        self.repo.soft_delete(payment_id, deleted_by=actor_id)
+        self.repo.soft_delete(payment.id, deleted_by=actor_id)
         metadata = self._audit_metadata(payment)
         metadata["reason"] = reason
         self._audit.record_action(
@@ -560,9 +595,54 @@ class AdvancePaymentService:
             actor_id,
             ACTION_ADVANCE_PAYMENT_DELETED,
             old_value=old_snapshot,
-            actor_display_name=actor_name,
             metadata_json=metadata,
+            **self._actor_kwargs(actor_id, actor_name),
         )
+
+    # ─── Stale cadence cleanup ────────────────────────────────────────────────
+
+    def _future_stale_cadence_rows(
+        self,
+        client_record_id: int,
+        year: int,
+        period_months_count: int,
+        reference_date: date,
+    ) -> list[AdvancePayment]:
+        """Rows of a superseded cadence that still lie ahead of ``reference_date``.
+
+        Past-due rows are deliberately left out however stale their cadence is:
+        an unpaid period whose due date has passed is a real debt, and the
+        generator would not have recreated it anyway.
+        """
+        rows = self.repo.list_stale_cadence_for_year(client_record_id, year, period_months_count)
+        return [row for row in rows if (row.due_date_effective or row.due_date) >= reference_date]
+
+    def count_stale_cadence(
+        self,
+        client_record_id: int,
+        year: int,
+        reference_date: date | None = None,
+    ) -> StaleCadenceOutcome:
+        """Report the superseded-cadence rows standing in the new schedule's way.
+
+        Split by what can be done about them: ``pending`` rows are removable by a
+        confirmed cleanup, ``settled`` rows never are — a paid period from the old
+        cadence permanently occupies its ``YYYY-MM`` key, so that part of the year
+        stays on the old shape until someone resolves it by hand.
+        """
+        if reference_date is None:
+            reference_date = israel_today()
+        self._get_record_or_raise(client_record_id)
+        period_months_count = self.default_period_months_count_for_client(client_record_id)
+        outcome = StaleCadenceOutcome()
+        for row in self._future_stale_cadence_rows(
+            client_record_id, year, period_months_count, reference_date
+        ):
+            if row.status == AdvancePaymentStatus.PENDING:
+                outcome.pending += 1
+            else:
+                outcome.settled += 1
+        return outcome
 
     # ─── Generate schedule ────────────────────────────────────────────────────
 
@@ -575,6 +655,7 @@ class AdvancePaymentService:
         actor_id: int | None = None,
         actor_name: str | None = None,
         audit_source: str | None = None,
+        cleanup_stale_cadence: bool = False,
     ) -> tuple[list[AdvancePayment], int]:
         if reference_date is None:
             reference_date = israel_today()
@@ -587,6 +668,31 @@ class AdvancePaymentService:
                 "תדירות המקדמות בבקשה אינה תואמת להגדרת הלקוח",
                 ErrorCode.ADVANCE_PAYMENT_FREQUENCY_MISMATCH,
             )
+
+        # Resolved before the loop, never as a consequence of it: the existence
+        # check below matches on the YYYY-MM key alone, so a row of the superseded
+        # cadence makes the generator skip the very period it should replace.
+        removable = [
+            row
+            for row in self._future_stale_cadence_rows(
+                client_record_id, year, period_months_count, reference_date
+            )
+            if row.status == AdvancePaymentStatus.PENDING
+        ]
+        if removable and not cleanup_stale_cadence:
+            # Generate nothing rather than part of the year. Only the periods the
+            # stale rows do *not* occupy would be created, which is how a client
+            # ends up with both cadences covering the same month — the exact mess
+            # the confirmation exists to prevent. The caller reports and re-asks.
+            return [], 0
+        for row in removable:
+            self._soft_delete_payment(
+                row,
+                actor_id=actor_id,
+                actor_name=actor_name,
+                reason=_STALE_CADENCE_DELETE_REASON,
+            )
+
         tax_calendar = TaxCalendarMaterializationService(self.db)
         created: list[AdvancePayment] = []
         skipped = 0
@@ -621,6 +727,7 @@ class AdvancePaymentService:
         year: int,
         *,
         cursor: int | None = None,
+        cleanup_stale_cadence: bool = False,
         actor_id: int | None = None,
         actor_name: str | None = None,
     ) -> BulkGenerateResult:
@@ -648,12 +755,16 @@ class AdvancePaymentService:
         names = gen_repo.get_client_names(client_ids)
         for client_record_id in client_ids:
             try:
+                # Measured before generating: once a cleanup has run the rows are
+                # gone, and "how many did we remove" is exactly this count.
+                stale = self.count_stale_cadence(client_record_id, year)
                 created, skipped = self.generate_annual_schedule(
                     client_record_id,
                     year,
                     actor_id=actor_id,
                     actor_name=actor_name,
                     audit_source=_BULK_GENERATE_AUDIT_SOURCE,
+                    cleanup_stale_cadence=cleanup_stale_cadence,
                 )
             except AppError as exc:
                 result.failed.append(
@@ -668,6 +779,11 @@ class AdvancePaymentService:
                 continue
             result.created += len(created)
             result.skipped += skipped
+            if cleanup_stale_cadence:
+                result.stale_removed += stale.pending
+            else:
+                result.stale_pending += stale.pending
+            result.stale_settled += stale.settled
         result.clients_processed = len(client_ids)
 
         # A short chunk means the keyset ran out — this was the last one.
