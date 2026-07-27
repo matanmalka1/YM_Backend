@@ -4,8 +4,11 @@ def make_client_create_payload(
     id_number="039337423",
     business_name="Test Business",
     opened_at=None,
+    accountant_id=None,
     **client_overrides,
 ):
+    # accountant_id is a nullable FK to users; it must stay None unless the caller passes a
+    # real user id, otherwise the insert fails against a database with no seeded users.
     client_payload = {
         "full_name": full_name,
         "id_number": id_number,
@@ -19,7 +22,7 @@ def make_client_create_payload(
         "address_zip_code": "1234567",
         "vat_reporting_frequency": "monthly",
         "advance_payment_frequency": "monthly",
-        "accountant_id": 1,
+        "accountant_id": accountant_id,
     }
     client_payload.update(client_overrides)
     return {

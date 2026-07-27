@@ -45,7 +45,9 @@ def test_identity_only_client_creation_is_not_available(client, advisor_headers)
     assert response.status_code == 422
 
 
-def test_create_client_creates_client_and_initial_business(client, test_db, advisor_headers):
+def test_create_client_creates_client_and_initial_business(
+    client, test_db, advisor_headers, actor_user
+):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -63,7 +65,7 @@ def test_create_client_creates_client_and_initial_business(client, test_db, advi
                 "address_zip_code": "1234567",
                 "vat_reporting_frequency": "monthly",
                 "advance_payment_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {
                 "business_name": "Created Business",
@@ -88,7 +90,7 @@ def test_create_client_creates_client_and_initial_business(client, test_db, advi
     assert stored_business.opened_at.isoformat() == "2026-04-19"
 
 
-def test_create_client_requires_advisor_role(client, secretary_headers):
+def test_create_client_requires_advisor_role(client, secretary_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=secretary_headers,
@@ -105,7 +107,7 @@ def test_create_client_requires_advisor_role(client, secretary_headers):
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1111111",
                 "vat_reporting_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {
                 "business_name": "Secretary Business",
@@ -121,6 +123,7 @@ def test_create_client_rejects_blank_business_before_creating_client(
     client,
     test_db,
     advisor_headers,
+    actor_user,
 ):
     response = client.post(
         "/api/v1/clients",
@@ -139,7 +142,7 @@ def test_create_client_rejects_blank_business_before_creating_client(
                 "address_zip_code": "2222222",
                 "vat_reporting_frequency": "monthly",
                 "advance_payment_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {"business_name": "   ", "opened_at": "2026-04-19"},
         },
@@ -160,6 +163,7 @@ def test_create_client_rejects_blank_business_before_creating_client(
 def test_create_client_missing_required_field_returns_friendly_hebrew_message(
     client,
     advisor_headers,
+    actor_user,
 ):
     response = client.post(
         "/api/v1/clients",
@@ -178,7 +182,7 @@ def test_create_client_missing_required_field_returns_friendly_hebrew_message(
                 "address_zip_code": "2222222",
                 "vat_reporting_frequency": "monthly",
                 "advance_payment_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {
                 "business_name": "Friendly Business",

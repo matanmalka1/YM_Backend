@@ -128,7 +128,7 @@ def test_create_conflict_payload_contains_conflict_lists(client, advisor_headers
     assert len(payload["details"]["conflict"]["active_clients"]) == 1
 
 
-def test_create_validates_israeli_checksum_for_individual(client, advisor_headers):
+def test_create_validates_israeli_checksum_for_individual(client, advisor_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -146,7 +146,7 @@ def test_create_validates_israeli_checksum_for_individual(client, advisor_header
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
                 "vat_reporting_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {
                 "business_name": "Checksum Invalid Business",
@@ -158,7 +158,7 @@ def test_create_validates_israeli_checksum_for_individual(client, advisor_header
     assert response.status_code == 422
 
 
-def test_create_validates_israeli_checksum_for_corporation(client, advisor_headers):
+def test_create_validates_israeli_checksum_for_corporation(client, advisor_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -176,7 +176,7 @@ def test_create_validates_israeli_checksum_for_corporation(client, advisor_heade
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
                 "vat_reporting_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {
                 "business_name": "Bad Corp Business",
@@ -188,7 +188,7 @@ def test_create_validates_israeli_checksum_for_corporation(client, advisor_heade
     assert response.status_code == 422
 
 
-def test_create_rejects_manual_vat_frequency_for_osek_patur(client, advisor_headers):
+def test_create_rejects_manual_vat_frequency_for_osek_patur(client, advisor_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -205,7 +205,7 @@ def test_create_rejects_manual_vat_frequency_for_osek_patur(client, advisor_head
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
                 "vat_reporting_frequency": "exempt",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {"business_name": "Exempt Business"},
         },
@@ -214,7 +214,7 @@ def test_create_rejects_manual_vat_frequency_for_osek_patur(client, advisor_head
     assert response.status_code == 422
 
 
-def test_create_rejects_manual_vat_exempt_ceiling(client, advisor_headers):
+def test_create_rejects_manual_vat_exempt_ceiling(client, advisor_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -231,7 +231,7 @@ def test_create_rejects_manual_vat_exempt_ceiling(client, advisor_headers):
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
                 "vat_exempt_ceiling": "120000",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {"business_name": "Ceiling Business"},
         },
@@ -240,7 +240,7 @@ def test_create_rejects_manual_vat_exempt_ceiling(client, advisor_headers):
     assert response.status_code == 422
 
 
-def test_create_rejects_unsupported_employee(client, advisor_headers):
+def test_create_rejects_unsupported_employee(client, advisor_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -256,7 +256,7 @@ def test_create_rejects_unsupported_employee(client, advisor_headers):
                 "address_apartment": "5",
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {"business_name": "Employee Business"},
         },
@@ -265,7 +265,7 @@ def test_create_rejects_unsupported_employee(client, advisor_headers):
     assert response.status_code == 422
 
 
-def test_create_rejects_missing_company_business_name(client, advisor_headers):
+def test_create_rejects_missing_company_business_name(client, advisor_headers, actor_user):
     response = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -282,7 +282,7 @@ def test_create_rejects_missing_company_business_name(client, advisor_headers):
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
                 "vat_reporting_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {"business_name": "", "opened_at": None},
         },
@@ -293,7 +293,7 @@ def test_create_rejects_missing_company_business_name(client, advisor_headers):
     assert any("יש להזין שם עסק" in error["message"] for error in errors)
 
 
-def test_update_rejects_manual_vat_exempt_ceiling_payload(client, advisor_headers):
+def test_update_rejects_manual_vat_exempt_ceiling_payload(client, advisor_headers, actor_user):
     created = client.post(
         "/api/v1/clients",
         headers=advisor_headers,
@@ -310,7 +310,7 @@ def test_update_rejects_manual_vat_exempt_ceiling_payload(client, advisor_header
                 "address_city": "Tel Aviv",
                 "address_zip_code": "1234567",
                 "advance_payment_frequency": "monthly",
-                "accountant_id": 1,
+                "accountant_id": actor_user.id,
             },
             "business": {"business_name": "Editable Ceiling Business"},
         },

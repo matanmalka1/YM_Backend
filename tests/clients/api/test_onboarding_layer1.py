@@ -26,7 +26,9 @@ _CREATE_PAYLOAD = {
         "vat_reporting_frequency": "monthly",
         "advance_payment_frequency": "monthly",
         "advance_rate": "5.0",
-        "accountant_id": 1,
+        # Module-level constant: no fixture is in scope, and accountant_id is a nullable FK to
+        # users, so it stays unset rather than pointing at a user id that may not exist.
+        "accountant_id": None,
     },
     "business": {
         "business_name": "Layer1 Business",

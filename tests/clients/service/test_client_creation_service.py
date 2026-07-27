@@ -21,7 +21,7 @@ def test_create_client_creates_identity_graph(test_db, actor_user):
         phone="0501234567",
         email="client@example.com",
         address_city="תל אביב",
-        accountant_id=1,
+        accountant_id=actor_user.id,
         actor_id=actor_user.id,
     )
 
@@ -41,7 +41,7 @@ def test_create_client_creates_identity_graph(test_db, actor_user):
 
     assert stored_record.id == client_record.id
     assert stored_record.office_client_number == client_record.office_client_number
-    assert stored_record.accountant_id == 1
+    assert stored_record.accountant_id == actor_user.id
     assert legal_entity.id_number == "123456780"
     assert legal_entity.official_name == "Client Identity"
     assert person.full_name == "Client Identity"

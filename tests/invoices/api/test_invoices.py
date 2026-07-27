@@ -114,4 +114,3 @@ def test_get_charge_invoice_missing_returns_404(
     res = client.get(f"/api/v1/invoices/charge/{charge_id}", headers=advisor_headers)
     assert res.status_code == 404
     assert res.json()["error"]["code"] == "INVOICE.NOT_FOUND"
-
