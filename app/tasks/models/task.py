@@ -4,7 +4,8 @@ from datetime import date, datetime
 from enum import Enum as PyEnum
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, Index, String, Text
+from sqlalchemy import ForeignKey, Index, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -53,7 +54,7 @@ class Task(Base):
         ForeignKey("client_records.id"), nullable=True
     )
     action_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    action_payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    action_payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     completed_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
     completed_at: Mapped[datetime | None] = mapped_column(nullable=True)

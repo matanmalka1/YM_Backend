@@ -6,11 +6,11 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from sqlalchemy import (
-    JSON,
     ForeignKey,
     Text,
     UniqueConstraint,
 )
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -40,7 +40,7 @@ class AnnualReportAnnexData(Base):
         index=True,
     )
     line_number: Mapped[int] = mapped_column(nullable=False)
-    data: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     data_version: Mapped[int] = mapped_column(nullable=False, default=1)
     notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)

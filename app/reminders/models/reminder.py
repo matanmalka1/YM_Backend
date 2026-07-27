@@ -4,7 +4,8 @@ import datetime
 from enum import Enum as PyEnum
 from typing import Any
 
-from sqlalchemy import JSON, DateTime, Index, Integer, String, Text
+from sqlalchemy import DateTime, Index, Integer, String, Text
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
@@ -40,7 +41,7 @@ class Reminder(Base):
     source_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     target_task_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     notification_template_key: Mapped[str | None] = mapped_column(String(100), nullable=True)
-    payload: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    payload: Mapped[dict[str, Any] | None] = mapped_column(JSONB, nullable=True)
     created_by_user_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
     fired_at: Mapped[datetime.datetime | None] = mapped_column(DateTime, nullable=True)
     failure_reason: Mapped[str | None] = mapped_column(Text, nullable=True)
