@@ -38,12 +38,7 @@ def _load_env_files() -> None:
 
 _load_env_files()
 
-_APP_ENV = (os.getenv("APP_ENV") or "development").strip().lower()
-_DEFAULT_DATABASE_URL = (
-    "sqlite:///./binder_crm_test.db"
-    if _APP_ENV == "test"
-    else "postgresql+psycopg2://postgres:postgres@localhost:5432/binder_crm"
-)
+_DEFAULT_DATABASE_URL = "postgresql+psycopg2://postgres:postgres@localhost:5432/binder_crm"
 
 
 def _split_origins(raw: str) -> list[str]:

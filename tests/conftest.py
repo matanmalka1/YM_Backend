@@ -4,13 +4,15 @@ from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
-from sqlalchemy.pool import StaticPool
 
 os.environ["APP_ENV"] = "test"
 os.environ.pop("ENV_FILE", None)
-os.environ.pop("DATABASE_URL", None)
+os.environ.setdefault(
+    "DATABASE_URL",
+    "postgresql+psycopg2://postgres:postgres@localhost:5433/binder_crm_test",
+)
 if len(os.environ.get("JWT_SECRET", "")) < 32:
     os.environ["JWT_SECRET"] = "test-secret-minimum-32-bytes-value"
 
@@ -23,7 +25,7 @@ import app.tasks.models.task  # noqa: F401
 import app.tax_calendar.models.tax_calendar_deadline_rule  # noqa: F401
 import app.tax_calendar.models.tax_calendar_entry  # noqa: F401
 from app.clients.models.client_record import ClientRecord  # noqa: F401
-from app.database import Base, get_db
+from app.database import get_db
 from app.legal_entities.models.legal_entity import LegalEntity  # noqa: F401
 from app.legal_entities.models.person import Person  # noqa: F401
 from app.legal_entities.models.person_legal_entity_link import PersonLegalEntityLink  # noqa: F401
@@ -42,34 +44,40 @@ from tests.factories import (
 
 @pytest.fixture(scope="function")
 def test_db():
-    """Create test database with proper SQLite threading config."""
-    # Use StaticPool and check_same_thread=False for SQLite in tests
-    engine = create_engine(
-        "sqlite:///:memory:",
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-        echo=False,
+    """Run each test in an isolated transaction on the PostgreSQL test database."""
+    engine = create_engine(os.environ["DATABASE_URL"], pool_pre_ping=True)
+    connection = engine.connect()
+    transaction = connection.begin()
+    TestSessionLocal = sessionmaker(
+        autocommit=False,
+        autoflush=False,
+        bind=connection,
+        join_transaction_mode="create_savepoint",
     )
-    Base.metadata.create_all(bind=engine)
-
-    TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
     db = TestSessionLocal()
-    seed_default_deadline_rules(db)
-    for rule in db.scalars(select(DeadlineRule)).all():
-        rule.effective_from = date(1900, 1, 1)
-    db.flush()
-
     try:
+        connection.execute(text("ALTER SEQUENCE client_office_number_seq RESTART WITH 100001"))
+        seed_default_deadline_rules(db)
+        for rule in db.scalars(select(DeadlineRule)).all():
+            rule.effective_from = date(1900, 1, 1)
+        db.flush()
         yield db
     finally:
         db.close()
-        Base.metadata.drop_all(bind=engine)
+        transaction.rollback()
+        connection.close()
+        engine.dispose()
 
 
 @pytest.fixture(scope="function")
 def user_factory(test_db):
     return UserFactory(test_db)
+
+
+@pytest.fixture
+def actor_user(user_factory):
+    """Persist a real user for tests that write actor foreign keys."""
+    return user_factory(commit=False)
 
 
 @pytest.fixture(scope="function")

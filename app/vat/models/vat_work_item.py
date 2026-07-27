@@ -141,7 +141,6 @@ class VatWorkItem(Base):
             "period",
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
-            sqlite_where=text("deleted_at IS NULL"),
         ),
         Index("ix_vat_work_items_status", "status"),
         Index("ix_vat_work_items_period", "period"),
@@ -149,7 +148,6 @@ class VatWorkItem(Base):
             "idx_vat_work_items_calendar_entry_active",
             "tax_calendar_entry_id",
             postgresql_where=text("deleted_at IS NULL"),
-            sqlite_where=text("deleted_at IS NULL"),
         ),
         Index(
             "ix_vat_work_items_turnover_lookup",
@@ -157,14 +155,12 @@ class VatWorkItem(Base):
             "period",
             "status",
             postgresql_where=text("deleted_at IS NULL"),
-            sqlite_where=text("deleted_at IS NULL"),
         ),
         Index(
             "ix_vat_work_items_active_due_client",
             "due_date_effective",
             "client_record_id",
             postgresql_where=text("deleted_at IS NULL"),
-            sqlite_where=text("deleted_at IS NULL"),
         ),
     )
 

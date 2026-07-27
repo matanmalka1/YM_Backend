@@ -114,8 +114,7 @@ def inject_enum_drops(content: str) -> tuple[str, int]:
 
     Alembic creates a standalone Postgres enum TYPE per inline `sa.Enum` column,
     but `op.drop_table` does not remove it, so a downgrade -> upgrade roundtrip
-    (what CI runs) fails with `type "..." already exists`. SQLite has no types,
-    so nothing to drop there.
+    (what CI runs) fails with `type "..." already exists`.
 
     Appends to the end of the file, which is the tail of `downgrade()` in the
     alembic template — the statements must run after every `drop_table`.
@@ -132,10 +131,9 @@ def inject_enum_drops(content: str) -> tuple[str, int]:
         "",
         "    # Enum types created implicitly by sa.Enum in create_table. Postgres keeps",
         "    # them as standalone objects that drop_table does not remove, so a",
-        "    # downgrade -> upgrade roundtrip would fail without this. Postgres-only:",
-        "    # SQLite has no enum types.",
-        '    if op.get_bind().dialect.name == "postgresql":',
-        *[f'        op.execute("DROP TYPE IF EXISTS {name}")' for name in names],
+        "    # downgrade -> upgrade roundtrip would fail without this.",
+        '    op.execute("DROP SEQUENCE IF EXISTS client_office_number_seq")',
+        *[f'    op.execute("DROP TYPE IF EXISTS {name}")' for name in names],
     ]
     return content.rstrip("\n") + "\n" + "\n".join(block) + "\n", len(names)
 
@@ -171,15 +169,6 @@ def _autogenerate_migration() -> None:
             content = content.replace(insert_after, insert_after + sequence_line)
         else:
             content = content.replace(marker, marker + sequence_line)
-        # also drop in downgrade
-        drop_line = '    op.execute("DROP SEQUENCE IF EXISTS client_office_number_seq")\n'
-        downgrade_marker = "def downgrade() -> None:\n"
-        insert_after_down = downgrade_marker + '    """Downgrade schema."""\n'
-        if drop_line not in content:
-            if insert_after_down in content:
-                content = content.replace(insert_after_down, insert_after_down + drop_line)
-            else:
-                content = content.replace(downgrade_marker, downgrade_marker + drop_line)
         print(f"       injected sequence into {migration_file.name}")
 
     # autogenerate never drops the enum types it implicitly creates

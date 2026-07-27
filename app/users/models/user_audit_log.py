@@ -4,7 +4,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, String
+from sqlalchemy import ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -46,8 +46,6 @@ class UserAuditLog(Base):
     # Immutable actor/target name snapshots (§5) so renames don't rewrite admin history.
     actor_display_name: Mapped[str | None] = mapped_column(String, nullable=True)
     target_display_name: Mapped[str | None] = mapped_column(String, nullable=True)
-    # Structured context stored as JSONB on PostgreSQL (JSON on SQLite) — dict, not a string.
-    metadata_json: Mapped[Any | None] = mapped_column(
-        JSON().with_variant(JSONB, "postgresql"), nullable=True
-    )
+    # Structured context stored as JSONB — dict, not a serialized string.
+    metadata_json: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False, index=True)

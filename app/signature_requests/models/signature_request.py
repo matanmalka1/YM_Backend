@@ -146,7 +146,6 @@ class SignatureRequest(Base):
             "status",
             "sent_at",
             postgresql_where=text("deleted_at IS NULL"),
-            sqlite_where=text("deleted_at IS NULL"),
         ),
     )
 

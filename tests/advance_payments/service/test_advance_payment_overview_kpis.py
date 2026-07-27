@@ -45,7 +45,14 @@ def _business(db, idx: int) -> Business:
     return business
 
 
-def _filed_vat_item(db, client_record_id: int, period: str, total_output_net: str):
+def _filed_vat_item(
+    db,
+    client_record_id: int,
+    period: str,
+    total_output_net: str,
+    *,
+    created_by: int,
+):
     entry = TaxCalendarMaterializationService(db).ensure_periodic_entry("vat", period, 1)
     amount = Decimal(total_output_net)
     item = VatWorkItem(
@@ -57,7 +64,7 @@ def _filed_vat_item(db, client_record_id: int, period: str, total_output_net: st
         total_output_net=amount,
         total_input_vat=Decimal("0"),
         net_vat=amount,
-        created_by=1,
+        created_by=created_by,
         tax_calendar_entry_id=entry.id,
         due_date_original=entry.due_date,
         due_date_effective=entry.due_date,
@@ -140,12 +147,17 @@ def test_get_overview_kpis_collection_rate_rounds(test_db):
     assert kpis["collection_rate"] == Decimal("83.33")
 
 
-def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db):
+def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db, user_factory):
+    actor = user_factory(commit=False)
     first = _business(test_db, 4)
     second = _business(test_db, 5)
-    first_jan = _filed_vat_item(test_db, first.client_record_id, "2026-01", "100")
-    _filed_vat_item(test_db, first.client_record_id, "2026-02", "200")
-    second_jan = _filed_vat_item(test_db, second.client_record_id, "2026-01", "300")
+    first_jan = _filed_vat_item(
+        test_db, first.client_record_id, "2026-01", "100", created_by=actor.id
+    )
+    _filed_vat_item(test_db, first.client_record_id, "2026-02", "200", created_by=actor.id)
+    second_jan = _filed_vat_item(
+        test_db, second.client_record_id, "2026-01", "300", created_by=actor.id
+    )
 
     result = TurnoverLookupRepository(test_db).resolve_turnover_for_clients(
         {
@@ -164,10 +176,11 @@ def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db):
     assert second_resolution.vat_work_item_ids == [second_jan.id]
 
 
-def test_turnover_lookup_expands_periods_across_year_boundary(test_db):
+def test_turnover_lookup_expands_periods_across_year_boundary(test_db, user_factory):
+    actor = user_factory(commit=False)
     business = _business(test_db, 6)
-    dec = _filed_vat_item(test_db, business.client_record_id, "2026-12", "100")
-    jan = _filed_vat_item(test_db, business.client_record_id, "2027-01", "200")
+    dec = _filed_vat_item(test_db, business.client_record_id, "2026-12", "100", created_by=actor.id)
+    jan = _filed_vat_item(test_db, business.client_record_id, "2027-01", "200", created_by=actor.id)
 
     result = TurnoverLookupRepository(test_db).resolve_turnover_for_clients(
         {business.client_record_id: [("2026-12", 2)]}

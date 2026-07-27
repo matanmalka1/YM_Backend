@@ -224,19 +224,13 @@ class SeedOrchestrator:
     def _reset(self, db) -> None:
         skip = {"users", "user_audit_logs"} if self.cfg.preserve_users else set()
         tables = [t.name for t in Base.metadata.sorted_tables if t.name not in skip]
-        if engine.dialect.name == "postgresql":
-            names = ", ".join(f'"{t}"' for t in tables)
-            db.execute(text(f"TRUNCATE {names} RESTART IDENTITY CASCADE"))
-            db.execute(
-                text(
-                    f"ALTER SEQUENCE IF EXISTS client_office_number_seq RESTART WITH {OFFICE_CLIENT_NUMBER_START}"
-                )
+        names = ", ".join(f'"{t}"' for t in tables)
+        db.execute(text(f"TRUNCATE {names} RESTART IDENTITY CASCADE"))
+        db.execute(
+            text(
+                f"ALTER SEQUENCE IF EXISTS client_office_number_seq RESTART WITH {OFFICE_CLIENT_NUMBER_START}"
             )
-        else:
-            for table in reversed(Base.metadata.sorted_tables):
-                if table.name in skip:
-                    continue
-                db.execute(table.delete())
+        )
         db.commit()
 
     def _seed_users(self, db):

@@ -33,8 +33,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
             return data
         try:
             validated = validator_cls(**data)
-            # Convert Decimal values to float so the dict is JSON-serializable
-            # before being stored in the JSON column (SQLite/PostgreSQL JSON type).
+            # Convert Decimal values to float before storing the dict in JSONB.
             raw = validated.model_dump(exclude_none=True)
             return {
                 k: float(v)

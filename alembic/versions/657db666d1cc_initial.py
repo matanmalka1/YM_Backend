@@ -39,7 +39,7 @@ def upgrade() -> None:
     )
     op.create_index('idx_deadline_rule_type_effective', 'deadline_rules', ['rule_type', 'effective_from'], unique=False)
     op.create_index(op.f('ix_deadline_rules_rule_type'), 'deadline_rules', ['rule_type'], unique=False)
-    op.create_index('uq_deadline_rule_open_ended', 'deadline_rules', ['rule_type'], unique=True, postgresql_where=sa.text('effective_to IS NULL'), sqlite_where=sa.text('effective_to IS NULL'))
+    op.create_index('uq_deadline_rule_open_ended', 'deadline_rules', ['rule_type'], unique=True, postgresql_where=sa.text('effective_to IS NULL'))
     op.create_table('legal_entities',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('id_number', sa.String(), nullable=False),
@@ -137,13 +137,13 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['restored_by'], ['users.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('ix_business_legal_entity_name_active', 'businesses', ['legal_entity_id', 'business_name'], unique=True, postgresql_where=sa.text('business_name IS NOT NULL AND deleted_at IS NULL'), sqlite_where=sa.text('business_name IS NOT NULL AND deleted_at IS NULL'))
+    op.create_index('ix_business_legal_entity_name_active', 'businesses', ['legal_entity_id', 'business_name'], unique=True, postgresql_where=sa.text('business_name IS NOT NULL AND deleted_at IS NULL'))
     op.create_index('ix_business_status', 'businesses', ['status'], unique=False)
     op.create_index(op.f('ix_businesses_legal_entity_id'), 'businesses', ['legal_entity_id'], unique=False)
     op.create_table('client_records',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('legal_entity_id', sa.Integer(), nullable=False),
-    sa.Column('office_client_number', sa.Integer(), nullable=False),
+    sa.Column('office_client_number', sa.Integer(), server_default=sa.text("nextval('client_office_number_seq')"), nullable=False),
     sa.Column('accountant_id', sa.Integer(), nullable=True),
     sa.Column('status', sa.Enum('active', 'frozen', 'closed', name='clientstatus'), nullable=False),
     sa.Column('notes', sa.Text(), nullable=True),
@@ -162,10 +162,10 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_client_records_accountant_id'), 'client_records', ['accountant_id'], unique=False)
-    op.create_index('ix_client_records_active_created_desc', 'client_records', [sa.literal_column('created_at DESC')], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('ix_client_records_active_created_desc', 'client_records', [sa.literal_column('created_at DESC')], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index(op.f('ix_client_records_legal_entity_id'), 'client_records', ['legal_entity_id'], unique=False)
-    op.create_index('ix_client_records_legal_entity_id_active', 'client_records', ['legal_entity_id'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.create_index('ix_client_records_office_client_number_active', 'client_records', ['office_client_number'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('ix_client_records_legal_entity_id_active', 'client_records', ['legal_entity_id'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'))
+    op.create_index('ix_client_records_office_client_number_active', 'client_records', ['office_client_number'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_table('entity_audit_logs',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('entity_type', sa.String(), nullable=False),
@@ -174,9 +174,9 @@ def upgrade() -> None:
     sa.Column('actor_type', sa.String(), nullable=False),
     sa.Column('actor_display_name', sa.String(), nullable=True),
     sa.Column('action', sa.String(), nullable=False),
-    sa.Column('old_value', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
-    sa.Column('new_value', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
-    sa.Column('metadata_json', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
+    sa.Column('old_value', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('new_value', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
+    sa.Column('metadata_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('note', sa.Text(), nullable=True),
     sa.Column('performed_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['performed_by'], ['users.id'], ),
@@ -212,7 +212,7 @@ def upgrade() -> None:
     sa.Column('request_hash', sa.String(length=64), nullable=False),
     sa.Column('status', sa.Enum('in_progress', 'completed', name='idempotencystatus'), nullable=False),
     sa.Column('response_status', sa.Integer(), nullable=True),
-    sa.Column('response_body', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
+    sa.Column('response_body', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('completed_at', sa.DateTime(), nullable=True),
     sa.ForeignKeyConstraint(['user_id'], ['users.id'], ),
@@ -264,8 +264,8 @@ def upgrade() -> None:
     op.create_index(op.f('ix_tax_calendar_entries_deadline_rule_id'), 'tax_calendar_entries', ['deadline_rule_id'], unique=False)
     op.create_index(op.f('ix_tax_calendar_entries_due_date'), 'tax_calendar_entries', ['due_date'], unique=False)
     op.create_index(op.f('ix_tax_calendar_entries_obligation_type'), 'tax_calendar_entries', ['obligation_type'], unique=False)
-    op.create_index('uq_tax_calendar_entry_annual', 'tax_calendar_entries', ['obligation_type', 'tax_year'], unique=True, postgresql_where=sa.text("obligation_type = 'annual_report'"), sqlite_where=sa.text("obligation_type = 'annual_report'"))
-    op.create_index('uq_tax_calendar_entry_periodic', 'tax_calendar_entries', ['obligation_type', 'period', 'period_months_count'], unique=True, postgresql_where=sa.text("obligation_type <> 'annual_report'"), sqlite_where=sa.text("obligation_type <> 'annual_report'"))
+    op.create_index('uq_tax_calendar_entry_annual', 'tax_calendar_entries', ['obligation_type', 'tax_year'], unique=True, postgresql_where=sa.text("obligation_type = 'annual_report'"))
+    op.create_index('uq_tax_calendar_entry_periodic', 'tax_calendar_entries', ['obligation_type', 'period', 'period_months_count'], unique=True, postgresql_where=sa.text("obligation_type <> 'annual_report'"))
     op.create_table('user_audit_logs',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('action', sa.Enum('login_success', 'login_failure', 'logout', 'user_created', 'user_updated', 'user_activated', 'user_deactivated', 'password_reset', name='auditaction'), nullable=False),
@@ -276,7 +276,7 @@ def upgrade() -> None:
     sa.Column('reason', sa.String(), nullable=True),
     sa.Column('actor_display_name', sa.String(), nullable=True),
     sa.Column('target_display_name', sa.String(), nullable=True),
-    sa.Column('metadata_json', sa.JSON().with_variant(postgresql.JSONB(astext_type=sa.Text()), 'postgresql'), nullable=True),
+    sa.Column('metadata_json', postgresql.JSONB(astext_type=sa.Text()), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.ForeignKeyConstraint(['actor_user_id'], ['users.id'], ),
     sa.ForeignKeyConstraint(['target_user_id'], ['users.id'], ),
@@ -326,12 +326,12 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index('idx_annual_report_assigned', 'annual_reports', ['assigned_to'], unique=False)
-    op.create_index('idx_annual_report_calendar_entry_active', 'annual_reports', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.create_index('idx_annual_report_client_record_year', 'annual_reports', ['client_record_id', 'tax_year'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_annual_report_calendar_entry_active', 'annual_reports', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_annual_report_client_record_year', 'annual_reports', ['client_record_id', 'tax_year'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_annual_report_deadline', 'annual_reports', ['filing_deadline'], unique=False)
     op.create_index('idx_annual_report_ita_reference', 'annual_reports', ['ita_reference'], unique=False)
     op.create_index('idx_annual_report_status', 'annual_reports', ['status'], unique=False)
-    op.create_index('idx_annual_report_tax_year_status_active', 'annual_reports', ['tax_year', 'status'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_annual_report_tax_year_status_active', 'annual_reports', ['tax_year', 'status'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index(op.f('ix_annual_reports_client_record_id'), 'annual_reports', ['client_record_id'], unique=False)
     op.create_index(op.f('ix_annual_reports_tax_calendar_entry_id'), 'annual_reports', ['tax_calendar_entry_id'], unique=False)
     op.create_table('authority_contacts',
@@ -395,7 +395,7 @@ def upgrade() -> None:
     op.create_index('idx_binder_number', 'binders', ['binder_number'], unique=False)
     op.create_index('idx_binder_period_start', 'binders', ['period_start'], unique=False)
     op.create_index(op.f('ix_binders_client_record_id'), 'binders', ['client_record_id'], unique=False)
-    op.create_index('uq_binder_number_per_client', 'binders', ['client_record_id', 'binder_number'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('uq_binder_number_per_client', 'binders', ['client_record_id', 'binder_number'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_table('tasks',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('title', sa.String(length=500), nullable=False),
@@ -472,14 +472,14 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['tax_calendar_entry_id'], ['tax_calendar_entries.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_vat_work_items_calendar_entry_active', 'vat_work_items', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.create_index('ix_vat_work_items_active_due_client', 'vat_work_items', ['due_date_effective', 'client_record_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_vat_work_items_calendar_entry_active', 'vat_work_items', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
+    op.create_index('ix_vat_work_items_active_due_client', 'vat_work_items', ['due_date_effective', 'client_record_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index(op.f('ix_vat_work_items_client_record_id'), 'vat_work_items', ['client_record_id'], unique=False)
     op.create_index('ix_vat_work_items_period', 'vat_work_items', ['period'], unique=False)
     op.create_index('ix_vat_work_items_status', 'vat_work_items', ['status'], unique=False)
     op.create_index(op.f('ix_vat_work_items_tax_calendar_entry_id'), 'vat_work_items', ['tax_calendar_entry_id'], unique=False)
-    op.create_index('ix_vat_work_items_turnover_lookup', 'vat_work_items', ['client_record_id', 'period', 'status'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.create_index('uq_vat_work_item_client_record_period', 'vat_work_items', ['client_record_id', 'period'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('ix_vat_work_items_turnover_lookup', 'vat_work_items', ['client_record_id', 'period', 'status'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
+    op.create_index('uq_vat_work_item_client_record_period', 'vat_work_items', ['client_record_id', 'period'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_table('advance_payments',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_record_id', sa.Integer(), nullable=False),
@@ -518,15 +518,15 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['tax_calendar_entry_id'], ['tax_calendar_entries.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_index('idx_advance_payment_calendar_entry_active', 'advance_payments', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_advance_payment_calendar_entry_active', 'advance_payments', ['tax_calendar_entry_id'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_advance_payment_client_record_period', 'advance_payments', ['client_record_id', 'period'], unique=False)
     op.create_index('idx_advance_payment_due_date', 'advance_payments', ['due_date'], unique=False)
-    op.create_index('idx_advance_payment_period_active', 'advance_payments', ['period'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_advance_payment_period_active', 'advance_payments', ['period'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_advance_payment_status', 'advance_payments', ['status'], unique=False)
     op.create_index(op.f('ix_advance_payments_annual_report_id'), 'advance_payments', ['annual_report_id'], unique=False)
     op.create_index(op.f('ix_advance_payments_client_record_id'), 'advance_payments', ['client_record_id'], unique=False)
     op.create_index(op.f('ix_advance_payments_tax_calendar_entry_id'), 'advance_payments', ['tax_calendar_entry_id'], unique=False)
-    op.create_index('uq_advance_payment_client_record_period_active', 'advance_payments', ['client_record_id', 'period'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('uq_advance_payment_client_record_period_active', 'advance_payments', ['client_record_id', 'period'], unique=True, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_table('annual_report_credit_points',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('annual_report_id', sa.Integer(), nullable=False),
@@ -853,7 +853,7 @@ def upgrade() -> None:
     op.create_index('idx_sig_request_annual_report', 'signature_requests', ['annual_report_id'], unique=False)
     op.create_index('idx_sig_request_business', 'signature_requests', ['business_id'], unique=False)
     op.create_index('idx_sig_request_client_record', 'signature_requests', ['client_record_id'], unique=False)
-    op.create_index('idx_sig_request_pending_sent_active', 'signature_requests', ['status', 'sent_at'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.create_index('idx_sig_request_pending_sent_active', 'signature_requests', ['status', 'sent_at'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_sig_request_status', 'signature_requests', ['status'], unique=False)
     op.create_index(op.f('ix_signature_requests_annual_report_id'), 'signature_requests', ['annual_report_id'], unique=False)
     op.create_index(op.f('ix_signature_requests_business_id'), 'signature_requests', ['business_id'], unique=False)
@@ -908,7 +908,6 @@ def upgrade() -> None:
 
 def downgrade() -> None:
     """Downgrade schema."""
-    op.execute("DROP SEQUENCE IF EXISTS client_office_number_seq")
     # ### commands auto generated by Alembic - please adjust! ###
     op.drop_index(op.f('ix_notifications_signature_request_id'), table_name='notifications')
     op.drop_index(op.f('ix_notifications_client_record_id'), table_name='notifications')
@@ -929,7 +928,7 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_signature_requests_business_id'), table_name='signature_requests')
     op.drop_index(op.f('ix_signature_requests_annual_report_id'), table_name='signature_requests')
     op.drop_index('idx_sig_request_status', table_name='signature_requests')
-    op.drop_index('idx_sig_request_pending_sent_active', table_name='signature_requests', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_sig_request_pending_sent_active', table_name='signature_requests', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_sig_request_client_record', table_name='signature_requests')
     op.drop_index('idx_sig_request_business', table_name='signature_requests')
     op.drop_index('idx_sig_request_annual_report', table_name='signature_requests')
@@ -987,24 +986,24 @@ def downgrade() -> None:
     op.drop_table('annual_report_details')
     op.drop_index(op.f('ix_annual_report_credit_points_annual_report_id'), table_name='annual_report_credit_points')
     op.drop_table('annual_report_credit_points')
-    op.drop_index('uq_advance_payment_client_record_period_active', table_name='advance_payments', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('uq_advance_payment_client_record_period_active', table_name='advance_payments', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index(op.f('ix_advance_payments_tax_calendar_entry_id'), table_name='advance_payments')
     op.drop_index(op.f('ix_advance_payments_client_record_id'), table_name='advance_payments')
     op.drop_index(op.f('ix_advance_payments_annual_report_id'), table_name='advance_payments')
     op.drop_index('idx_advance_payment_status', table_name='advance_payments')
-    op.drop_index('idx_advance_payment_period_active', table_name='advance_payments', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_advance_payment_period_active', table_name='advance_payments', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_advance_payment_due_date', table_name='advance_payments')
     op.drop_index('idx_advance_payment_client_record_period', table_name='advance_payments')
-    op.drop_index('idx_advance_payment_calendar_entry_active', table_name='advance_payments', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_advance_payment_calendar_entry_active', table_name='advance_payments', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_table('advance_payments')
-    op.drop_index('uq_vat_work_item_client_record_period', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.drop_index('ix_vat_work_items_turnover_lookup', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('uq_vat_work_item_client_record_period', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('ix_vat_work_items_turnover_lookup', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index(op.f('ix_vat_work_items_tax_calendar_entry_id'), table_name='vat_work_items')
     op.drop_index('ix_vat_work_items_status', table_name='vat_work_items')
     op.drop_index('ix_vat_work_items_period', table_name='vat_work_items')
     op.drop_index(op.f('ix_vat_work_items_client_record_id'), table_name='vat_work_items')
-    op.drop_index('ix_vat_work_items_active_due_client', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.drop_index('idx_vat_work_items_calendar_entry_active', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('ix_vat_work_items_active_due_client', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_vat_work_items_calendar_entry_active', table_name='vat_work_items', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_table('vat_work_items')
     op.drop_index('idx_tasks_title', table_name='tasks')
     op.drop_index('idx_tasks_status', table_name='tasks')
@@ -1014,7 +1013,7 @@ def downgrade() -> None:
     op.drop_index('idx_tasks_client_record_id', table_name='tasks')
     op.drop_index('idx_tasks_assigned_to_user_id', table_name='tasks')
     op.drop_table('tasks')
-    op.drop_index('uq_binder_number_per_client', table_name='binders', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('uq_binder_number_per_client', table_name='binders', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index(op.f('ix_binders_client_record_id'), table_name='binders')
     op.drop_index('idx_binder_period_start', table_name='binders')
     op.drop_index('idx_binder_number', table_name='binders')
@@ -1028,12 +1027,12 @@ def downgrade() -> None:
     op.drop_table('authority_contacts')
     op.drop_index(op.f('ix_annual_reports_tax_calendar_entry_id'), table_name='annual_reports')
     op.drop_index(op.f('ix_annual_reports_client_record_id'), table_name='annual_reports')
-    op.drop_index('idx_annual_report_tax_year_status_active', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_annual_report_tax_year_status_active', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_annual_report_status', table_name='annual_reports')
     op.drop_index('idx_annual_report_ita_reference', table_name='annual_reports')
     op.drop_index('idx_annual_report_deadline', table_name='annual_reports')
-    op.drop_index('idx_annual_report_client_record_year', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.drop_index('idx_annual_report_calendar_entry_active', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_annual_report_client_record_year', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('idx_annual_report_calendar_entry_active', table_name='annual_reports', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_annual_report_assigned', table_name='annual_reports')
     op.drop_table('annual_reports')
     op.drop_index(op.f('ix_user_audit_logs_target_user_id'), table_name='user_audit_logs')
@@ -1043,8 +1042,8 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_user_audit_logs_actor_user_id'), table_name='user_audit_logs')
     op.drop_index(op.f('ix_user_audit_logs_action'), table_name='user_audit_logs')
     op.drop_table('user_audit_logs')
-    op.drop_index('uq_tax_calendar_entry_periodic', table_name='tax_calendar_entries', postgresql_where=sa.text("obligation_type <> 'annual_report'"), sqlite_where=sa.text("obligation_type <> 'annual_report'"))
-    op.drop_index('uq_tax_calendar_entry_annual', table_name='tax_calendar_entries', postgresql_where=sa.text("obligation_type = 'annual_report'"), sqlite_where=sa.text("obligation_type = 'annual_report'"))
+    op.drop_index('uq_tax_calendar_entry_periodic', table_name='tax_calendar_entries', postgresql_where=sa.text("obligation_type <> 'annual_report'"))
+    op.drop_index('uq_tax_calendar_entry_annual', table_name='tax_calendar_entries', postgresql_where=sa.text("obligation_type = 'annual_report'"))
     op.drop_index(op.f('ix_tax_calendar_entries_obligation_type'), table_name='tax_calendar_entries')
     op.drop_index(op.f('ix_tax_calendar_entries_due_date'), table_name='tax_calendar_entries')
     op.drop_index(op.f('ix_tax_calendar_entries_deadline_rule_id'), table_name='tax_calendar_entries')
@@ -1067,15 +1066,15 @@ def downgrade() -> None:
     op.drop_index('idx_entity_audit_entity_perf', table_name='entity_audit_logs')
     op.drop_index('idx_entity_audit_action_perf', table_name='entity_audit_logs')
     op.drop_table('entity_audit_logs')
-    op.drop_index('ix_client_records_office_client_number_active', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
-    op.drop_index('ix_client_records_legal_entity_id_active', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('ix_client_records_office_client_number_active', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('ix_client_records_legal_entity_id_active', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index(op.f('ix_client_records_legal_entity_id'), table_name='client_records')
-    op.drop_index('ix_client_records_active_created_desc', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'), sqlite_where=sa.text('deleted_at IS NULL'))
+    op.drop_index('ix_client_records_active_created_desc', table_name='client_records', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index(op.f('ix_client_records_accountant_id'), table_name='client_records')
     op.drop_table('client_records')
     op.drop_index(op.f('ix_businesses_legal_entity_id'), table_name='businesses')
     op.drop_index('ix_business_status', table_name='businesses')
-    op.drop_index('ix_business_legal_entity_name_active', table_name='businesses', postgresql_where=sa.text('business_name IS NOT NULL AND deleted_at IS NULL'), sqlite_where=sa.text('business_name IS NOT NULL AND deleted_at IS NULL'))
+    op.drop_index('ix_business_legal_entity_name_active', table_name='businesses', postgresql_where=sa.text('business_name IS NOT NULL AND deleted_at IS NULL'))
     op.drop_table('businesses')
     op.drop_index(op.f('ix_users_email'), table_name='users')
     op.drop_table('users')
@@ -1088,7 +1087,7 @@ def downgrade() -> None:
     op.drop_table('persons')
     op.drop_index('ix_legal_entities_official_name', table_name='legal_entities')
     op.drop_table('legal_entities')
-    op.drop_index('uq_deadline_rule_open_ended', table_name='deadline_rules', postgresql_where=sa.text('effective_to IS NULL'), sqlite_where=sa.text('effective_to IS NULL'))
+    op.drop_index('uq_deadline_rule_open_ended', table_name='deadline_rules', postgresql_where=sa.text('effective_to IS NULL'))
     op.drop_index(op.f('ix_deadline_rules_rule_type'), table_name='deadline_rules')
     op.drop_index('idx_deadline_rule_type_effective', table_name='deadline_rules')
     op.drop_table('deadline_rules')
@@ -1096,57 +1095,56 @@ def downgrade() -> None:
 
     # Enum types created implicitly by sa.Enum in create_table. Postgres keeps
     # them as standalone objects that drop_table does not remove, so a
-    # downgrade -> upgrade roundtrip would fail without this. Postgres-only:
-    # SQLite has no enum types.
-    if op.get_bind().dialect.name == "postgresql":
-        op.execute("DROP TYPE IF EXISTS advance_payment_frequency")
-        op.execute("DROP TYPE IF EXISTS advancepaymentstatus")
-        op.execute("DROP TYPE IF EXISTS annualreportschedule")
-        op.execute("DROP TYPE IF EXISTS annualreportstatus")
-        op.execute("DROP TYPE IF EXISTS auditaction")
-        op.execute("DROP TYPE IF EXISTS auditstatus")
-        op.execute("DROP TYPE IF EXISTS binder_capacity_status")
-        op.execute("DROP TYPE IF EXISTS binder_location_status")
-        op.execute("DROP TYPE IF EXISTS businessstatus")
-        op.execute("DROP TYPE IF EXISTS chargestatus")
-        op.execute("DROP TYPE IF EXISTS chargetype")
-        op.execute("DROP TYPE IF EXISTS clientannualfilingtype")
-        op.execute("DROP TYPE IF EXISTS clientstatus")
-        op.execute("DROP TYPE IF EXISTS contacttype")
-        op.execute("DROP TYPE IF EXISTS correspondencetype")
-        op.execute("DROP TYPE IF EXISTS counterpartyidtype")
-        op.execute("DROP TYPE IF EXISTS creditpointreason")
-        op.execute("DROP TYPE IF EXISTS deadlineruletype")
-        op.execute("DROP TYPE IF EXISTS documentscope")
-        op.execute("DROP TYPE IF EXISTS documentstatus")
-        op.execute("DROP TYPE IF EXISTS documenttype")
-        op.execute("DROP TYPE IF EXISTS entitytype")
-        op.execute("DROP TYPE IF EXISTS expensecategory")
-        op.execute("DROP TYPE IF EXISTS expensecategorytype")
-        op.execute("DROP TYPE IF EXISTS extensionreason")
-        op.execute("DROP TYPE IF EXISTS filingdeadlinetype")
-        op.execute("DROP TYPE IF EXISTS idempotencystatus")
-        op.execute("DROP TYPE IF EXISTS idnumbertype")
-        op.execute("DROP TYPE IF EXISTS incomesourcetype")
-        op.execute("DROP TYPE IF EXISTS invoicetype")
-        op.execute("DROP TYPE IF EXISTS materialtype")
-        op.execute("DROP TYPE IF EXISTS notificationchannel")
-        op.execute("DROP TYPE IF EXISTS notificationstatus")
-        op.execute("DROP TYPE IF EXISTS notificationtrigger")
-        op.execute("DROP TYPE IF EXISTS obligationtype")
-        op.execute("DROP TYPE IF EXISTS paymentmethod")
-        op.execute("DROP TYPE IF EXISTS personlegalentityrole")
-        op.execute("DROP TYPE IF EXISTS primaryannualreportform")
-        op.execute("DROP TYPE IF EXISTS reminderactiontype")
-        op.execute("DROP TYPE IF EXISTS reminderstatus")
-        op.execute("DROP TYPE IF EXISTS signaturerequeststatus")
-        op.execute("DROP TYPE IF EXISTS signaturerequesttype")
-        op.execute("DROP TYPE IF EXISTS submissionmethod")
-        op.execute("DROP TYPE IF EXISTS taskpriority")
-        op.execute("DROP TYPE IF EXISTS taskstatus")
-        op.execute("DROP TYPE IF EXISTS turnoversource")
-        op.execute("DROP TYPE IF EXISTS userrole")
-        op.execute("DROP TYPE IF EXISTS vatdocumenttype")
-        op.execute("DROP TYPE IF EXISTS vatratetype")
-        op.execute("DROP TYPE IF EXISTS vattype")
-        op.execute("DROP TYPE IF EXISTS vatworkitemstatus")
+    # downgrade -> upgrade roundtrip would fail without this.
+    op.execute("DROP SEQUENCE IF EXISTS client_office_number_seq")
+    op.execute("DROP TYPE IF EXISTS advance_payment_frequency")
+    op.execute("DROP TYPE IF EXISTS advancepaymentstatus")
+    op.execute("DROP TYPE IF EXISTS annualreportschedule")
+    op.execute("DROP TYPE IF EXISTS annualreportstatus")
+    op.execute("DROP TYPE IF EXISTS auditaction")
+    op.execute("DROP TYPE IF EXISTS auditstatus")
+    op.execute("DROP TYPE IF EXISTS binder_capacity_status")
+    op.execute("DROP TYPE IF EXISTS binder_location_status")
+    op.execute("DROP TYPE IF EXISTS businessstatus")
+    op.execute("DROP TYPE IF EXISTS chargestatus")
+    op.execute("DROP TYPE IF EXISTS chargetype")
+    op.execute("DROP TYPE IF EXISTS clientannualfilingtype")
+    op.execute("DROP TYPE IF EXISTS clientstatus")
+    op.execute("DROP TYPE IF EXISTS contacttype")
+    op.execute("DROP TYPE IF EXISTS correspondencetype")
+    op.execute("DROP TYPE IF EXISTS counterpartyidtype")
+    op.execute("DROP TYPE IF EXISTS creditpointreason")
+    op.execute("DROP TYPE IF EXISTS deadlineruletype")
+    op.execute("DROP TYPE IF EXISTS documentscope")
+    op.execute("DROP TYPE IF EXISTS documentstatus")
+    op.execute("DROP TYPE IF EXISTS documenttype")
+    op.execute("DROP TYPE IF EXISTS entitytype")
+    op.execute("DROP TYPE IF EXISTS expensecategory")
+    op.execute("DROP TYPE IF EXISTS expensecategorytype")
+    op.execute("DROP TYPE IF EXISTS extensionreason")
+    op.execute("DROP TYPE IF EXISTS filingdeadlinetype")
+    op.execute("DROP TYPE IF EXISTS idempotencystatus")
+    op.execute("DROP TYPE IF EXISTS idnumbertype")
+    op.execute("DROP TYPE IF EXISTS incomesourcetype")
+    op.execute("DROP TYPE IF EXISTS invoicetype")
+    op.execute("DROP TYPE IF EXISTS materialtype")
+    op.execute("DROP TYPE IF EXISTS notificationchannel")
+    op.execute("DROP TYPE IF EXISTS notificationstatus")
+    op.execute("DROP TYPE IF EXISTS notificationtrigger")
+    op.execute("DROP TYPE IF EXISTS obligationtype")
+    op.execute("DROP TYPE IF EXISTS paymentmethod")
+    op.execute("DROP TYPE IF EXISTS personlegalentityrole")
+    op.execute("DROP TYPE IF EXISTS primaryannualreportform")
+    op.execute("DROP TYPE IF EXISTS reminderactiontype")
+    op.execute("DROP TYPE IF EXISTS reminderstatus")
+    op.execute("DROP TYPE IF EXISTS signaturerequeststatus")
+    op.execute("DROP TYPE IF EXISTS signaturerequesttype")
+    op.execute("DROP TYPE IF EXISTS submissionmethod")
+    op.execute("DROP TYPE IF EXISTS taskpriority")
+    op.execute("DROP TYPE IF EXISTS taskstatus")
+    op.execute("DROP TYPE IF EXISTS turnoversource")
+    op.execute("DROP TYPE IF EXISTS userrole")
+    op.execute("DROP TYPE IF EXISTS vatdocumenttype")
+    op.execute("DROP TYPE IF EXISTS vatratetype")
+    op.execute("DROP TYPE IF EXISTS vattype")
+    op.execute("DROP TYPE IF EXISTS vatworkitemstatus")

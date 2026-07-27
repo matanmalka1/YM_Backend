@@ -107,7 +107,6 @@ class TaxCalendarEntry(Base):
             "period_months_count",
             unique=True,
             postgresql_where=text("obligation_type <> 'annual_report'"),
-            sqlite_where=text("obligation_type <> 'annual_report'"),
         ),
         Index(
             "uq_tax_calendar_entry_annual",
@@ -115,7 +114,6 @@ class TaxCalendarEntry(Base):
             "tax_year",
             unique=True,
             postgresql_where=text("obligation_type = 'annual_report'"),
-            sqlite_where=text("obligation_type = 'annual_report'"),
         ),
         Index(
             "idx_tax_calendar_entries_year_obligation",

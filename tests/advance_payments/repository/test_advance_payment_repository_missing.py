@@ -35,9 +35,10 @@ def _business(test_db) -> Business:
     return business
 
 
-def test_advance_payment_get_by_id_for_client_and_soft_delete(test_db):
+def test_advance_payment_get_by_id_for_client_and_soft_delete(test_db, user_factory):
     repo = AdvancePaymentRepository(test_db)
     business = _business(test_db)
+    actor = user_factory(commit=False)
 
     payment = create_linked_advance_payment(
         test_db,
@@ -53,7 +54,7 @@ def test_advance_payment_get_by_id_for_client_and_soft_delete(test_db):
     assert fetched is not None
     assert fetched.id == payment.id
 
-    assert repo.soft_delete(payment.id, deleted_by=123) is True
+    assert repo.soft_delete(payment.id, deleted_by=actor.id) is True
     assert repo.get_by_id(payment.id) is None
 
 

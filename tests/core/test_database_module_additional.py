@@ -1,8 +1,3 @@
-import importlib
-
-import pytest
-
-import app.config as config_mod
 import app.database as database_mod
 from app.core.logging_config import (
     begin_request_log_stats,
@@ -59,18 +54,3 @@ def test_get_db_does_not_log_summary_before_status_is_known(monkeypatch):
     finally:
         clear_request_log_stats()
         clear_request_id()
-
-
-def test_database_module_rejects_sqlite_in_production(monkeypatch):
-    class _Cfg:
-        APP_ENV = "production"
-        DATABASE_URL = "sqlite:///should_fail.db"
-
-    original = config_mod.settings
-    monkeypatch.setattr(config_mod, "settings", _Cfg)
-    try:
-        with pytest.raises(RuntimeError):
-            importlib.reload(database_mod)
-    finally:
-        config_mod.settings = original
-        importlib.reload(database_mod)

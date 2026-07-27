@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 from typing import Any
 
-from sqlalchemy import JSON, ForeignKey, PrimaryKeyConstraint, String
+from sqlalchemy import ForeignKey, PrimaryKeyConstraint, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column
 
@@ -25,9 +25,7 @@ class IdempotencyKey(Base):
     request_hash: Mapped[str] = mapped_column(String(64), nullable=False)
     status: Mapped[IdempotencyStatus] = mapped_column(pg_enum(IdempotencyStatus), nullable=False)
     response_status: Mapped[int | None] = mapped_column(nullable=True)
-    response_body: Mapped[Any | None] = mapped_column(
-        JSON().with_variant(JSONB, "postgresql"), nullable=True
-    )
+    response_body: Mapped[Any | None] = mapped_column(JSONB, nullable=True)
     created_at: Mapped[datetime] = mapped_column(nullable=False, default=utcnow)
     completed_at: Mapped[datetime | None] = mapped_column(nullable=True)
 

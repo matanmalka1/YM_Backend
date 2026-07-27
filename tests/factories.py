@@ -172,6 +172,7 @@ class AnnualReportFactory:
     def __init__(self, db: Session, client_factory: ClientFactory) -> None:
         self.db = db
         self.client_factory = client_factory
+        self._actor_sequence = count(1)
 
     def __call__(
         self,
@@ -197,8 +198,21 @@ class AnnualReportFactory:
             )
         assert client_record_id is not None or client is not None
         resolved_client_id = client_record_id if client_record_id is not None else client.id
-        resolved_actor_id = created_by if created_by is not None else actor.id if actor else 1
-        resolved_actor_name = created_by_name or (actor.full_name if actor else "Test User")
+        if actor is not None:
+            resolved_actor_id = actor.id
+            resolved_actor_name = created_by_name or actor.full_name
+        elif created_by is not None:
+            resolved_actor_id = created_by
+            resolved_actor_name = created_by_name or "Test Actor"
+        else:
+            actor_sequence = next(self._actor_sequence)
+            actor = create_user(
+                self.db,
+                full_name=f"Annual Report Actor {actor_sequence}",
+                email=f"annual-report-actor-{actor_sequence}@example.com",
+            )
+            resolved_actor_id = actor.id
+            resolved_actor_name = created_by_name or actor.full_name
         return AnnualReportService(self.db).create_report(
             client_record_id=resolved_client_id,
             tax_year=tax_year,

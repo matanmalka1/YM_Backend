@@ -164,7 +164,7 @@ def test_cors_origins_empty_entries_stripped():
 # ── DATABASE_URL defaults ─────────────────────────────────────────────────────
 
 
-def test_test_env_defaults_to_sqlite(monkeypatch):
+def test_test_env_defaults_to_postgres(monkeypatch):
     monkeypatch.setenv("APP_ENV", "test")
     monkeypatch.delenv("DATABASE_URL", raising=False)
 
@@ -172,7 +172,7 @@ def test_test_env_defaults_to_sqlite(monkeypatch):
 
     importlib.reload(config_mod)
     s = config_mod.Settings(APP_ENV="test", JWT_SECRET="secret")
-    assert "sqlite" in s.DATABASE_URL
+    assert s.DATABASE_URL.startswith("postgresql+psycopg2://")
 
 
 def test_sentry_environment_defaults_to_app_env(monkeypatch):

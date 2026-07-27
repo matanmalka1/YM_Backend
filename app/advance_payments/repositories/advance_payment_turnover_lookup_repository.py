@@ -180,8 +180,7 @@ def vat_turnover_mismatch_expr():
 
     Both months of a bi-monthly period fall in the period's own year
     (bi-monthly periods start on an odd month), so months are compared within
-    the year rather than by building an end-period string, which has no
-    portable spelling across SQLite and Postgres.
+    the year rather than by building an end-period string.
     """
     payment_start_month = cast(func.substr(AdvancePayment.period, 6, 2), Integer)
     vat_month = cast(func.substr(VatWorkItem.period, 6, 2), Integer)
@@ -196,8 +195,7 @@ def vat_turnover_mismatch_expr():
             vat_month >= payment_start_month,
             vat_month <= payment_start_month + AdvancePayment.period_months_count - 1,
         )
-        # One group: the WHERE already pins a single client. Grouping is explicit
-        # because SQLite rejects a HAVING clause without a GROUP BY.
+        # One group: the WHERE already pins a single client.
         .group_by(VatWorkItem.client_record_id)
         .having(
             func.count(VatWorkItem.id) == AdvancePayment.period_months_count,

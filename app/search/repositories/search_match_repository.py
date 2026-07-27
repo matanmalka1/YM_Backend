@@ -25,6 +25,7 @@ from sqlalchemy import (
     func,
     literal,
     null,
+    nullslast,
     or_,
     select,
 )
@@ -146,13 +147,11 @@ class SearchMatchRepository:
 def _match_ordering(sq) -> list:
     """Deterministic within-type order: tier, then most recent, nulls last, id tiebreak.
 
-    The null flag is an explicit boolean key instead of `NULLS LAST` so SQLite and
-    Postgres order identically, and `id DESC` keeps pagination stable across ties.
+    `id DESC` keeps pagination stable across ties.
     """
     return [
         sq.c.rank.asc(),
-        sq.c.occurred_on.is_(None).asc(),
-        sq.c.occurred_on.desc(),
+        nullslast(sq.c.occurred_on.desc()),
         sq.c.id.desc(),
     ]
 
@@ -186,8 +185,7 @@ def _projection(
 
     Every expression is coerced to the union's common type: enum statuses to their
     stored string values, anchors to Date, absent columns to typed NULLs. The anchors
-    mix Date and DateTime columns; `func.date(...)` truncates on both Postgres and
-    SQLite — `CAST(... AS DATE)` would not (SQLite gives it numeric affinity).
+    mix Date and DateTime columns; `func.date(...)` truncates them consistently.
     `rank` is the tier literal — phase 1 is exact-only, so always 1.
     """
     return [

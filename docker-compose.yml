@@ -1,7 +1,7 @@
 services:
-  postgres:
+  db:
     image: postgres:16
-    container_name: binder-crm-postgres
+    container_name: ym-tax-crm-db
     restart: unless-stopped
     environment:
       POSTGRES_DB: binder_crm
@@ -10,12 +10,30 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - postgres_dev_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres -d binder_crm"]
       interval: 5s
       timeout: 5s
       retries: 10
 
+  db_test:
+    image: postgres:16
+    container_name: ym-tax-crm-db-test
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: binder_crm_test
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5433:5432"
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d binder_crm_test"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
 volumes:
-  postgres_data:
+  postgres_dev_data:

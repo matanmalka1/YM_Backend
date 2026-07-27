@@ -39,6 +39,20 @@ jobs:
   test:
     name: Tests (pytest)
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: binder_crm_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d binder_crm_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     steps:
       - uses: actions/checkout@v4
 
@@ -53,22 +67,19 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run pytest
-        # Tests use in-memory SQLite and set APP_ENV themselves; JWT_SECRET
-        # is the only required env for app import. Coverage is reported but
-        # not enforced (no --cov-fail-under) — informational only.
         env:
           APP_ENV: test
           JWT_SECRET: ci-test-only
-        run: pytest --cov=app --cov-report=term-missing
+          DATABASE_URL: postgresql+psycopg2://postgres:postgres@localhost:5432/binder_crm_test
+        run: |
+          alembic upgrade head
+          pytest --cov=app --cov-report=term-missing
 
   migrations:
     name: Alembic migrations
     runs-on: ubuntu-latest
 
-    # Real Postgres so migrations are validated against the production
-    # dialect (JSONB, enum DDL, ALTER TYPE, gin/partial indexes, server
-    # defaults). SQLite would silently pass Postgres-only DDL. Pin 17 to
-    # match Neon (production runs PostgreSQL 17).
+    # Pin 17 to match Neon production.
     services:
       postgres:
         image: postgres:17
@@ -114,9 +125,7 @@ jobs:
           fi
 
       - name: Migrations apply cleanly (Postgres)
-        # APP_ENV=test allows a non-SQLite URL without tripping the
-        # production localhost guard. Roundtrip (upgrade -> downgrade ->
-        # upgrade) also validates that downgrade() functions are correct.
+        # Roundtrip also validates that downgrade() functions are correct.
         env:
           APP_ENV: test
           JWT_SECRET: ci-test-only
@@ -129,8 +138,9 @@ jobs:
       - name: Models match migrations (alembic check)
         # After upgrade head the DB reflects all migrations. `alembic check`
         # autogenerates against the live SQLAlchemy metadata and fails if a
-        # model was changed without a matching migration. Note: env.py does
-        # not set compare_type, so column-type-only changes are not caught.
+        # model was changed without a matching migration. env.py sets
+        # compare_type and compare_server_default, so column-type and
+        # server-default changes are caught too.
         env:
           APP_ENV: test
           JWT_SECRET: ci-test-only

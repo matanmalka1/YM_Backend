@@ -17,9 +17,6 @@ from app.core.logging_config import (
 
 logger = get_logger(__name__)
 
-if settings.APP_ENV == "production" and settings.DATABASE_URL.startswith("sqlite"):
-    raise RuntimeError("SQLite אינו מותר בסביבת ייצור")
-
 # Create engine
 engine = create_engine(
     settings.DATABASE_URL,

@@ -5,8 +5,8 @@
 - All schema changes must go through Alembic.
 - Never use `Base.metadata.create_all()` for application schema management.
 - Migration files live in `alembic/versions/`.
-- Current head is `0007` (`0007_vat_invoice_created_at_datetime.py`).
-- The migration history was reset on 2026-06-03 for the development database.
+- Current head is `657db666d1cc` (`657db666d1cc_initial.py`).
+- The migration history was last squashed on 2026-07-26 for the development database.
 - Production startup must run migrations before the server command:
   `alembic upgrade head && ...`
 
@@ -17,7 +17,7 @@ Development targets local PostgreSQL.
 1. Start the DB:
 
 ```bash
-docker compose up -d postgres
+docker compose up -d db
 ```
 
 2. Reset the development schema when applying the fresh baseline:
@@ -50,80 +50,12 @@ APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin
 Default local connection:
 
 ```text
-postgresql+psycopg2://matanmalka@localhost:5432/binder_crm
+postgresql+psycopg2://postgres:postgres@localhost:5432/binder_crm
 ```
 
 ## Current migrations
 
-### 0007_vat_invoice_created_at_datetime
-
-- Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
-- What it does:
-  Converts `vat_invoices.created_at` from `date` to `timestamp`.
-- Covers:
-  Preserves existing date-only values as midnight timestamps; downgrades back to date.
-- Notes:
-  `down_revision = "0006"`.
-
-### 0006_reminder_action_type_snake_case
-
-- Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
-- What it does:
-  Renames `reminderactiontype` enum values from upper-case to snake_case.
-- Covers:
-  `CREATE_TASK` → `create_task`, `SEND_NOTIFICATION` → `send_notification`,
-  `CREATE_TASK_AND_NOTIFY` → `create_task_and_notify`.
-- Notes:
-  PostgreSQL-only enum rename; no-op on non-PostgreSQL dialects.
-  `down_revision = "0005"`.
-
-### 0005_correspondence_updated_at
-
-- Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
-- What it does:
-  Adds nullable `updated_at` to `correspondence_entries`.
-- Covers:
-  Real correspondence updates via model `onupdate`; existing rows stay NULL.
-- Notes:
-  `down_revision = "0004"`.
-
-### 0004_signature_request_updated_at
-
-- Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
-- What it does:
-  Adds nullable `updated_at` to `signature_requests`.
-- Covers:
-  Real send/sign/decline/cancel/expire/soft-delete mutations; existing rows stay NULL.
-- Notes:
-  `down_revision = "0003"`.
-
-### 0003_binder_updated_at
-
-- Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
-- What it does:
-  Adds nullable `updated_at` to `binders`.
-- Covers:
-  Real status/handover/capacity/soft-delete mutations; existing rows stay NULL.
-- Notes:
-  `down_revision = "0002"`.
-
-### 0002_charge_updated_at
-
-- Command:
-  `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
-- What it does:
-  Adds nullable `updated_at` to `charges`.
-- Covers:
-  Real issue/pay/cancel/soft-delete mutations; existing rows stay NULL.
-- Notes:
-  `down_revision = "bfaed5b29bd3"`.
-
-### 0001_initial
+### 657db666d1cc_initial
 
 - Command:
   `APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin/python -m alembic upgrade head`
@@ -135,10 +67,12 @@ postgresql+psycopg2://matanmalka@localhost:5432/binder_crm
   permanent documents, signature requests, correspondence, authority contacts,
   notes, tasks, idempotency keys, and audit tables.
 - Notes:
-  Generated as a fresh initial migration for an empty database/schema.
-  Previous incremental migration history was intentionally reset.
-  Includes creation of `client_office_number_seq` starting at `100001`
-  for generated office client numbers.
+  Generated as a fresh initial migration for an empty database/schema on 2026-07-26;
+  the previous incremental history was squashed into it.
+  Creates `client_office_number_seq` starting at `100001` and binds it to
+  `client_records.office_client_number` via `server_default`.
+  `downgrade()` drops that sequence and every enum type created implicitly by
+  `sa.Enum`, so the CI upgrade -> downgrade -> upgrade roundtrip passes.
   `down_revision = None`.
 
 ## Required checks after model changes
@@ -149,7 +83,7 @@ APP_ENV=development ENV_FILE=.env.development JWT_SECRET=test-secret ./.venv/bin
 
 Review the generated migration before applying it:
 
-- Ensure every partial index `postgresql_where` / `sqlite_where` uses `sa.text(...)`.
+- Ensure every partial index `postgresql_where` uses `sa.text(...)`.
 - Confirm `down_revision` points to the current head.
 
 Then run:

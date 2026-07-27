@@ -105,6 +105,5 @@ class Business(SoftDeletableMixin, Base):
             postgresql_where=and_(
                 column("business_name").isnot(None), column("deleted_at").is_(None)
             ),
-            sqlite_where=and_(column("business_name").isnot(None), column("deleted_at").is_(None)),
         ),
     )

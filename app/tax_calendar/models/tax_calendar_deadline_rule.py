@@ -72,7 +72,6 @@ class DeadlineRule(Base):
             "rule_type",
             unique=True,
             postgresql_where=text("effective_to IS NULL"),
-            sqlite_where=text("effective_to IS NULL"),
         ),
     )
 

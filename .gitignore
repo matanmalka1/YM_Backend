@@ -31,10 +31,6 @@ env/
 .coverage
 htmlcov/
 
-# Databases
-*.db
-*.db-journal
-
 # IDEs
 .vscode/
 .idea/
@@ -46,10 +42,6 @@ htmlcov/
 .env.*
 !.env.example
 !.env.*.example
-
-# Database
-*.db
-*.db-journal
 
 # macOS
 .DS_Store

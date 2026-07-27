@@ -173,9 +173,7 @@ class EntityAuditLogRepository(AppendOnlyRepository):
 
         Uses the §8b PostgreSQL expression index
         ``idx_entity_audit_client_ctx`` on ``((metadata_json->>'client_record_id'),
-        performed_at)``. The text comparison is consistent across dialects
-        (``.as_string()`` maps to ``->>`` on PostgreSQL JSONB and ``json_extract``
-        on SQLite). ``entity_types``/``business_ids`` narrow further.
+        performed_at)``. ``entity_types``/``business_ids`` narrow further.
         """
         stmt = select(EntityAuditLog).where(
             EntityAuditLog.metadata_json["client_record_id"].as_string() == str(client_record_id)

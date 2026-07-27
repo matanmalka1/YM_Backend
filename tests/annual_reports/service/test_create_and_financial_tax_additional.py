@@ -33,29 +33,36 @@ def _client(db, suffix="1"):
     )
 
 
-def test_create_report_validation_errors(test_db):
+def test_create_report_validation_errors(test_db, actor_user):
     c = _client(test_db, "A")
     service = AnnualReportService(test_db)
 
     with pytest.raises(AppError):
-        service.create_report(c.id, 2026, "bad", 1, "A")
+        service.create_report(c.id, 2026, "bad", actor_user.id, actor_user.full_name)
     with pytest.raises(AppError):
-        service.create_report(c.id, 2026, "corporation", 1, "A", deadline_type="bad")
+        service.create_report(
+            c.id,
+            2026,
+            "corporation",
+            actor_user.id,
+            actor_user.full_name,
+            deadline_type="bad",
+        )
 
-    service.create_report(c.id, 2026, "corporation", 1, "A")
+    service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
     with pytest.raises(ConflictError):
-        service.create_report(c.id, 2026, "corporation", 1, "A")
+        service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 
 
-def test_create_report_custom_deadline_and_assigned_to_validation(test_db):
+def test_create_report_custom_deadline_and_assigned_to_validation(test_db, actor_user):
     c = _client(test_db, "B")
     service = AnnualReportService(test_db)
     report = service.create_report(
         client_record_id=c.id,
         tax_year=2025,
         client_type="corporation",
-        created_by=1,
-        created_by_name="A",
+        created_by=actor_user.id,
+        created_by_name=actor_user.full_name,
         deadline_type="custom",
     )
     assert report.filing_deadline is None
@@ -65,17 +72,24 @@ def test_create_report_custom_deadline_and_assigned_to_validation(test_db):
             client_record_id=c.id,
             tax_year=2024,
             client_type="corporation",
-            created_by=1,
-            created_by_name="A",
+            created_by=actor_user.id,
+            created_by_name=actor_user.full_name,
             assigned_to=999999,
         )
 
 
-def test_readiness_incomplete_required_schedule_issue_present(test_db):
+def test_readiness_incomplete_required_schedule_issue_present(test_db, actor_user):
     c = _client(test_db, "C")
     service = AnnualReportService(test_db)
     readiness_service = AnnualReportReadinessService(test_db)
-    report = service.create_report(c.id, 2026, "corporation", 1, "A", has_rental_income=True)
+    report = service.create_report(
+        c.id,
+        2026,
+        "corporation",
+        actor_user.id,
+        actor_user.full_name,
+        has_rental_income=True,
+    )
 
     # required schedule exists and incomplete -> explicit issue
     readiness = readiness_service.get_readiness_check(report.id)
@@ -83,15 +97,15 @@ def test_readiness_incomplete_required_schedule_issue_present(test_db):
     assert readiness.is_ready is False
 
 
-def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db):
+def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db, actor_user):
     c = _client(test_db, "D")
     service = AnnualReportService(test_db)
     line_service = AnnualReportFinancialLineService(test_db)
     tax_service = AnnualReportTaxService(test_db)
-    report = service.create_report(c.id, 2026, "corporation", 1, "A")
+    report = service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 
     # ensure summary has taxable income
-    line_service.add_income(report.id, "salary", 1000, actor_id=1)
+    line_service.add_income(report.id, "salary", 1000, actor_id=actor_user.id)
     AnnualReportDetailRepository(test_db).update_meta(
         report.id,
         pension_contribution=100.0,
@@ -126,61 +140,67 @@ def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db):
     assert out.total_credit_points == Decimal("3.0")
 
 
-def test_income_line_allows_zero_amount(test_db):
+def test_income_line_allows_zero_amount(test_db, actor_user):
     c = _client(test_db, "E")
     service = AnnualReportService(test_db)
     line_service = AnnualReportFinancialLineService(test_db)
     summary_service = AnnualReportFinancialSummaryService(test_db)
-    report = service.create_report(c.id, 2026, "corporation", 1, "A")
+    report = service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 
-    line = line_service.add_income(report.id, "salary", 0, actor_id=1)
+    line = line_service.add_income(report.id, "salary", 0, actor_id=actor_user.id)
 
     assert float(line.amount) == 0.0
     summary = summary_service.get_financial_summary(report.id)
     assert float(summary.total_income) == 0.0
 
 
-def test_expense_line_uses_external_document_reference(test_db):
+def test_expense_line_uses_external_document_reference(test_db, actor_user):
     c = _client(test_db, "F")
     service = AnnualReportService(test_db)
     line_service = AnnualReportFinancialLineService(test_db)
-    report = service.create_report(c.id, 2026, "corporation", 1, "A")
+    report = service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 
     line = line_service.add_expense(
         report.id,
         "office_rent",
         250,
         external_document_reference="INV-2026-001",
-        actor_id=1,
+        actor_id=actor_user.id,
     )
 
     assert line.external_document_reference == "INV-2026-001"
     assert line.supporting_document_id is None
 
 
-def _prepare_financial_mutation(line_service, report_id: int, mutation: str):
+def _prepare_financial_mutation(line_service, report_id: int, mutation: str, actor_id: int):
     if mutation == "add_income":
-        return lambda: line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=1)
+        return lambda: line_service.add_income(
+            report_id, "salary", Decimal("100.00"), actor_id=actor_id
+        )
     if mutation == "update_income":
-        line = line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=1)
+        line = line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=actor_id)
         return lambda: line_service.update_income(
-            report_id, line.id, amount=Decimal("125.00"), actor_id=1
+            report_id, line.id, amount=Decimal("125.00"), actor_id=actor_id
         )
     if mutation == "delete_income":
-        line = line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=1)
-        return lambda: line_service.delete_income(report_id, line.id, actor_id=1)
+        line = line_service.add_income(report_id, "salary", Decimal("100.00"), actor_id=actor_id)
+        return lambda: line_service.delete_income(report_id, line.id, actor_id=actor_id)
     if mutation == "add_expense":
         return lambda: line_service.add_expense(
-            report_id, "office_rent", Decimal("100.00"), actor_id=1
+            report_id, "office_rent", Decimal("100.00"), actor_id=actor_id
         )
     if mutation == "update_expense":
-        line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"), actor_id=1)
+        line = line_service.add_expense(
+            report_id, "office_rent", Decimal("100.00"), actor_id=actor_id
+        )
         return lambda: line_service.update_expense(
-            report_id, line.id, amount=Decimal("125.00"), actor_id=1
+            report_id, line.id, amount=Decimal("125.00"), actor_id=actor_id
         )
     if mutation == "delete_expense":
-        line = line_service.add_expense(report_id, "office_rent", Decimal("100.00"), actor_id=1)
-        return lambda: line_service.delete_expense(report_id, line.id, actor_id=1)
+        line = line_service.add_expense(
+            report_id, "office_rent", Decimal("100.00"), actor_id=actor_id
+        )
+        return lambda: line_service.delete_expense(report_id, line.id, actor_id=actor_id)
     raise AssertionError(f"Unhandled mutation {mutation}")
 
 
@@ -195,12 +215,16 @@ def _prepare_financial_mutation(line_service, report_id: int, mutation: str):
         "delete_expense",
     ],
 )
-def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(test_db, mutation):
+def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(
+    test_db, actor_user, mutation
+):
     c = _client(test_db, f"INV{mutation}")
-    report = AnnualReportService(test_db).create_report(c.id, 2026, "corporation", 1, "A")
+    report = AnnualReportService(test_db).create_report(
+        c.id, 2026, "corporation", actor_user.id, actor_user.full_name
+    )
     line_service = AnnualReportFinancialLineService(test_db)
     tax_service = AnnualReportTaxService(test_db)
-    mutate = _prepare_financial_mutation(line_service, report.id, mutation)
+    mutate = _prepare_financial_mutation(line_service, report.id, mutation, actor_user.id)
 
     tax_service.save_tax_calculation(report.id, Decimal("100.00"), None)
     test_db.refresh(report)
@@ -213,9 +237,11 @@ def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(test
     assert report.refund_due is None
 
 
-def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(test_db):
+def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(test_db, actor_user):
     c = _client(test_db, "SUBMITTED-TAX")
-    report = AnnualReportService(test_db).create_report(c.id, 2026, "corporation", 1, "A")
+    report = AnnualReportService(test_db).create_report(
+        c.id, 2026, "corporation", actor_user.id, actor_user.full_name
+    )
     AnnualReportRepository(test_db).update(
         report.id,
         status=AnnualReportStatus.SUBMITTED,
@@ -224,7 +250,7 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(t
     test_db.refresh(report)
 
     AnnualReportFinancialLineService(test_db).add_income(
-        report.id, "salary", Decimal("100.00"), actor_id=1
+        report.id, "salary", Decimal("100.00"), actor_id=actor_user.id
     )
 
     test_db.refresh(report)
@@ -233,10 +259,10 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(t
     assert report.refund_due is None
 
 
-def test_annex_line_creates_schedule_owner_when_missing(test_db):
+def test_annex_line_creates_schedule_owner_when_missing(test_db, actor_user):
     c = _client(test_db, "G")
     service = AnnualReportService(test_db)
-    report = service.create_report(c.id, 2026, "corporation", 1, "A")
+    report = service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 
     assert service.get_annex_lines(report.id, AnnualReportSchedule.SCHEDULE_B) == []
 
@@ -245,7 +271,7 @@ def test_annex_line_creates_schedule_owner_when_missing(test_db):
         AnnualReportSchedule.SCHEDULE_B,
         {"rental_income": 12000},
         notes="auto owner",
-        actor_id=1,
+        actor_id=actor_user.id,
     )
 
     assert line.schedule == AnnualReportSchedule.SCHEDULE_B
