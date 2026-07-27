@@ -225,6 +225,33 @@ class AdvancePaymentService:
             return AdvancePaymentStatus.PAID
         return AdvancePaymentStatus.PARTIAL
 
+    def _invalidate_annual_report_tax(self, client_record_id: int, periods) -> None:
+        """Clear the persisted tax of any open annual report these periods feed.
+
+        The annual report's ``advances_paid`` comes from an aggregate that both sums
+        ``paid_amount`` and filters on ``status == PAID``, so *any* write that can move
+        either one invalidates a previously saved ``tax_due``/``refund_due`` — including
+        a settled row dropping back to PARTIAL, not only a row becoming PAID.
+
+        Called unconditionally by every such write path rather than gated on the
+        resulting status: the gate is what made this miss transitions. It is a cheap
+        no-op when the client has no open pre-submission report for the year.
+
+        The import is deferred because ``annual_reports`` imports this domain's
+        repositories, so a module-level import would close the cycle. Relocating this
+        dependency behind a published contract is tracked in the tax-lifecycle plan.
+        """
+        from app.annual_reports.services.annual_report_tax_service import (
+            AnnualReportTaxService,
+        )
+
+        tax_years = {parse_period_year(period) for period in periods if period}
+        if not tax_years:
+            return
+        tax_service = AnnualReportTaxService(self.db)
+        for tax_year in tax_years:
+            tax_service.invalidate_tax_if_open(client_record_id, tax_year)
+
     # ─── List ─────────────────────────────────────────────────────────────────
 
     def list_payments_for_client(
@@ -412,6 +439,7 @@ class AdvancePaymentService:
             metadata_json=self._audit_metadata(updated),
             **self._actor_kwargs(actor_id, actor_name),
         )
+        self._invalidate_annual_report_tax(client_record_id, [updated.period])
         return updated
 
     # ─── Bulk mark-paid ───────────────────────────────────────────────────────
@@ -437,6 +465,9 @@ class AdvancePaymentService:
         payments = {p.id: p for p in self.repo.get_active_by_ids(payment_ids)}
         updated: list[int] = []
         skipped: list[tuple[int, str]] = []
+        # This command is cross-client (it is driven by the org-wide overview), so the
+        # settled periods are grouped per client before invalidating annual reports.
+        settled_periods_by_client: dict[int, list[str]] = {}
 
         for payment_id in payment_ids:
             payment = payments.get(payment_id)
@@ -473,7 +504,10 @@ class AdvancePaymentService:
                 **self._actor_kwargs(actor_id, actor_name),
             )
             updated.append(saved.id)
+            settled_periods_by_client.setdefault(saved.client_record_id, []).append(saved.period)
 
+        for settled_client_id, settled_periods in settled_periods_by_client.items():
+            self._invalidate_annual_report_tax(settled_client_id, settled_periods)
         return updated, skipped
 
     # ─── Bulk rate update ───────────────────────────────────────────────────────
@@ -549,6 +583,9 @@ class AdvancePaymentService:
             actor_role=actor_role,
             actor_name=actor_name,
         )
+        # No annual-report invalidation here by design: this loop skips every row that is
+        # not PENDING, and a PENDING row has paid_amount == 0, so repricing can never move
+        # a row into or out of the PAID set the annual report's advances_paid sums over.
         return updated, skipped
 
     # ─── Delete ───────────────────────────────────────────────────────────────
@@ -928,4 +965,7 @@ class AdvancePaymentService:
             },
             **self._actor_kwargs(actor_id, actor_name),
         )
+        # Snapshotting rewrites expected_amount and re-derives status, which can move a
+        # row into or out of PAID — both change the annual report's advances_paid.
+        self._invalidate_annual_report_tax(updated.client_record_id, [updated.period])
         return updated

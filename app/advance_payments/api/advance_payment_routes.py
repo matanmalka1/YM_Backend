@@ -32,7 +32,6 @@ from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.common.period_utils import parse_period_year
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
@@ -224,26 +223,6 @@ def update_advance_payment(
         actor_name=user.full_name,
         **request.model_dump(exclude_unset=True),
     )
-    # When a payment is marked PAID, invalidate any open annual report tax calculation
-    # for the same client+year so the advisor is prompted to re-save after recalculation.
-    if payment.status == AdvancePaymentStatus.PAID and payment.period:
-        tax_year: int | None = None
-        try:
-            tax_year = parse_period_year(payment.period)
-            from app.annual_reports.services.annual_report_tax_service import (
-                AnnualReportTaxService,
-            )
-
-            AnnualReportTaxService(db).invalidate_tax_if_open(client_record_id, tax_year)
-        except Exception:
-            logger.exception(
-                "Failed to invalidate annual report tax after advance payment update. "
-                "client_record_id=%s tax_year=%s payment_id=%s period=%s",
-                client_record_id,
-                tax_year,
-                payment_id,
-                payment.period,
-            )
     return AdvancePaymentRow.model_validate(payment)
 
 

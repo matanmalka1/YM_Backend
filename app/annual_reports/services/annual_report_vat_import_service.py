@@ -366,6 +366,19 @@ class VatImportService:
                 note=f"source={_VAT_IMPORT_SOURCE}",
             )
 
+        # Importing rewrites the report's income/expense lines, so any tax result saved
+        # before the import no longer reflects them. Manual line mutations already clear
+        # it via AnnualReportFinancialLineService; this path writes lines through the
+        # repositories directly and so must clear it itself.
+        if income_lines_created or expense_lines_created or lines_deleted:
+            from app.annual_reports.services.annual_report_tax_service import (
+                AnnualReportTaxService,
+            )
+
+            AnnualReportTaxService(self.db).invalidate_tax_if_open(
+                report.client_record_id, report.tax_year
+            )
+
         return {
             "annual_report_id": report_id,
             "income_lines_created": income_lines_created,

@@ -36,6 +36,11 @@ jobs:
       - name: ruff format --check
         run: ruff format --check .
 
+      # Enforces the cross-domain import rules in docs/backend/architecture.md.
+      # Pure-stdlib AST scan, so it needs no project dependencies.
+      - name: Domain boundary check
+        run: python scripts/audit/check_domain_boundaries.py --fail-on-findings
+
   test:
     name: Tests (pytest)
     runs-on: ubuntu-latest
