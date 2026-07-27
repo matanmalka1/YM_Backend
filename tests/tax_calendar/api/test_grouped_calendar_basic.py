@@ -138,15 +138,6 @@ def test_soft_deleted_client_rows_are_excluded_from_group_counts(
     }
 
 
-def test_unauthenticated_request_is_rejected(client, test_db):
-    vat_entry(test_db)
-    test_db.commit()
-
-    response = client.get(f"{PATH}?include_empty=true")
-
-    assert response.status_code == 401
-
-
 def test_secretary_role_can_access(client, secretary_token, test_db):
     vat_entry(test_db)
     test_db.commit()

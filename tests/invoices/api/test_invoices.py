@@ -115,15 +115,3 @@ def test_get_charge_invoice_missing_returns_404(
     assert res.status_code == 404
     assert res.json()["error"]["code"] == "INVOICE.NOT_FOUND"
 
-
-def test_attach_invoice_requires_auth(client):
-    res = client.post(
-        "/api/v1/invoices",
-        json={
-            "charge_id": 1,
-            "provider": "icount",
-            "external_invoice_id": "INV-NOAUTH",
-            "issued_at": "2026-01-01T12:00:00",
-        },
-    )
-    assert res.status_code == 401

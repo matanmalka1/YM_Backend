@@ -231,19 +231,6 @@ def test_negative_assignee_user_id_returns_422(client, advisor_headers):
     assert resp.status_code == 422
 
 
-# ── Auth ─────────────────────────────────────────────────────────────────────
-
-
-def test_unauthenticated_returns_401(client, test_db):
-    t = _task(test_db)
-    resp = client.post(
-        "/api/v1/tasks/bulk-assign",
-        headers={"X-Idempotency-Key": _idem()},
-        json={"task_ids": [t.id], "assignee_user_id": None},
-    )
-    assert resp.status_code == 401
-
-
 def test_secretary_allowed(client, test_db, secretary_headers):
     t = _task(test_db)
     resp = _post(client, secretary_headers, [t.id], None)

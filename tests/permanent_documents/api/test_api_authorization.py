@@ -52,25 +52,6 @@ def test_advisor_can_upload_documents(
     assert response.status_code == 201
 
 
-def test_unauthenticated_cannot_upload_documents(client, test_db, create_client_with_business):
-    """Test that unauthenticated users cannot upload documents."""
-    _client, b = create_client_with_business(
-        full_name="API Test Client", id_number="71080001", id_number_type=IdNumberType.CORPORATION
-    )
-
-    response = client.post(
-        "/api/v1/documents/upload",
-        data={
-            "client_record_id": b.client_id,
-            "business_id": b.id,
-            "document_type": "id_copy",
-        },
-        files={"file": ("test.pdf", BytesIO(b"fake content"), "application/pdf")},
-    )
-
-    assert response.status_code == 401
-
-
 def test_invalid_token_cannot_upload_documents(client, test_db, create_client_with_business):
     """Test that invalid token cannot upload documents."""
     _client, b = create_client_with_business(

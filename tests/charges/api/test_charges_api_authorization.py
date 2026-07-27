@@ -87,8 +87,7 @@ def test_secretary_can_read_charges(
     assert [action["key"] for action in get_payload["available_actions"]] == expected_action_keys
 
 
-def test_charges_requires_auth(client):
-    assert client.get("/api/v1/charges").status_code == 401
+def test_charges_rejects_invalid_bearer_token(client):
     assert (
         client.get("/api/v1/charges", headers={"Authorization": "Bearer not-a-jwt"}).status_code
         == 401

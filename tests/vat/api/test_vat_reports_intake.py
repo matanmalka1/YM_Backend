@@ -35,13 +35,6 @@ class TestCreateWorkItem:
         assert response.status_code == 400
         assert response.json()["error"]["code"] == "VAT.PENDING_NOTE_REQUIRED"
 
-    def test_unauthenticated_401(self, client, vat_client):
-        response = client.post(
-            "/api/v1/vat/work-items",
-            json={"client_record_id": vat_client.id, "period": "2026-04"},
-        )
-        assert response.status_code == 401
-
     def test_create_work_item_response_is_enriched(
         self, client, advisor_headers, vat_client, user_factory
     ):

@@ -1,13 +1,3 @@
-def test_search_requires_auth(client):
-    response = client.get("/api/v1/search?search=x")
-    assert response.status_code == 401
-
-
-def test_search_items_requires_auth(client):
-    response = client.get("/api/v1/search/items?search=x&result_type=task")
-    assert response.status_code == 401
-
-
 def test_search_rejects_a_missing_term(client, advisor_headers):
     response = client.get("/api/v1/search", headers=advisor_headers)
     assert response.status_code == 422

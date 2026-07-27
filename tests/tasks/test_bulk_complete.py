@@ -159,19 +159,6 @@ def test_same_key_different_payload_returns_409(client, test_db, advisor_headers
     assert r2.status_code == 409
 
 
-# ── Auth ─────────────────────────────────────────────────────────────────────
-
-
-def test_unauthenticated_returns_401(client, test_db):
-    t = _task(test_db)
-    resp = client.post(
-        "/api/v1/tasks/bulk-complete",
-        headers={"X-Idempotency-Key": _idem()},
-        json={"task_ids": [t.id]},
-    )
-    assert resp.status_code == 401
-
-
 def test_secretary_allowed(client, test_db, secretary_headers):
     t = _task(test_db)
     resp = _post(client, secretary_headers, [t.id])

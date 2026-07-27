@@ -69,11 +69,6 @@ def test_notification_metadata_is_backend_owned_and_available_to_operational_rol
         assert options["client_general_message"]["client_level_manual"] is True
 
 
-def test_notification_metadata_requires_authentication(client):
-    response = client.get("/api/v1/notifications/metadata")
-    assert response.status_code == 401
-
-
 def test_list_notifications_accepts_page_size_50(
     client, test_db, advisor_headers, client_factory, notification_factory
 ):

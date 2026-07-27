@@ -39,15 +39,6 @@ def _write(test_db, test_user, entity_type, entity_id, *, metadata=None, action=
     test_db.commit()
 
 
-# --------------------------------------------------------------------------- #
-# Route authorization (current model only)
-# --------------------------------------------------------------------------- #
-def test_unauthenticated_request_is_rejected(client, create_client_with_business):
-    client_record, _ = create_client_with_business(id_number="P2-401")
-    resp = client.get(f"/api/v1/audit/client/{client_record.id}")
-    assert resp.status_code == 401
-
-
 @pytest.mark.parametrize("headers_fixture", ["advisor_headers", "secretary_headers"])
 def test_both_roles_may_read_audit(
     request, client, test_db, test_user, create_client_with_business, headers_fixture

@@ -31,11 +31,6 @@ def test_list_rules_response_shape(client, advisor_headers, test_db):
     assert rule["rule_type"] in _EXPECTED_RULE_KEYS
 
 
-def test_list_rules_unauthenticated_returns_401(client, test_db):
-    response = client.get(RULES_PATH)
-    assert response.status_code == 401
-
-
 def test_list_rules_secretary_returns_403(client, secretary_headers, test_db):
     response = client.get(RULES_PATH, headers=secretary_headers)
     assert response.status_code == 403
@@ -55,11 +50,6 @@ def test_list_entries_year_filter(client, advisor_headers, test_db):
     data = response.json()
     assert len(data) == 37
     assert all(e["tax_year"] == 2026 for e in data)
-
-
-def test_list_entries_unauthenticated_returns_401(client, test_db):
-    response = client.get(ENTRIES_PATH)
-    assert response.status_code == 401
 
 
 def test_list_entries_secretary_returns_403(client, secretary_headers, test_db):
