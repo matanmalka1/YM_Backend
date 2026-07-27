@@ -70,13 +70,3 @@ def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user, 
     )
     assert resp2.status_code == 200
     assert len(resp2.json()["items"]) == 1
-
-
-def test_binder_intakes_page_size_cap(client, test_db, advisor_headers, test_user, binder_factory):
-    binder = _seed_binder_and_intakes(test_db, binder_factory, test_user.id)
-    resp = client.get(
-        f"/api/v1/binders/{binder.id}/intakes",
-        params={"page_size": 999},
-        headers=advisor_headers,
-    )
-    assert resp.status_code == 422

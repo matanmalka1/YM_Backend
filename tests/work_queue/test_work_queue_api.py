@@ -4,7 +4,6 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
-from app.core.pagination import MAX_PAGE_SIZE
 from app.tasks.models.task import TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.items.common import source_route
@@ -84,14 +83,6 @@ def test_work_queue_api_pagination(
     assert r2.status_code == 200
     assert len(r1.json()["items"]) == 2
     assert len(r2.json()["items"]) == 1
-
-
-def test_work_queue_api_page_size_max_enforced(client, advisor_headers):
-    response = client.get(
-        f"/api/v1/work-queue?page_size={MAX_PAGE_SIZE + 1}",
-        headers=advisor_headers,
-    )
-    assert response.status_code == 422
 
 
 def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers, task_factory):

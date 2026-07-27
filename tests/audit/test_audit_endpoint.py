@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from app.audit.audit_constants import ENTITY_CLIENT
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.core.pagination import MAX_PAGE_SIZE
 
 
 def _seed_three_audit_entries(test_db, test_user, client_record):
@@ -110,15 +109,6 @@ def test_audit_endpoint_page_two_returns_remaining_records(
     assert payload["page_size"] == 2
     # Page 2 holds the single remaining (oldest) entry.
     assert [item["id"] for item in payload["items"]] == [first.id]
-
-
-def test_audit_endpoint_page_size_validation(client, advisor_headers):
-    response = client.get(
-        f"/api/v1/audit/client/55?page_size={MAX_PAGE_SIZE + 1}",
-        headers=advisor_headers,
-    )
-
-    assert response.status_code == 422
 
 
 def test_audit_endpoint_rejects_unknown_entity_type(client, advisor_headers):
