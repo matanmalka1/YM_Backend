@@ -14,7 +14,7 @@ from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_client_identity
 
 
-def _create_vat_client(test_db, id_number: str):
+def _create_vat_client(test_db, actor_user, id_number: str):
     return create_client_identity_only(
         test_db,
         full_name="VAT Onboarding Client",
@@ -24,13 +24,13 @@ def _create_vat_client(test_db, id_number: str):
         vat_reporting_frequency=VatType.MONTHLY,
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
         advance_rate="5.0",
-        actor_id=1,
+        actor_id=actor_user.id,
         reference_date=date(2026, 4, 30),
     )
 
 
-def test_onboarding_creates_vat_work_items_and_advance_payments(test_db):
-    client_record = _create_vat_client(test_db, "123456780")
+def test_onboarding_creates_vat_work_items_and_advance_payments(test_db, actor_user):
+    client_record = _create_vat_client(test_db, actor_user, "123456780")
     vat_items = list(
         test_db.scalars(select(VatWorkItem).where(VatWorkItem.client_record_id == client_record.id))
     )
@@ -55,9 +55,9 @@ def test_onboarding_creates_vat_work_items_and_advance_payments(test_db):
     assert all(p.due_date_effective == p.due_date for p in payments)
 
 
-def test_onboarding_advance_payments_link_tax_calendar_entries(test_db):
+def test_onboarding_advance_payments_link_tax_calendar_entries(test_db, actor_user):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2026)
-    client_record = _create_vat_client(test_db, "123456786")
+    client_record = _create_vat_client(test_db, actor_user, "123456786")
 
     payments = list(
         test_db.scalars(
@@ -72,7 +72,7 @@ def test_onboarding_advance_payments_link_tax_calendar_entries(test_db):
 
 
 def test_onboarding_retry_does_not_duplicate_vat_work_items(test_db, actor_user):
-    client_record = _create_vat_client(test_db, "123456781")
+    client_record = _create_vat_client(test_db, actor_user, "123456781")
     ClientOnboardingOrchestrator(test_db).run(
         client_record.id,
         actor_id=actor_user.id,
@@ -92,8 +92,8 @@ def test_onboarding_retry_does_not_duplicate_vat_work_items(test_db, actor_user)
     assert payment_count == 9
 
 
-def test_onboarding_does_not_create_empty_setup_placeholders(test_db):
-    _create_vat_client(test_db, "123456782")
+def test_onboarding_does_not_create_empty_setup_placeholders(test_db, actor_user):
+    _create_vat_client(test_db, actor_user, "123456782")
 
     from app.authority_contacts.models.authority_contact import AuthorityContact
     from app.documents.permanent_documents.models.permanent_document import PermanentDocument

@@ -4,32 +4,28 @@ from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocumentType,
 )
-from app.documents.permanent_documents.repositories.permanent_document_repository import (
-    PermanentDocumentRepository,
-)
 
 
-def _doc(db, business: Business, annual_report_id: int | None = None):
-    return PermanentDocumentRepository(db).create(
+def _doc(permanent_document_factory, business: Business, annual_report_id: int | None = None):
+    return permanent_document_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         scope=DocumentScope.CLIENT,
         document_type=PermanentDocumentType.ID_COPY,
         storage_key="businesses/x/id_copy/api.pdf",
-        uploaded_by=1,
         annual_report_id=annual_report_id,
     )
 
 
 def test_actions_endpoints_versions_and_list(
-    client, test_db, advisor_headers, create_client_with_business
+    client, test_db, advisor_headers, create_client_with_business, permanent_document_factory
 ):
     _client, business = create_client_with_business(
         full_name="Perm Action API Client",
         id_number="71070001",
         id_number_type=IdNumberType.CORPORATION,
     )
-    _doc(test_db, business, annual_report_id=55)
+    _doc(permanent_document_factory, business, annual_report_id=55)
 
     versions = client.get(
         f"/api/v1/documents/client/{business.client_id}/versions?document_type=id_copy",

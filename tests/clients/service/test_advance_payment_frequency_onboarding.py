@@ -35,10 +35,10 @@ def _seed_client(
     )
 
 
-def _run_onboarding(db, client_record_id: int, entity_type: EntityType) -> None:
+def _run_onboarding(db, actor_user, client_record_id: int, entity_type: EntityType) -> None:
     ClientOnboardingOrchestrator(db).run(
         client_record_id,
-        actor_id=1,
+        actor_id=actor_user.id,
         entity_type=entity_type,
         reference_date=date(2026, 1, 1),
     )
@@ -52,7 +52,7 @@ def _advance_payments(db, client_record_id: int):
     ).all()
 
 
-def test_company_ltd_monthly_advance_frequency_creates_monthly_payments(test_db):
+def test_company_ltd_monthly_advance_frequency_creates_monthly_payments(test_db, actor_user):
     client = _seed_client(
         test_db,
         name="חומוס אחלה",
@@ -61,7 +61,7 @@ def test_company_ltd_monthly_advance_frequency_creates_monthly_payments(test_db)
         vat_frequency=VatType.MONTHLY,
         advance_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    _run_onboarding(test_db, client.id, EntityType.COMPANY_LTD)
+    _run_onboarding(test_db, actor_user, client.id, EntityType.COMPANY_LTD)
 
     payments = _advance_payments(test_db, client.id)
 
@@ -69,7 +69,7 @@ def test_company_ltd_monthly_advance_frequency_creates_monthly_payments(test_db)
     assert all(p.period_months_count == 1 for p in payments)
 
 
-def test_osek_murshe_bimonthly_advance_frequency_creates_bimonthly_payments(test_db):
+def test_osek_murshe_bimonthly_advance_frequency_creates_bimonthly_payments(test_db, actor_user):
     client = _seed_client(
         test_db,
         name="עוסק מקדמות דו חודשי",
@@ -78,7 +78,7 @@ def test_osek_murshe_bimonthly_advance_frequency_creates_bimonthly_payments(test
         vat_frequency=VatType.MONTHLY,
         advance_frequency=AdvancePaymentFrequency.BIMONTHLY,
     )
-    _run_onboarding(test_db, client.id, EntityType.OSEK_MURSHE)
+    _run_onboarding(test_db, actor_user, client.id, EntityType.OSEK_MURSHE)
 
     payments = _advance_payments(test_db, client.id)
 
@@ -93,7 +93,7 @@ def test_osek_murshe_bimonthly_advance_frequency_creates_bimonthly_payments(test
     assert all(p.period_months_count == 2 for p in payments)
 
 
-def test_vat_reporting_frequency_does_not_drive_advance_payment_frequency(test_db):
+def test_vat_reporting_frequency_does_not_drive_advance_payment_frequency(test_db, actor_user):
     client = _seed_client(
         test_db,
         name="מעום דו חודשי מקדמות חודשיות",
@@ -102,7 +102,7 @@ def test_vat_reporting_frequency_does_not_drive_advance_payment_frequency(test_d
         vat_frequency=VatType.BIMONTHLY,
         advance_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    _run_onboarding(test_db, client.id, EntityType.OSEK_MURSHE)
+    _run_onboarding(test_db, actor_user, client.id, EntityType.OSEK_MURSHE)
 
     payments = _advance_payments(test_db, client.id)
 

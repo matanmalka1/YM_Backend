@@ -21,7 +21,6 @@ def _make_document(permanent_document_factory, business, **overrides):
         scope=DocumentScope.BUSINESS,
         document_type=PermanentDocumentType.BANK_APPROVAL,
         storage_key="businesses/x/bank_approval/doc.pdf",
-        uploaded_by=1,
         original_filename="doc.pdf",
         tax_year=2024,
     )
@@ -174,7 +173,6 @@ def _make_binder(binder_factory, client_record_id: int, binder_number: str = "B-
     return binder_factory(
         client_record_id=client_record_id,
         binder_number=binder_number,
-        created_by=1,
     )
 
 

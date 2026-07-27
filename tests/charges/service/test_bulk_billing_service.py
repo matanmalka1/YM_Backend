@@ -54,14 +54,16 @@ def test_bulk_action_uses_domain_error_message_for_app_error(test_db, actor_user
     assert failed[0].error == "invalid transition"
 
 
-def test_bulk_action_mark_paid_and_cancel_paths(test_db, actor_user):
+def test_bulk_action_mark_paid_and_cancel_paths(test_db):
     service = BulkBillingService(db=test_db)
     fake = _FakeBilling()
     service.billing = fake
 
-    ok_paid, failed_paid = service.bulk_action([10], action="mark-paid", actor_id=actor_user.id)
+    # Actor ids reach a fake billing service, never the database: no user rows required,
+    # and the two calls must stay distinguishable.
+    ok_paid, failed_paid = service.bulk_action([10], action="mark-paid", actor_id=7)
     ok_cancel, failed_cancel = service.bulk_action(
-        [11], action="cancel", actor_id=actor_user.id, cancellation_reason="dup"
+        [11], action="cancel", actor_id=8, cancellation_reason="dup"
     )
 
     assert ok_paid == [10]

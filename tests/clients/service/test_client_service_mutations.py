@@ -18,12 +18,14 @@ from app.utils.time_utils import utcnow
 from app.vat.repositories.vat_client_summary_repository import VatClientSummaryRepository
 
 
-def _create_client(client_factory, *, full_name: str, id_number: str, deleted: bool = False):
+def _create_client(
+    client_factory, actor_user, *, full_name: str, id_number: str, deleted: bool = False
+):
     return client_factory(
         full_name=full_name,
         id_number=id_number,
         id_number_type=IdNumberType.CORPORATION,
-        created_by=1,
+        created_by=actor_user.id,
         deleted_at=utcnow() if deleted else None,
     )
 
@@ -67,7 +69,7 @@ def test_create_client_assigns_next_office_client_number_and_creates_initial_bin
 
 
 def test_create_client_conflict_when_active_exists(test_db, client_factory, actor_user):
-    _create_client(client_factory, full_name="Existing", id_number="620000000")
+    _create_client(client_factory, actor_user, full_name="Existing", id_number="620000000")
     service = CreateClientService(test_db)
 
     with pytest.raises(AppError) as exc:
@@ -84,7 +86,9 @@ def test_create_client_conflict_when_active_exists(test_db, client_factory, acto
 
 
 def test_create_client_deleted_exists_conflict(test_db, client_factory, actor_user):
-    _create_client(client_factory, full_name="Deleted", id_number="630000008", deleted=True)
+    _create_client(
+        client_factory, actor_user, full_name="Deleted", id_number="630000008", deleted=True
+    )
 
     service = CreateClientService(test_db)
     with pytest.raises(AppError) as exc:
@@ -231,7 +235,7 @@ def test_delete_raises_not_found_when_client_already_deleted(test_db, actor_user
 
 
 def test_restore_raises_when_not_deleted(test_db, client_factory, actor_user):
-    client = _create_client(client_factory, full_name="Alive", id_number="650000003")
+    client = _create_client(client_factory, actor_user, full_name="Alive", id_number="650000003")
     service = ClientLifecycleService(test_db)
 
     with pytest.raises(ConflictError) as exc:
@@ -241,7 +245,9 @@ def test_restore_raises_when_not_deleted(test_db, client_factory, actor_user):
 
 
 def test_restore_raises_when_active_duplicate_exists(test_db, client_factory, actor_user):
-    deleted = _create_client(client_factory, full_name="Old", id_number="660000001", deleted=True)
+    deleted = _create_client(
+        client_factory, actor_user, full_name="Old", id_number="660000001", deleted=True
+    )
     # A second, active ClientRecord sharing the same legal entity — the duplicate-active
     # conflict path restore_client must guard against.
     client_factory(legal_entity_id=deleted.legal_entity_id, created_by=actor_user.id, commit=True)

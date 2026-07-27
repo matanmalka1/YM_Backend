@@ -115,7 +115,7 @@ def test_vat_card_latest_period_is_lexicographic_max(test_db, client_factory, ac
 # ── Annual report card ────────────────────────────────────────────────────────
 
 
-def _annual_report(db, client_id: int, year: int, **kwargs) -> AnnualReport:
+def _annual_report(db, actor_user, client_id: int, year: int, **kwargs) -> AnnualReport:
     entry = create_tax_calendar_entry_for_annual(db, year)
     report = AnnualReport(
         client_record_id=client_id,
@@ -123,7 +123,7 @@ def _annual_report(db, client_id: int, year: int, **kwargs) -> AnnualReport:
         client_type=ClientAnnualFilingType.SELF_EMPLOYED,
         form_type=PrimaryAnnualReportForm.FORM_1301,
         tax_calendar_entry_id=entry.id,
-        created_by=1,
+        created_by=actor_user.id,
         **kwargs,
     )
     db.add(report)
@@ -131,10 +131,11 @@ def _annual_report(db, client_id: int, year: int, **kwargs) -> AnnualReport:
     return report
 
 
-def test_annual_report_card_reflects_stored_report(test_db, client_factory):
+def test_annual_report_card_reflects_stored_report(test_db, client_factory, actor_user):
     client_id = _client(client_factory, "SC-AR-001")
     _annual_report(
         test_db,
+        actor_user,
         client_id,
         2026,
         status=AnnualReportStatus.IN_PREPARATION,
@@ -153,9 +154,9 @@ def test_annual_report_card_reflects_stored_report(test_db, client_factory):
     assert card.annual_report.tax_due is None
 
 
-def test_annual_report_card_empty_when_no_report_for_year(test_db, client_factory):
+def test_annual_report_card_empty_when_no_report_for_year(test_db, client_factory, actor_user):
     client_id = _client(client_factory, "SC-AR-002")
-    _annual_report(test_db, client_id, 2025, status=AnnualReportStatus.SUBMITTED)
+    _annual_report(test_db, actor_user, client_id, 2025, status=AnnualReportStatus.SUBMITTED)
 
     card = StatusCardService(test_db).get_status_card(client_id, year=2026)
     assert card.annual_report.status is None

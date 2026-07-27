@@ -36,6 +36,7 @@ from app.users.services.user_token_service import generate_access_token
 from tests.factories import (
     AdvancePaymentFactory,
     AnnualReportFactory,
+    AnnualReportModelFactory,
     AuthorityContactFactory,
     BinderFactory,
     BusinessFactory,
@@ -108,6 +109,11 @@ def create_client_with_business(test_db):
 @pytest.fixture(scope="function")
 def annual_report_factory(test_db, client_factory):
     return AnnualReportFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def annual_report_model_factory(test_db, client_factory, tax_calendar_entry_factory):
+    return AnnualReportModelFactory(test_db, client_factory, tax_calendar_entry_factory)
 
 
 @pytest.fixture(scope="function")

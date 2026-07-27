@@ -69,7 +69,7 @@ def test_create_report_custom_deadline_and_assigned_to_validation(
             client_type="corporation",
             created_by=actor_user.id,
             created_by_name=actor_user.full_name,
-            assigned_to=actor_user.id,
+            assigned_to=999999,  # deliberately absent: the assignee lookup must raise
         )
 
 

@@ -38,21 +38,27 @@ def _setup(db, id_number: str, office_number: int):
     return client, business
 
 
-def _vat_item(db, client_id: int, period: str, status: VatWorkItemStatus) -> VatWorkItem:
+def _vat_item(
+    db, actor_user, client_id: int, period: str, status: VatWorkItemStatus
+) -> VatWorkItem:
     return create_linked_vat_work_item(
         db,
         client_record_id=client_id,
         period=period,
         period_type=VatType.MONTHLY,
         status=status,
-        created_by=1,
+        created_by=actor_user.id,
     )
 
 
-def test_vat_material_advances_pending_materials_to_material_received(test_db, test_user):
+def test_vat_material_advances_pending_materials_to_material_received(
+    test_db, test_user, actor_user
+):
     """material_type='vat' + PENDING_MATERIALS vat_report_id → MATERIAL_RECEIVED."""
     client, _ = _setup(test_db, "VA-001", 100501)
-    vat_item = _vat_item(test_db, client.id, "2026-01", VatWorkItemStatus.PENDING_MATERIALS)
+    vat_item = _vat_item(
+        test_db, actor_user, client.id, "2026-01", VatWorkItemStatus.PENDING_MATERIALS
+    )
 
     BinderIntakeService(test_db).receive(
         client_record_id=client.id,
@@ -73,10 +79,12 @@ def test_vat_material_advances_pending_materials_to_material_received(test_db, t
     assert vat_item.status == VatWorkItemStatus.MATERIAL_RECEIVED
 
 
-def test_vat_material_advance_writes_audit_entry(test_db, test_user):
+def test_vat_material_advance_writes_audit_entry(test_db, test_user, actor_user):
     """Status advance appends a vat_work_item.status_changed EntityAuditLog row."""
     client, _ = _setup(test_db, "VA-002", 100502)
-    vat_item = _vat_item(test_db, client.id, "2026-02", VatWorkItemStatus.PENDING_MATERIALS)
+    vat_item = _vat_item(
+        test_db, actor_user, client.id, "2026-02", VatWorkItemStatus.PENDING_MATERIALS
+    )
 
     BinderIntakeService(test_db).receive(
         client_record_id=client.id,
@@ -110,10 +118,12 @@ def test_vat_material_advance_writes_audit_entry(test_db, test_user):
     assert audit_rows[0].metadata_json["client_record_id"] == client.id
 
 
-def test_vat_material_does_not_advance_non_pending_status(test_db, test_user):
+def test_vat_material_does_not_advance_non_pending_status(test_db, test_user, actor_user):
     """material_type='vat' with status != PENDING_MATERIALS → no change."""
     client, _ = _setup(test_db, "VA-003", 100503)
-    vat_item = _vat_item(test_db, client.id, "2026-03", VatWorkItemStatus.MATERIAL_RECEIVED)
+    vat_item = _vat_item(
+        test_db, actor_user, client.id, "2026-03", VatWorkItemStatus.MATERIAL_RECEIVED
+    )
 
     BinderIntakeService(test_db).receive(
         client_record_id=client.id,
@@ -134,10 +144,12 @@ def test_vat_material_does_not_advance_non_pending_status(test_db, test_user):
     assert vat_item.status == VatWorkItemStatus.MATERIAL_RECEIVED
 
 
-def test_non_vat_material_does_not_touch_vat_work_item(test_db, test_user):
+def test_non_vat_material_does_not_touch_vat_work_item(test_db, test_user, actor_user):
     """material_type='other' → linked VatWorkItem untouched."""
     client, _ = _setup(test_db, "VA-004", 100504)
-    vat_item = _vat_item(test_db, client.id, "2026-04", VatWorkItemStatus.PENDING_MATERIALS)
+    vat_item = _vat_item(
+        test_db, actor_user, client.id, "2026-04", VatWorkItemStatus.PENDING_MATERIALS
+    )
 
     BinderIntakeService(test_db).receive(
         client_record_id=client.id,
@@ -158,10 +170,12 @@ def test_non_vat_material_does_not_touch_vat_work_item(test_db, test_user):
     assert vat_item.status == VatWorkItemStatus.PENDING_MATERIALS
 
 
-def test_duplicate_vat_report_id_advanced_only_once(test_db, test_user):
+def test_duplicate_vat_report_id_advanced_only_once(test_db, test_user, actor_user):
     """Same vat_report_id appearing twice in materials list is de-duped; one audit entry."""
     client, _ = _setup(test_db, "VA-005", 100505)
-    vat_item = _vat_item(test_db, client.id, "2026-05", VatWorkItemStatus.PENDING_MATERIALS)
+    vat_item = _vat_item(
+        test_db, actor_user, client.id, "2026-05", VatWorkItemStatus.PENDING_MATERIALS
+    )
     mat = {
         "material_type": "vat",
         "vat_report_id": vat_item.id,

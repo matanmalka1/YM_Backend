@@ -162,6 +162,8 @@ def seed_business(
     status: BusinessStatus = BusinessStatus.ACTIVE,
     created_by: int | None = None,
     notes: str | None = None,
+    deleted_at=None,
+    deleted_by: int | None = None,
 ) -> Business:
     business = Business(
         legal_entity_id=legal_entity_id,
@@ -170,6 +172,8 @@ def seed_business(
         status=status,
         created_by=created_by,
         notes=notes,
+        deleted_at=deleted_at,
+        deleted_by=deleted_by,
     )
     db.add(business)
     db.flush()

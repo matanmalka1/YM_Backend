@@ -5,14 +5,13 @@ from datetime import date, timedelta
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.dashboard.services.dashboard_attention_service import DashboardAttentionService
 from app.work_queue.schemas.work_queue import WorkQueueUrgency
-from tests.helpers.task_helpers import create_business
 
 
-def test_attention_is_role_independent(test_db, charge_factory):
+def test_attention_is_role_independent(test_db, charge_factory, create_client_with_business):
     """Attention has no role gate — build() surfaces items for advisor and secretary alike."""
-    biz = create_business(test_db)
+    client, biz = create_client_with_business()
     charge_factory(
-        client_record_id=biz.client_id,
+        client_record_id=client.id,
         business_id=biz.id,
         amount=500,
         charge_type=ChargeType.OTHER,
@@ -25,10 +24,10 @@ def test_attention_is_role_independent(test_db, charge_factory):
     assert any(item["source_type"] == "charge" for item in items)
 
 
-def test_unpaid_charge_appears_as_overdue(test_db, charge_factory):
-    biz = create_business(test_db)
+def test_unpaid_charge_appears_as_overdue(test_db, charge_factory, create_client_with_business):
+    client, biz = create_client_with_business()
     charge = charge_factory(
-        client_record_id=biz.client_id,
+        client_record_id=client.id,
         business_id=biz.id,
         amount=500,
         charge_type=ChargeType.OTHER,
@@ -47,11 +46,11 @@ def test_unpaid_charge_appears_as_overdue(test_db, charge_factory):
     assert charge_items[0]["href"] == f"/charges/{charge.id}"
 
 
-def test_max_7_items_are_included(test_db, charge_factory):
-    biz = create_business(test_db)
+def test_max_7_items_are_included(test_db, charge_factory, create_client_with_business):
+    client, biz = create_client_with_business()
     for i in range(10):
         charge_factory(
-            client_record_id=biz.client_id,
+            client_record_id=client.id,
             business_id=biz.id,
             amount=100 + i,
             charge_type=ChargeType.OTHER,

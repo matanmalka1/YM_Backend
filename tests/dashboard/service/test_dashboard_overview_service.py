@@ -5,13 +5,14 @@ from sqlalchemy import event
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.dashboard.services.dashboard_overview_service import DashboardOverviewService
 from app.users.models.user import UserRole
-from tests.helpers.task_helpers import create_business
 
 
-def test_secretary_overview_shares_attention_but_hides_charge_stats(test_db, charge_factory):
-    biz = create_business(test_db)
+def test_secretary_overview_shares_attention_but_hides_charge_stats(
+    test_db, charge_factory, create_client_with_business
+):
+    client, biz = create_client_with_business()
     charge_factory(
-        client_record_id=biz.client_id,
+        client_record_id=client.id,
         business_id=biz.id,
         amount=500,
         charge_type=ChargeType.OTHER,

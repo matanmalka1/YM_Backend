@@ -30,7 +30,7 @@ from tests.helpers.tax_calendar_links import (
 )
 
 
-def _setup_client_with_cascade_data(db, client_factory, binder_factory) -> int:
+def _setup_client_with_cascade_data(db, actor_user, client_factory, binder_factory) -> int:
     seeded = client_factory(
         full_name="Cascade Test Client",
         id_number="CASCADE-001",
@@ -46,7 +46,7 @@ def _setup_client_with_cascade_data(db, client_factory, binder_factory) -> int:
         period="2026-01",
         period_type=VatType.MONTHLY,
         status=VatWorkItemStatus.PENDING_MATERIALS,
-        created_by=1,
+        created_by=actor_user.id,
     )
     create_linked_vat_work_item(
         db,
@@ -54,7 +54,7 @@ def _setup_client_with_cascade_data(db, client_factory, binder_factory) -> int:
         period="2026-02",
         period_type=VatType.MONTHLY,
         status=VatWorkItemStatus.MATERIAL_RECEIVED,
-        created_by=1,
+        created_by=actor_user.id,
     )
 
     annual_entry = create_tax_calendar_entry_for_annual(db, 2026)
@@ -66,14 +66,14 @@ def _setup_client_with_cascade_data(db, client_factory, binder_factory) -> int:
             form_type=PrimaryAnnualReportForm.FORM_1301,
             status=AnnualReportStatus.NOT_STARTED,
             tax_calendar_entry_id=annual_entry.id,
-            created_by=1,
+            created_by=actor_user.id,
         )
     )
     binder_factory(
         client_record_id=client_id,
         binder_number="199001/1",
         period_start=date(2026, 1, 1),
-        created_by=1,
+        created_by=actor_user.id,
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
     )
@@ -85,7 +85,7 @@ def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(
     test_db, client_factory, binder_factory, actor_user
 ):
     """freeze → status FROZEN, VatWorkItems CANCELED, AnnualReports CANCELED, binder FULL."""
-    client_id = _setup_client_with_cascade_data(test_db, client_factory, binder_factory)
+    client_id = _setup_client_with_cascade_data(test_db, actor_user, client_factory, binder_factory)
 
     ClientUpdateService(test_db).update_client(
         client_id, actor_id=actor_user.id, status=ClientStatus.FROZEN
@@ -116,7 +116,7 @@ def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(
 
 def test_close_cascade_mirrors_freeze_cascade(test_db, client_factory, binder_factory, actor_user):
     """close → same cascade as freeze; CLOSED status persists."""
-    client_id = _setup_client_with_cascade_data(test_db, client_factory, binder_factory)
+    client_id = _setup_client_with_cascade_data(test_db, actor_user, client_factory, binder_factory)
 
     ClientUpdateService(test_db).update_client(
         client_id, actor_id=actor_user.id, status=ClientStatus.CLOSED

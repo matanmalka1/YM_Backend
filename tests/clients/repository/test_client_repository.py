@@ -3,17 +3,17 @@ from app.clients.services.client_create_service import create_client_identity_on
 from app.common.enums import EntityType, IdNumberType
 
 
-def _create_client(db, *, full_name: str, id_number: str, deleted: bool = False):
+def _create_client(db, actor_user, *, full_name: str, id_number: str, deleted: bool = False):
     record = create_client_identity_only(
         db,
         full_name=full_name,
         id_number=id_number,
         id_number_type=IdNumberType.CORPORATION,
         entity_type=EntityType.COMPANY_LTD,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
     if deleted:
-        ClientRecordRepository(db).soft_delete(record.id, deleted_by=2)
+        ClientRecordRepository(db).soft_delete(record.id, deleted_by=actor_user.id)
         record = ClientRecordRepository(db).get_by_id_including_deleted(record.id)
     return record
 
@@ -36,10 +36,12 @@ def test_create_and_get_by_id_filters_deleted(test_db, actor_user):
     assert repo.get_by_id_including_deleted(created.id) is not None
 
 
-def test_get_active_and_deleted_by_id_number(test_db):
+def test_get_active_and_deleted_by_id_number(test_db, actor_user):
     repo = ClientRecordRepository(test_db)
-    active = _create_client(test_db, full_name="Active", id_number="200000001")
-    deleted = _create_client(test_db, full_name="Deleted", id_number="200000002", deleted=True)
+    active = _create_client(test_db, actor_user, full_name="Active", id_number="200000001")
+    deleted = _create_client(
+        test_db, actor_user, full_name="Deleted", id_number="200000002", deleted=True
+    )
 
     active_rows = repo.get_active_by_id_number("200000001")
     deleted_rows = repo.get_deleted_by_id_number("200000002")
@@ -60,7 +62,9 @@ def test_get_active_and_deleted_by_id_number(test_db):
 
 
 def test_restore_clears_deleted_fields(test_db, actor_user):
-    client = _create_client(test_db, full_name="Restore Me", id_number="300000001", deleted=True)
+    client = _create_client(
+        test_db, actor_user, full_name="Restore Me", id_number="300000001", deleted=True
+    )
     repo = ClientRecordRepository(test_db)
 
     restored = repo.restore(client.id, restored_by=actor_user.id)
@@ -73,11 +77,11 @@ def test_restore_clears_deleted_fields(test_db, actor_user):
     assert repo.restore(restored.id, restored_by=actor_user.id) is None
 
 
-def test_list_count_search_and_list_by_ids(test_db):
-    _create_client(test_db, full_name="Alice One", id_number="400000001")
-    bob = _create_client(test_db, full_name="Bob Two", id_number="400000002")
+def test_list_count_search_and_list_by_ids(test_db, actor_user):
+    _create_client(test_db, actor_user, full_name="Alice One", id_number="400000001")
+    bob = _create_client(test_db, actor_user, full_name="Bob Two", id_number="400000002")
     deleted = _create_client(
-        test_db, full_name="Deleted Three", id_number="499999999", deleted=True
+        test_db, actor_user, full_name="Deleted Three", id_number="499999999", deleted=True
     )
 
     repo = ClientRecordRepository(test_db)

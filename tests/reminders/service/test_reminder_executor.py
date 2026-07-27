@@ -16,14 +16,14 @@ from app.utils.time_utils import utcnow
 from tests.helpers.identity import seed_client_identity
 
 
-def _create_due_reminder(test_db, *, action_type, **kwargs):
+def _create_due_reminder(test_db, actor_user, *, action_type, **kwargs):
     reminder = ReminderService(test_db).create_from_request(
         ReminderCreateRequest(
             fire_at=utcnow(),
             action_type=action_type,
             **kwargs,
         ),
-        created_by_user_id=7,
+        created_by_user_id=actor_user.id,
     )
     test_db.commit()
     return reminder
@@ -39,9 +39,10 @@ def _reminder_audit(test_db, reminder_id: int, action: str) -> EntityAuditLog:
     ).one()
 
 
-def test_create_task_action_creates_task_and_marks_reminder_fired(test_db):
+def test_create_task_action_creates_task_and_marks_reminder_fired(test_db, actor_user):
     reminder = _create_due_reminder(
         test_db,
+        actor_user,
         action_type=ReminderActionType.CREATE_TASK,
         payload={"task": {"title": "Follow up with client", "priority": "high"}},
     )
@@ -65,7 +66,9 @@ def test_create_task_action_creates_task_and_marks_reminder_fired(test_db):
     assert audit.metadata_json["target_task_id"] == task.id
 
 
-def test_send_notification_action_uses_canonical_service_and_marks_fired(test_db, monkeypatch):
+def test_send_notification_action_uses_canonical_service_and_marks_fired(
+    test_db, monkeypatch, actor_user
+):
     calls = []
 
     def _send(
@@ -85,6 +88,7 @@ def test_send_notification_action_uses_canonical_service_and_marks_fired(test_db
     )
     reminder = _create_due_reminder(
         test_db,
+        actor_user,
         action_type=ReminderActionType.SEND_NOTIFICATION,
         source_id=44,
         notification_template_key="payment_reminder",
@@ -107,7 +111,7 @@ def test_send_notification_action_uses_canonical_service_and_marks_fired(test_db
     assert retry_failed is True
 
 
-def test_create_task_and_notify_performs_both_actions(test_db, monkeypatch):
+def test_create_task_and_notify_performs_both_actions(test_db, monkeypatch, actor_user):
     sent = []
     client = seed_client_identity(
         test_db,
@@ -132,6 +136,7 @@ def test_create_task_and_notify_performs_both_actions(test_db, monkeypatch):
     )
     reminder = _create_due_reminder(
         test_db,
+        actor_user,
         action_type=ReminderActionType.CREATE_TASK_AND_NOTIFY,
         notification_template_key="client_general_message",
         payload={
@@ -151,7 +156,9 @@ def test_create_task_and_notify_performs_both_actions(test_db, monkeypatch):
     assert sent[0][0].overrides.subject == "Reminder"
 
 
-def test_notification_failure_marks_reminder_failed_with_system_audit(test_db, monkeypatch):
+def test_notification_failure_marks_reminder_failed_with_system_audit(
+    test_db, monkeypatch, actor_user
+):
     def _send(
         _self,
         request,
@@ -168,6 +175,7 @@ def test_notification_failure_marks_reminder_failed_with_system_audit(test_db, m
     )
     reminder = _create_due_reminder(
         test_db,
+        actor_user,
         action_type=ReminderActionType.SEND_NOTIFICATION,
         notification_template_key="client_general_message",
         payload={"client_record_id": 14},
@@ -185,7 +193,9 @@ def test_notification_failure_marks_reminder_failed_with_system_audit(test_db, m
     assert audit.new_value["failure_reason"] == "SMTP unavailable"
 
 
-def test_partial_failure_retry_reuses_task_and_notification_idempotency_key(test_db, monkeypatch):
+def test_partial_failure_retry_reuses_task_and_notification_idempotency_key(
+    test_db, monkeypatch, actor_user
+):
     client = seed_client_identity(
         test_db,
         full_name="Retry Reminder Client",
@@ -216,6 +226,7 @@ def test_partial_failure_retry_reuses_task_and_notification_idempotency_key(test
     )
     reminder = _create_due_reminder(
         test_db,
+        actor_user,
         action_type=ReminderActionType.CREATE_TASK_AND_NOTIFY,
         notification_template_key="client_general_message",
         payload={
@@ -248,7 +259,7 @@ def test_partial_failure_retry_reuses_task_and_notification_idempotency_key(test
     ]
 
 
-def test_reexecuting_fired_reminder_is_a_noop(test_db, monkeypatch):
+def test_reexecuting_fired_reminder_is_a_noop(test_db, monkeypatch, actor_user):
     calls = 0
 
     def _send(
@@ -269,6 +280,7 @@ def test_reexecuting_fired_reminder_is_a_noop(test_db, monkeypatch):
     )
     reminder = _create_due_reminder(
         test_db,
+        actor_user,
         action_type=ReminderActionType.SEND_NOTIFICATION,
         notification_template_key="client_general_message",
         payload={"client_record_id": 16},
