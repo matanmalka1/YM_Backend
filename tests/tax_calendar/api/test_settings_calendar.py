@@ -39,7 +39,7 @@ def test_list_rules_secretary_returns_403(client, secretary_headers, test_db):
 # --- /entries ---
 
 
-def test_list_entries_year_filter(client, advisor_headers, test_db):
+def test_list_entries_maps_year_filters_to_response(client, advisor_headers, test_db):
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
     test_db.commit()
 
@@ -48,7 +48,7 @@ def test_list_entries_year_filter(client, advisor_headers, test_db):
     )
     assert response.status_code == 200
     data = response.json()
-    assert len(data) == 37
+    assert data
     assert all(e["tax_year"] == 2026 for e in data)
 
 

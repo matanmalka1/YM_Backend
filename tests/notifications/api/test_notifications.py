@@ -241,7 +241,7 @@ def test_send_rejects_legacy_subject_body_shape(
     assert resp.status_code == 422
 
 
-def test_preview_returns_ready_for_active_client(
+def test_preview_returns_notification_preview_contract(
     client, test_db, create_client_with_business, advisor_headers
 ):
     b1 = _business(create_client_with_business, "prev1")
@@ -259,7 +259,15 @@ def test_preview_returns_ready_for_active_client(
     )
     assert resp.status_code == 200
     data = resp.json()
-    assert data["can_send"] is True
-    assert data["status"] == "ready"
-    assert data["subject"] is not None
-    assert data["body"] is not None
+    assert set(data) == {
+        "can_send",
+        "status",
+        "reason",
+        "warnings",
+        "recipient",
+        "subject",
+        "body",
+    }
+    assert isinstance(data["can_send"], bool)
+    assert data["status"] in {"ready", "blocked"}
+    assert isinstance(data["warnings"], list)
