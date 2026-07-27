@@ -5,7 +5,6 @@ import uuid
 from app.tasks.schemas.task import TaskCreateRequest
 from app.tasks.services.task_service import TaskService
 from app.users.models.user import UserRole
-from tests.factories import create_user
 
 
 def _task(db, **kwargs):
@@ -25,25 +24,24 @@ def _post(client, headers, task_ids, assignee_user_id, idem_key=None):
     )
 
 
-def _create_user(db, email="assignee@example.com", active=True):
-    user = create_user(
-        db,
+def _create_user(user_factory, email="assignee@example.com", active=True):
+    return user_factory(
         full_name="Assignee User",
         email=email,
         password="password123",
         role=UserRole.ADVISOR,
         is_active=active,
+        commit=False,
     )
-    return user
 
 
 # ── Success ───────────────────────────────────────────────────────────────────
 
 
-def test_bulk_assign_sets_assignee(client, test_db, advisor_headers):
+def test_bulk_assign_sets_assignee(client, test_db, advisor_headers, user_factory):
     t1 = _task(test_db)
     t2 = _task(test_db)
-    assignee = _create_user(test_db)
+    assignee = _create_user(user_factory)
 
     resp = _post(client, advisor_headers, [t1.id, t2.id], assignee.id)
     assert resp.status_code == 200
@@ -55,8 +53,8 @@ def test_bulk_assign_sets_assignee(client, test_db, advisor_headers):
     assert updated.assigned_to_user_id == assignee.id
 
 
-def test_bulk_assign_null_unassigns(client, test_db, advisor_headers):
-    assignee = _create_user(test_db)
+def test_bulk_assign_null_unassigns(client, test_db, advisor_headers, user_factory):
+    assignee = _create_user(user_factory)
     t = _task(test_db, assigned_to_user_id=assignee.id)
 
     resp = _post(client, advisor_headers, [t.id], None)
@@ -65,8 +63,10 @@ def test_bulk_assign_null_unassigns(client, test_db, advisor_headers):
     assert TaskService(test_db).get(t.id).assigned_to_user_id is None
 
 
-def test_same_assignee_already_is_idempotent_success(client, test_db, advisor_headers):
-    assignee = _create_user(test_db)
+def test_same_assignee_already_is_idempotent_success(
+    client, test_db, advisor_headers, user_factory
+):
+    assignee = _create_user(user_factory)
     t = _task(test_db, assigned_to_user_id=assignee.id)
 
     resp = _post(client, advisor_headers, [t.id], assignee.id)
@@ -85,10 +85,10 @@ def test_already_null_assign_null_is_success(client, test_db, advisor_headers):
 # ── Terminal state ────────────────────────────────────────────────────────────
 
 
-def test_done_task_fails_with_conflict(client, test_db, advisor_headers):
+def test_done_task_fails_with_conflict(client, test_db, advisor_headers, user_factory):
     t = _task(test_db)
     TaskService(test_db).complete(t.id, completed_by_user_id=None)
-    assignee = _create_user(test_db, email="a2@example.com")
+    assignee = _create_user(user_factory, email="a2@example.com")
 
     resp = _post(client, advisor_headers, [t.id], assignee.id)
     assert resp.status_code == 200
@@ -98,10 +98,10 @@ def test_done_task_fails_with_conflict(client, test_db, advisor_headers):
     assert data["failed"][0]["code"] == "TASK.CONFLICT"
 
 
-def test_canceled_task_fails_with_conflict(client, test_db, advisor_headers):
+def test_canceled_task_fails_with_conflict(client, test_db, advisor_headers, user_factory):
     t = _task(test_db)
     TaskService(test_db).cancel(t.id)
-    assignee = _create_user(test_db, email="a3@example.com")
+    assignee = _create_user(user_factory, email="a3@example.com")
 
     resp = _post(client, advisor_headers, [t.id], assignee.id)
     assert resp.status_code == 200
@@ -118,8 +118,8 @@ def test_nonexistent_assignee_fails_whole_request(client, test_db, advisor_heade
     assert TaskService(test_db).get(t.id).assigned_to_user_id is None
 
 
-def test_inactive_assignee_fails_whole_request(client, test_db, advisor_headers):
-    inactive = _create_user(test_db, email="inactive@example.com", active=False)
+def test_inactive_assignee_fails_whole_request(client, test_db, advisor_headers, user_factory):
+    inactive = _create_user(user_factory, email="inactive@example.com", active=False)
     t = _task(test_db)
 
     resp = _post(client, advisor_headers, [t.id], inactive.id)
@@ -139,11 +139,11 @@ def test_missing_task_id_returns_not_found_in_result(client, advisor_headers):
 # ── Partial success ───────────────────────────────────────────────────────────
 
 
-def test_partial_success(client, test_db, advisor_headers):
+def test_partial_success(client, test_db, advisor_headers, user_factory):
     ok_task = _task(test_db)
     done_task = _task(test_db)
     TaskService(test_db).complete(done_task.id, completed_by_user_id=None)
-    assignee = _create_user(test_db, email="partial@example.com")
+    assignee = _create_user(user_factory, email="partial@example.com")
 
     resp = _post(client, advisor_headers, [ok_task.id, done_task.id], assignee.id)
     assert resp.status_code == 200

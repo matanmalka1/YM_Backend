@@ -18,7 +18,7 @@ def _create_client(db, *, full_name: str, id_number: str, deleted: bool = False)
     return record
 
 
-def test_create_and_get_by_id_filters_deleted(test_db):
+def test_create_and_get_by_id_filters_deleted(test_db, actor_user):
     repo = ClientRecordRepository(test_db)
     created = create_client_identity_only(
         test_db,
@@ -26,12 +26,12 @@ def test_create_and_get_by_id_filters_deleted(test_db):
         id_number="100000001",
         id_number_type=IdNumberType.CORPORATION,
         entity_type=EntityType.COMPANY_LTD,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
 
     assert repo.get_by_id(created.id) is not None
 
-    assert repo.soft_delete(created.id, deleted_by=99) is True
+    assert repo.soft_delete(created.id, deleted_by=actor_user.id) is True
     assert repo.get_by_id(created.id) is None
     assert repo.get_by_id_including_deleted(created.id) is not None
 
@@ -59,18 +59,18 @@ def test_get_active_and_deleted_by_id_number(test_db):
     assert repo.get_active_by_id_number("200000001")[0].id == active.id
 
 
-def test_restore_clears_deleted_fields(test_db):
+def test_restore_clears_deleted_fields(test_db, actor_user):
     client = _create_client(test_db, full_name="Restore Me", id_number="300000001", deleted=True)
     repo = ClientRecordRepository(test_db)
 
-    restored = repo.restore(client.id, restored_by=7)
+    restored = repo.restore(client.id, restored_by=actor_user.id)
 
     assert restored is not None
     assert restored.deleted_at is None
     assert restored.deleted_by is None
     assert restored.restored_at is not None
     assert restored.restored_by == 7
-    assert repo.restore(restored.id, restored_by=7) is None
+    assert repo.restore(restored.id, restored_by=actor_user.id) is None
 
 
 def test_list_count_search_and_list_by_ids(test_db):
@@ -104,6 +104,6 @@ def test_list_count_search_and_list_by_ids(test_db):
     assert repo.list_by_ids([]) == []
 
 
-def test_soft_delete_returns_false_for_missing_client(test_db):
+def test_soft_delete_returns_false_for_missing_client(test_db, actor_user):
     repo = ClientRecordRepository(test_db)
-    assert repo.soft_delete(9999, deleted_by=1) is False
+    assert repo.soft_delete(9999, deleted_by=actor_user.id) is False

@@ -18,33 +18,24 @@ from app.audit.audit_constants import (
 from app.audit.repositories.audit_entity_audit_log_repository import (
     EntityAuditLogRepository,
 )
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.notifications.models.notification import (
-    Notification,
-    NotificationChannel,
-    NotificationTrigger,
-)
+from app.charges.models.charge import ChargeStatus, ChargeType
+from app.common.enums import ObligationType
+from app.notifications.models.notification import NotificationChannel, NotificationTrigger
 from app.reminders.models.reminder import (
     Reminder,
     ReminderActionType,
     ReminderStatus,
 )
 from app.timeline.services.timeline_service import TimelineService
-from tests.helpers.identity import seed_business, seed_client_identity
-from tests.helpers.tax_calendar_links import create_tax_calendar_entry_for_annual
 
 
-def _business(test_db):
-    client = seed_client_identity(test_db, full_name="Timeline Policy", id_number="TP100")
-    business = seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
+def _business(create_client_with_business):
+    _, business = create_client_with_business(
+        full_name="Timeline Policy",
+        id_number="TP100",
         business_name="Timeline Policy Business",
         opened_at=date(2026, 1, 1),
     )
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_id = client.id
     return business
 
 
@@ -52,9 +43,11 @@ def _event_types(events):
     return [event["event_type"] for event in events]
 
 
-def test_timeline_includes_client_record_changes_and_dedups_created(test_db, test_user):
+def test_timeline_includes_client_record_changes_and_dedups_created(
+    test_db, test_user, create_client_with_business
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     audit_repo = EntityAuditLogRepository(test_db)
     audit_repo.append(
         entity_type=ENTITY_CLIENT,
@@ -84,10 +77,15 @@ def test_timeline_includes_client_record_changes_and_dedups_created(test_db, tes
     assert _event_types(events).count("client_created") == 1
 
 
-def test_timeline_includes_annual_report_audit_changes(test_db, test_user):
+def test_timeline_includes_annual_report_audit_changes(
+    test_db, test_user, create_client_with_business, tax_calendar_entry_factory
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
-    entry = create_tax_calendar_entry_for_annual(test_db, 2025)
+    business = _business(create_client_with_business)
+    entry = tax_calendar_entry_factory(
+        obligation_type=ObligationType.ANNUAL_REPORT,
+        tax_year=2025,
+    )
     report = AnnualReport(
         client_record_id=business.client_id,
         created_by=test_user.id,
@@ -126,9 +124,9 @@ def test_timeline_includes_annual_report_audit_changes(test_db, test_user):
     assert metadata["change_action"] == entity_action(ENTITY_ANNUAL_REPORT, ACTION_UPDATED)
 
 
-def test_timeline_date_range_excludes_out_of_range_events(test_db):
+def test_timeline_date_range_excludes_out_of_range_events(test_db, create_client_with_business):
     service = TimelineService(test_db)
-    business = _business(test_db)
+    business = _business(create_client_with_business)
 
     _, total_before_cutoff = service.get_client_timeline(
         business.client_id, page=1, page_size=50, date_to=date(2000, 1, 1)
@@ -143,9 +141,11 @@ def test_timeline_date_range_excludes_out_of_range_events(test_db):
     assert total_unfiltered > 0
 
 
-def test_timeline_excludes_scheduler_reminder_with_source_reference(test_db):
+def test_timeline_excludes_scheduler_reminder_with_source_reference(
+    test_db, create_client_with_business
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     reminder = Reminder(
         fire_at=datetime(2026, 1, 10, tzinfo=UTC),
         action_type=ReminderActionType.SEND_NOTIFICATION,
@@ -163,10 +163,12 @@ def test_timeline_excludes_scheduler_reminder_with_source_reference(test_db):
     assert all(event.get("metadata", {}).get("source_domain") is None for event in events)
 
 
-def test_timeline_excludes_noisy_notification_events(test_db):
+def test_timeline_excludes_noisy_notification_events(
+    test_db, create_client_with_business, notification_factory
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
-    notification = Notification(
+    business = _business(create_client_with_business)
+    notification_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
@@ -174,7 +176,6 @@ def test_timeline_excludes_noisy_notification_events(test_db):
         recipient="client@example.com",
         content_snapshot="Ready",
     )
-    test_db.add(notification)
     test_db.commit()
 
     events, _ = service.get_client_timeline(business.client_id, page=1, page_size=50)
@@ -184,10 +185,15 @@ def test_timeline_excludes_noisy_notification_events(test_db):
     assert "notification_sent" not in _event_types(events)
 
 
-def test_timeline_annual_report_status_events_use_entity_audit_source(test_db, test_user):
+def test_timeline_annual_report_status_events_use_entity_audit_source(
+    test_db, test_user, create_client_with_business, tax_calendar_entry_factory
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
-    entry = create_tax_calendar_entry_for_annual(test_db, 2025)
+    business = _business(create_client_with_business)
+    entry = tax_calendar_entry_factory(
+        obligation_type=ObligationType.ANNUAL_REPORT,
+        tax_year=2025,
+    )
     report = AnnualReport(
         client_record_id=business.client_id,
         created_by=test_user.id,
@@ -230,10 +236,10 @@ def test_timeline_annual_report_status_events_use_entity_audit_source(test_db, t
     }
 
 
-def test_timeline_keeps_charge_policy_events(test_db):
+def test_timeline_keeps_charge_policy_events(test_db, create_client_with_business, charge_factory):
     service = TimelineService(test_db)
-    business = _business(test_db)
-    charge = Charge(
+    business = _business(create_client_with_business)
+    charge_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         amount=Decimal("250.00"),
@@ -243,7 +249,6 @@ def test_timeline_keeps_charge_policy_events(test_db):
         issued_at=datetime(2026, 1, 2, 9, 0, tzinfo=UTC),
         paid_at=datetime(2026, 1, 3, 9, 0, tzinfo=UTC),
     )
-    test_db.add(charge)
     test_db.commit()
 
     events, _ = service.get_client_timeline(business.client_id, page=1, page_size=50)

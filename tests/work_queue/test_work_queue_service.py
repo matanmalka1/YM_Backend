@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
 from app.reminders.models.reminder import Reminder, ReminderActionType, ReminderStatus
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
@@ -14,22 +14,20 @@ from app.work_queue.schemas.work_queue import (
 )
 from app.work_queue.services.work_queue_service import WorkQueueService
 from app.work_queue.work_queue_actions import source_actions
-from tests.helpers.task_helpers import create_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
-def test_unpaid_charge_item_after_threshold(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_unpaid_charge_item_after_threshold(test_db, create_client_with_business, charge_factory):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    test_db.add(charge)
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     unpaid = [i for i in items if i.source_type == WorkQueueSourceType.CHARGE]
@@ -39,27 +37,27 @@ def test_unpaid_charge_item_after_threshold(test_db):
     assert unpaid[0].urgency == WorkQueueUrgency.OVERDUE
 
 
-def test_unpaid_charge_before_threshold_excluded(test_db):
-    biz = create_business(test_db)
-    test_db.add(
-        Charge(
-            client_record_id=biz.client_id,
-            business_id=biz.id,
-            amount=200,
-            charge_type=ChargeType.OTHER,
-            status=ChargeStatus.ISSUED,
-            issued_at=date.today() - timedelta(days=10),
-        )
+def test_unpaid_charge_before_threshold_excluded(
+    test_db, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge_factory(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        amount=200,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today() - timedelta(days=10),
+        commit=True,
     )
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
 
     assert [i for i in items if i.source_type == WorkQueueSourceType.CHARGE] == []
 
 
-def test_work_queue_excludes_reminders(test_db):
-    biz = create_business(test_db)
+def test_work_queue_excludes_reminders(test_db, create_client_with_business):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     test_db.add(
         Reminder(
             fire_at=utcnow(),
@@ -76,8 +74,8 @@ def test_work_queue_excludes_reminders(test_db):
     assert items == []
 
 
-def test_work_queue_advance_payment_includes_source_payload(test_db):
-    biz = create_business(test_db)
+def test_work_queue_advance_payment_includes_source_payload(test_db, create_client_with_business):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     client_record = test_db.get(ClientRecord, biz.client_id)
     client_record.office_client_number = 100001
     due_date = date.today() - timedelta(days=1)
@@ -113,8 +111,10 @@ def test_work_queue_advance_payment_includes_source_payload(test_db):
     }
 
 
-def test_work_queue_advance_payment_payload_formats_bimonthly_period(test_db):
-    biz = create_business(test_db)
+def test_work_queue_advance_payment_payload_formats_bimonthly_period(
+    test_db, create_client_with_business
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     due_date = date.today() + timedelta(days=3)
     create_linked_advance_payment(
         test_db,
@@ -134,9 +134,11 @@ def test_work_queue_advance_payment_payload_formats_bimonthly_period(test_db):
     assert item.metadata["frequency"] == "bimonthly"
 
 
-def test_work_queue_advance_payment_batch_loads_all_client_identities(test_db):
-    first = create_business(test_db)
-    second = create_business(test_db)
+def test_work_queue_advance_payment_batch_loads_all_client_identities(
+    test_db, create_client_with_business
+):
+    _, first = create_client_with_business(full_name="Task Test Client")
+    _, second = create_client_with_business(full_name="Task Test Client")
     test_db.get(ClientRecord, first.client_id).office_client_number = 100001
     test_db.get(ClientRecord, second.client_id).office_client_number = 100003
     due_date = date.today() + timedelta(days=3)
@@ -259,20 +261,18 @@ def test_source_routes_only_return_existing_frontend_targets():
 # ── Pagination ────────────────────────────────────────────────────────────────
 
 
-def test_work_queue_pagination_page_size(test_db):
-    biz = create_business(test_db)
+def test_work_queue_pagination_page_size(test_db, create_client_with_business, charge_factory):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     for days_ago in [31, 32, 33]:
-        test_db.add(
-            Charge(
-                client_record_id=biz.client_id,
-                business_id=biz.id,
-                amount=100,
-                charge_type=ChargeType.OTHER,
-                status=ChargeStatus.ISSUED,
-                issued_at=date.today() - timedelta(days=days_ago),
-            )
+        charge_factory(
+            client_record_id=biz.client_id,
+            business_id=biz.id,
+            amount=100,
+            charge_type=ChargeType.OTHER,
+            status=ChargeStatus.ISSUED,
+            issued_at=date.today() - timedelta(days=days_ago),
+            commit=True,
         )
-    test_db.commit()
 
     page1 = WorkQueueService(test_db).list_items(
         client_record_id=biz.client_id, page=1, page_size=2
@@ -286,19 +286,19 @@ def test_work_queue_pagination_page_size(test_db):
     assert {i.source_id for i in page1}.isdisjoint({i.source_id for i in page2})
 
 
-def test_work_queue_pagination_page_beyond_end(test_db):
-    biz = create_business(test_db)
-    test_db.add(
-        Charge(
-            client_record_id=biz.client_id,
-            business_id=biz.id,
-            amount=100,
-            charge_type=ChargeType.OTHER,
-            status=ChargeStatus.ISSUED,
-            issued_at=date.today() - timedelta(days=31),
-        )
+def test_work_queue_pagination_page_beyond_end(
+    test_db, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge_factory(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        amount=100,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(
         client_record_id=biz.client_id, page=20, page_size=50
@@ -309,9 +309,11 @@ def test_work_queue_pagination_page_beyond_end(test_db):
 # ── business_id filter semantics ──────────────────────────────────────────────
 
 
-def test_work_queue_advance_payment_uses_effective_due_date_when_set(test_db):
+def test_work_queue_advance_payment_uses_effective_due_date_when_set(
+    test_db, create_client_with_business
+):
     """When due_date_effective is set, queue item due_date and metadata must use it, not due_date."""
-    biz = create_business(test_db)
+    _, biz = create_client_with_business(full_name="Task Test Client")
     original_due = date.today() - timedelta(days=10)
     effective_due = date.today() + timedelta(days=5)
     payment = create_linked_advance_payment(
@@ -333,11 +335,13 @@ def test_work_queue_advance_payment_uses_effective_due_date_when_set(test_db):
     assert item.metadata["due_date"] == effective_due.isoformat()
 
 
-def test_business_id_filter_merges_linked_tasks_into_charge_rows(test_db):
+def test_business_id_filter_merges_linked_tasks_into_charge_rows(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
     """Tasks linked to a charge must be merged when filtering by business_id."""
-    biz = create_business(test_db)
-    charge = _add_overdue_charge(test_db, biz)
-    task = _add_task_for_source(test_db, source_domain="charge", source_id=charge.id)
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _add_overdue_charge(charge_factory, biz)
+    task = _add_task_for_source(task_factory, source_domain="charge", source_id=charge.id)
 
     items = WorkQueueService(test_db).list_items(business_id=biz.id)
     charge_rows = [i for i in items if i.source_type == WorkQueueSourceType.CHARGE]
@@ -348,20 +352,24 @@ def test_business_id_filter_merges_linked_tasks_into_charge_rows(test_db):
     assert not any(i.source_type == WorkQueueSourceType.TASK for i in items)
 
 
-def test_business_id_filter_excludes_standalone_task_rows(test_db):
+def test_business_id_filter_excludes_standalone_task_rows(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
     """Standalone tasks (no source or unrelated source) must not appear in business-scoped queue."""
-    biz = create_business(test_db)
-    _add_overdue_charge(test_db, biz)
-    _add_task_for_source(test_db, source_domain=None, source_id=None, title="Unrelated manual task")
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    _add_overdue_charge(charge_factory, biz)
+    _add_task_for_source(
+        task_factory, source_domain=None, source_id=None, title="Unrelated manual task"
+    )
 
     items = WorkQueueService(test_db).list_items(business_id=biz.id)
 
     assert not any(i.source_type == WorkQueueSourceType.TASK for i in items)
 
 
-def test_business_id_filter_hides_client_level_sources(test_db):
+def test_business_id_filter_hides_client_level_sources(test_db, create_client_with_business):
     """When business_id is set, VAT/annual/advance sources must not appear."""
-    biz = create_business(test_db)
+    _, biz = create_client_with_business(full_name="Task Test Client")
     due_date = date.today() - timedelta(days=1)
     payment = create_linked_advance_payment(
         test_db,
@@ -382,27 +390,29 @@ def test_business_id_filter_hides_client_level_sources(test_db):
     assert WorkQueueSourceType.ANNUAL_REPORT not in source_types
 
 
-def test_business_id_filter_returns_unpaid_charge_for_that_business(test_db):
-    biz = create_business(test_db)
-    other_biz = create_business(test_db)
-    charge = Charge(
+def test_business_id_filter_returns_unpaid_charge_for_that_business(
+    test_db, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    _, other_biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=750,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    other_charge = Charge(
+    charge_factory(
         client_record_id=other_biz.client_id,
         business_id=other_biz.id,
         amount=200,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    test_db.add_all([charge, other_charge])
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(business_id=biz.id)
     unpaid = [i for i in items if i.source_type == WorkQueueSourceType.CHARGE]
@@ -414,20 +424,18 @@ def test_business_id_filter_returns_unpaid_charge_for_that_business(test_db):
 # ── Charge urgency is always OVERDUE ─────────────────────────────────────────
 
 
-def test_unpaid_charge_urgency_always_overdue(test_db):
+def test_unpaid_charge_urgency_always_overdue(test_db, create_client_with_business, charge_factory):
     """Charges only appear after threshold — urgency is always OVERDUE by design."""
-    biz = create_business(test_db)
-    test_db.add(
-        Charge(
-            client_record_id=biz.client_id,
-            business_id=biz.id,
-            amount=300,
-            charge_type=ChargeType.OTHER,
-            status=ChargeStatus.ISSUED,
-            issued_at=date.today() - timedelta(days=31),
-        )
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge_factory(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        amount=300,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     charge_items = [i for i in items if i.source_type == WorkQueueSourceType.CHARGE]
@@ -439,7 +447,7 @@ def test_unpaid_charge_urgency_always_overdue(test_db):
 
 
 def _add_task_for_source(
-    db,
+    task_factory,
     *,
     source_domain: str | None,
     source_id: int | None,
@@ -447,40 +455,36 @@ def _add_task_for_source(
     status=TaskStatus.OPEN,
     due_date=None,
 ) -> Task:
-    task = Task(
+    return task_factory(
         title=title,
         status=status,
         priority=TaskPriority.HIGH,
         due_date=due_date,
         source_domain=source_domain,
         source_id=source_id,
-        created_at=utcnow(),
-        updated_at=utcnow(),
+        commit=True,
     )
-    db.add(task)
-    db.commit()
-    return task
 
 
-def _add_overdue_charge(db, biz, *, days_ago: int = 31) -> Charge:
-    charge = Charge(
+def _add_overdue_charge(charge_factory, biz, *, days_ago: int = 31):
+    return charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=days_ago),
+        commit=True,
     )
-    db.add(charge)
-    db.commit()
-    return charge
 
 
-def test_scope_manual_filters_before_pagination(test_db):
-    biz = create_business(test_db)
-    _add_overdue_charge(test_db, biz, days_ago=40)
+def test_scope_manual_filters_before_pagination(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    _add_overdue_charge(charge_factory, biz, days_ago=40)
     task = _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain=None,
         source_id=None,
         title="Manual outside first page",
@@ -499,11 +503,13 @@ def test_scope_manual_filters_before_pagination(test_db):
     assert manual_page[0].source_id == task.id
 
 
-def test_search_filters_before_pagination(test_db):
-    biz = create_business(test_db)
-    _add_overdue_charge(test_db, biz, days_ago=40)
+def test_search_filters_before_pagination(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    _add_overdue_charge(charge_factory, biz, days_ago=40)
     task = _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain=None,
         source_id=None,
         title="Needle Hebrew משימה",
@@ -517,10 +523,12 @@ def test_search_filters_before_pagination(test_db):
     assert items[0].source_id == task.id
 
 
-def test_source_type_task_returns_task_rows_only(test_db):
-    biz = create_business(test_db)
-    _add_overdue_charge(test_db, biz)
-    _add_task_for_source(test_db, source_domain=None, source_id=None)
+def test_source_type_task_returns_task_rows_only(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    _add_overdue_charge(charge_factory, biz)
+    _add_task_for_source(task_factory, source_domain=None, source_id=None)
 
     items = WorkQueueService(test_db).list_items(source_type=WorkQueueSourceType.TASK)
 
@@ -528,10 +536,12 @@ def test_source_type_task_returns_task_rows_only(test_db):
     assert all(item.source_type == WorkQueueSourceType.TASK for item in items)
 
 
-def test_scope_system_excludes_task_rows(test_db):
-    biz = create_business(test_db)
-    _add_overdue_charge(test_db, biz)
-    _add_task_for_source(test_db, source_domain=None, source_id=None)
+def test_scope_system_excludes_task_rows(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    _add_overdue_charge(charge_factory, biz)
+    _add_task_for_source(task_factory, source_domain=None, source_id=None)
 
     items = WorkQueueService(test_db).list_items(scope="system")
 
@@ -539,11 +549,13 @@ def test_scope_system_excludes_task_rows(test_db):
     assert all(item.source_type != WorkQueueSourceType.TASK for item in items)
 
 
-def test_linked_filters_return_expected_rows(test_db):
-    biz = create_business(test_db)
-    linked_charge = _add_overdue_charge(test_db, biz, days_ago=31)
-    unlinked_charge = _add_overdue_charge(test_db, biz, days_ago=32)
-    _add_task_for_source(test_db, source_domain="charge", source_id=linked_charge.id)
+def test_linked_filters_return_expected_rows(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    linked_charge = _add_overdue_charge(charge_factory, biz, days_ago=31)
+    unlinked_charge = _add_overdue_charge(charge_factory, biz, days_ago=32)
+    _add_task_for_source(task_factory, source_domain="charge", source_id=linked_charge.id)
 
     linked = WorkQueueService(test_db).list_items(client_record_id=biz.client_id, linked="linked")
     unlinked = WorkQueueService(test_db).list_items(
@@ -556,19 +568,23 @@ def test_linked_filters_return_expected_rows(test_db):
     assert all(item.linked_tasks_count == 0 for item in unlinked)
 
 
-def test_task_status_open_finds_standalone_task_rows(test_db):
-    task = _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.OPEN)
+def test_task_status_open_finds_standalone_task_rows(test_db, task_factory):
+    task = _add_task_for_source(
+        task_factory, source_domain=None, source_id=None, status=TaskStatus.OPEN
+    )
 
     items = WorkQueueService(test_db).list_items(task_status=TaskStatus.OPEN)
 
     assert {item.source_id for item in items} == {task.id}
 
 
-def test_task_status_open_finds_linked_source_rows(test_db):
-    biz = create_business(test_db)
-    charge = _add_overdue_charge(test_db, biz)
+def test_task_status_open_finds_linked_source_rows(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _add_overdue_charge(charge_factory, biz)
     _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain="charge",
         source_id=charge.id,
         status=TaskStatus.OPEN,
@@ -583,22 +599,26 @@ def test_task_status_open_finds_linked_source_rows(test_db):
     assert items[0].linked_tasks[0].status == TaskStatus.OPEN.value
 
 
-def test_active_mode_hides_done_and_canceled_task_rows(test_db):
-    _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.DONE)
-    _add_task_for_source(test_db, source_domain=None, source_id=None, status=TaskStatus.CANCELED)
+def test_active_mode_hides_done_and_canceled_task_rows(test_db, task_factory):
+    _add_task_for_source(task_factory, source_domain=None, source_id=None, status=TaskStatus.DONE)
+    _add_task_for_source(
+        task_factory, source_domain=None, source_id=None, status=TaskStatus.CANCELED
+    )
 
     items = WorkQueueService(test_db).list_items()
 
     assert not any(item.source_type == WorkQueueSourceType.TASK for item in items)
 
 
-def test_summary_is_computed_before_pagination_and_respects_filters(test_db):
-    biz = create_business(test_db)
-    linked_charge = _add_overdue_charge(test_db, biz, days_ago=31)
-    _add_overdue_charge(test_db, biz, days_ago=32)
-    _add_task_for_source(test_db, source_domain="charge", source_id=linked_charge.id)
+def test_summary_is_computed_before_pagination_and_respects_filters(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    linked_charge = _add_overdue_charge(charge_factory, biz, days_ago=31)
+    _add_overdue_charge(charge_factory, biz, days_ago=32)
+    _add_task_for_source(task_factory, source_domain="charge", source_id=linked_charge.id)
     manual = _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain=None,
         source_id=None,
         title="Summary needle",
@@ -624,9 +644,11 @@ def test_summary_is_computed_before_pagination_and_respects_filters(test_db):
     assert manual.id is not None
 
 
-def test_linked_task_merges_into_source_row(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_linked_task_merges_into_source_row(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -634,10 +656,8 @@ def test_linked_task_merges_into_source_row(test_db):
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
     )
-    test_db.add(charge)
-    test_db.flush()
     task = _add_task_for_source(
-        test_db, source_domain="charge", source_id=charge.id, title="Call client"
+        task_factory, source_domain="charge", source_id=charge.id, title="Call client"
     )
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
@@ -653,9 +673,11 @@ def test_linked_task_merges_into_source_row(test_db):
     assert not any(i.source_id == task.id for i in task_rows)
 
 
-def test_search_matches_linked_task_title(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_search_matches_linked_task_title(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -663,10 +685,8 @@ def test_search_matches_linked_task_title(test_db):
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
     )
-    test_db.add(charge)
-    test_db.flush()
     _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain="charge",
         source_id=charge.id,
         title="בדיקת מסמכים",
@@ -677,9 +697,11 @@ def test_search_matches_linked_task_title(test_db):
     assert any(item.source_type == WorkQueueSourceType.CHARGE for item in items)
 
 
-def test_multiple_linked_tasks_merge_into_single_source_row(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_multiple_linked_tasks_merge_into_single_source_row(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -687,16 +709,14 @@ def test_multiple_linked_tasks_merge_into_single_source_row(test_db):
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
     )
-    test_db.add(charge)
-    test_db.flush()
     _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain="charge",
         source_id=charge.id,
         title="בדיקת מסמכים",
     )
     _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain="charge",
         source_id=charge.id,
         title="שיחה עם הלקוח",
@@ -714,9 +734,11 @@ def test_multiple_linked_tasks_merge_into_single_source_row(test_db):
     assert "ערוך משימה: שיחה עם הלקוח" in action_labels
 
 
-def test_task_linked_to_source_not_in_queue_appears_as_task(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_task_linked_to_source_not_in_queue_appears_as_task(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -724,9 +746,7 @@ def test_task_linked_to_source_not_in_queue_appears_as_task(test_db):
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=5),
     )
-    test_db.add(charge)
-    test_db.flush()
-    task = _add_task_for_source(test_db, source_domain="charge", source_id=charge.id)
+    task = _add_task_for_source(task_factory, source_domain="charge", source_id=charge.id)
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     task_row = next(
@@ -738,9 +758,11 @@ def test_task_linked_to_source_not_in_queue_appears_as_task(test_db):
     assert task_row.warnings == []
 
 
-def test_final_source_with_open_task_returns_task_warning(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_final_source_with_open_task_returns_task_warning(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -748,9 +770,7 @@ def test_final_source_with_open_task_returns_task_warning(test_db):
         status=ChargeStatus.PAID,
         issued_at=date.today() - timedelta(days=31),
     )
-    test_db.add(charge)
-    test_db.flush()
-    task = _add_task_for_source(test_db, source_domain="charge", source_id=charge.id)
+    task = _add_task_for_source(task_factory, source_domain="charge", source_id=charge.id)
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     task_row = next(
@@ -760,9 +780,11 @@ def test_final_source_with_open_task_returns_task_warning(test_db):
     assert [w.key for w in task_row.warnings] == ["source_final"]
 
 
-def test_deleted_source_with_open_task_returns_task_warning(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_deleted_source_with_open_task_returns_task_warning(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -771,9 +793,7 @@ def test_deleted_source_with_open_task_returns_task_warning(test_db):
         issued_at=date.today() - timedelta(days=31),
         deleted_at=utcnow(),
     )
-    test_db.add(charge)
-    test_db.flush()
-    task = _add_task_for_source(test_db, source_domain="charge", source_id=charge.id)
+    task = _add_task_for_source(task_factory, source_domain="charge", source_id=charge.id)
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     task_row = next(
@@ -783,9 +803,11 @@ def test_deleted_source_with_open_task_returns_task_warning(test_db):
     assert [w.key for w in task_row.warnings] == ["source_missing"]
 
 
-def test_done_task_does_not_hide_open_source(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_done_task_does_not_hide_open_source(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -793,10 +815,8 @@ def test_done_task_does_not_hide_open_source(test_db):
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
     )
-    test_db.add(charge)
-    test_db.flush()
     _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain="charge",
         source_id=charge.id,
         status=TaskStatus.DONE,
@@ -808,9 +828,11 @@ def test_done_task_does_not_hide_open_source(test_db):
     assert charge_row.linked_tasks_count == 0
 
 
-def test_done_linked_task_is_hidden_from_work_queue(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_done_linked_task_is_hidden_from_work_queue(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
@@ -818,10 +840,8 @@ def test_done_linked_task_is_hidden_from_work_queue(test_db):
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
     )
-    test_db.add(charge)
-    test_db.flush()
     task = _add_task_for_source(
-        test_db,
+        task_factory,
         source_domain="charge",
         source_id=charge.id,
         status=TaskStatus.DONE,
@@ -840,18 +860,19 @@ def test_done_linked_task_is_hidden_from_work_queue(test_db):
     ]
 
 
-def test_charge_item_exposes_only_safe_link_actions(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_charge_item_exposes_only_safe_link_actions(
+    test_db, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=500,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    test_db.add(charge)
-    test_db.commit()
 
     item = next(
         i
@@ -865,10 +886,12 @@ def test_charge_item_exposes_only_safe_link_actions(test_db):
     ]
 
 
-def test_pagination_happens_after_merge(test_db):
-    biz = create_business(test_db)
+def test_pagination_happens_after_merge(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     for idx, days_ago in enumerate([31, 32]):
-        charge = Charge(
+        charge = charge_factory(
             client_record_id=biz.client_id,
             business_id=biz.id,
             amount=500,
@@ -876,10 +899,8 @@ def test_pagination_happens_after_merge(test_db):
             status=ChargeStatus.ISSUED,
             issued_at=date.today() - timedelta(days=days_ago),
         )
-        test_db.add(charge)
-        test_db.flush()
         _add_task_for_source(
-            test_db,
+            task_factory,
             source_domain="charge",
             source_id=charge.id,
             title=f"Task {idx}",

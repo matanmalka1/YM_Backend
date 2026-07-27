@@ -71,11 +71,11 @@ def test_onboarding_advance_payments_link_tax_calendar_entries(test_db):
     assert all(payment.due_date_effective == payment.due_date for payment in payments)
 
 
-def test_onboarding_retry_does_not_duplicate_vat_work_items(test_db):
+def test_onboarding_retry_does_not_duplicate_vat_work_items(test_db, actor_user):
     client_record = _create_vat_client(test_db, "123456781")
     ClientOnboardingOrchestrator(test_db).run(
         client_record.id,
-        actor_id=1,
+        actor_id=actor_user.id,
         entity_type=EntityType.OSEK_MURSHE,
         reference_date=date(2026, 4, 30),
     )
@@ -104,7 +104,7 @@ def test_onboarding_does_not_create_empty_setup_placeholders(test_db):
     assert test_db.scalar(select(func.count(EntityNote.id))) == 0
 
 
-def test_onboarding_exempt_client_creates_no_vat_items(test_db):
+def test_onboarding_exempt_client_creates_no_vat_items(test_db, actor_user):
     seeded = seed_client_identity(
         test_db,
         full_name="Exempt Client",
@@ -116,7 +116,7 @@ def test_onboarding_exempt_client_creates_no_vat_items(test_db):
 
     ClientOnboardingOrchestrator(test_db).run(
         seeded.id,
-        actor_id=1,
+        actor_id=actor_user.id,
         entity_type=EntityType.OSEK_PATUR,
         reference_date=date(2026, 4, 30),
     )
@@ -129,7 +129,7 @@ def test_onboarding_exempt_client_creates_no_vat_items(test_db):
     )
 
 
-def test_vat_bimonthly_advance_monthly_creates_12_advance_payments(test_db):
+def test_vat_bimonthly_advance_monthly_creates_12_advance_payments(test_db, actor_user):
     """VAT bimonthly, advance monthly → 12 independent advance payments (not 6)."""
     client_record = create_client_identity_only(
         test_db,
@@ -139,7 +139,7 @@ def test_vat_bimonthly_advance_monthly_creates_12_advance_payments(test_db):
         entity_type=EntityType.OSEK_MURSHE,
         vat_reporting_frequency=VatType.BIMONTHLY,
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
-        actor_id=1,
+        actor_id=actor_user.id,
         reference_date=date(2025, 12, 31),
     )
 

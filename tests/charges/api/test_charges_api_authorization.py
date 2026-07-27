@@ -1,20 +1,5 @@
-from app.businesses.models.business import Business, BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _create_business(test_db) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name="Client A",
-        id_number="111111111",
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_advisor_can_create_charge(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_advisor_can_create_charge(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Client A", id_number="111111111")
     res = client.post(
         "/api/v1/charges",
         headers=advisor_headers,
@@ -37,8 +22,8 @@ def test_advisor_can_create_charge(client, advisor_headers, test_db):
     assert data["paid_at"] is None
 
 
-def test_secretary_can_mutate_charges(client, secretary_headers, test_db):
-    business = _create_business(test_db)
+def test_secretary_can_mutate_charges(client, secretary_headers, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Client A", id_number="111111111")
 
     create_res = client.post(
         "/api/v1/charges",
@@ -64,8 +49,10 @@ def test_secretary_can_mutate_charges(client, secretary_headers, test_db):
     )
 
 
-def test_secretary_can_read_charges(client, secretary_headers, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_secretary_can_read_charges(
+    client, secretary_headers, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(full_name="Client A", id_number="111111111")
     create_res = client.post(
         "/api/v1/charges",
         headers=advisor_headers,

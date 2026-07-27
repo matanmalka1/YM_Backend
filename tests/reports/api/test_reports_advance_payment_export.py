@@ -1,22 +1,14 @@
 import io
 from decimal import Decimal
-from itertools import count
 
 import openpyxl
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.enums import AdvancePaymentFrequency
-from tests.helpers.identity import seed_client_identity
-
-_seq = count(1)
 
 
-def _seed_payment(db):
-    idx = next(_seq)
-    client = seed_client_identity(
-        db,
-        full_name=f"Export AP Client {idx}",
-        id_number=f"APEXP{idx:05d}",
+def _seed_payment(db, client_factory):
+    client = client_factory(
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
         advance_rate=Decimal("10"),
     )
@@ -31,8 +23,8 @@ def _seed_payment(db):
     return client
 
 
-def test_advance_payment_report_excel_export(client, test_db, advisor_headers):
-    crm_client = _seed_payment(test_db)
+def test_advance_payment_report_excel_export(client, test_db, advisor_headers, client_factory):
+    crm_client = _seed_payment(test_db, client_factory)
 
     resp = client.get(
         "/api/v1/reports/advance-payments/export?format=excel&year=2026", headers=advisor_headers
@@ -53,8 +45,8 @@ def test_advance_payment_report_excel_export(client, test_db, advisor_headers):
     assert crm_client.full_name in names
 
 
-def test_advance_payment_report_pdf_export(client, test_db, advisor_headers):
-    _seed_payment(test_db)
+def test_advance_payment_report_pdf_export(client, test_db, advisor_headers, client_factory):
+    _seed_payment(test_db, client_factory)
 
     resp = client.get(
         "/api/v1/reports/advance-payments/export?format=pdf&year=2026", headers=advisor_headers

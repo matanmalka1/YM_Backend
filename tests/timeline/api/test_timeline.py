@@ -1,59 +1,40 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
-from itertools import count
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.invoices.models.invoice import Invoice
-from app.notifications.models.notification import (
-    Notification,
-    NotificationChannel,
-    NotificationTrigger,
-)
+from app.notifications.models.notification import NotificationChannel, NotificationTrigger
 from app.reminders.models.reminder import (
     Reminder,
     ReminderActionType,
     ReminderStatus,
 )
 from app.signature_requests.models.signature_request import (
-    SignatureRequest,
     SignatureRequestStatus,
     SignatureRequestType,
 )
-from tests.helpers.identity import seed_business, seed_client_identity
-
-_client_seq = count(1)
-
-
-def _business(db):
-    idx = next(_client_seq)
-    crm_client = seed_client_identity(
-        db,
-        full_name=f"Timeline Client {idx}",
-        id_number=f"2323232{idx:03d}",
-    )
-    business = seed_business(
-        db,
-        legal_entity_id=crm_client.legal_entity_id,
-        business_name=f"Timeline Business {idx}",
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
-    business.client_id = crm_client.id
-    return business
 
 
 def test_timeline_orders_events_newest_first(
-    client, test_db, advisor_headers, test_user, monkeypatch
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    monkeypatch,
+    create_client_with_business,
+    binder_factory,
+    charge_factory,
+    signature_request_factory,
+    notification_factory,
 ):
-    business = _business(test_db)
+    _, business = create_client_with_business(full_name="Timeline Client")
     monkeypatch.setattr(
         "app.timeline.services.timeline_service.build_client_events",
         lambda *args, **kwargs: [],
     )
 
-    binder = Binder(
+    binder_factory(
         client_record_id=business.client_id,
         binder_number="B-100",
         period_start=date.today() - timedelta(days=5),
@@ -61,10 +42,10 @@ def test_timeline_orders_events_newest_first(
         location_status=BinderLocationStatus.HANDED_OVER,
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=test_user.id,
+        commit=True,
     )
-    test_db.add(binder)
 
-    charge = Charge(
+    charge = charge_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         amount=Decimal("500.00"),
@@ -73,9 +54,8 @@ def test_timeline_orders_events_newest_first(
         created_at=datetime.now(UTC) - timedelta(days=4),
         issued_at=datetime.now(UTC) - timedelta(days=3),
     )
-    test_db.add(charge)
 
-    sig = SignatureRequest(
+    signature_request_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         created_by=test_user.id,
@@ -86,7 +66,6 @@ def test_timeline_orders_events_newest_first(
         created_at=datetime.now(UTC) - timedelta(days=6),
         sent_at=datetime.now(UTC) - timedelta(days=5),
     )
-    test_db.add(sig)
 
     reminder = Reminder(
         fire_at=datetime.now(UTC) - timedelta(days=7),
@@ -98,7 +77,7 @@ def test_timeline_orders_events_newest_first(
     )
     test_db.add(reminder)
 
-    notification = Notification(
+    notification_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
@@ -107,7 +86,6 @@ def test_timeline_orders_events_newest_first(
         content_snapshot="Ready",
         created_at=datetime.now(UTC) - timedelta(days=8),
     )
-    test_db.add(notification)
 
     test_db.flush()
     invoice = Invoice(
@@ -134,22 +112,21 @@ def test_timeline_orders_events_newest_first(
     assert timestamps == sorted(timestamps, reverse=True)
 
 
-def test_timeline_applies_bulk_limits(client, test_db, advisor_headers, monkeypatch):
-    business = _business(test_db)
+def test_timeline_applies_bulk_limits(
+    client, test_db, advisor_headers, monkeypatch, create_client_with_business, charge_factory
+):
+    _, business = create_client_with_business(full_name="Timeline Client")
     monkeypatch.setattr(
         "app.timeline.services.timeline_service.build_client_events",
         lambda *args, **kwargs: [],
     )
     for _ in range(210):
-        test_db.add(
-            Charge(
-                client_record_id=business.client_id,
-                business_id=business.id,
-                amount=Decimal("10.00"),
-                charge_type=ChargeType.CONSULTATION_FEE,
-                status=ChargeStatus.DRAFT,
-                created_at=datetime.now(UTC),
-            )
+        charge_factory(
+            client_record_id=business.client_id,
+            business_id=business.id,
+            amount=Decimal("10.00"),
+            charge_type=ChargeType.CONSULTATION_FEE,
+            status=ChargeStatus.DRAFT,
         )
     test_db.commit()
 

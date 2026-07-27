@@ -2,25 +2,23 @@ from datetime import date, timedelta
 
 from sqlalchemy import event
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.dashboard.services.dashboard_overview_service import DashboardOverviewService
 from app.users.models.user import UserRole
 from tests.helpers.task_helpers import create_business
 
 
-def test_secretary_overview_shares_attention_but_hides_charge_stats(test_db):
+def test_secretary_overview_shares_attention_but_hides_charge_stats(test_db, charge_factory):
     biz = create_business(test_db)
-    test_db.add(
-        Charge(
-            client_record_id=biz.client_id,
-            business_id=biz.id,
-            amount=500,
-            charge_type=ChargeType.OTHER,
-            status=ChargeStatus.ISSUED,
-            issued_at=date.today() - timedelta(days=31),
-        )
+    charge_factory(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        amount=500,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today() - timedelta(days=31),
+        commit=True,
     )
-    test_db.commit()
 
     overview = DashboardOverviewService(test_db).get_overview(user_role=UserRole.SECRETARY)
 

@@ -32,12 +32,10 @@ from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
 from app.timeline.services.timeline_service import TimelineService
-from tests.helpers.identity import seed_client_with_business
 
 
-def _business(db) -> Business:
-    _client, business = seed_client_with_business(
-        db,
+def _business(create_client_with_business) -> Business:
+    _client, business = create_client_with_business(
         full_name="Signature Client",
         id_number="999999991",
         email="client@example.com",
@@ -45,12 +43,13 @@ def _business(db) -> Business:
         business_name="Signature Business",
         opened_at=date(2026, 1, 1),
     )
-    db.commit()
     return business
 
 
-def test_signature_request_full_sign_flow(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_signature_request_full_sign_flow(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     create_resp = client.post(
         "/api/v1/signature-requests",
@@ -103,8 +102,10 @@ def test_signature_request_full_sign_flow(client, test_db, advisor_headers):
     assert signed_event["content_hash_missing"] is None
 
 
-def test_signature_request_decline_records_reason(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_signature_request_decline_records_reason(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     create_resp = client.post(
         "/api/v1/signature-requests",
@@ -137,9 +138,9 @@ def test_signature_request_decline_records_reason(client, test_db, advisor_heade
 
 
 def test_signature_request_signed_without_hash_records_missing_hash(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, create_client_with_business
 ):
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     create_resp = client.post(
         "/api/v1/signature-requests",
         headers=advisor_headers,
@@ -167,9 +168,9 @@ def test_signature_request_signed_without_hash_records_missing_hash(
 
 
 def test_signature_request_viewed_and_declined_forensics_visible_to_both_roles(
-    client, test_db, advisor_headers, secretary_headers
+    client, test_db, advisor_headers, secretary_headers, create_client_with_business
 ):
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     create_resp = client.post(
         "/api/v1/signature-requests",
         headers=advisor_headers,
@@ -223,9 +224,9 @@ def test_signature_request_viewed_and_declined_forensics_visible_to_both_roles(
 
 
 def test_signature_request_audit_ordering_embedded_chronological_generic_newest_first(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, create_client_with_business
 ):
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     resp = client.post(
         "/api/v1/signature-requests",
         headers=advisor_headers,
@@ -257,14 +258,14 @@ def test_signature_request_audit_ordering_embedded_chronological_generic_newest_
 
 
 def test_signature_annual_report_auto_submit_system_audit_and_no_signature_duplicate(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, create_client_with_business, actor_user
 ):
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     report = AnnualReportService(test_db).create_report(
         client_record_id=business.client_id,
         tax_year=2026,
         client_type="corporation",
-        created_by=1,
+        created_by=actor_user.id,
         created_by_name="Advisor",
         deadline_type="standard",
     )
@@ -359,8 +360,10 @@ def test_signature_annual_report_auto_submit_system_audit_and_no_signature_dupli
     assert "signature_request_viewed" not in event_types
 
 
-def test_list_pending_returns_only_pending(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_list_pending_returns_only_pending(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     for i in range(2):
         client.post(
@@ -387,8 +390,10 @@ def test_list_pending_returns_only_pending(client, test_db, advisor_headers):
     assert all("signing_url_hint" not in item for item in payload["items"])
 
 
-def test_create_signature_request_sends_immediately(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_create_signature_request_sends_immediately(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     resp = client.post(
         "/api/v1/signature-requests",

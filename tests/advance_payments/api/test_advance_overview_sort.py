@@ -8,36 +8,28 @@ from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.common.enums import AdvancePaymentFrequency
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 _seq = count(1)
 PATH = "/api/v1/advance-payments/overview"
 
 
-def _business(db, *, full_name: str):
+def _business(create_client_with_business, *, full_name: str):
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    _client, business = create_client_with_business(
         full_name=full_name,
         id_number=f"SRT{idx:06d}",
+        business_name=f"Sort Biz {idx}",
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Sort Biz {idx}",
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     return business
 
 
-def test_overview_sort_by_expected_amount_desc(client, test_db, advisor_headers):
-    low = _business(test_db, full_name="Sort Client Low")
-    high = _business(test_db, full_name="Sort Client High")
+def test_overview_sort_by_expected_amount_desc(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    low = _business(create_client_with_business, full_name="Sort Client Low")
+    high = _business(create_client_with_business, full_name="Sort Client High")
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -74,9 +66,11 @@ def test_overview_sort_by_expected_amount_desc(client, test_db, advisor_headers)
     assert float(amounts[0]) == 900.0
 
 
-def test_overview_sort_by_client_name_asc(client, test_db, advisor_headers):
-    b_client = _business(test_db, full_name="Sort AAA Client")
-    a_client = _business(test_db, full_name="Sort ZZZ Client")
+def test_overview_sort_by_client_name_asc(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b_client = _business(create_client_with_business, full_name="Sort AAA Client")
+    a_client = _business(create_client_with_business, full_name="Sort ZZZ Client")
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,

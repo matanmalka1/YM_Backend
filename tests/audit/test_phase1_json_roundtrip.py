@@ -11,25 +11,13 @@ from app.audit.audit_constants import ENTITY_CLIENT
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.audit.schemas.audit_entity_audit_log import EntityAuditLogResponse
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus, UserAuditLog
 from app.users.schemas.user_management import UserAuditLogResponse
 from app.users.services.user_audit_log_service import AuditLogService
-from app.users.services.user_auth_service import AuthService
 
 
-def _user(test_db, *, email: str, name: str = "מבקר") -> User:
-    user = User(
-        full_name=name,
-        email=email,
-        password_hash=AuthService.hash_password("password123"),
-        role=UserRole.ADVISOR,
-        is_active=True,
-    )
-    test_db.add(user)
-    test_db.commit()
-    test_db.refresh(user)
-    return user
+def _user(user_factory, *, email: str, name: str = "מבקר"):
+    return user_factory(full_name=name, email=email)
 
 
 def test_entity_audit_metadata_json_round_trips_as_object(test_db, test_user):
@@ -75,9 +63,9 @@ def test_entity_audit_response_exposes_objects_not_strings(test_db, test_user):
     assert isinstance(dumped["new_value"], dict)
 
 
-def test_user_audit_metadata_round_trips_as_object_with_snapshots(test_db):
-    actor = _user(test_db, email="p1.actor@example.com", name="יוסי המבצע")
-    target = _user(test_db, email="p1.target@example.com", name="דנה המטרה")
+def test_user_audit_metadata_round_trips_as_object_with_snapshots(test_db, user_factory):
+    actor = _user(user_factory, email="p1.actor@example.com", name="יוסי המבצע")
+    target = _user(user_factory, email="p1.target@example.com", name="דנה המטרה")
     service = AuditLogService(test_db)
 
     service.log(
@@ -111,8 +99,8 @@ def test_user_audit_metadata_round_trips_as_object_with_snapshots(test_db):
     assert resp.target_display_name == "דנה המטרה"
 
 
-def test_user_audit_metadata_none_stays_none(test_db):
-    actor = _user(test_db, email="p1.none@example.com")
+def test_user_audit_metadata_none_stays_none(test_db, user_factory):
+    actor = _user(user_factory, email="p1.none@example.com")
     AuditLogService(test_db).log(
         action=AuditAction.LOGIN_SUCCESS,
         status=AuditStatus.SUCCESS,

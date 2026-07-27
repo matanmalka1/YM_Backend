@@ -51,7 +51,9 @@ def test_delete_and_restore_client_role_rules(client, advisor_headers, secretary
     assert restored.json()["id"] == client_id
 
 
-def test_restore_conflict_when_active_duplicate_exists(client, advisor_headers, test_db):
+def test_restore_conflict_when_active_duplicate_exists(
+    client, advisor_headers, test_db, actor_user
+):
     first = create_client_via_api(
         client, advisor_headers, full_name="Old One", id_number="700000037"
     )
@@ -62,7 +64,7 @@ def test_restore_conflict_when_active_duplicate_exists(client, advisor_headers, 
         test_db,
         full_name="Active One",
         id_number="700000037",
-        created_by=1,
+        created_by=actor_user.id,
     )
 
     restored = client.post(f"/api/v1/clients/{first_id}/restore", headers=advisor_headers)

@@ -8,44 +8,19 @@ from app.audit.audit_constants import (
     ENTITY_VAT_WORK_ITEM,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
-from app.businesses.models.business import Business
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
 from app.utils.time_utils import utcnow
 from app.vat.services.vat_report_service import VatReportService
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
-        full_name="VAT Metadata User",
-        email="vat.metadata.user@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _business(test_db) -> tuple[Business, int]:
-    client, business = seed_client_with_business(
-        test_db,
-        full_name="VAT Metadata Client",
-        id_number="VMD001",
-        opened_at=date(2026, 1, 1),
-    )
-    test_db.commit()
-    test_db.refresh(business)
-    return business, client.id
-
-
-def test_update_work_item_metadata_touches_updated_at_and_audits_changed_fields(test_db):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_update_work_item_metadata_touches_updated_at_and_audits_changed_fields(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(
+        full_name="VAT Metadata Client", id_number="VMD001", opened_at=date(2026, 1, 1)
+    )[0].id
     service = VatReportService(test_db)
     item = create_linked_vat_work_item(
         test_db,
@@ -81,9 +56,13 @@ def test_update_work_item_metadata_touches_updated_at_and_audits_changed_fields(
     assert audit.metadata_json["client_record_id"] == client_record_id
 
 
-def test_soft_delete_work_item_sets_delete_fields_updated_at_and_audit(test_db):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_soft_delete_work_item_sets_delete_fields_updated_at_and_audit(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(
+        full_name="VAT Metadata Client", id_number="VMD001", opened_at=date(2026, 1, 1)
+    )[0].id
     service = VatReportService(test_db)
     item = create_linked_vat_work_item(
         test_db,

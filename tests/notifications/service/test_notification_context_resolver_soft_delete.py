@@ -12,7 +12,7 @@ from __future__ import annotations
 import datetime as dt
 from decimal import Decimal
 
-from sqlalchemy import event, select
+from sqlalchemy import event
 
 from app.binders.models.binder import (
     Binder,
@@ -22,7 +22,7 @@ from app.binders.models.binder import (
 from app.binders.repositories.binder_repository import BinderRepository
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository
-from app.common.enums import DeadlineRuleType, IdNumberType, ObligationType, VatType
+from app.common.enums import IdNumberType, VatType
 from app.notifications.notification_context_resolver import NotificationContextResolver
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
@@ -32,18 +32,13 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
-from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_query_repository import VatWorkItemQueryRepository
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(test_db, suffix: str):
-    return seed_client_identity(
-        test_db,
+def _client(client_factory, suffix: str):
+    return client_factory(
         full_name=f"Resolver Client {suffix}",
         id_number=f"RES-{suffix}",
         id_number_type=IdNumberType.INDIVIDUAL,
@@ -52,8 +47,8 @@ def _client(test_db, suffix: str):
     )
 
 
-def _charge(test_db, client_record_id: int) -> Charge:
-    charge = Charge(
+def _charge(charge_factory, client_record_id: int) -> Charge:
+    return charge_factory(
         client_record_id=client_record_id,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
@@ -61,13 +56,10 @@ def _charge(test_db, client_record_id: int) -> Charge:
         description="חיוב",
         issued_at=utcnow(),
     )
-    test_db.add(charge)
-    test_db.flush()
-    return charge
 
 
-def _binder(test_db, client_record_id: int, user_id: int) -> Binder:
-    binder = Binder(
+def _binder(binder_factory, client_record_id: int, user_id: int) -> Binder:
+    return binder_factory(
         client_record_id=client_record_id,
         binder_number="ZZ-900",
         period_start=dt.date.today() - dt.timedelta(days=10),
@@ -75,42 +67,21 @@ def _binder(test_db, client_record_id: int, user_id: int) -> Binder:
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=user_id,
     )
-    test_db.add(binder)
-    test_db.flush()
-    return binder
 
 
-def _vat_item(test_db, client_record_id: int, user_id: int) -> VatWorkItem:
-    rule = test_db.scalar(
-        select(DeadlineRule).where(DeadlineRule.rule_type == DeadlineRuleType.VAT_MONTHLY)
-    )
-    entry = TaxCalendarEntry(
-        obligation_type=ObligationType.VAT,
-        period="2026-01",
-        period_months_count=1,
-        tax_year=2026,
-        due_date=dt.date.today(),
-        deadline_rule_id=rule.id,
-    )
-    test_db.add(entry)
-    test_db.flush()
-    item = VatWorkItem(
+def _vat_item(vat_work_item_factory, client_record_id: int, user_id: int) -> VatWorkItem:
+    return vat_work_item_factory(
         client_record_id=client_record_id,
         created_by=user_id,
         period="2026-01",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
-        tax_calendar_entry_id=entry.id,
-        due_date_original=entry.due_date,
-        due_date_effective=entry.due_date,
+        due_date_original=dt.date.today(),
+        due_date_effective=dt.date.today(),
     )
-    test_db.add(item)
-    test_db.flush()
-    return item
 
 
-def _signature(test_db, client_record_id: int, user_id: int) -> SignatureRequest:
-    sig = SignatureRequest(
+def _signature(signature_request_factory, client_record_id: int, user_id: int) -> SignatureRequest:
+    return signature_request_factory(
         client_record_id=client_record_id,
         created_by=user_id,
         request_type=SignatureRequestType.CUSTOM,
@@ -121,14 +92,11 @@ def _signature(test_db, client_record_id: int, user_id: int) -> SignatureRequest
         signing_token="tok-soft-del",
         expires_at=utcnow() + dt.timedelta(days=7),
     )
-    test_db.add(sig)
-    test_db.flush()
-    return sig
 
 
-def test_resolver_renders_context_for_soft_deleted_charge(test_db):
-    client = _client(test_db, "charge")
-    charge = _charge(test_db, client.id)
+def test_resolver_renders_context_for_soft_deleted_charge(test_db, client_factory, charge_factory):
+    client = _client(client_factory, "charge")
+    charge = _charge(charge_factory, client.id)
     ChargeRepository(test_db).soft_delete(charge.id)
 
     ctx = NotificationContextResolver(test_db)._resolve_charge_context(charge.id, client.id)
@@ -136,9 +104,11 @@ def test_resolver_renders_context_for_soft_deleted_charge(test_db):
     assert ctx["charge_description"] == "חיוב"
 
 
-def test_resolver_renders_context_for_soft_deleted_binder(test_db, test_user):
-    client = _client(test_db, "binder")
-    binder = _binder(test_db, client.id, test_user.id)
+def test_resolver_renders_context_for_soft_deleted_binder(
+    test_db, test_user, client_factory, binder_factory
+):
+    client = _client(client_factory, "binder")
+    binder = _binder(binder_factory, client.id, test_user.id)
     BinderRepository(test_db).soft_delete(binder.id)
 
     number = NotificationContextResolver(test_db)._resolve_binder_number(binder.id, client.id)
@@ -146,9 +116,11 @@ def test_resolver_renders_context_for_soft_deleted_binder(test_db, test_user):
     assert number == "ZZ-900"
 
 
-def test_resolver_renders_context_for_soft_deleted_vat_item(test_db, test_user):
-    client = _client(test_db, "vat")
-    item = _vat_item(test_db, client.id, test_user.id)
+def test_resolver_renders_context_for_soft_deleted_vat_item(
+    test_db, test_user, client_factory, vat_work_item_factory
+):
+    client = _client(client_factory, "vat")
+    item = _vat_item(vat_work_item_factory, client.id, test_user.id)
     VatWorkItemQueryRepository(test_db).soft_delete(item.id)
 
     ctx = NotificationContextResolver(test_db)._resolve_vat_context(item.id, client.id)
@@ -156,9 +128,11 @@ def test_resolver_renders_context_for_soft_deleted_vat_item(test_db, test_user):
     assert ctx["period"] == "2026-01"
 
 
-def test_resolver_renders_context_for_soft_deleted_signature(test_db, test_user):
-    client = _client(test_db, "sig")
-    sig = _signature(test_db, client.id, test_user.id)
+def test_resolver_renders_context_for_soft_deleted_signature(
+    test_db, test_user, client_factory, signature_request_factory
+):
+    client = _client(client_factory, "sig")
+    sig = _signature(signature_request_factory, client.id, test_user.id)
     sig.deleted_at = utcnow()
     test_db.flush()
 
@@ -167,9 +141,11 @@ def test_resolver_renders_context_for_soft_deleted_signature(test_db, test_user)
     assert ctx["document_title"] == "מסמך"
 
 
-def test_signature_get_by_id_include_deleted(test_db, test_user):
-    client = _client(test_db, "sig2")
-    sig = _signature(test_db, client.id, test_user.id)
+def test_signature_get_by_id_include_deleted(
+    test_db, test_user, client_factory, signature_request_factory
+):
+    client = _client(client_factory, "sig2")
+    sig = _signature(signature_request_factory, client.id, test_user.id)
     sig.deleted_at = utcnow()
     test_db.flush()
     repo = SignatureRequestRepository(test_db)
@@ -178,10 +154,12 @@ def test_signature_get_by_id_include_deleted(test_db, test_user):
     assert repo.get_by_id(sig.id, include_deleted=True) is not None
 
 
-def test_resolver_charge_read_emits_no_extra_query_when_preloaded(test_db):
+def test_resolver_charge_read_emits_no_extra_query_when_preloaded(
+    test_db, client_factory, charge_factory
+):
     """Identity-map regression: a charge already loaded in the session costs no SELECT."""
-    client = _client(test_db, "qc")
-    charge = _charge(test_db, client.id)  # flushed → present in the identity map, attrs loaded
+    client = _client(client_factory, "qc")
+    charge = _charge(charge_factory, client.id)  # flushed → present in the identity map
 
     selects: list[str] = []
 

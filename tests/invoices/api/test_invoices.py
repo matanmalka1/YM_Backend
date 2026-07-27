@@ -1,18 +1,3 @@
-from app.businesses.models.business import Business, BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _create_business(test_db) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name="Client Inv",
-        id_number="444444444",
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
 def _issued_charge_id(client, advisor_headers, business) -> int:
     res = client.post(
         "/api/v1/charges",
@@ -33,8 +18,8 @@ def _issued_charge_id(client, advisor_headers, business) -> int:
     return charge_id
 
 
-def test_attach_invoice_and_fetch_by_charge(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_attach_invoice_and_fetch_by_charge(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Client Inv", id_number="444444444")
     charge_id = _issued_charge_id(client, advisor_headers, business)
 
     res = client.post(
@@ -59,8 +44,10 @@ def test_attach_invoice_and_fetch_by_charge(client, advisor_headers, test_db):
     assert fetched.json()["external_invoice_id"] == "INV-API-1"
 
 
-def test_attach_invoice_on_draft_charge_returns_400(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_attach_invoice_on_draft_charge_returns_400(
+    client, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(full_name="Client Inv", id_number="444444444")
     res = client.post(
         "/api/v1/charges",
         headers=advisor_headers,
@@ -88,8 +75,8 @@ def test_attach_invoice_on_draft_charge_returns_400(client, advisor_headers, tes
     assert attach.json()["error"]["code"] == "INVOICE.INVALID_STATUS"
 
 
-def test_attach_invoice_twice_returns_409(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_attach_invoice_twice_returns_409(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Client Inv", id_number="444444444")
     charge_id = _issued_charge_id(client, advisor_headers, business)
 
     payload = {
@@ -119,8 +106,10 @@ def test_attach_invoice_missing_charge_returns_404(client, advisor_headers):
     assert res.json()["error"]["code"] == "INVOICE.NOT_FOUND"
 
 
-def test_get_charge_invoice_missing_returns_404(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_get_charge_invoice_missing_returns_404(
+    client, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(full_name="Client Inv", id_number="444444444")
     charge_id = _issued_charge_id(client, advisor_headers, business)
     res = client.get(f"/api/v1/invoices/charge/{charge_id}", headers=advisor_headers)
     assert res.status_code == 404

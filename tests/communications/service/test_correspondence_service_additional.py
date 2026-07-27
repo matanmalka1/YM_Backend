@@ -2,44 +2,37 @@ from datetime import date, datetime
 
 import pytest
 
-from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
-from app.businesses.models.business import Business
+from app.authority_contacts.models.authority_contact import ContactType
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.services.correspondence_service import CorrespondenceService
 from app.core.exceptions import ForbiddenError, NotFoundError
-from tests.helpers.identity import seed_client_with_business
 
 
-def _business(db, id_number: str) -> Business:
-    _, business = seed_client_with_business(
-        db,
+def _business(create_client_with_business, id_number: str):
+    _, business = create_client_with_business(
         full_name=f"Correspondence Service {id_number}",
         id_number=id_number,
         business_name=f"Business {id_number}",
         opened_at=date.today(),
     )
-    db.commit()
-    db.refresh(business)
     return business
 
 
-def _contact(db, client_id: int, name: str) -> AuthorityContact:
-    contact = AuthorityContact(
+def _contact(authority_contact_factory, client_id: int, name: str):
+    return authority_contact_factory(
         client_record_id=client_id,
         contact_type=ContactType.ASSESSING_OFFICER,
         name=name,
         phone="0501111111",
     )
-    db.add(contact)
-    db.commit()
-    db.refresh(contact)
-    return contact
 
 
-def test_update_entry_forbidden_when_contact_belongs_to_other_client(test_db, test_user):
-    b1 = _business(test_db, "700000001")
-    b2 = _business(test_db, "700000002")
-    foreign_contact = _contact(test_db, b2.client_id, "Foreign Contact")
+def test_update_entry_forbidden_when_contact_belongs_to_other_client(
+    test_db, test_user, create_client_with_business, authority_contact_factory
+):
+    b1 = _business(create_client_with_business, "700000001")
+    b2 = _business(create_client_with_business, "700000002")
+    foreign_contact = _contact(authority_contact_factory, b2.client_id, "Foreign Contact")
 
     service = CorrespondenceService(test_db)
     entry = service.add_entry(
@@ -58,9 +51,9 @@ def test_update_entry_forbidden_when_contact_belongs_to_other_client(test_db, te
 
 
 def test_update_entry_raises_not_found_when_repo_update_returns_none(
-    test_db, test_user, monkeypatch
+    test_db, test_user, monkeypatch, create_client_with_business
 ):
-    b1 = _business(test_db, "700000003")
+    b1 = _business(create_client_with_business, "700000003")
     service = CorrespondenceService(test_db)
     entry = service.add_entry(
         client_record_id=b1.client_id,
@@ -79,9 +72,11 @@ def test_update_entry_raises_not_found_when_repo_update_returns_none(
     assert exc_info.value.code == "CORRESPONDENCE.NOT_FOUND"
 
 
-def test_delete_entry_raises_not_found_when_client_mismatch(test_db, test_user):
-    b1 = _business(test_db, "700000004")
-    b2 = _business(test_db, "700000005")
+def test_delete_entry_raises_not_found_when_client_mismatch(
+    test_db, test_user, create_client_with_business
+):
+    b1 = _business(create_client_with_business, "700000004")
+    b2 = _business(create_client_with_business, "700000005")
     service = CorrespondenceService(test_db)
     entry = service.add_entry(
         client_record_id=b1.client_id,
@@ -113,9 +108,11 @@ def test_add_entry_raises_not_found_for_missing_client(test_db, test_user):
     assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
-def test_add_entry_rejected_for_business_client_mismatch(test_db, test_user):
-    b1 = _business(test_db, "700000006")
-    b2 = _business(test_db, "700000007")
+def test_add_entry_rejected_for_business_client_mismatch(
+    test_db, test_user, create_client_with_business
+):
+    b1 = _business(create_client_with_business, "700000006")
+    b2 = _business(create_client_with_business, "700000007")
     service = CorrespondenceService(test_db)
 
     with pytest.raises(NotFoundError) as exc_info:
@@ -131,9 +128,9 @@ def test_add_entry_rejected_for_business_client_mismatch(test_db, test_user):
     assert exc_info.value.code == "BUSINESS.NOT_FOUND"
 
 
-def test_get_entry_not_found_for_mismatch_client(test_db, test_user):
-    b1 = _business(test_db, "700000008")
-    b2 = _business(test_db, "700000009")
+def test_get_entry_not_found_for_mismatch_client(test_db, test_user, create_client_with_business):
+    b1 = _business(create_client_with_business, "700000008")
+    b2 = _business(create_client_with_business, "700000009")
     service = CorrespondenceService(test_db)
 
     entry = service.add_entry(

@@ -5,22 +5,10 @@ from app.charges.models.charge import ChargeStatus, ChargeType
 from app.charges.services.charge_billing_service import BillingService
 from app.charges.services.charge_query_service import ChargeQueryService
 from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
-from tests.helpers.identity import seed_client_with_business
 
 
-def _business(test_db, *, status: BusinessStatus = BusinessStatus.ACTIVE):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name="Billing Extra Client",
-        id_number=f"BSE{status.value}",
-    )
-    business.status = status
-    test_db.commit()
-    return business
-
-
-def test_billing_service_validation_and_not_found_paths(test_db):
-    business = _business(test_db)
+def test_billing_service_validation_and_not_found_paths(test_db, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Billing Extra Client")
     service = BillingService(test_db)
 
     with pytest.raises(AppError) as amount_exc:
@@ -48,31 +36,37 @@ def test_billing_service_validation_and_not_found_paths(test_db):
         service.delete_charge(999999)
 
 
-def test_billing_service_cancel_and_delete_status_guards(test_db):
-    business = _business(test_db)
+def test_billing_service_cancel_and_delete_status_guards(
+    test_db, create_client_with_business, actor_user
+):
+    _client, business = create_client_with_business(full_name="Billing Extra Client")
     service = BillingService(test_db)
     charge = service.create_charge(
         client_record_id=business.client_id,
         business_id=business.id,
         amount=50,
         charge_type=ChargeType.CONSULTATION_FEE,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
 
-    service.issue_charge(charge.id, actor_id=1)
+    service.issue_charge(charge.id, actor_id=actor_user.id)
     with pytest.raises(AppError):
         service.delete_charge(charge.id)
 
-    canceled = service.cancel_charge(charge.id, actor_id=1)
+    canceled = service.cancel_charge(charge.id, actor_id=actor_user.id)
     assert canceled.status == ChargeStatus.CANCELED
     with pytest.raises(ConflictError):
         service.cancel_charge(charge.id)
 
 
-def test_create_charge_blocked_for_closed_and_frozen_business(test_db):
+def test_create_charge_blocked_for_closed_and_frozen_business(test_db, create_client_with_business):
     service = BillingService(test_db)
-    closed = _business(test_db, status=BusinessStatus.CLOSED)
-    frozen = _business(test_db, status=BusinessStatus.FROZEN)
+    _closed_client, closed = create_client_with_business(
+        full_name="Billing Extra Client", business_status=BusinessStatus.CLOSED
+    )
+    _frozen_client, frozen = create_client_with_business(
+        full_name="Billing Extra Client", business_status=BusinessStatus.FROZEN
+    )
 
     with pytest.raises(ForbiddenError) as closed_exc:
         service.create_charge(
@@ -93,14 +87,14 @@ def test_create_charge_blocked_for_closed_and_frozen_business(test_db):
     assert frozen_exc.value.code == "BUSINESS.FROZEN"
 
 
-def test_list_charges_exposes_amount_to_all_roles(test_db):
-    business = _business(test_db)
+def test_list_charges_exposes_amount_to_all_roles(test_db, create_client_with_business, actor_user):
+    _client, business = create_client_with_business(full_name="Billing Extra Client")
     BillingService(test_db).create_charge(
         client_record_id=business.client_id,
         business_id=business.id,
         amount=77,
         charge_type=ChargeType.CONSULTATION_FEE,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
 
     query = ChargeQueryService(test_db)

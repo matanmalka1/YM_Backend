@@ -1,17 +1,5 @@
-from itertools import count
-
 from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-_client_seq = count(1)
-
-
-def _client(db):
-    idx = next(_client_seq)
-    return seed_client_identity(
-        db, full_name=f"Annual Query Client {idx}", id_number=f"AQS{idx:03d}"
-    )
 
 
 def _create_report(service: AnnualReportService, client_id: int, tax_year: int, created_by: int):
@@ -25,10 +13,10 @@ def _create_report(service: AnnualReportService, client_id: int, tax_year: int, 
     )
 
 
-def test_query_service_list_detail_and_client_reports(test_db, test_user):
+def test_query_service_list_detail_and_client_reports(test_db, test_user, client_factory):
     service = AnnualReportService(test_db)
-    client_a = _client(test_db)
-    client_b = _client(test_db)
+    client_a = client_factory(full_name="Annual Query Client 1", id_number="AQS001")
+    client_b = client_factory(full_name="Annual Query Client 2", id_number="AQS002")
 
     report_a_2026 = _create_report(service, client_a.id, 2026, test_user.id)
     report_a_2025 = _create_report(service, client_a.id, 2025, test_user.id)
@@ -89,9 +77,9 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user):
     assert hasattr(detail, "available_transitions")
 
 
-def test_get_client_reports_empty_client_returns_empty_with_zero_total(test_db):
+def test_get_client_reports_empty_client_returns_empty_with_zero_total(test_db, client_factory):
     service = AnnualReportService(test_db)
-    client = _client(test_db)
+    client = client_factory(full_name="Annual Query Client 1", id_number="AQS001")
 
     reports, total = service.get_client_reports(client.id, page=1, page_size=20)
 
@@ -99,9 +87,11 @@ def test_get_client_reports_empty_client_returns_empty_with_zero_total(test_db):
     assert reports == []
 
 
-def test_get_client_reports_deterministic_order_by_tax_year_desc(test_db, test_user):
+def test_get_client_reports_deterministic_order_by_tax_year_desc(
+    test_db, test_user, client_factory
+):
     service = AnnualReportService(test_db)
-    client = _client(test_db)
+    client = client_factory(full_name="Annual Query Client 1", id_number="AQS001")
     r_2024 = _create_report(service, client.id, 2024, test_user.id)
     r_2026 = _create_report(service, client.id, 2026, test_user.id)
     r_2025 = _create_report(service, client.id, 2025, test_user.id)

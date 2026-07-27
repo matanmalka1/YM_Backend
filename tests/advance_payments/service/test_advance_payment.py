@@ -1,6 +1,4 @@
-from datetime import date
 from decimal import Decimal
-from itertools import count
 
 import pytest
 
@@ -10,39 +8,15 @@ from app.advance_payments.advance_payment_calculator import (
 )
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.businesses.models.business import Business
-from app.common.enums import VatType
+from app.common.enums import AdvancePaymentFrequency, VatType
 from app.core.exceptions import AppError, ConflictError
-from tests.helpers.identity import seed_client_identity
-
-_seq = count(1)
 
 
-def _business(db) -> Business:
-    idx = next(_seq)
-    from app.common.enums import AdvancePaymentFrequency
-
-    client = seed_client_identity(
-        db,
-        full_name=f"Advance Service Client {idx}",
-        id_number=f"777777{idx:03d}",
+def test_create_payment_duplicate_period_raises_conflict(test_db, create_client_with_business):
+    _client, business = create_client_with_business(
         vat_reporting_frequency=VatType.MONTHLY,
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Advance Service Business {idx}",
-        opened_at=date.today(),
-    )
-    db.add(business)
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
-    return business
-
-
-def test_create_payment_duplicate_period_raises_conflict(test_db):
-    business = _business(test_db)
     service = AdvancePaymentService(test_db)
 
     service.create_payment_for_client(
@@ -70,8 +44,11 @@ def test_derive_income_zero_rate_raises():
     assert exc_info.value.code == "ADVANCE_PAYMENT.RATE_INVALID"
 
 
-def test_list_payments_filters_by_status(test_db):
-    business = _business(test_db)
+def test_list_payments_filters_by_status(test_db, create_client_with_business):
+    _client, business = create_client_with_business(
+        vat_reporting_frequency=VatType.MONTHLY,
+        advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
+    )
     service = AdvancePaymentService(test_db)
 
     first = service.create_payment_for_client(

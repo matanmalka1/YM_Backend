@@ -24,17 +24,10 @@ from app.annual_reports.services.annual_report_readiness_service import AnnualRe
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.annual_report_tax_service import AnnualReportTaxService
 from app.core.exceptions import AppError, ConflictError, NotFoundError
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(db, suffix="1"):
-    return seed_client_identity(
-        db, full_name=f"AR create extra {suffix}", id_number=f"ARCE{suffix}"
-    )
-
-
-def test_create_report_validation_errors(test_db, actor_user):
-    c = _client(test_db, "A")
+def test_create_report_validation_errors(test_db, actor_user, client_factory):
+    c = client_factory(full_name="AR create extra A", id_number="ARCEA")
     service = AnnualReportService(test_db)
 
     with pytest.raises(AppError):
@@ -54,8 +47,10 @@ def test_create_report_validation_errors(test_db, actor_user):
         service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 
 
-def test_create_report_custom_deadline_and_assigned_to_validation(test_db, actor_user):
-    c = _client(test_db, "B")
+def test_create_report_custom_deadline_and_assigned_to_validation(
+    test_db, actor_user, client_factory
+):
+    c = client_factory(full_name="AR create extra B", id_number="ARCEB")
     service = AnnualReportService(test_db)
     report = service.create_report(
         client_record_id=c.id,
@@ -74,12 +69,12 @@ def test_create_report_custom_deadline_and_assigned_to_validation(test_db, actor
             client_type="corporation",
             created_by=actor_user.id,
             created_by_name=actor_user.full_name,
-            assigned_to=999999,
+            assigned_to=actor_user.id,
         )
 
 
-def test_readiness_incomplete_required_schedule_issue_present(test_db, actor_user):
-    c = _client(test_db, "C")
+def test_readiness_incomplete_required_schedule_issue_present(test_db, actor_user, client_factory):
+    c = client_factory(full_name="AR create extra C", id_number="ARCEC")
     service = AnnualReportService(test_db)
     readiness_service = AnnualReportReadinessService(test_db)
     report = service.create_report(
@@ -97,8 +92,10 @@ def test_readiness_incomplete_required_schedule_issue_present(test_db, actor_use
     assert readiness.is_ready is False
 
 
-def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db, actor_user):
-    c = _client(test_db, "D")
+def test_tax_calculation_uses_detail_credit_components(
+    monkeypatch, test_db, actor_user, client_factory
+):
+    c = client_factory(full_name="AR create extra D", id_number="ARCED")
     service = AnnualReportService(test_db)
     line_service = AnnualReportFinancialLineService(test_db)
     tax_service = AnnualReportTaxService(test_db)
@@ -140,8 +137,8 @@ def test_tax_calculation_uses_detail_credit_components(monkeypatch, test_db, act
     assert out.total_credit_points == Decimal("3.0")
 
 
-def test_income_line_allows_zero_amount(test_db, actor_user):
-    c = _client(test_db, "E")
+def test_income_line_allows_zero_amount(test_db, actor_user, client_factory):
+    c = client_factory(full_name="AR create extra E", id_number="ARCEE")
     service = AnnualReportService(test_db)
     line_service = AnnualReportFinancialLineService(test_db)
     summary_service = AnnualReportFinancialSummaryService(test_db)
@@ -154,8 +151,8 @@ def test_income_line_allows_zero_amount(test_db, actor_user):
     assert float(summary.total_income) == 0.0
 
 
-def test_expense_line_uses_external_document_reference(test_db, actor_user):
-    c = _client(test_db, "F")
+def test_expense_line_uses_external_document_reference(test_db, actor_user, client_factory):
+    c = client_factory(full_name="AR create extra F", id_number="ARCEF")
     service = AnnualReportService(test_db)
     line_service = AnnualReportFinancialLineService(test_db)
     report = service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
@@ -216,9 +213,9 @@ def _prepare_financial_mutation(line_service, report_id: int, mutation: str, act
     ],
 )
 def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(
-    test_db, actor_user, mutation
+    test_db, actor_user, mutation, client_factory
 ):
-    c = _client(test_db, f"INV{mutation}")
+    c = client_factory(full_name=f"AR create extra INV{mutation}", id_number=f"ARCEINV{mutation}")
     report = AnnualReportService(test_db).create_report(
         c.id, 2026, "corporation", actor_user.id, actor_user.full_name
     )
@@ -237,8 +234,10 @@ def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(
     assert report.refund_due is None
 
 
-def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(test_db, actor_user):
-    c = _client(test_db, "SUBMITTED-TAX")
+def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(
+    test_db, actor_user, client_factory
+):
+    c = client_factory(full_name="AR create extra SUBMITTED-TAX", id_number="ARCESUBMITTED-TAX")
     report = AnnualReportService(test_db).create_report(
         c.id, 2026, "corporation", actor_user.id, actor_user.full_name
     )
@@ -259,8 +258,8 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(t
     assert report.refund_due is None
 
 
-def test_annex_line_creates_schedule_owner_when_missing(test_db, actor_user):
-    c = _client(test_db, "G")
+def test_annex_line_creates_schedule_owner_when_missing(test_db, actor_user, client_factory):
+    c = client_factory(full_name="AR create extra G", id_number="ARCEG")
     service = AnnualReportService(test_db)
     report = service.create_report(c.id, 2026, "corporation", actor_user.id, actor_user.full_name)
 

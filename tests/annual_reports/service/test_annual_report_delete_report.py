@@ -1,14 +1,11 @@
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(db):
-    return seed_client_identity(db, full_name="Annual Delete Client", id_number="ADS001")
-
-
-def test_delete_report_soft_deletes_existing_and_returns_false_for_missing(test_db, test_user):
+def test_delete_report_soft_deletes_existing_and_returns_false_for_missing(
+    test_db, test_user, client_factory
+):
     service = AnnualReportService(test_db)
-    client = _client(test_db)
+    client = client_factory(full_name="Annual Delete Client", id_number="ADS001")
     report = service.create_report(
         client_record_id=client.id,
         tax_year=2026,

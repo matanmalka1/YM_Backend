@@ -4,29 +4,15 @@ from decimal import Decimal
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.businesses.models.business import Business
-from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
-def _create_business(test_db) -> Business:
-    client = seed_client_identity(
-        test_db, full_name="Advance Payment Client", id_number="444444444"
+def test_list_advance_payments_paginates(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Payment Client", id_number="444444444"
     )
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name="Advance Payment Business",
-        opened_at=date.today(),
-    )
-    test_db.add(business)
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_record_id = client.id
-    return business
-
-
-def test_list_advance_payments_paginates(client, test_db, advisor_headers):
-    business = _create_business(test_db)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -81,8 +67,12 @@ def test_list_advance_payments_paginates(client, test_db, advisor_headers):
     assert [item["period"] for item in second_page.json()["items"]] == ["2026-03"]
 
 
-def test_update_advance_payment_success(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_update_advance_payment_success(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Payment Client", id_number="444444444"
+    )
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
         test_db,
@@ -107,8 +97,12 @@ def test_update_advance_payment_success(client, test_db, advisor_headers):
     assert data["updated_at"] is not None
 
 
-def test_update_advance_payment_rejects_server_owned_status(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_update_advance_payment_rejects_server_owned_status(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Payment Client", id_number="444444444"
+    )
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
         test_db,
@@ -128,8 +122,12 @@ def test_update_advance_payment_rejects_server_owned_status(client, test_db, adv
     assert response.status_code == 422
 
 
-def test_update_advance_payment_not_found_returns_404(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_update_advance_payment_not_found_returns_404(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Payment Client", id_number="444444444"
+    )
     response = client.patch(
         f"/api/v1/clients/{business.client_record_id}/advance-payments/999",
         headers=advisor_headers,

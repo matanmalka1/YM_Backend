@@ -3,16 +3,14 @@ from datetime import timedelta
 
 from sqlalchemy import func, select
 
-from app.users.models.user import User, UserRole
+from app.users.models.user import UserRole
 from app.users.models.user_password_reset_token import PasswordResetToken
 from app.users.services.user_auth_service import AuthService
 from app.utils.time_utils import utcnow
-from tests.factories import create_user
 
 
-def _create_user(test_db, *, email: str = "reset.self@example.com") -> User:
-    user = create_user(
-        test_db,
+def _create_user(user_factory, *, email: str = "reset.self@example.com"):
+    return user_factory(
         full_name="Reset Self",
         email=email,
         password="password123",
@@ -20,15 +18,16 @@ def _create_user(test_db, *, email: str = "reset.self@example.com") -> User:
         is_active=True,
         commit=True,
     )
-    return user
 
 
 def _hash_token(raw: str) -> str:
     return hashlib.sha256(raw.encode("utf-8")).hexdigest()
 
 
-def test_forgot_password_returns_generic_message_and_stores_hashed_token(client, test_db):
-    user = _create_user(test_db)
+def test_forgot_password_returns_generic_message_and_stores_hashed_token(
+    client, test_db, user_factory
+):
+    user = _create_user(user_factory)
 
     response = client.post("/api/v1/auth/forgot-password", json={"email": user.email})
 
@@ -53,8 +52,10 @@ def test_forgot_password_does_not_reveal_missing_user(client, test_db):
     assert test_db.scalar(select(func.count()).select_from(PasswordResetToken)) == 0
 
 
-def test_reset_password_uses_token_once_and_invalidates_existing_access_token(client, test_db):
-    user = _create_user(test_db)
+def test_reset_password_uses_token_once_and_invalidates_existing_access_token(
+    client, test_db, user_factory
+):
+    user = _create_user(user_factory)
     login = client.post("/api/v1/auth/login", json={"email": user.email, "password": "password123"})
     old_access_token = login.json()["access_token"]
     raw_token = "raw-reset-token"

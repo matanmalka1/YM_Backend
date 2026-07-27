@@ -1,35 +1,28 @@
 """Tests for advance payment overview server-backed timing_status filter."""
 
 from decimal import Decimal
-from itertools import count
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.enums import AdvancePaymentFrequency
-from tests.helpers.identity import seed_client_identity
 
-_seq = count(1)
 PATH = "/api/v1/advance-payments/overview"
 
 
-def _client_record(db, *, full_name: str):
-    idx = next(_seq)
-    return seed_client_identity(
-        db,
-        full_name=full_name,
-        id_number=f"TMG{idx:06d}",
-        advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
-    )
-
-
-def _seed_overdue_and_on_time(test_db):
+def _seed_overdue_and_on_time(test_db, client_factory):
     """Same query `year` (period-based), but opposite timing_status.
 
     - period "2026-01" materializes to due_date 2026-02-16 -> already past -> overdue
       (pending, never paid).
     - period "2026-12" materializes to due_date 2027-01-17 -> still ahead -> on_time.
     """
-    overdue_record = _client_record(test_db, full_name="Timing Overdue Client")
-    on_time_record = _client_record(test_db, full_name="Timing OnTime Client")
+    overdue_record = client_factory(
+        full_name="Timing Overdue Client",
+        advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
+    )
+    on_time_record = client_factory(
+        full_name="Timing OnTime Client",
+        advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
+    )
 
     service = AdvancePaymentService(test_db)
     overdue_payment = service.create_payment_for_client(
@@ -48,9 +41,11 @@ def _seed_overdue_and_on_time(test_db):
     return overdue_record, overdue_payment, on_time_record, on_time_payment
 
 
-def test_timing_status_overdue_returns_only_overdue_row(client, test_db, advisor_headers):
+def test_timing_status_overdue_returns_only_overdue_row(
+    client, test_db, advisor_headers, client_factory
+):
     overdue_record, overdue_payment, on_time_record, on_time_payment = _seed_overdue_and_on_time(
-        test_db
+        test_db, client_factory
     )
 
     resp = client.get(
@@ -67,9 +62,11 @@ def test_timing_status_overdue_returns_only_overdue_row(client, test_db, advisor
         assert item["timing_status"] == "overdue"
 
 
-def test_timing_status_on_time_returns_only_on_time_row(client, test_db, advisor_headers):
+def test_timing_status_on_time_returns_only_on_time_row(
+    client, test_db, advisor_headers, client_factory
+):
     overdue_record, overdue_payment, on_time_record, on_time_payment = _seed_overdue_and_on_time(
-        test_db
+        test_db, client_factory
     )
 
     resp = client.get(
@@ -86,9 +83,9 @@ def test_timing_status_on_time_returns_only_on_time_row(client, test_db, advisor
         assert item["timing_status"] == "on_time"
 
 
-def test_timing_status_shrinks_kpi_totals(client, test_db, advisor_headers):
+def test_timing_status_shrinks_kpi_totals(client, test_db, advisor_headers, client_factory):
     overdue_record, overdue_payment, on_time_record, on_time_payment = _seed_overdue_and_on_time(
-        test_db
+        test_db, client_factory
     )
 
     unfiltered = client.get(

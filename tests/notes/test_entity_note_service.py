@@ -2,19 +2,10 @@ import pytest
 
 from app.core.exceptions import NotFoundError
 from app.notes.services.note_entity_note_service import EntityNoteService
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(test_db, *, id_number: str):
-    return seed_client_identity(
-        test_db,
-        full_name="Notes Client",
-        id_number=id_number,
-    )
-
-
-def test_list_notes_includes_creator_name(test_db, test_user):
-    client = _client(test_db, id_number="NOTE-001")
+def test_list_notes_includes_creator_name(test_db, test_user, client_factory):
+    client = client_factory(full_name="Notes Client", id_number="NOTE-001")
     service = EntityNoteService(test_db)
     created = service.add_note(
         entity_type="client",
@@ -32,8 +23,8 @@ def test_list_notes_includes_creator_name(test_db, test_user):
     assert items[0].created_by_name == test_user.full_name
 
 
-def test_update_note_keeps_creator_name(test_db, test_user):
-    client = _client(test_db, id_number="NOTE-002")
+def test_update_note_keeps_creator_name(test_db, test_user, client_factory):
+    client = client_factory(full_name="Notes Client", id_number="NOTE-002")
     service = EntityNoteService(test_db)
     created = service.add_note(
         entity_type="client",
@@ -55,8 +46,8 @@ def test_update_note_keeps_creator_name(test_db, test_user):
     assert updated.created_by_name == test_user.full_name
 
 
-def test_missing_creator_does_not_fallback_to_another_user(test_db, test_user):
-    client = _client(test_db, id_number="NOTE-003")
+def test_missing_creator_does_not_fallback_to_another_user(test_db, test_user, client_factory):
+    client = client_factory(full_name="Notes Client", id_number="NOTE-003")
     service = EntityNoteService(test_db)
     service.add_note(
         entity_type="client",

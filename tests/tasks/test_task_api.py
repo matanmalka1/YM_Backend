@@ -2,10 +2,23 @@ from datetime import date, timedelta
 
 import pytest
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.tasks.repositories.task_repository import TaskRepository
 from app.utils.time_utils import utcnow
-from tests.helpers.task_helpers import create_business, create_charge
+
+
+def _charge(charge_factory, biz, **overrides):
+    fields = {
+        "client_record_id": biz.client_id,
+        "business_id": biz.id,
+        "charge_type": ChargeType.OTHER,
+        "status": ChargeStatus.ISSUED,
+        "issued_at": date.today(),
+        "commit": True,
+    }
+    fields.update(overrides)
+    return charge_factory(**fields)
+
 
 # ── Create ────────────────────────────────────────────────────────────────────
 
@@ -134,9 +147,11 @@ def test_patch_task_blank_title_returns_422(client, advisor_headers):
     assert resp.status_code == 422
 
 
-def test_create_task_with_optional_fields(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+def test_create_task_with_optional_fields(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz)
     resp = client.post(
         "/api/v1/tasks",
         headers=advisor_headers,
@@ -229,19 +244,11 @@ def test_create_task_rejects_missing_linked_source(client, advisor_headers):
     assert resp.status_code == 404
 
 
-def test_create_task_rejects_deleted_linked_source(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    charge = Charge(
-        client_record_id=biz.client_id,
-        business_id=biz.id,
-        amount=100,
-        charge_type=ChargeType.OTHER,
-        status=ChargeStatus.ISSUED,
-        issued_at=date.today(),
-        deleted_at=utcnow(),
-    )
-    test_db.add(charge)
-    test_db.commit()
+def test_create_task_rejects_deleted_linked_source(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz, deleted_at=utcnow())
 
     resp = client.post(
         "/api/v1/tasks",
@@ -294,8 +301,10 @@ def test_secretary_can_manage_tasks(client, secretary_headers):
 # ── List — client_record_id filter ────────────────────────────────────────────
 
 
-def test_list_tasks_filters_by_client_record_id(client, test_db, advisor_headers):
-    biz = create_business(test_db)
+def test_list_tasks_filters_by_client_record_id(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     client.post(
         "/api/v1/tasks",
         headers=advisor_headers,
@@ -315,9 +324,11 @@ def test_list_tasks_filters_by_client_record_id(client, test_db, advisor_headers
     assert all(t["client_record_id"] == biz.client_id for t in data["items"])
 
 
-def test_list_tasks_client_record_id_cross_client_isolation(client, test_db, advisor_headers):
-    biz1 = create_business(test_db)
-    biz2 = create_business(test_db)
+def test_list_tasks_client_record_id_cross_client_isolation(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _, biz1 = create_client_with_business(full_name="Task Test Client")
+    _, biz2 = create_client_with_business(full_name="Task Test Client")
     client.post(
         "/api/v1/tasks",
         headers=advisor_headers,
@@ -358,9 +369,9 @@ def test_list_supports_search_sort_and_enriched_names(
     test_db,
     advisor_headers,
     test_user,
+    create_client_with_business,
 ):
-    biz = create_business(test_db)
-    test_db.commit()
+    _, biz = create_client_with_business(full_name="Task Test Client")
     client.post(
         "/api/v1/tasks",
         headers=advisor_headers,
@@ -389,11 +400,11 @@ def test_linkable_sources_returns_client_system_work_with_existing_task_count(
     client,
     test_db,
     advisor_headers,
+    create_client_with_business,
+    charge_factory,
 ):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
-    charge.issued_at = date.today() - timedelta(days=31)
-    test_db.commit()
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz, issued_at=date.today() - timedelta(days=31))
     client.post(
         "/api/v1/tasks",
         headers=advisor_headers,
@@ -447,9 +458,11 @@ def test_update_task_invalid_assigned_role_rejected(client, advisor_headers):
 # ── Source linking via PATCH ──────────────────────────────────────────────────
 
 
-def test_patch_task_links_valid_source(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+def test_patch_task_links_valid_source(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz)
 
     created = client.post(
         "/api/v1/tasks", headers=advisor_headers, json={"title": "Linkable"}
@@ -466,10 +479,12 @@ def test_patch_task_links_valid_source(client, test_db, advisor_headers):
     assert data["source_id"] == charge.id
 
 
-def test_patch_task_relinks_from_one_valid_source_to_another(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    first_charge = create_charge(test_db, biz.client_id, biz.id)
-    second_charge = create_charge(test_db, biz.client_id, biz.id)
+def test_patch_task_relinks_from_one_valid_source_to_another(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    first_charge = _charge(charge_factory, biz)
+    second_charge = _charge(charge_factory, biz)
 
     created = client.post(
         "/api/v1/tasks",
@@ -511,9 +526,11 @@ def test_patch_task_partial_source_link_rejected(client, advisor_headers, payloa
     assert resp.status_code == 400
 
 
-def test_patch_linked_task_partial_source_update_rejected(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+def test_patch_linked_task_partial_source_update_rejected(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz)
 
     created = client.post(
         "/api/v1/tasks",
@@ -557,9 +574,11 @@ def test_patch_task_missing_source_record_rejected(client, advisor_headers):
     assert resp.status_code == 404
 
 
-def test_patch_task_clears_source_with_explicit_null(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+def test_patch_task_clears_source_with_explicit_null(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz)
 
     created = client.post(
         "/api/v1/tasks",
@@ -580,10 +599,10 @@ def test_patch_task_clears_source_with_explicit_null(client, test_db, advisor_he
 
 
 def test_patch_task_without_source_fields_does_not_clear_existing_source(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
 ):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = _charge(charge_factory, biz)
 
     created = client.post(
         "/api/v1/tasks",

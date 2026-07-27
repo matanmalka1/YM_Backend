@@ -1,28 +1,18 @@
 from datetime import date
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.models.binder_intake import BinderIntake
-from tests.helpers.identity import seed_client_identity
 
 
-def _seed_binder_and_intakes(db, user_id: int, count: int = 1):
-    crm_client = seed_client_identity(
-        db,
-        full_name="Binder Intake Client",
-        id_number="BINT001",
-    )
-
-    binder = Binder(
-        client_record_id=crm_client.id,
+def _seed_binder_and_intakes(db, binder_factory, user_id: int, count: int = 1):
+    binder = binder_factory(
         binder_number="BIN-1",
         period_start=date.today(),
         created_by=user_id,
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
+        commit=True,
     )
-    db.add(binder)
-    db.commit()
-    db.refresh(binder)
 
     for i in range(count):
         intake = BinderIntake(
@@ -37,8 +27,10 @@ def _seed_binder_and_intakes(db, user_id: int, count: int = 1):
     return binder
 
 
-def test_binder_intakes_endpoint_success_and_not_found(client, test_db, advisor_headers, test_user):
-    binder = _seed_binder_and_intakes(test_db, test_user.id)
+def test_binder_intakes_endpoint_success_and_not_found(
+    client, test_db, advisor_headers, test_user, binder_factory
+):
+    binder = _seed_binder_and_intakes(test_db, binder_factory, test_user.id)
 
     ok = client.get(f"/api/v1/binders/{binder.id}/intakes", headers=advisor_headers)
     assert ok.status_code == 200
@@ -56,8 +48,8 @@ def test_binder_intakes_endpoint_success_and_not_found(client, test_db, advisor_
     assert missing.status_code == 404
 
 
-def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user):
-    binder = _seed_binder_and_intakes(test_db, test_user.id, count=3)
+def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user, binder_factory):
+    binder = _seed_binder_and_intakes(test_db, binder_factory, test_user.id, count=3)
 
     resp = client.get(
         f"/api/v1/binders/{binder.id}/intakes",
@@ -80,8 +72,8 @@ def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user):
     assert len(resp2.json()["items"]) == 1
 
 
-def test_binder_intakes_page_size_cap(client, test_db, advisor_headers, test_user):
-    binder = _seed_binder_and_intakes(test_db, test_user.id)
+def test_binder_intakes_page_size_cap(client, test_db, advisor_headers, test_user, binder_factory):
+    binder = _seed_binder_and_intakes(test_db, binder_factory, test_user.id)
     resp = client.get(
         f"/api/v1/binders/{binder.id}/intakes",
         params={"page_size": 999},

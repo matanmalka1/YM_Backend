@@ -1,18 +1,3 @@
-from app.businesses.models.business import Business, BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _create_business(test_db) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name="Client B",
-        id_number="222222222",
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
 def _create_charge_via_api(client, advisor_headers, business) -> int:
     res = client.post(
         "/api/v1/charges",
@@ -28,8 +13,10 @@ def _create_charge_via_api(client, advisor_headers, business) -> int:
     return res.json()["id"]
 
 
-def test_charge_lifecycle_draft_to_issued_to_paid(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_charge_lifecycle_draft_to_issued_to_paid(
+    client, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(full_name="Client B", id_number="222222222")
     charge_id = _create_charge_via_api(client, advisor_headers, business)
 
     issue_res = client.post(f"/api/v1/charges/{charge_id}/issue", headers=advisor_headers)
@@ -46,8 +33,8 @@ def test_charge_lifecycle_draft_to_issued_to_paid(client, advisor_headers, test_
     assert paid["paid_at"] is not None
 
 
-def test_charge_lifecycle_issued_to_canceled(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_charge_lifecycle_issued_to_canceled(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Client B", id_number="222222222")
     charge_id = _create_charge_via_api(client, advisor_headers, business)
     assert (
         client.post(f"/api/v1/charges/{charge_id}/issue", headers=advisor_headers).status_code
@@ -59,8 +46,8 @@ def test_charge_lifecycle_issued_to_canceled(client, advisor_headers, test_db):
     assert cancel_res.json()["status"] == "canceled"
 
 
-def test_invalid_transitions_return_400(client, advisor_headers, test_db):
-    business = _create_business(test_db)
+def test_invalid_transitions_return_400(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(full_name="Client B", id_number="222222222")
     charge_id = _create_charge_via_api(client, advisor_headers, business)
 
     pay_draft = client.post(f"/api/v1/charges/{charge_id}/mark-paid", headers=advisor_headers)

@@ -1,9 +1,6 @@
 from datetime import UTC, date, datetime
-from itertools import count
 
-from app.businesses.models.business import Business
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
 from app.vat.models.vat_enums import (
     DocumentType,
     ExpenseCategory,
@@ -12,42 +9,14 @@ from app.vat.models.vat_enums import (
 )
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
-_client_seq = count(1)
 
-
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
-        full_name="VAT Repo User",
-        email="vat.repo@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _business(db) -> tuple[Business, int]:
-    idx = next(_client_seq)
-    client, business = seed_client_with_business(
-        db,
-        full_name=f"VAT Repo Client {idx}",
-        id_number=f"VRI{idx:03d}",
-        opened_at=date(2026, 1, 1),
-    )
-    db.commit()
-    db.refresh(business)
-    return business, client.id
-
-
-def test_list_by_work_item_orders_and_filters_by_type(test_db):
-    user = _user(test_db)
-    business, client_record_id = _business(test_db)
+def test_list_by_work_item_orders_and_filters_by_type(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
 
@@ -109,11 +78,11 @@ def test_list_by_work_item_orders_and_filters_by_type(test_db):
 
 
 def test_sum_income_net_by_business_year_filters_by_business_year_and_income_only(
-    test_db,
+    test_db, user_factory, create_client_with_business
 ):
-    user = _user(test_db)
-    business, client_record_id = _business(test_db)
-    other_business, other_client_record_id = _business(test_db)
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
+    other_client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
@@ -189,9 +158,11 @@ def test_sum_income_net_by_business_year_filters_by_business_year_and_income_onl
     assert invoice_repo.sum_income_net_by_client_year(client_record_id, 2024) == 0.0
 
 
-def test_sum_income_net_excludes_soft_deleted_work_items(test_db):
-    user = _user(test_db)
-    business, client_record_id = _business(test_db)
+def test_sum_income_net_excludes_soft_deleted_work_items(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
@@ -242,9 +213,11 @@ def test_sum_income_net_excludes_soft_deleted_work_items(test_db):
     assert invoice_repo.sum_income_net_by_client_year(client_record_id, 2026) == 5000.0
 
 
-def test_sum_vat_and_net_both_types_aggregate_in_single_result_set(test_db):
-    user = _user(test_db)
-    business, client_record_id = _business(test_db)
+def test_sum_vat_and_net_both_types_aggregate_in_single_result_set(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
 
@@ -308,9 +281,9 @@ def test_sum_vat_and_net_both_types_aggregate_in_single_result_set(test_db):
     assert invoice_repo.sum_net_both_types(item.id) == (1400.0, 700.0)
 
 
-def test_credit_notes_reduce_vat_and_net_totals(test_db):
-    user = _user(test_db)
-    business, client_record_id = _business(test_db)
+def test_credit_notes_reduce_vat_and_net_totals(test_db, user_factory, create_client_with_business):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
 
@@ -376,9 +349,11 @@ def test_credit_notes_reduce_vat_and_net_totals(test_db):
     assert invoice_repo.sum_net_both_types(item.id) == (800.0, 400.0)
 
 
-def test_credit_notes_reduce_income_turnover_for_yearly_ceiling(test_db):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_credit_notes_reduce_income_turnover_for_yearly_ceiling(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
@@ -417,9 +392,11 @@ def test_credit_notes_reduce_income_turnover_for_yearly_ceiling(test_db):
     assert invoice_repo.sum_income_net_by_client_year(client_record_id, 2026) == 750.0
 
 
-def test_credit_notes_reduce_grouped_expense_totals(test_db):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_credit_notes_reduce_grouped_expense_totals(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)
@@ -462,14 +439,16 @@ def test_credit_notes_reduce_grouped_expense_totals(test_db):
     }
 
 
-def test_expense_breakdown_keeps_mixed_deduction_rates_as_separate_rows(test_db):
+def test_expense_breakdown_keeps_mixed_deduction_rates_as_separate_rows(
+    test_db, user_factory, create_client_with_business
+):
     """A category holding two stored rates must not collapse into one row.
 
     The rate is resolved at write time, so a mid-period rules change can leave two rates
     under the same category. Collapsing them would attach one rate to both sets of amounts.
     """
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     work_item_repo = VatWorkItemRepository(test_db)
     invoice_repo = VatInvoiceRepository(test_db)

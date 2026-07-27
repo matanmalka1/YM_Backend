@@ -43,19 +43,16 @@ from app.signature_requests.services.signature_request_service import (
     SignatureRequestService,
 )
 from app.utils.time_utils import utcnow
-from tests.helpers.identity import seed_client_with_business
 
 
-def _business(db, suffix: str = "A") -> Business:
-    _client, business = seed_client_with_business(
-        db,
+def _business(create_client_with_business, suffix: str = "A") -> Business:
+    _client, business = create_client_with_business(
         full_name=f"Signature Service Client {suffix}",
         id_number=f"99999999{suffix}",
         business_name=f"Signature Service Business {suffix}",
         email="svc@example.com",
         opened_at=date(2026, 1, 1),
     )
-    db.commit()
     return business
 
 
@@ -85,8 +82,10 @@ def _create(
     )
 
 
-def test_expire_overdue_requests_marks_expired_and_audits(test_db, test_user):
-    business = _business(test_db, "1")
+def test_expire_overdue_requests_marks_expired_and_audits(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "1")
     repo = SignatureRequestRepository(test_db)
     req = _create(repo, business, user_id=test_user.id, title="Expired")
     repo.update(
@@ -102,8 +101,10 @@ def test_expire_overdue_requests_marks_expired_and_audits(test_db, test_user):
     assert any(e.action == ACTION_SIGNATURE_REQUEST_EXPIRED for e in audit_rows)
 
 
-def test_record_view_on_expired_request_sets_status_and_raises(test_db, test_user):
-    business = _business(test_db, "2")
+def test_record_view_on_expired_request_sets_status_and_raises(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "2")
     repo = SignatureRequestRepository(test_db)
     req = _create(repo, business, user_id=test_user.id, title="Expired View")
     repo.update(
@@ -119,8 +120,8 @@ def test_record_view_on_expired_request_sets_status_and_raises(test_db, test_use
     assert repo.get_by_id(req.id).status == SignatureRequestStatus.EXPIRED
 
 
-def test_list_client_requests_invalid_status_raises_app_error(test_db):
-    business = _business(test_db, "3")
+def test_list_client_requests_invalid_status_raises_app_error(test_db, create_client_with_business):
+    business = _business(create_client_with_business, "3")
     with pytest.raises(AppError) as exc_info:
         SignatureRequestService(test_db).list_client_requests(
             client_record_id=business.client_id,
@@ -129,16 +130,18 @@ def test_list_client_requests_invalid_status_raises_app_error(test_db):
     assert exc_info.value.code == "SIGNATURE_REQUEST.INVALID_STATUS"
 
 
-def test_service_get_by_token_returns_request(test_db, test_user):
-    business = _business(test_db, "4")
+def test_service_get_by_token_returns_request(test_db, test_user, create_client_with_business):
+    business = _business(create_client_with_business, "4")
     repo = SignatureRequestRepository(test_db)
     req = _create(repo, business, user_id=test_user.id, title="Token Lookup")
     repo.update(req.id, signing_token="lookup-token")
     assert SignatureRequestService(test_db).get_by_token("lookup-token").id == req.id
 
 
-def test_signed_annual_report_approval_is_preserved_and_retried(test_db, test_user):
-    business = _business(test_db, "retry")
+def test_signed_annual_report_approval_is_preserved_and_retried(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "retry")
     report = AnnualReportService(test_db).create_report(
         client_record_id=business.client_id,
         tax_year=2026,
@@ -225,8 +228,10 @@ def test_signed_annual_report_approval_is_preserved_and_retried(test_db, test_us
     assert sum(row.action == ACTION_SIGNATURE_REQUEST_CANCELED for row in sibling_audit_rows) == 1
 
 
-def test_create_request_sets_pending_token_and_expiry(test_db, test_user):
-    business = _business(test_db, "create")
+def test_create_request_sets_pending_token_and_expiry(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "create")
 
     req = SignatureRequestService(test_db).create_request(
         client_record_id=business.client_id,
@@ -257,8 +262,10 @@ def test_create_request_sets_pending_token_and_expiry(test_db, test_user):
     assert audit_rows[0].metadata_json["signer_name"] == "Signer"
 
 
-def test_create_pending_requires_signing_link_fields(test_db, test_user):
-    business = _business(test_db, "repo-invariant")
+def test_create_pending_requires_signing_link_fields(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "repo-invariant")
 
     with pytest.raises(ValueError):
         SignatureRequestRepository(test_db).create_pending(
@@ -275,7 +282,7 @@ def test_create_pending_requires_signing_link_fields(test_db, test_user):
         )
 
 
-def test_create_request_raises_when_business_missing():
+def test_create_request_raises_when_business_missing(actor_user):
     repo = SimpleNamespace(
         create_pending=lambda **kwargs: None,
         db=SimpleNamespace(),
@@ -292,7 +299,7 @@ def test_create_request_raises_when_business_missing():
                 business_repo,
                 client_record_id=123,
                 business_id=123,
-                created_by=1,
+                created_by=actor_user.id,
                 created_by_name="Advisor",
                 sent_by=1,
                 sent_by_name="Advisor",
@@ -304,7 +311,7 @@ def test_create_request_raises_when_business_missing():
     assert exc_info.value.code == "BUSINESS.NOT_FOUND"
 
 
-def test_create_request_raises_on_invalid_type():
+def test_create_request_raises_on_invalid_type(actor_user):
     repo = SimpleNamespace(
         create_pending=lambda **kwargs: None,
         db=object(),
@@ -332,7 +339,7 @@ def test_create_request_raises_on_invalid_type():
                 business_repo,
                 client_record_id=1,
                 business_id=1,
-                created_by=1,
+                created_by=actor_user.id,
                 created_by_name="Advisor",
                 sent_by=1,
                 sent_by_name="Advisor",
@@ -344,7 +351,7 @@ def test_create_request_raises_on_invalid_type():
     assert exc_info.value.code == "SIGNATURE_REQUEST.INVALID_TYPE"
 
 
-def test_create_request_falls_back_to_business_contact_details():
+def test_create_request_falls_back_to_business_contact_details(actor_user):
     captured = {}
 
     def _create(**kwargs):
@@ -384,7 +391,7 @@ def test_create_request_falls_back_to_business_contact_details():
             business_repo,
             client_record_id=5,
             business_id=1,
-            created_by=9,
+            created_by=actor_user.id,
             created_by_name="Advisor",
             sent_by=9,
             sent_by_name="Advisor",
@@ -400,8 +407,10 @@ def test_create_request_falls_back_to_business_contact_details():
     assert captured["audit"]["action"] == ACTION_SIGNATURE_REQUEST_CREATED
 
 
-def test_cancel_request_requires_pending_request_in_client_scope(test_db, test_user):
-    business = _business(test_db, "6")
+def test_cancel_request_requires_pending_request_in_client_scope(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "6")
     repo = SignatureRequestRepository(test_db)
     req = _create(repo, business, user_id=test_user.id, title="Already signed")
     repo.update(req.id, status=SignatureRequestStatus.SIGNED)
@@ -416,8 +425,10 @@ def test_cancel_request_requires_pending_request_in_client_scope(test_db, test_u
     assert exc_info.value.code == "SIGNATURE_REQUEST.NOT_FOUND"
 
 
-def test_get_or_raise_and_assert_signable_validation_branches(test_db, test_user):
-    business = _business(test_db, "7")
+def test_get_or_raise_and_assert_signable_validation_branches(
+    test_db, test_user, create_client_with_business
+):
+    business = _business(create_client_with_business, "7")
     repo = SignatureRequestRepository(test_db)
     req = _create(repo, business, user_id=test_user.id, title="Validation")
     with pytest.raises(NotFoundError) as not_found_exc:

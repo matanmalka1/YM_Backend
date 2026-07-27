@@ -4,18 +4,6 @@ NULL on create; set on a real mutation (issue) and on soft-delete.
 Never faked from created_at.
 """
 
-from app.businesses.models.business import Business, BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _business(test_db) -> Business:
-    _client, business = seed_client_with_business(
-        test_db, full_name="Charge UpdatedAt", id_number="318318318"
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
 
 def _create_charge(client, advisor_headers, business) -> int:
     res = client.post(
@@ -32,8 +20,12 @@ def _create_charge(client, advisor_headers, business) -> int:
     return res.json()["id"]
 
 
-def test_updated_at_null_on_create_set_after_issue(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_updated_at_null_on_create_set_after_issue(
+    client, advisor_headers, test_db, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge UpdatedAt", id_number="318318318"
+    )
     charge_id = _create_charge(client, advisor_headers, business)
 
     created = client.get(f"/api/v1/charges/{charge_id}", headers=advisor_headers).json()
@@ -51,8 +43,12 @@ def test_updated_at_null_on_create_set_after_issue(client, advisor_headers, test
     assert issued["updated_at"] >= issued["created_at"]
 
 
-def test_soft_delete_bumps_updated_at(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_soft_delete_bumps_updated_at(
+    client, advisor_headers, test_db, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge UpdatedAt", id_number="318318318"
+    )
     charge_id = _create_charge(client, advisor_headers, business)
 
     # Soft-delete is a mutation → updated_at must be set.

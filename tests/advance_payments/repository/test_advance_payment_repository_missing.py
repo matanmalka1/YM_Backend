@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from itertools import count
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
@@ -9,35 +8,18 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.businesses.models.business import Business
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
-_seq = count(1)
 
-
-def _business(test_db) -> Business:
-    idx = next(_seq)
-    client = seed_client_identity(
-        test_db,
+def test_advance_payment_get_by_id_for_client_and_soft_delete(
+    test_db, user_factory, create_client_with_business
+):
+    repo = AdvancePaymentRepository(test_db)
+    _client, business = create_client_with_business(
         full_name="Advance Repo Missing Client",
-        id_number=f"100001{idx:03d}",
-    )
-    business = seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
         business_name="Advance Repo Missing Business",
         opened_at=date(2024, 1, 1),
     )
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_record_id = client.id
-    return business
-
-
-def test_advance_payment_get_by_id_for_client_and_soft_delete(test_db, user_factory):
-    repo = AdvancePaymentRepository(test_db)
-    business = _business(test_db)
     actor = user_factory(commit=False)
 
     payment = create_linked_advance_payment(
@@ -58,9 +40,13 @@ def test_advance_payment_get_by_id_for_client_and_soft_delete(test_db, user_fact
     assert repo.get_by_id(payment.id) is None
 
 
-def test_advance_payment_exists_for_period_and_sum_paid(test_db):
+def test_advance_payment_exists_for_period_and_sum_paid(test_db, create_client_with_business):
     repo = AdvancePaymentRepository(test_db)
-    business = _business(test_db)
+    _client, business = create_client_with_business(
+        full_name="Advance Repo Missing Client",
+        business_name="Advance Repo Missing Business",
+        opened_at=date(2024, 1, 1),
+    )
 
     jan = create_linked_advance_payment(
         test_db,
@@ -94,10 +80,14 @@ def test_advance_payment_exists_for_period_and_sum_paid(test_db):
     )
 
 
-def test_advance_payment_analytics_annual_kpis(test_db):
+def test_advance_payment_analytics_annual_kpis(test_db, create_client_with_business):
     repo = AdvancePaymentRepository(test_db)
     analytics = AdvancePaymentAnalyticsRepository(test_db)
-    business = _business(test_db)
+    _client, business = create_client_with_business(
+        full_name="Advance Repo Missing Client",
+        business_name="Advance Repo Missing Business",
+        opened_at=date(2024, 1, 1),
+    )
 
     jan = create_linked_advance_payment(
         test_db,

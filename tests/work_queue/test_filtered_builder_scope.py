@@ -17,7 +17,7 @@ from app.annual_reports.models.annual_report_enums import (
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.charges.charge_constants import UNPAID_CHARGE_TASK_THRESHOLD_DAYS
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.client_enums import ClientStatus
 from app.common.enums import IdNumberType, VatType
 from app.utils.time_utils import utcnow
@@ -42,17 +42,16 @@ def _deleted_client(test_db, suffix: str):
     )
 
 
-def test_charge_builder_excludes_soft_deleted_client(test_db):
+def test_charge_builder_excludes_soft_deleted_client(test_db, charge_factory):
     client = _deleted_client(test_db, "charge")
-    charge = Charge(
+    charge = charge_factory(
         client_record_id=client.id,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         amount=Decimal("300.00"),
         issued_at=utcnow() - timedelta(days=UNPAID_CHARGE_TASK_THRESHOLD_DAYS + 5),
+        commit=True,
     )
-    test_db.add(charge)
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items()
 
@@ -80,7 +79,7 @@ def test_advance_payment_builder_excludes_soft_deleted_client(test_db):
     ]
 
 
-def test_annual_report_builder_excludes_soft_deleted_client(test_db):
+def test_annual_report_builder_excludes_soft_deleted_client(test_db, actor_user):
     client = _deleted_client(test_db, "annual")
     entry = create_tax_calendar_entry_for_annual(test_db, 2026)
     report = AnnualReport(
@@ -91,7 +90,7 @@ def test_annual_report_builder_excludes_soft_deleted_client(test_db):
         status=AnnualReportStatus.NOT_STARTED,
         tax_calendar_entry_id=entry.id,
         filing_deadline=date.today(),
-        created_by=1,
+        created_by=actor_user.id,
     )
     test_db.add(report)
     test_db.commit()

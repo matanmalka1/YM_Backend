@@ -1,53 +1,40 @@
 from datetime import date
 
-from app.binders.models.binder import Binder
-from app.businesses.models.business import Business
-from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType
-from app.legal_entities.models.legal_entity import LegalEntity
 
 
-def _seed_client_business_and_binder(test_db, *, user_id: int):
-    legal_entity = LegalEntity(
-        official_name="Binders Client",
+def _seed_client_business_and_binder(
+    client_factory, business_factory, binder_factory, *, user_id: int
+):
+    client = client_factory(
+        full_name="Binders Client",
         id_number="720000001",
         id_number_type=IdNumberType.CORPORATION,
+        created_by=user_id,
     )
-    test_db.add(legal_entity)
-    test_db.commit()
-    test_db.refresh(legal_entity)
-
-    client_record = ClientRecord(legal_entity_id=legal_entity.id, created_by=user_id)
-    test_db.add(client_record)
-    test_db.commit()
-    test_db.refresh(client_record)
-
-    business = Business(
-        legal_entity_id=legal_entity.id,
+    business = business_factory(
+        legal_entity_id=client.legal_entity_id,
         business_name="Binders Biz",
         opened_at=date(2025, 1, 1),
         created_by=user_id,
+        commit=True,
     )
-    test_db.add(business)
-    test_db.commit()
-    test_db.refresh(business)
-
-    binder = Binder(
-        client_record_id=client_record.id,
+    binder = binder_factory(
+        client_record_id=client.id,
         binder_number="BIZ-BIND-001",
         period_start=date(2026, 1, 1),
         created_by=user_id,
+        commit=True,
     )
-    test_db.add(binder)
-    test_db.commit()
-    test_db.refresh(binder)
 
-    return business, binder, client_record.id
+    return business, binder, client.id
 
 
-def test_list_business_binders_returns_client_binders(client, test_db, test_user, advisor_headers):
+def test_list_business_binders_returns_client_binders(
+    client, test_db, test_user, advisor_headers, client_factory, business_factory, binder_factory
+):
     business, binder, client_record_id = _seed_client_business_and_binder(
-        test_db, user_id=test_user.id
+        client_factory, business_factory, binder_factory, user_id=test_user.id
     )
 
     response = client.get(

@@ -1,10 +1,7 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportStatus,
     ClientAnnualFilingType,
@@ -14,39 +11,29 @@ from app.annual_reports.models.annual_report_enums import (
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.common.enums import VatType
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_tax_calendar_entry_for_annual,
     create_tax_calendar_entry_for_period,
 )
 
 
-def _create_client_and_business(test_db, suffix: str):
-    crm_client = seed_client_identity(
-        test_db,
-        full_name=f"Reports Client {suffix}",
-        id_number=f"RPT-{suffix}",
+def test_reports_vat_compliance_endpoint(
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    create_client_with_business,
+    vat_work_item_factory,
+):
+    crm_client, business = create_client_with_business(
+        full_name="Reports Client VAT", id_number="RPT-VAT", opened_at=date(2025, 1, 1)
     )
-    business = seed_business(
-        test_db,
-        legal_entity_id=crm_client.legal_entity_id,
-        business_name=crm_client.full_name,
-        opened_at=date(2025, 1, 1),
-    )
-    test_db.commit()
-    test_db.refresh(business)
-    return crm_client, business
-
-
-def test_reports_vat_compliance_endpoint(client, test_db, advisor_headers, test_user):
-    crm_client, business = _create_client_and_business(test_db, "VAT")
     now = datetime.now(UTC)
     jan_entry = create_tax_calendar_entry_for_period(test_db, "vat", "2026-01", 1)
     feb_entry = create_tax_calendar_entry_for_period(test_db, "vat", "2026-02", 1)
     dec_entry = create_tax_calendar_entry_for_period(test_db, "vat", "2025-12", 1)
 
-    filed = VatWorkItem(
+    vat_work_item_factory(
         client_record_id=crm_client.id,
         created_by=test_user.id,
         period="2026-01",
@@ -58,7 +45,7 @@ def test_reports_vat_compliance_endpoint(client, test_db, advisor_headers, test_
         due_date_original=jan_entry.due_date,
         due_date_effective=jan_entry.due_date,
     )
-    stale_pending = VatWorkItem(
+    vat_work_item_factory(
         client_record_id=crm_client.id,
         created_by=test_user.id,
         period="2026-02",
@@ -69,7 +56,7 @@ def test_reports_vat_compliance_endpoint(client, test_db, advisor_headers, test_
         due_date_original=feb_entry.due_date,
         due_date_effective=feb_entry.due_date,
     )
-    stale_pending_other_year = VatWorkItem(
+    vat_work_item_factory(
         client_record_id=crm_client.id,
         created_by=test_user.id,
         period="2025-12",
@@ -80,7 +67,6 @@ def test_reports_vat_compliance_endpoint(client, test_db, advisor_headers, test_
         due_date_original=dec_entry.due_date,
         due_date_effective=dec_entry.due_date,
     )
-    test_db.add_all([filed, stale_pending, stale_pending_other_year])
     test_db.commit()
 
     response = client.get("/api/v1/reports/vat-compliance?year=2026", headers=advisor_headers)
@@ -97,12 +83,16 @@ def test_reports_vat_compliance_endpoint(client, test_db, advisor_headers, test_
     assert payload["stale_pending"][0]["days_pending"] >= 40
 
 
-def test_reports_advance_payments_endpoint_month_filter(client, test_db, advisor_headers):
-    crm_client, _ = _create_client_and_business(test_db, "ADV")
+def test_reports_advance_payments_endpoint_month_filter(
+    client, test_db, advisor_headers, create_client_with_business, advance_payment_factory
+):
+    crm_client, _ = create_client_with_business(
+        full_name="Reports Client ADV", id_number="RPT-ADV", opened_at=date(2025, 1, 1)
+    )
     jan_entry = create_tax_calendar_entry_for_period(test_db, "advance_payment", "2026-01", 1)
     feb_entry = create_tax_calendar_entry_for_period(test_db, "advance_payment", "2026-02", 1)
 
-    jan = AdvancePayment(
+    advance_payment_factory(
         client_record_id=crm_client.id,
         period="2026-01",
         period_months_count=1,
@@ -112,7 +102,7 @@ def test_reports_advance_payments_endpoint_month_filter(client, test_db, advisor
         due_date=date(2026, 1, 15),
         tax_calendar_entry_id=jan_entry.id,
     )
-    feb = AdvancePayment(
+    advance_payment_factory(
         client_record_id=crm_client.id,
         period="2026-02",
         period_months_count=1,
@@ -122,7 +112,6 @@ def test_reports_advance_payments_endpoint_month_filter(client, test_db, advisor
         due_date=date(2026, 2, 15),
         tax_calendar_entry_id=feb_entry.id,
     )
-    test_db.add_all([jan, feb])
     test_db.commit()
 
     response = client.get(
@@ -144,8 +133,12 @@ def test_reports_advance_payments_endpoint_month_filter(client, test_db, advisor
     assert payload["items"][0]["overdue_count"] == 1
 
 
-def test_reports_annual_reports_endpoint(client, test_db, advisor_headers, test_user):
-    crm_client, business = _create_client_and_business(test_db, "ANR")
+def test_reports_annual_reports_endpoint(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    crm_client, business = create_client_with_business(
+        full_name="Reports Client ANR", id_number="RPT-ANR", opened_at=date(2025, 1, 1)
+    )
     entry = create_tax_calendar_entry_for_annual(test_db, 2026)
     report = AnnualReport(
         client_record_id=crm_client.id,

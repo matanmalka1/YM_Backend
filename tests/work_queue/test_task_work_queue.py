@@ -1,62 +1,37 @@
 """Work queue integration tests for persisted Task items."""
 
-from datetime import timedelta
+from datetime import date, timedelta
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.tasks.models.task import Task, TaskPriority, TaskStatus
+from app.charges.models.charge import ChargeStatus, ChargeType
+from app.tasks.models.task import TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.schemas.work_queue import WorkQueueSourceType, WorkQueueUrgency
 from app.work_queue.services.work_queue_service import WorkQueueService
-from tests.helpers.task_helpers import create_business, create_charge
-
-
-def _add_task(
-    db,
-    title="Task",
-    status=TaskStatus.OPEN,
-    due_date=None,
-    source_domain=None,
-    source_id=None,
-) -> Task:
-    task = Task(
-        title=title,
-        status=status,
-        priority=TaskPriority.NORMAL,
-        due_date=due_date,
-        source_domain=source_domain,
-        source_id=source_id,
-        created_at=utcnow(),
-        updated_at=utcnow(),
-    )
-    db.add(task)
-    db.commit()
-    return task
-
 
 # ── Inclusion ─────────────────────────────────────────────────────────────────
 
 
-def test_open_task_appears_in_work_queue(test_db):
-    task = _add_task(test_db, title="Open Task")
+def test_open_task_appears_in_work_queue(test_db, task_factory):
+    task = task_factory(title="Open Task", status=TaskStatus.OPEN, commit=True)
     items = WorkQueueService(test_db).list_items()
     task_items = [i for i in items if i.source_type == WorkQueueSourceType.TASK]
     assert any(i.source_id == task.id for i in task_items)
 
 
-def test_open_standalone_task_can_be_filtered_with_many_system_rows(test_db):
-    biz = create_business(test_db)
+def test_open_standalone_task_can_be_filtered_with_many_system_rows(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
     for _ in range(55):
-        test_db.add(
-            Charge(
-                client_record_id=biz.client_id,
-                business_id=biz.id,
-                amount=100,
-                charge_type=ChargeType.OTHER,
-                status=ChargeStatus.ISSUED,
-                issued_at=utcnow().date() - timedelta(days=31),
-            )
+        charge_factory(
+            client_record_id=biz.client_id,
+            business_id=biz.id,
+            amount=100,
+            charge_type=ChargeType.OTHER,
+            status=ChargeStatus.ISSUED,
+            issued_at=utcnow().date() - timedelta(days=31),
         )
-    task = _add_task(test_db, title="Manual task in first page")
+    task = task_factory(title="Manual task in first page", status=TaskStatus.OPEN, commit=True)
 
     items = WorkQueueService(test_db).list_items(scope="manual")
     task_items = [i for i in items if i.source_type == WorkQueueSourceType.TASK]
@@ -71,8 +46,8 @@ def test_open_standalone_task_can_be_filtered_with_many_system_rows(test_db):
 # ── Null due_date ─────────────────────────────────────────────────────────────
 
 
-def test_null_due_date_task_appears(test_db):
-    task = _add_task(test_db, title="No Due Date")
+def test_null_due_date_task_appears(test_db, task_factory):
+    task = task_factory(title="No Due Date", status=TaskStatus.OPEN, commit=True)
     items = WorkQueueService(test_db).list_items()
     match = next(
         (i for i in items if i.source_type == WorkQueueSourceType.TASK and i.source_id == task.id),
@@ -83,9 +58,9 @@ def test_null_due_date_task_appears(test_db):
     assert match.urgency == WorkQueueUrgency.UPCOMING
 
 
-def test_null_due_date_task_sorts_after_dated_task(test_db):
-    _add_task(test_db, title="Dated", due_date=utcnow())
-    _add_task(test_db, title="Undated", due_date=None)
+def test_null_due_date_task_sorts_after_dated_task(test_db, task_factory):
+    task_factory(title="Dated", status=TaskStatus.OPEN, due_date=utcnow(), commit=True)
+    task_factory(title="Undated", status=TaskStatus.OPEN, due_date=None, commit=True)
 
     items = WorkQueueService(test_db).list_items()
     task_items = [i for i in items if i.source_type == WorkQueueSourceType.TASK]
@@ -98,9 +73,9 @@ def test_null_due_date_task_sorts_after_dated_task(test_db):
 # ── Urgency from due_date ─────────────────────────────────────────────────────
 
 
-def test_overdue_task_urgency(test_db):
+def test_overdue_task_urgency(test_db, task_factory):
     past = utcnow() - timedelta(days=2)
-    task = _add_task(test_db, due_date=past)
+    task = task_factory(status=TaskStatus.OPEN, due_date=past, commit=True)
     items = WorkQueueService(test_db).list_items()
     match = next(
         i for i in items if i.source_type == WorkQueueSourceType.TASK and i.source_id == task.id
@@ -108,9 +83,9 @@ def test_overdue_task_urgency(test_db):
     assert match.urgency == WorkQueueUrgency.OVERDUE
 
 
-def test_approaching_task_urgency(test_db):
+def test_approaching_task_urgency(test_db, task_factory):
     soon = utcnow() + timedelta(days=3)
-    task = _add_task(test_db, due_date=soon)
+    task = task_factory(status=TaskStatus.OPEN, due_date=soon, commit=True)
     items = WorkQueueService(test_db).list_items()
     match = next(
         i for i in items if i.source_type == WorkQueueSourceType.TASK and i.source_id == task.id
@@ -121,23 +96,20 @@ def test_approaching_task_urgency(test_db):
 # ── Metadata ──────────────────────────────────────────────────────────────────
 
 
-def test_task_work_queue_item_metadata(test_db):
-    task = Task(
+def test_task_work_queue_item_metadata(test_db, task_factory, actor_user):
+    task = task_factory(
         title="Payload Task",
         status=TaskStatus.OPEN,
         priority=TaskPriority.HIGH,
         description="Some details",
-        assigned_to_user_id=5,
+        assigned_to_user_id=actor_user.id,
         assigned_role="advisor",
         action_key="review",
         action_payload={"key": "val"},
         source_domain="charge",
         source_id=42,
-        created_at=utcnow(),
-        updated_at=utcnow(),
+        commit=True,
     )
-    test_db.add(task)
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items()
     match = next(
@@ -159,8 +131,8 @@ def test_task_work_queue_item_metadata(test_db):
 # ── Exclusion filter ──────────────────────────────────────────────────────────
 
 
-def test_exclude_task_source_type(test_db):
-    _add_task(test_db)
+def test_exclude_task_source_type(test_db, task_factory):
+    task_factory(status=TaskStatus.OPEN, commit=True)
     items = WorkQueueService(test_db).list_items(exclude_source_types=[WorkQueueSourceType.TASK])
     assert not any(i.source_type == WorkQueueSourceType.TASK for i in items)
 
@@ -168,8 +140,8 @@ def test_exclude_task_source_type(test_db):
 # ── Tasks hidden when client_record_id filter is active ──────────────────────
 
 
-def test_tasks_hidden_when_client_scoped(test_db):
-    _add_task(test_db, title="Global Task")
+def test_tasks_hidden_when_client_scoped(test_db, task_factory):
+    task_factory(title="Global Task", status=TaskStatus.OPEN, commit=True)
     items = WorkQueueService(test_db).list_items(client_record_id=1)
     assert not any(i.source_type == WorkQueueSourceType.TASK for i in items)
 
@@ -177,23 +149,29 @@ def test_tasks_hidden_when_client_scoped(test_db):
 # ── Source-linked task enrichment ─────────────────────────────────────────────
 
 
-def test_task_linked_to_charge_exposes_client_info(test_db):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+def test_task_linked_to_charge_exposes_client_info(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today(),
+        commit=True,
+    )
 
     # Task linked to the charge but charge is not in active work-queue window —
     # task becomes standalone with source enrichment.
-    task = Task(
+    task = task_factory(
         title="Charge Task",
         status=TaskStatus.OPEN,
         priority=TaskPriority.NORMAL,
         source_domain="charge",
         source_id=charge.id,
-        created_at=utcnow(),
-        updated_at=utcnow(),
+        commit=True,
     )
-    test_db.add(task)
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items()
     match = next(
@@ -206,21 +184,27 @@ def test_task_linked_to_charge_exposes_client_info(test_db):
     assert match.office_client_number == 100001
 
 
-def test_task_linked_to_charge_appears_in_client_filtered_work_queue(test_db):
-    biz = create_business(test_db)
-    charge = create_charge(test_db, biz.client_id, biz.id)
+def test_task_linked_to_charge_appears_in_client_filtered_work_queue(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
+        client_record_id=biz.client_id,
+        business_id=biz.id,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        issued_at=date.today(),
+        commit=True,
+    )
 
-    task = Task(
+    task = task_factory(
         title="Client Filtered Task",
         status=TaskStatus.OPEN,
         priority=TaskPriority.NORMAL,
         source_domain="charge",
         source_id=charge.id,
-        created_at=utcnow(),
-        updated_at=utcnow(),
+        commit=True,
     )
-    test_db.add(task)
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
     match = next(
@@ -231,10 +215,12 @@ def test_task_linked_to_charge_appears_in_client_filtered_work_queue(test_db):
     assert match.client_record_id == biz.client_id
 
 
-def test_task_linked_to_other_client_charge_excluded_from_client_filter(test_db):
-    biz1 = create_business(test_db)
-    biz2 = create_business(test_db)
-    charge = Charge(
+def test_task_linked_to_other_client_charge_excluded_from_client_filter(
+    test_db, create_client_with_business, charge_factory, task_factory
+):
+    _, biz1 = create_client_with_business(full_name="Task Test Client")
+    _, biz2 = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz1.client_id,
         business_id=biz1.id,
         amount=100,
@@ -242,20 +228,15 @@ def test_task_linked_to_other_client_charge_excluded_from_client_filter(test_db)
         status=ChargeStatus.ISSUED,
         issued_at=utcnow().date(),
     )
-    test_db.add(charge)
-    test_db.flush()
 
-    task = Task(
+    task = task_factory(
         title="Wrong Client Task",
         status=TaskStatus.OPEN,
         priority=TaskPriority.NORMAL,
         source_domain="charge",
         source_id=charge.id,
-        created_at=utcnow(),
-        updated_at=utcnow(),
+        commit=True,
     )
-    test_db.add(task)
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz2.client_id)
     assert not any(

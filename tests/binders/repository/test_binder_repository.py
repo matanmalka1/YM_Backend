@@ -2,38 +2,13 @@ from datetime import date
 
 from app.binders.models.binder import BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
-from app.users.models.user import UserRole
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_identity
 
 
-def _user(test_db):
-    user = create_user(
-        test_db,
-        full_name="Binder Admin",
-        email="binder.admin@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _client(test_db, name: str, id_number: str):
-    client = seed_client_identity(
-        test_db,
-        full_name=name,
-        id_number=id_number,
-    )
-    return client
-
-
-def test_active_queries_and_soft_delete(test_db):
+def test_active_queries_and_soft_delete(test_db, user_factory, client_factory):
     repo = BinderRepository(test_db)
-    user = _user(test_db)
-    client_a = _client(test_db, "Alpha", "B001")
-    client_b = _client(test_db, "Beta", "B002")
+    user = user_factory()
+    client_a = client_factory(full_name="Alpha", id_number="B001")
+    client_b = client_factory(full_name="Beta", id_number="B002")
 
     binder_active = repo.create(
         client_record_id=client_a.id,
@@ -76,10 +51,10 @@ def test_active_queries_and_soft_delete(test_db):
     assert repo.list_active(client_record_id=client_a.id) == []
 
 
-def test_list_active_respects_sort_and_filters(test_db):
+def test_list_active_respects_sort_and_filters(test_db, user_factory, client_factory):
     repo = BinderRepository(test_db)
-    user = _user(test_db)
-    client = _client(test_db, "Gamma", "B003")
+    user = user_factory()
+    client = client_factory(full_name="Gamma", id_number="B003")
 
     older = repo.create(
         client_record_id=client.id,
@@ -104,10 +79,10 @@ def test_list_active_respects_sort_and_filters(test_db):
     assert [b.id for b in number_filtered] == [older.id]
 
 
-def test_list_open_binders_sorts_null_period_start_last(test_db):
+def test_list_open_binders_sorts_null_period_start_last(test_db, user_factory, client_factory):
     repo = BinderRepository(test_db)
-    user = _user(test_db)
-    client = _client(test_db, "Null Sort", "B004")
+    user = user_factory()
+    client = client_factory(full_name="Null Sort", id_number="B004")
 
     with_period = repo.create(
         client_record_id=client.id,

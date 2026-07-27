@@ -11,7 +11,7 @@ from app.legal_entities.models.person_legal_entity_link import (
 )
 
 
-def test_create_client_creates_identity_graph(test_db):
+def test_create_client_creates_identity_graph(test_db, actor_user):
     client_record = create_client_identity_only(
         test_db,
         full_name="Client Identity",
@@ -22,7 +22,7 @@ def test_create_client_creates_identity_graph(test_db):
         email="client@example.com",
         address_city="תל אביב",
         accountant_id=1,
-        actor_id=7,
+        actor_id=actor_user.id,
     )
 
     person = test_db.scalars(select(Person).filter(Person.id_number == "123456780")).one()

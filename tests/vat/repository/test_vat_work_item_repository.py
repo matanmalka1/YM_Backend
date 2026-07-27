@@ -1,50 +1,17 @@
 from datetime import date
-from itertools import count
 
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
-from app.businesses.models.business import Business
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
-_client_seq = count(1)
 
-
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
-        full_name="VAT Work Repo User",
-        email="vat.work.repo@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _business(db) -> tuple[Business, int]:
-    idx = next(_client_seq)
-    client, business = seed_client_with_business(
-        db,
-        full_name=f"VAT Work Repo Client {idx}",
-        id_number=f"VWR{idx:03d}",
-        opened_at=date(2026, 1, 1),
-    )
-    db.commit()
-    db.refresh(business)
-    return business, client.id
-
-
-def test_status_listing_and_totals(test_db):
+def test_status_listing_and_totals(test_db, user_factory, create_client_with_business):
     repo = VatWorkItemRepository(test_db)
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     oldest = create_linked_vat_work_item(
         test_db,
@@ -94,10 +61,12 @@ def test_status_listing_and_totals(test_db):
     assert float(updated.net_vat) == 150.0
 
 
-def test_global_work_item_lists_hide_deleted_clients_and_restore_visibility(test_db):
+def test_global_work_item_lists_hide_deleted_clients_and_restore_visibility(
+    test_db, user_factory, create_client_with_business
+):
     repo = VatWorkItemRepository(test_db)
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     item = create_linked_vat_work_item(
         test_db,
         repo=repo,
@@ -120,10 +89,12 @@ def test_global_work_item_lists_hide_deleted_clients_and_restore_visibility(test
     assert repo.count_all() == 1
 
 
-def test_mark_filed_persists_amendment_and_reference_fields(test_db):
+def test_mark_filed_persists_amendment_and_reference_fields(
+    test_db, user_factory, create_client_with_business
+):
     repo = VatWorkItemRepository(test_db)
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     item = create_linked_vat_work_item(
         test_db,
         repo=repo,

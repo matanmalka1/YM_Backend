@@ -1,21 +1,16 @@
 from datetime import date, datetime
 
-from app.businesses.models.business import Business
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.services.correspondence_service import CorrespondenceService
-from tests.helpers.identity import seed_client_with_business
 
 
-def _create_business(test_db, id_number: str = "111222333") -> Business:
-    _, business = seed_client_with_business(
-        test_db,
+def _create_business(create_client_with_business, id_number: str = "111222333"):
+    _, business = create_client_with_business(
         full_name="Update Test Client",
         id_number=id_number,
         business_name=f"Update Business {id_number}",
         opened_at=date.today(),
     )
-    test_db.commit()
-    test_db.refresh(business)
     return business
 
 
@@ -31,8 +26,10 @@ def _add_entry(test_db, client_id: int, business_id: int, user_id: int):
     )
 
 
-def test_update_correspondence(client, test_db, advisor_headers, test_user):
-    business = _create_business(test_db)
+def test_update_correspondence(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
     entry = _add_entry(test_db, business.client_id, business.id, test_user.id)
 
     response = client.patch(
@@ -48,8 +45,10 @@ def test_update_correspondence(client, test_db, advisor_headers, test_user):
     assert data["occurred_at"].startswith("2026-01-10")
 
 
-def test_update_correspondence_invalid_type(client, test_db, advisor_headers, test_user):
-    business = _create_business(test_db)
+def test_update_correspondence_invalid_type(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
     entry = _add_entry(test_db, business.client_id, business.id, test_user.id)
 
     response = client.patch(
@@ -61,8 +60,10 @@ def test_update_correspondence_invalid_type(client, test_db, advisor_headers, te
     assert response.status_code == 422
 
 
-def test_update_correspondence_not_found(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_update_correspondence_not_found(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
 
     response = client.patch(
         f"/api/v1/clients/{business.client_id}/correspondence/99999",
@@ -73,8 +74,10 @@ def test_update_correspondence_not_found(client, test_db, advisor_headers):
     assert response.status_code == 404
 
 
-def test_delete_correspondence(client, test_db, advisor_headers, test_user):
-    business = _create_business(test_db)
+def test_delete_correspondence(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
     entry = _add_entry(test_db, business.client_id, business.id, test_user.id)
 
     response = client.delete(
@@ -85,8 +88,10 @@ def test_delete_correspondence(client, test_db, advisor_headers, test_user):
     assert response.status_code == 204
 
 
-def test_deleted_not_returned_in_list(client, test_db, advisor_headers, test_user):
-    business = _create_business(test_db)
+def test_deleted_not_returned_in_list(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
     entry = _add_entry(test_db, business.client_id, business.id, test_user.id)
 
     client.delete(
@@ -103,8 +108,10 @@ def test_deleted_not_returned_in_list(client, test_db, advisor_headers, test_use
     assert entry.id not in ids
 
 
-def test_delete_correspondence_secretary_forbidden(client, test_db, secretary_headers, test_user):
-    business = _create_business(test_db)
+def test_delete_correspondence_secretary_forbidden(
+    client, test_db, secretary_headers, test_user, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
     entry = _add_entry(test_db, business.client_id, business.id, test_user.id)
 
     response = client.delete(

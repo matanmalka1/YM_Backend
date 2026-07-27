@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from itertools import count
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus, TurnoverSource
 from app.advance_payments.repositories.advance_payment_repository import (
@@ -18,35 +17,21 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
-_seq = count(1)
 
-
-def _business(db, idx: int) -> Business:
-    uniq = next(_seq)
-    client = seed_client_identity(
-        db,
+def _business(create_client_with_business, idx: int) -> Business:
+    client, business = create_client_with_business(
         full_name=f"AP Overview Client {idx}",
-        id_number=f"321654{uniq:03d}",
-    )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
         business_name=f"AP Overview Biz {idx}",
-        opened_at=date.today(),
     )
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     business.client = client
     return business
 
 
 def _filed_vat_item(
     db,
+    vat_work_item_factory,
     client_record_id: int,
     period: str,
     total_output_net: str,
@@ -55,7 +40,7 @@ def _filed_vat_item(
 ):
     entry = TaxCalendarMaterializationService(db).ensure_periodic_entry("vat", period, 1)
     amount = Decimal(total_output_net)
-    item = VatWorkItem(
+    return vat_work_item_factory(
         client_record_id=client_record_id,
         period=period,
         period_type=VatType.MONTHLY,
@@ -68,15 +53,13 @@ def _filed_vat_item(
         tax_calendar_entry_id=entry.id,
         due_date_original=entry.due_date,
         due_date_effective=entry.due_date,
+        commit=True,
     )
-    db.add(item)
-    db.commit()
-    return item
 
 
-def test_list_overview_returns_rows_sorted_and_total(test_db):
-    b1 = _business(test_db, 1)
-    b2 = _business(test_db, 2)
+def test_list_overview_returns_rows_sorted_and_total(test_db, create_client_with_business):
+    b1 = _business(create_client_with_business, 1)
+    b2 = _business(create_client_with_business, 2)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -112,8 +95,8 @@ def test_list_overview_returns_rows_sorted_and_total(test_db):
     assert rows[1].client_name == b2.client.full_name
 
 
-def test_get_overview_kpis_collection_rate_rounds(test_db):
-    business = _business(test_db, 3)
+def test_get_overview_kpis_collection_rate_rounds(test_db, create_client_with_business):
+    business = _business(create_client_with_business, 3)
     repo = AdvancePaymentRepository(test_db)
     partial = create_linked_advance_payment(
         test_db,
@@ -147,16 +130,35 @@ def test_get_overview_kpis_collection_rate_rounds(test_db):
     assert kpis["collection_rate"] == Decimal("83.33")
 
 
-def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db, user_factory):
+def test_turnover_lookup_batches_multiple_clients_with_group_by(
+    test_db, user_factory, create_client_with_business, vat_work_item_factory
+):
     actor = user_factory(commit=False)
-    first = _business(test_db, 4)
-    second = _business(test_db, 5)
+    first = _business(create_client_with_business, 4)
+    second = _business(create_client_with_business, 5)
     first_jan = _filed_vat_item(
-        test_db, first.client_record_id, "2026-01", "100", created_by=actor.id
+        test_db,
+        vat_work_item_factory,
+        first.client_record_id,
+        "2026-01",
+        "100",
+        created_by=actor.id,
     )
-    _filed_vat_item(test_db, first.client_record_id, "2026-02", "200", created_by=actor.id)
+    _filed_vat_item(
+        test_db,
+        vat_work_item_factory,
+        first.client_record_id,
+        "2026-02",
+        "200",
+        created_by=actor.id,
+    )
     second_jan = _filed_vat_item(
-        test_db, second.client_record_id, "2026-01", "300", created_by=actor.id
+        test_db,
+        vat_work_item_factory,
+        second.client_record_id,
+        "2026-01",
+        "300",
+        created_by=actor.id,
     )
 
     result = TurnoverLookupRepository(test_db).resolve_turnover_for_clients(
@@ -176,11 +178,27 @@ def test_turnover_lookup_batches_multiple_clients_with_group_by(test_db, user_fa
     assert second_resolution.vat_work_item_ids == [second_jan.id]
 
 
-def test_turnover_lookup_expands_periods_across_year_boundary(test_db, user_factory):
+def test_turnover_lookup_expands_periods_across_year_boundary(
+    test_db, user_factory, create_client_with_business, vat_work_item_factory
+):
     actor = user_factory(commit=False)
-    business = _business(test_db, 6)
-    dec = _filed_vat_item(test_db, business.client_record_id, "2026-12", "100", created_by=actor.id)
-    jan = _filed_vat_item(test_db, business.client_record_id, "2027-01", "200", created_by=actor.id)
+    business = _business(create_client_with_business, 6)
+    dec = _filed_vat_item(
+        test_db,
+        vat_work_item_factory,
+        business.client_record_id,
+        "2026-12",
+        "100",
+        created_by=actor.id,
+    )
+    jan = _filed_vat_item(
+        test_db,
+        vat_work_item_factory,
+        business.client_record_id,
+        "2027-01",
+        "200",
+        created_by=actor.id,
+    )
 
     result = TurnoverLookupRepository(test_db).resolve_turnover_for_clients(
         {business.client_record_id: [("2026-12", 2)]}

@@ -1,20 +1,12 @@
-from itertools import count
-
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from tests.helpers.identity import seed_client_identity
-
-_client_seq = count(1)
 
 
-def _client(db):
-    idx = next(_client_seq)
-    return seed_client_identity(db, full_name=f"Annual API Client {idx}", id_number=f"AAP{idx:03d}")
-
-
-def test_client_and_tax_year_list_endpoints(client, test_db, advisor_headers, test_user):
+def test_client_and_tax_year_list_endpoints(
+    client, test_db, advisor_headers, test_user, client_factory
+):
     service = AnnualReportService(test_db)
-    client_a = _client(test_db)
-    client_b = _client(test_db)
+    client_a = client_factory(full_name="Annual API Client 1", id_number="AAP001")
+    client_b = client_factory(full_name="Annual API Client 2", id_number="AAP002")
 
     r1 = service.create_report(
         client_record_id=client_a.id,
@@ -56,15 +48,15 @@ def test_client_and_tax_year_list_endpoints(client, test_db, advisor_headers, te
 
 
 def test_active_season_endpoints_use_backend_tax_year(
-    client, test_db, advisor_headers, test_user, monkeypatch
+    client, test_db, advisor_headers, test_user, monkeypatch, client_factory
 ):
     monkeypatch.setattr(
         "app.annual_reports.api.annual_report_routes_season.get_active_annual_report_tax_year",
         lambda: 2025,
     )
     service = AnnualReportService(test_db)
-    client_a = _client(test_db)
-    client_b = _client(test_db)
+    client_a = client_factory(full_name="Annual API Client 1", id_number="AAP001")
+    client_b = client_factory(full_name="Annual API Client 2", id_number="AAP002")
 
     service.create_report(
         client_record_id=client_a.id,

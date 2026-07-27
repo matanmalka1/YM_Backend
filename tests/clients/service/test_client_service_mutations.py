@@ -3,7 +3,6 @@ from sqlalchemy.exc import IntegrityError
 
 from app.binders.repositories.binder_repository import BinderRepository
 from app.clients.client_enums import ClientStatus
-from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_create_service import (
     CreateClientService,
@@ -17,20 +16,16 @@ from app.common.enums import EntityType, IdNumberType
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
 from app.vat.repositories.vat_client_summary_repository import VatClientSummaryRepository
-from tests.helpers.identity import seed_client_identity
 
 
-def _create_client(db, *, full_name: str, id_number: str, deleted: bool = False):
-    client = seed_client_identity(
-        db,
+def _create_client(client_factory, *, full_name: str, id_number: str, deleted: bool = False):
+    return client_factory(
         full_name=full_name,
         id_number=id_number,
         id_number_type=IdNumberType.CORPORATION,
         created_by=1,
         deleted_at=utcnow() if deleted else None,
     )
-    db.flush()
-    return client
 
 
 def _svc_create(service, *, full_name, id_number, actor_id=3):
@@ -71,8 +66,8 @@ def test_create_client_assigns_next_office_client_number_and_creates_initial_bin
     assert binder.binder_number == "100002/1"
 
 
-def test_create_client_conflict_when_active_exists(test_db):
-    _create_client(test_db, full_name="Existing", id_number="620000000")
+def test_create_client_conflict_when_active_exists(test_db, client_factory, actor_user):
+    _create_client(client_factory, full_name="Existing", id_number="620000000")
     service = CreateClientService(test_db)
 
     with pytest.raises(AppError) as exc:
@@ -80,7 +75,7 @@ def test_create_client_conflict_when_active_exists(test_db):
             full_name="Duplicate",
             id_number="620000000",
             id_number_type=IdNumberType.CORPORATION,
-            actor_id=1,
+            actor_id=actor_user.id,
         )
 
     assert exc.value.code == "CLIENT.CONFLICT"
@@ -88,8 +83,8 @@ def test_create_client_conflict_when_active_exists(test_db):
     assert "conflict" in exc.value.details
 
 
-def test_create_client_deleted_exists_conflict(test_db):
-    _create_client(test_db, full_name="Deleted", id_number="630000008", deleted=True)
+def test_create_client_deleted_exists_conflict(test_db, client_factory, actor_user):
+    _create_client(client_factory, full_name="Deleted", id_number="630000008", deleted=True)
 
     service = CreateClientService(test_db)
     with pytest.raises(AppError) as exc:
@@ -97,7 +92,7 @@ def test_create_client_deleted_exists_conflict(test_db):
             full_name="New",
             id_number="630000008",
             id_number_type=IdNumberType.CORPORATION,
-            actor_id=1,
+            actor_id=actor_user.id,
         )
 
     assert exc.value.code == "CLIENT.DELETED_EXISTS"
@@ -105,7 +100,7 @@ def test_create_client_deleted_exists_conflict(test_db):
     assert "conflict" in exc.value.details
 
 
-def test_create_client_rejects_employee_entity_type(test_db):
+def test_create_client_rejects_employee_entity_type(test_db, actor_user):
     service = CreateClientService(test_db)
 
     with pytest.raises(ValueError, match="שכיר"):
@@ -114,11 +109,11 @@ def test_create_client_rejects_employee_entity_type(test_db):
             id_number="087654321",
             id_number_type=IdNumberType.INDIVIDUAL,
             entity_type=EntityType.EMPLOYEE,
-            actor_id=1,
+            actor_id=actor_user.id,
         )
 
 
-def test_create_client_rejects_company_with_non_corporation_id_type(test_db):
+def test_create_client_rejects_company_with_non_corporation_id_type(test_db, actor_user):
     service = CreateClientService(test_db)
 
     with pytest.raises(ValueError, match="חייבת להיווצר עם ח.פ"):
@@ -127,7 +122,7 @@ def test_create_client_rejects_company_with_non_corporation_id_type(test_db):
             id_number="039337423",
             id_number_type=IdNumberType.INDIVIDUAL,
             entity_type=EntityType.COMPANY_LTD,
-            actor_id=1,
+            actor_id=actor_user.id,
         )
 
 
@@ -138,15 +133,15 @@ def test_get_client_or_raise_not_found(test_db):
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
-def test_update_delete_restore_flow(test_db):
+def test_update_delete_restore_flow(test_db, actor_user):
     creation_service = CreateClientService(test_db)
     created = _svc_create(
-        creation_service, full_name="Before Update", id_number="640000006", actor_id=10
+        creation_service, full_name="Before Update", id_number="640000006", actor_id=actor_user.id
     )
 
     updated = ClientUpdateService(test_db).update_client(
         created.id,
-        actor_id=10,
+        actor_id=actor_user.id,
         full_name="After Update",
         phone="0501234567",
     )
@@ -154,11 +149,11 @@ def test_update_delete_restore_flow(test_db):
     assert updated["phone"] == "0501234567"
 
     lifecycle_service = ClientLifecycleService(test_db)
-    lifecycle_service.delete_client(created.id, actor_id=11)
+    lifecycle_service.delete_client(created.id, actor_id=actor_user.id)
     with pytest.raises(NotFoundError):
         get_client_or_raise(test_db, created.id)
 
-    restored = lifecycle_service.restore_client(created.id, actor_id=12)
+    restored = lifecycle_service.restore_client(created.id, actor_id=actor_user.id)
     restored_record = ClientRecordRepository(test_db).get_by_id(created.id)
     assert restored_record is not None
     assert restored_record.deleted_at is None
@@ -166,44 +161,52 @@ def test_update_delete_restore_flow(test_db):
     assert restored["id"] == created.id
 
 
-def test_update_advance_rate_change_stamps_server_owned_timestamp(test_db):
+def test_update_advance_rate_change_stamps_server_owned_timestamp(test_db, actor_user):
     from decimal import Decimal
 
     from app.utils.time_utils import israel_today
 
     created = _svc_create(
-        CreateClientService(test_db), full_name="Advance Rate", id_number="640000099", actor_id=10
+        CreateClientService(test_db),
+        full_name="Advance Rate",
+        id_number="640000099",
+        actor_id=actor_user.id,
     )
     service = ClientUpdateService(test_db)
 
-    updated = service.update_client(created.id, actor_id=10, advance_rate=Decimal("12.50"))
+    updated = service.update_client(
+        created.id, actor_id=actor_user.id, advance_rate=Decimal("12.50")
+    )
     assert updated["advance_rate"] == Decimal("12.50")
     assert updated["advance_rate_updated_at"] == israel_today()
 
 
-def test_update_advance_rate_unchanged_does_not_restamp_timestamp(test_db):
+def test_update_advance_rate_unchanged_does_not_restamp_timestamp(test_db, actor_user):
     from decimal import Decimal
 
     created = _svc_create(
-        CreateClientService(test_db), full_name="Advance Same", id_number="640000098", actor_id=10
+        CreateClientService(test_db),
+        full_name="Advance Same",
+        id_number="640000098",
+        actor_id=actor_user.id,
     )
     service = ClientUpdateService(test_db)
-    first = service.update_client(created.id, actor_id=10, advance_rate=Decimal("9.00"))
+    first = service.update_client(created.id, actor_id=actor_user.id, advance_rate=Decimal("9.00"))
     sentinel_date = first["advance_rate_updated_at"]
     assert sentinel_date is not None
 
     # Re-send the same advance_rate together with another change; the timestamp
     # must not move because advance_rate did not actually change.
     again = service.update_client(
-        created.id, actor_id=10, advance_rate=Decimal("9.00"), phone="0500000000"
+        created.id, actor_id=actor_user.id, advance_rate=Decimal("9.00"), phone="0500000000"
     )
     assert again["advance_rate_updated_at"] == sentinel_date
 
 
-def test_create_client_always_creates_initial_binder(test_db):
+def test_create_client_always_creates_initial_binder(test_db, actor_user):
     service = CreateClientService(test_db)
     created = _svc_create(
-        service, full_name="Auto Binder Client", id_number="640000022", actor_id=10
+        service, full_name="Auto Binder Client", id_number="640000022", actor_id=actor_user.id
     )
 
     assert BinderRepository(test_db).count_by_client(created.id) == 1
@@ -212,49 +215,49 @@ def test_create_client_always_creates_initial_binder(test_db):
     assert binder.binder_number == f"{created.office_client_number}/1"
 
 
-def test_delete_raises_not_found_when_client_already_deleted(test_db):
+def test_delete_raises_not_found_when_client_already_deleted(test_db, actor_user):
     created = _svc_create(
         CreateClientService(test_db),
         full_name="Delete Twice",
         id_number="640000014",
     )
     service = ClientLifecycleService(test_db)
-    service.delete_client(created.id, actor_id=1)
+    service.delete_client(created.id, actor_id=actor_user.id)
 
     with pytest.raises(NotFoundError) as exc:
-        service.delete_client(created.id, actor_id=2)
+        service.delete_client(created.id, actor_id=actor_user.id)
 
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
-def test_restore_raises_when_not_deleted(test_db):
-    client = _create_client(test_db, full_name="Alive", id_number="650000003")
+def test_restore_raises_when_not_deleted(test_db, client_factory, actor_user):
+    client = _create_client(client_factory, full_name="Alive", id_number="650000003")
     service = ClientLifecycleService(test_db)
 
     with pytest.raises(ConflictError) as exc:
-        service.restore_client(client.id, actor_id=1)
+        service.restore_client(client.id, actor_id=actor_user.id)
 
     assert exc.value.code == "CLIENT.NOT_DELETED"
 
 
-def test_restore_raises_when_active_duplicate_exists(test_db):
-    deleted = _create_client(test_db, full_name="Old", id_number="660000001", deleted=True)
-    active = ClientRecord(legal_entity_id=deleted.legal_entity_id, created_by=1)
-    test_db.add(active)
-    test_db.commit()
+def test_restore_raises_when_active_duplicate_exists(test_db, client_factory, actor_user):
+    deleted = _create_client(client_factory, full_name="Old", id_number="660000001", deleted=True)
+    # A second, active ClientRecord sharing the same legal entity — the duplicate-active
+    # conflict path restore_client must guard against.
+    client_factory(legal_entity_id=deleted.legal_entity_id, created_by=actor_user.id, commit=True)
 
     service = ClientLifecycleService(test_db)
     with pytest.raises(ConflictError) as exc:
-        service.restore_client(deleted.id, actor_id=2)
+        service.restore_client(deleted.id, actor_id=actor_user.id)
 
     assert exc.value.code == "CLIENT.CONFLICT"
 
 
-def test_list_clients_and_conflict_info(test_db):
+def test_list_clients_and_conflict_info(test_db, actor_user):
     creation_service = CreateClientService(test_db)
     one = _svc_create(creation_service, full_name="Alpha", id_number="670000009")
     two = _svc_create(creation_service, full_name="Beta", id_number="670000017")
-    ClientLifecycleService(test_db).delete_client(two.id, actor_id=1)
+    ClientLifecycleService(test_db).delete_client(two.id, actor_id=actor_user.id)
 
     query_service = ClientQueryService(test_db)
     result = query_service.list_full_clients(search="Alpha", page=1, page_size=10)
@@ -270,33 +273,29 @@ def test_list_clients_and_conflict_info(test_db):
     assert len(info_deleted.deleted_clients) == 1
 
 
-def test_list_clients_entity_type_stats_respect_non_type_filters(test_db):
-    seed_client_identity(
-        test_db,
+def test_list_clients_entity_type_stats_respect_non_type_filters(test_db, client_factory):
+    client_factory(
         full_name="פטור",
         id_number="700000001",
         id_number_type=IdNumberType.INDIVIDUAL,
         entity_type=EntityType.OSEK_PATUR,
         status=ClientStatus.ACTIVE,
     )
-    seed_client_identity(
-        test_db,
+    client_factory(
         full_name="מורשה",
         id_number="700000002",
         id_number_type=IdNumberType.INDIVIDUAL,
         entity_type=EntityType.OSEK_MURSHE,
         status=ClientStatus.FROZEN,
     )
-    seed_client_identity(
-        test_db,
+    client_factory(
         full_name="חברה",
         id_number="700000003",
         id_number_type=IdNumberType.CORPORATION,
         entity_type=EntityType.COMPANY_LTD,
         status=ClientStatus.ACTIVE,
     )
-    seed_client_identity(
-        test_db,
+    client_factory(
         full_name="שכיר",
         id_number="700000004",
         id_number_type=IdNumberType.INDIVIDUAL,
@@ -359,10 +358,10 @@ def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch
     assert not hasattr(by_id[reported.id], "annual_turnover")
 
 
-def test_create_client_does_not_reuse_deleted_office_client_number(test_db):
+def test_create_client_does_not_reuse_deleted_office_client_number(test_db, actor_user):
     service = CreateClientService(test_db)
     first = _svc_create(service, full_name="First", id_number="670000025")
-    ClientLifecycleService(test_db).delete_client(first.id, actor_id=1)
+    ClientLifecycleService(test_db).delete_client(first.id, actor_id=actor_user.id)
 
     second = _svc_create(service, full_name="Second", id_number="670000033")
 
@@ -370,7 +369,7 @@ def test_create_client_does_not_reuse_deleted_office_client_number(test_db):
     assert second.office_client_number == 100002
 
 
-def test_create_client_converts_integrity_error_to_conflict(test_db, monkeypatch):
+def test_create_client_converts_integrity_error_to_conflict(test_db, monkeypatch, actor_user):
     service = CreateClientService(test_db)
 
     def _raise_integrity(*_args, **_kwargs):
@@ -383,7 +382,7 @@ def test_create_client_converts_integrity_error_to_conflict(test_db, monkeypatch
             full_name="Integrity",
             id_number="690000005",
             id_number_type=IdNumberType.CORPORATION,
-            actor_id=1,
+            actor_id=actor_user.id,
         )
 
     assert exc.value.code == "CLIENT.CONFLICT"
@@ -391,27 +390,27 @@ def test_create_client_converts_integrity_error_to_conflict(test_db, monkeypatch
     assert "conflict" in exc.value.details
 
 
-def test_restore_raises_not_found_when_client_missing(test_db):
+def test_restore_raises_not_found_when_client_missing(test_db, actor_user):
     service = ClientLifecycleService(test_db)
 
     with pytest.raises(NotFoundError) as exc:
-        service.restore_client(9999, actor_id=1)
+        service.restore_client(9999, actor_id=actor_user.id)
 
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
-def test_restore_raises_not_found_when_repo_restore_returns_none(test_db, monkeypatch):
+def test_restore_raises_not_found_when_repo_restore_returns_none(test_db, monkeypatch, actor_user):
     created = _svc_create(
         CreateClientService(test_db),
         full_name="To Restore",
         id_number="690000013",
     )
     service = ClientLifecycleService(test_db)
-    service.delete_client(created.id, actor_id=1)
+    service.delete_client(created.id, actor_id=actor_user.id)
 
     monkeypatch.setattr(service.record_repo, "restore", lambda *_args, **_kwargs: None)
 
     with pytest.raises(NotFoundError) as exc:
-        service.restore_client(created.id, actor_id=2)
+        service.restore_client(created.id, actor_id=actor_user.id)
 
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"

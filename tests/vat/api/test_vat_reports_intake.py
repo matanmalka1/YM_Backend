@@ -1,5 +1,4 @@
 from app.users.models.user import UserRole
-from tests.factories import create_user
 from tests.vat.api.test_vat_reports_utils import create_work_item
 
 
@@ -44,17 +43,9 @@ class TestCreateWorkItem:
         assert response.status_code == 401
 
     def test_create_work_item_response_is_enriched(
-        self, client, test_db, advisor_headers, vat_client
+        self, client, advisor_headers, vat_client, user_factory
     ):
-        assignee = create_user(
-            test_db,
-            full_name="VAT Assignee",
-            email="vat.assignee.intake@example.com",
-            password="pass",
-            role=UserRole.SECRETARY,
-            is_active=True,
-            commit=True,
-        )
+        assignee = user_factory(full_name="VAT Assignee", role=UserRole.SECRETARY)
 
         response = client.post(
             "/api/v1/vat/work-items",

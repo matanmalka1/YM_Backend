@@ -1,60 +1,19 @@
-from datetime import date
-
 from sqlalchemy import select
 
-from app.businesses.models.business import BusinessStatus
-from app.common.enums import IdNumberType, VatType
-from app.users.models.user import User, UserRole
+from app.common.enums import VatType
+from app.users.models.user import UserRole
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_work_item import VatWorkItem
-from tests.factories import create_user
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.vat.api.test_vat_reports_utils import (
     create_work_item,
     income_payload,
 )
 
 
-def _create_user(test_db, email: str, full_name: str, role: UserRole) -> User:
-    user = create_user(
-        test_db,
-        full_name=full_name,
-        email=email,
-        password="pass",
-        role=role,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _create_vat_client_with_name(test_db, full_name: str, id_number: str):
-    client = seed_client_identity(
-        test_db,
-        full_name=full_name,
-        id_number=id_number,
-        id_number_type=IdNumberType.INDIVIDUAL,
-    )
-    seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=full_name,
-        status=BusinessStatus.ACTIVE,
-        opened_at=date.today(),
-    )
-    test_db.commit()
-    return client
-
-
 def test_get_work_item_includes_user_names_and_deadline_fields(
-    client, test_db, advisor_headers, vat_client, test_user
+    client, advisor_headers, vat_client, test_user, user_factory
 ):
-    assignee = _create_user(
-        test_db,
-        email="vat.assignee@example.com",
-        full_name="VAT Assignee",
-        role=UserRole.SECRETARY,
-    )
+    assignee = user_factory(full_name="VAT Assignee", role=UserRole.SECRETARY)
 
     create_resp = client.post(
         "/api/v1/vat/work-items",
@@ -144,13 +103,12 @@ def test_list_work_items_supports_status_and_client_name_filters(
 
 
 def test_status_summary_returns_all_statuses_and_counts_by_filter(
-    client, test_db, advisor_headers, vat_client, test_user
+    client, test_db, advisor_headers, vat_client, test_user, create_client_with_business
 ):
-    same_name_client = _create_vat_client_with_name(
-        test_db,
-        vat_client.full_name,
-        "987654321",
-    )
+    same_name_client = create_client_with_business(
+        full_name=vat_client.full_name,
+        id_number="987654321",
+    )[0]
     other_pending_resp = client.post(
         "/api/v1/vat/work-items",
         headers=advisor_headers,
@@ -244,13 +202,12 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
 
 
 def test_grouped_work_items_filter_by_exact_client_record_id(
-    client, test_db, advisor_headers, vat_client
+    client, advisor_headers, vat_client, create_client_with_business
 ):
-    same_name_client = _create_vat_client_with_name(
-        test_db,
-        vat_client.full_name,
-        "987654322",
-    )
+    same_name_client = create_client_with_business(
+        full_name=vat_client.full_name,
+        id_number="987654322",
+    )[0]
     create_work_item(client, advisor_headers, vat_client, "2026-01")
     create_work_item(client, advisor_headers, same_name_client, "2026-02")
 

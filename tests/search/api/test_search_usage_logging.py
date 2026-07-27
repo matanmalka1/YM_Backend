@@ -4,7 +4,6 @@ import logging
 from app.core.logging_config import StructuredFormatter
 from app.search.schemas.search import SearchMatchType
 from app.search.services import search_service as search_service_module
-from app.tasks.models.task import Task
 
 
 def _usage_record(caplog):
@@ -23,18 +22,17 @@ def test_authenticated_search_logs_phase_one_usage_without_the_term(
     test_db,
     test_user,
     create_client_with_business,
+    task_factory,
     caplog,
 ):
     sensitive_term = "Private Client 884422"
     crm_client, _ = create_client_with_business(full_name=sensitive_term)
-    test_db.add(
-        Task(
-            title=sensitive_term,
-            client_record_id=crm_client.id,
-            created_by_user_id=test_user.id,
-        )
+    task_factory(
+        title=sensitive_term,
+        client_record_id=crm_client.id,
+        created_by_user_id=test_user.id,
+        commit=True,
     )
-    test_db.commit()
 
     with caplog.at_level(logging.INFO, logger=search_service_module.__name__):
         response = client.get(

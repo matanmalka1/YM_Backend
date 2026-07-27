@@ -3,44 +3,38 @@
 from datetime import date
 from decimal import Decimal
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
-    PermanentDocument,
     PermanentDocumentType,
 )
 from app.notifications.models.notification import (
     TRIGGER_LABELS,
-    Notification,
     NotificationChannel,
     NotificationStatus,
     NotificationTrigger,
 )
-from app.tasks.models.task import Task
 from tests.helpers.tax_calendar_links import (
     create_linked_advance_payment,
     create_linked_vat_work_item,
 )
 
 
-def _make_binder(db, client_record_id, binder_number, user_id):
-    binder = Binder(
+def _make_binder(binder_factory, client_record_id, binder_number, user_id):
+    return binder_factory(
         client_record_id=client_record_id,
         binder_number=binder_number,
         period_start=date.today(),
         created_by=user_id,
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
+        commit=True,
     )
-    db.add(binder)
-    db.commit()
-    db.refresh(binder)
-    return binder
 
 
-def _make_document(db, *, client_record_id, business_id, filename, user_id):
-    document = PermanentDocument(
+def _make_document(permanent_document_factory, *, client_record_id, business_id, filename, user_id):
+    return permanent_document_factory(
         client_record_id=client_record_id,
         business_id=business_id,
         scope=DocumentScope.BUSINESS,
@@ -48,15 +42,12 @@ def _make_document(db, *, client_record_id, business_id, filename, user_id):
         storage_key=f"tests/{client_record_id}/{filename}",
         original_filename=filename,
         uploaded_by=user_id,
+        commit=True,
     )
-    db.add(document)
-    db.commit()
-    db.refresh(document)
-    return document
 
 
-def _make_notification(db, client_record_id, *, recipient="client@example.com"):
-    notification = Notification(
+def _make_notification(notification_factory, client_record_id, *, recipient="client@example.com"):
+    return notification_factory(
         client_record_id=client_record_id,
         trigger=NotificationTrigger.PAYMENT_REMINDER,
         channel=NotificationChannel.EMAIL,
@@ -64,21 +55,18 @@ def _make_notification(db, client_record_id, *, recipient="client@example.com"):
         content_snapshot="גוף ההודעה",
         subject_snapshot="תזכורת תשלום",
         status=NotificationStatus.SENT,
+        commit=True,
     )
-    db.add(notification)
-    db.commit()
-    db.refresh(notification)
-    return notification
 
 
-def _make_task(db, client_record_id, user_id, title, **fields):
-    task = Task(
-        title=title, client_record_id=client_record_id, created_by_user_id=user_id, **fields
+def _make_task(task_factory, client_record_id, user_id, title, **fields):
+    return task_factory(
+        title=title,
+        client_record_id=client_record_id,
+        created_by_user_id=user_id,
+        commit=True,
+        **fields,
     )
-    db.add(task)
-    db.commit()
-    db.refresh(task)
-    return task
 
 
 def _matches(client, headers, term):
@@ -88,10 +76,10 @@ def _matches(client, headers, term):
 
 
 def test_a_binder_number_matches_the_binder_itself(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, binder_factory
 ):
     crm_client, _ = create_client_with_business(full_name="בעל קלסר")
-    binder = _make_binder(test_db, crm_client.id, "MATCH-101", test_user.id)
+    binder = _make_binder(binder_factory, crm_client.id, "MATCH-101", test_user.id)
 
     group = _matches(client, advisor_headers, "MATCH-101")["binders"]
 
@@ -105,11 +93,16 @@ def test_a_binder_number_matches_the_binder_itself(
 
 
 def test_a_full_filename_matches_the_document(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    create_client_with_business,
+    permanent_document_factory,
 ):
     crm_client, business = create_client_with_business(full_name="בעל מסמך")
     document = _make_document(
-        test_db,
+        permanent_document_factory,
         client_record_id=crm_client.id,
         business_id=business.id,
         filename="audit_2026.pdf",
@@ -164,19 +157,17 @@ def test_a_tax_year_and_an_ita_reference_match_the_annual_report(
 
 
 def test_a_charge_id_matches_the_charge(
-    client, test_db, advisor_headers, create_client_with_business
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
 ):
     crm_client, _ = create_client_with_business(full_name="לקוח חיוב")
-    charge = Charge(
+    charge = charge_factory(
         client_record_id=crm_client.id,
         charge_type=ChargeType.ANNUAL_REPORT_FEE,
         status=ChargeStatus.ISSUED,
         amount=Decimal("1500"),
         period="2026-01",
+        commit=True,
     )
-    test_db.add(charge)
-    test_db.commit()
-    test_db.refresh(charge)
 
     group = _matches(client, advisor_headers, str(charge.id))["charges"]
 
@@ -186,11 +177,11 @@ def test_a_charge_id_matches_the_charge(
 
 
 def test_an_exact_title_matches_the_task(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     crm_client, _ = create_client_with_business(full_name="לקוח משימה")
     task = _make_task(
-        test_db, crm_client.id, test_user.id, "השלמת מסמכים", due_date=date(2026, 3, 15)
+        task_factory, crm_client.id, test_user.id, "השלמת מסמכים", due_date=date(2026, 3, 15)
     )
 
     group = _matches(client, advisor_headers, "השלמת מסמכים")["tasks"]
@@ -200,10 +191,12 @@ def test_an_exact_title_matches_the_task(
 
 
 def test_a_recipient_email_matches_the_notification(
-    client, test_db, advisor_headers, create_client_with_business
+    client, test_db, advisor_headers, create_client_with_business, notification_factory
 ):
     crm_client, _ = create_client_with_business(full_name="לקוח התראה")
-    notification = _make_notification(test_db, crm_client.id, recipient="דוא@example.com")
+    notification = _make_notification(
+        notification_factory, crm_client.id, recipient="דוא@example.com"
+    )
 
     group = _matches(client, advisor_headers, "דוא@example.com")["notifications"]
 
@@ -214,14 +207,14 @@ def test_a_recipient_email_matches_the_notification(
 
 
 def test_recipient_matching_is_case_sensitive_in_phase_one(
-    client, test_db, advisor_headers, create_client_with_business
+    client, test_db, advisor_headers, create_client_with_business, notification_factory
 ):
     """Exact means exact: no ILIKE ships before the index that serves it (D7).
 
     Documented product decision (2026-07-21) — revisit with phase-2 measurement.
     """
     crm_client, _ = create_client_with_business(full_name="לקוח רישיות")
-    _make_notification(test_db, crm_client.id, recipient="User@Example.com")
+    _make_notification(notification_factory, crm_client.id, recipient="User@Example.com")
 
     group = _matches(client, advisor_headers, "user@example.com")["notifications"]
 
@@ -229,12 +222,18 @@ def test_recipient_matching_is_case_sensitive_in_phase_one(
 
 
 def test_an_internal_db_id_matches_nothing(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    create_client_with_business,
+    task_factory,
+    notification_factory,
 ):
     """D4: a column participates only if the UI shows it as the record's identifier."""
     crm_client, _ = create_client_with_business(full_name="לקוח פנימי")
-    task = _make_task(test_db, crm_client.id, test_user.id, "משימה חסויה")
-    notification = _make_notification(test_db, crm_client.id)
+    task = _make_task(task_factory, crm_client.id, test_user.id, "משימה חסויה")
+    notification = _make_notification(notification_factory, crm_client.id)
 
     for internal_id in (task.id, notification.id):
         matches = _matches(client, advisor_headers, str(internal_id))
@@ -243,21 +242,21 @@ def test_an_internal_db_id_matches_nothing(
 
 
 def test_a_bare_number_does_not_match_free_text(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     """A bare integer is an identifier; titles and filenames are not identifiers."""
     crm_client, _ = create_client_with_business(full_name="לקוח מספרי")
-    _make_task(test_db, crm_client.id, test_user.id, "2026")
+    _make_task(task_factory, crm_client.id, test_user.id, "2026")
 
     assert _matches(client, advisor_headers, "2026")["tasks"] == {"items": [], "total": 0}
 
 
 def test_preview_caps_at_five_and_reports_the_true_total(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     crm_client, _ = create_client_with_business(full_name="לקוח תקרה")
     for _ in range(7):
-        _make_task(test_db, crm_client.id, test_user.id, "אותו שם בדיוק")
+        _make_task(task_factory, crm_client.id, test_user.id, "אותו שם בדיוק")
 
     group = _matches(client, advisor_headers, "אותו שם בדיוק")["tasks"]
 
@@ -266,12 +265,12 @@ def test_preview_caps_at_five_and_reports_the_true_total(
 
 
 def test_expansion_pages_the_type_and_agrees_with_the_preview(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     """The preview is the first page of the expansion: same rows, same order, same total."""
     crm_client, _ = create_client_with_business(full_name="לקוח הרחבה")
     for _ in range(7):
-        _make_task(test_db, crm_client.id, test_user.id, "כפילות מותרת")
+        _make_task(task_factory, crm_client.id, test_user.id, "כפילות מותרת")
 
     preview = _matches(client, advisor_headers, "כפילות מותרת")["tasks"]
     base = "/api/v1/search/items?search=כפילות מותרת&result_type=task"
@@ -285,12 +284,12 @@ def test_expansion_pages_the_type_and_agrees_with_the_preview(
 
 
 def test_identical_titles_on_different_records_are_not_deduped(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     first_client, _ = create_client_with_business(full_name="לקוח אחד")
     second_client, _ = create_client_with_business(full_name="לקוח שני")
-    mine = _make_task(test_db, first_client.id, test_user.id, "שם משותף")
-    theirs = _make_task(test_db, second_client.id, test_user.id, "שם משותף")
+    mine = _make_task(task_factory, first_client.id, test_user.id, "שם משותף")
+    theirs = _make_task(task_factory, second_client.id, test_user.id, "שם משותף")
 
     group = _matches(client, advisor_headers, "שם משותף")["tasks"]
 
@@ -301,11 +300,11 @@ def test_identical_titles_on_different_records_are_not_deduped(
 
 
 def test_clients_and_matches_coexist_in_one_response(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     """Both sections non-empty at once is the point of the page."""
     crm_client, _ = create_client_with_business(full_name="חופף")
-    _make_task(test_db, crm_client.id, test_user.id, "חופף")
+    _make_task(task_factory, crm_client.id, test_user.id, "חופף")
 
     response = client.get("/api/v1/search?search=חופף", headers=advisor_headers).json()
 
@@ -314,10 +313,10 @@ def test_clients_and_matches_coexist_in_one_response(
 
 
 def test_match_rows_carry_the_same_client_name_resolution_returns(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, task_factory
 ):
     crm_client, _ = create_client_with_business(full_name="שם קנוני")
-    _make_task(test_db, crm_client.id, test_user.id, "שם קנוני")
+    _make_task(task_factory, crm_client.id, test_user.id, "שם קנוני")
 
     response = client.get("/api/v1/search?search=שם קנוני", headers=advisor_headers).json()
 

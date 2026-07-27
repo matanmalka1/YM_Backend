@@ -8,34 +8,25 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.users.models.user import User, UserRole
+from app.users.models.user import User
 from app.utils.time_utils import utcnow
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 
 
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
+def _user(user_factory) -> User:
+    return user_factory(
         full_name="Signature Repo User",
         email="signature.repo@example.com",
         password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
     )
-    return user
 
 
-def _business(test_db, *, suffix: str) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
+def _business(create_client_with_business, *, suffix: str) -> Business:
+    _client, business = create_client_with_business(
         full_name=f"Signature Repo Client {suffix}",
         id_number=f"SIG-R-{suffix}",
         business_name=f"Signature Repo Business {suffix}",
         opened_at=date(2026, 1, 1),
     )
-    test_db.commit()
     return business
 
 
@@ -66,11 +57,13 @@ def _create(
     return req
 
 
-def test_signature_request_repository_pending_and_expired_queries(test_db):
+def test_signature_request_repository_pending_and_expired_queries(
+    test_db, user_factory, create_client_with_business
+):
     repo = SignatureRequestRepository(test_db)
-    user = _user(test_db)
-    business_a = _business(test_db, suffix="A")
-    business_b = _business(test_db, suffix="B")
+    user = _user(user_factory)
+    business_a = _business(create_client_with_business, suffix="A")
+    business_b = _business(create_client_with_business, suffix="B")
     now = utcnow()
     canceled = _create(repo, business_a, user_id=user.id, title="Canceled")
     repo.update(canceled.id, status=SignatureRequestStatus.CANCELED)
@@ -122,10 +115,12 @@ def test_signature_request_repository_pending_and_expired_queries(test_db):
     assert canceled.id not in [item.id for item in repo.list_expired_pending()]
 
 
-def test_repository_update_missing_id_and_pending_by_annual_report(test_db):
+def test_repository_update_missing_id_and_pending_by_annual_report(
+    test_db, user_factory, create_client_with_business
+):
     repo = SignatureRequestRepository(test_db)
-    user = _user(test_db)
-    business = _business(test_db, suffix="AR")
+    user = _user(user_factory)
+    business = _business(create_client_with_business, suffix="AR")
     assert repo.update(999999, status=SignatureRequestStatus.CANCELED) is None
     pending = _create(repo, business, user_id=user.id, title="Annual Pending", annual_report_id=77)
     canceled = _create(

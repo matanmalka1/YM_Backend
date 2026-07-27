@@ -1,39 +1,39 @@
 from datetime import date, timedelta
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.services.binder_list_service import BinderListService
 from tests.helpers.identity import seed_client_identity
 
 
-def _seed_binders(db, user_id: int):
+def _seed_binders(db, binder_factory, user_id: int):
     c1 = seed_client_identity(db, full_name="Alpha Client", id_number="BLS001")
     c2 = seed_client_identity(db, full_name="Beta Client", id_number="BLS002")
 
-    b1 = Binder(
+    b1 = binder_factory(
         client_record_id=c1.id,
         binder_number="AA-100",
         period_start=date.today() - timedelta(days=15),
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=user_id,
+        commit=True,
     )
-    b2 = Binder(
+    b2 = binder_factory(
         client_record_id=c2.id,
         binder_number="BB-200",
         period_start=date.today() - timedelta(days=5),
         location_status=BinderLocationStatus.READY_FOR_HANDOVER,
         capacity_status=BinderCapacityStatus.FULL,
         created_by=user_id,
+        commit=True,
     )
-    db.add_all([b1, b2])
-    db.commit()
-    db.refresh(b1)
-    db.refresh(b2)
     return c1, c2, b1, b2
 
 
-def test_list_binders_enriched_filters_and_counters_use_lifecycle_fields(test_db, test_user):
-    _c1, _c2, _b1, _b2 = _seed_binders(test_db, test_user.id)
+def test_list_binders_enriched_filters_and_counters_use_lifecycle_fields(
+    test_db, test_user, binder_factory
+):
+    _c1, _c2, _b1, _b2 = _seed_binders(test_db, binder_factory, test_user.id)
     service = BinderListService(test_db)
 
     items, total, counters = service.list_binders_enriched(
@@ -60,9 +60,9 @@ def test_list_binders_enriched_filters_and_counters_use_lifecycle_fields(test_db
     }
 
 
-def test_list_binders_enriched_excludes_handed_over_by_default(test_db, test_user):
-    c1, _c2, b1, b2 = _seed_binders(test_db, test_user.id)
-    handed_over = Binder(
+def test_list_binders_enriched_excludes_handed_over_by_default(test_db, test_user, binder_factory):
+    c1, _c2, b1, b2 = _seed_binders(test_db, binder_factory, test_user.id)
+    binder_factory(
         client_record_id=c1.id,
         binder_number="AA-300",
         period_start=date.today() - timedelta(days=1),
@@ -70,9 +70,8 @@ def test_list_binders_enriched_excludes_handed_over_by_default(test_db, test_use
         capacity_status=BinderCapacityStatus.FULL,
         handed_over_at=date.today(),
         created_by=test_user.id,
+        commit=True,
     )
-    test_db.add(handed_over)
-    test_db.commit()
 
     service = BinderListService(test_db)
 
@@ -84,18 +83,19 @@ def test_list_binders_enriched_excludes_handed_over_by_default(test_db, test_use
     assert counters["location_handed_over"] == 1
 
 
-def test_list_binders_enriched_location_filter_includes_handed_over(test_db, test_user):
-    c1, _c2, _b1, _b2 = _seed_binders(test_db, test_user.id)
-    handed_over = Binder(
+def test_list_binders_enriched_location_filter_includes_handed_over(
+    test_db, test_user, binder_factory
+):
+    c1, _c2, _b1, _b2 = _seed_binders(test_db, binder_factory, test_user.id)
+    handed_over = binder_factory(
         client_record_id=c1.id,
         binder_number="AA-400",
         period_start=date.today(),
         location_status=BinderLocationStatus.HANDED_OVER,
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=test_user.id,
+        commit=True,
     )
-    test_db.add(handed_over)
-    test_db.commit()
 
     service = BinderListService(test_db)
     items, total, _ = service.list_binders_enriched(location_status="handed_over")
@@ -105,19 +105,17 @@ def test_list_binders_enriched_location_filter_includes_handed_over(test_db, tes
     assert items[0].location_status == BinderLocationStatus.HANDED_OVER
 
 
-def test_build_binder_response_handles_null_period_start(test_db, test_user):
+def test_build_binder_response_handles_null_period_start(test_db, test_user, binder_factory):
     client = seed_client_identity(test_db, full_name="Null Period Client", id_number="BLSNULL")
-    binder = Binder(
+    binder = binder_factory(
         client_record_id=client.id,
         binder_number="NULL-100",
         period_start=None,
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=test_user.id,
+        commit=True,
     )
-    test_db.add(binder)
-    test_db.commit()
-    test_db.refresh(binder)
 
     response = BinderListService(test_db).build_binder_response(
         binder,

@@ -3,14 +3,6 @@
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
-from app.clients.models.client_record import ClientRecord
-from app.common.enums import IdNumberType
-from app.legal_entities.models.legal_entity import LegalEntity
-from app.legal_entities.models.person import Person
-from app.legal_entities.models.person_legal_entity_link import (
-    PersonLegalEntityLink,
-    PersonLegalEntityRole,
-)
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -18,36 +10,6 @@ from app.notifications.models.notification import (
 )
 from app.notifications.repositories.notification_repository import NotificationRepository
 from app.notifications.services.notification_service import NotificationService
-
-
-def _make_client(db, *, email: str = "owner@test.com") -> int:
-    entity = LegalEntity(
-        official_name="Test Entity",
-        id_number=f"SVC-{id(db)}-{email}",
-        id_number_type=IdNumberType.INDIVIDUAL,
-    )
-    db.add(entity)
-    db.flush()
-    record = ClientRecord(legal_entity_id=entity.id)
-    db.add(record)
-    db.flush()
-    person = Person(
-        full_name="Test Client",
-        id_number=f"P-{record.id}",
-        id_number_type=IdNumberType.OTHER,
-        email=email,
-    )
-    db.add(person)
-    db.flush()
-    db.add(
-        PersonLegalEntityLink(
-            person_id=person.id,
-            legal_entity_id=entity.id,
-            role=PersonLegalEntityRole.OWNER,
-        )
-    )
-    db.flush()
-    return record.id
 
 
 def test_list_paginated_enriches_business_name(test_db):
@@ -81,8 +43,8 @@ def test_list_paginated_enriches_business_name(test_db):
     assert items[0].business_name == "Biz 4"
 
 
-def test_get_summary_returns_correct_counts(test_db):
-    client_record_id = _make_client(test_db, email="sum@test.com")
+def test_get_summary_returns_correct_counts(test_db, client_factory):
+    client_record_id = client_factory(email="sum@test.com").id
     repo = NotificationRepository(test_db)
 
     n_sent = repo.create(
@@ -119,8 +81,8 @@ def test_get_summary_returns_correct_counts(test_db):
     assert summary.total == 3
 
 
-def test_get_summary_returns_zeros_for_absent_statuses(test_db):
-    client_record_id = _make_client(test_db, email="zero@test.com")
+def test_get_summary_returns_zeros_for_absent_statuses(test_db, client_factory):
+    client_record_id = client_factory(email="zero@test.com").id
     repo = NotificationRepository(test_db)
     n = repo.create(
         client_record_id=client_record_id,

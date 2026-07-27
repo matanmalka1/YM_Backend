@@ -7,22 +7,7 @@ from app.notifications.models.notification import (
     NotificationTrigger,
 )
 from app.notifications.repositories.notification_repository import NotificationRepository
-from app.users.models.user import UserRole
 from app.utils.time_utils import utcnow
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_identity
-
-
-def _user(test_db):
-    user = create_user(
-        test_db,
-        full_name="Notification Trigger User",
-        email="notification.trigger@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-    )
-    return user
 
 
 def _create_notification(repo, client_id, trigger, **kwargs):
@@ -36,9 +21,11 @@ def _create_notification(repo, client_id, trigger, **kwargs):
     )
 
 
-def test_get_last_for_binder_trigger_returns_newest_matching_notification(test_db):
-    user = _user(test_db)
-    client = seed_client_identity(test_db, full_name="Trigger Binder", id_number="NTB001")
+def test_get_last_for_binder_trigger_returns_newest_matching_notification(
+    test_db, user_factory, client_factory
+):
+    user = user_factory()
+    client = client_factory(full_name="Trigger Binder", id_number="NTB001")
     binder = BinderRepository(test_db).create(client.id, "NTB-1", date(2026, 1, 1), user.id)
     repo = NotificationRepository(test_db)
     older = _create_notification(
@@ -63,9 +50,9 @@ def test_get_last_for_binder_trigger_returns_newest_matching_notification(test_d
     )
 
 
-def test_latest_by_binder_ids_returns_newest_per_binder(test_db):
-    user = _user(test_db)
-    client = seed_client_identity(test_db, full_name="Trigger Binder Batch", id_number="NTB002")
+def test_latest_by_binder_ids_returns_newest_per_binder(test_db, user_factory, client_factory):
+    user = user_factory()
+    client = client_factory(full_name="Trigger Binder Batch", id_number="NTB002")
     repo = NotificationRepository(test_db)
     binder_a = BinderRepository(test_db).create(client.id, "NTB-2", date(2026, 1, 1), user.id)
     binder_b = BinderRepository(test_db).create(client.id, "NTB-3", date(2026, 1, 1), user.id)
@@ -97,14 +84,14 @@ def test_latest_by_binder_ids_returns_newest_per_binder(test_db):
 
 
 def test_get_last_for_annual_report_trigger_returns_newest_matching_notification(
-    test_db,
+    test_db, client_factory, actor_user
 ):
-    client = seed_client_identity(test_db, full_name="Trigger Annual", id_number="NTA001")
+    client = client_factory(full_name="Trigger Annual", id_number="NTA001")
     report = AnnualReportService(test_db).create_report(
         client_record_id=client.id,
         tax_year=2026,
         client_type="individual",
-        created_by=1,
+        created_by=actor_user.id,
         created_by_name="Tester",
     )
     repo = NotificationRepository(test_db)
@@ -131,20 +118,20 @@ def test_get_last_for_annual_report_trigger_returns_newest_matching_notification
     assert result.id == newer.id
 
 
-def test_latest_by_annual_report_ids_returns_newest_per_report(test_db):
-    client = seed_client_identity(test_db, full_name="Trigger Annual Batch", id_number="NTA002")
+def test_latest_by_annual_report_ids_returns_newest_per_report(test_db, client_factory, actor_user):
+    client = client_factory(full_name="Trigger Annual Batch", id_number="NTA002")
     report_a = AnnualReportService(test_db).create_report(
         client_record_id=client.id,
         tax_year=2026,
         client_type="individual",
-        created_by=1,
+        created_by=actor_user.id,
         created_by_name="Tester",
     )
     report_b = AnnualReportService(test_db).create_report(
         client_record_id=client.id,
         tax_year=2027,
         client_type="individual",
-        created_by=1,
+        created_by=actor_user.id,
         created_by_name="Tester",
     )
     repo = NotificationRepository(test_db)

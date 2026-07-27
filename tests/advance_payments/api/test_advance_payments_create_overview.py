@@ -6,36 +6,27 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from tests.helpers.identity import seed_business, seed_client_identity
+from app.common.enums import AdvancePaymentFrequency
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 _client_seq = count(1)
 
 
-def _business(db):
-    from app.common.enums import AdvancePaymentFrequency
-
+def _business(create_client_with_business):
     id_number = f"66666666{next(_client_seq)}"
-    client = seed_client_identity(
-        db,
+    _client, business = create_client_with_business(
         full_name="Advance Client",
         id_number=id_number,
+        business_name="Advance Overview Business",
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
-        business_name="Advance Overview Business",
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     return business
 
 
-def test_create_advance_payment_and_conflict(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_create_advance_payment_and_conflict(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     payload = {
         "period": "2026-03",
@@ -67,10 +58,12 @@ def test_create_advance_payment_and_conflict(client, test_db, advisor_headers):
     assert isinstance(data["error"]["message"], str)
 
 
-def test_create_advance_payment_uses_advance_payment_frequency(client, test_db, advisor_headers):
+def test_create_advance_payment_uses_advance_payment_frequency(
+    client, test_db, advisor_headers, create_client_with_business
+):
     from app.common.enums import AdvancePaymentFrequency
 
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     business.legal_entity.advance_payment_frequency = AdvancePaymentFrequency.BIMONTHLY
     test_db.commit()
 
@@ -90,8 +83,10 @@ def test_create_advance_payment_uses_advance_payment_frequency(client, test_db, 
     assert data["period_months_count"] == 2
 
 
-def test_overview_filters_by_status_and_month(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_overview_filters_by_status_and_month(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -124,9 +119,11 @@ def test_overview_filters_by_status_and_month(client, test_db, advisor_headers):
     assert item["status"] == "paid"
 
 
-def test_overview_filters_by_due_date_and_client_search(client, test_db, advisor_headers):
-    first_business = _business(test_db)
-    second_business = _business(test_db)
+def test_overview_filters_by_due_date_and_client_search(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    first_business = _business(create_client_with_business)
+    second_business = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     first = create_linked_advance_payment(
         test_db,
@@ -161,8 +158,10 @@ def test_overview_filters_by_due_date_and_client_search(client, test_db, advisor
     assert data["items"][0]["id"] == first.id
 
 
-def test_overview_batches_returns_numeric_counts(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_overview_batches_returns_numeric_counts(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -190,9 +189,11 @@ def test_overview_batches_returns_numeric_counts(client, test_db, advisor_header
         assert row[key] >= 0
 
 
-def test_overview_batches_filter_by_exact_client_record_id(client, test_db, advisor_headers):
-    target = _business(test_db)
-    other = _business(test_db)
+def test_overview_batches_filter_by_exact_client_record_id(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    target = _business(create_client_with_business)
+    other = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,

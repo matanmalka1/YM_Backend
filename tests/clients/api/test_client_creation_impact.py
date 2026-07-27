@@ -48,7 +48,7 @@ def test_preview_impact_materializes_missing_tax_calendar(client, advisor_header
     assert counts["רשומות מקדמות"] > 0
 
 
-def test_preview_impact_matches_actual_future_generation(test_db):
+def test_preview_impact_matches_actual_future_generation(test_db, actor_user):
     reference_date = date(2026, 4, 30)
     bootstrap_tax_calendar(test_db, start_year=2026, end_year=2027)
 
@@ -74,7 +74,7 @@ def test_preview_impact_matches_actual_future_generation(test_db):
         vat_reporting_frequency=VatType.MONTHLY,
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
         advance_rate=Decimal("5.0"),
-        actor_id=1,
+        actor_id=actor_user.id,
         reference_date=reference_date,
     )
     vat_work_items_count = test_db.scalar(

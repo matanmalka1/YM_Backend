@@ -40,7 +40,7 @@ def test_update_schema_rejects_future_occurred_at():
         )
 
 
-def test_list_response_build_uses_standard_envelope_without_total_pages():
+def test_list_response_build_uses_standard_envelope_without_total_pages(actor_user):
     item = CorrespondenceResponse(
         id=1,
         client_record_id=1,
@@ -50,7 +50,7 @@ def test_list_response_build_uses_standard_envelope_without_total_pages():
         subject="s",
         notes=None,
         occurred_at=datetime(2026, 1, 1, tzinfo=UTC),
-        created_by=1,
+        created_by=actor_user.id,
         created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
 

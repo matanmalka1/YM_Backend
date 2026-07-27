@@ -1,14 +1,12 @@
 from datetime import UTC, datetime, timedelta
 
-from app.users.models.user import User, UserRole
+from app.users.models.user import UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
 from app.users.services.user_audit_log_service import AuditLogService
-from tests.factories import create_user
 
 
-def _user(test_db, *, email: str) -> User:
-    user = create_user(
-        test_db,
+def _user(user_factory, *, email: str):
+    return user_factory(
         full_name="Audit Service User",
         email=email,
         password="password123",
@@ -16,12 +14,11 @@ def _user(test_db, *, email: str) -> User:
         is_active=True,
         commit=True,
     )
-    return user
 
 
-def test_list_logs_returns_filtered_items_and_total(test_db):
-    actor = _user(test_db, email="audit.actor@example.com")
-    target = _user(test_db, email="audit.target@example.com")
+def test_list_logs_returns_filtered_items_and_total(test_db, user_factory):
+    actor = _user(user_factory, email="audit.actor@example.com")
+    target = _user(user_factory, email="audit.target@example.com")
     service = AuditLogService(test_db)
 
     service.log(

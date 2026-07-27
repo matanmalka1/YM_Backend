@@ -1,6 +1,5 @@
 """API tests for the /{payment_id}/refresh-turnover command."""
 
-from datetime import date
 from decimal import Decimal
 from itertools import count
 
@@ -11,30 +10,19 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)
 
 
-def _business(db, advance_rate=Decimal("10")) -> Business:
+def _business(create_client_with_business, advance_rate=Decimal("10")) -> Business:
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    _client, business = create_client_with_business(
         full_name=f"Refresh API Client {idx}",
         id_number=f"RFA{idx:06d}",
+        business_name=f"Refresh API Business {idx}",
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
         advance_rate=advance_rate,
     )
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Refresh API Business {idx}",
-        opened_at=date.today(),
-    )
-    db.add(business)
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     return business
 
 
@@ -48,11 +36,13 @@ def _payment(db, business, period):
     return payment
 
 
-def _vat_item(db, client_id, period, net, user_id, status=VatWorkItemStatus.FILED):
+def _vat_item(
+    db, vat_work_item_factory, client_id, period, net, user_id, status=VatWorkItemStatus.FILED
+):
     mat = TaxCalendarMaterializationService(db)
     entry = mat.ensure_periodic_entry("vat", period, 1)
     amt = Decimal(str(net))
-    item = VatWorkItem(
+    return vat_work_item_factory(
         client_record_id=client_id,
         created_by=user_id,
         period=period,
@@ -65,11 +55,8 @@ def _vat_item(db, client_id, period, net, user_id, status=VatWorkItemStatus.FILE
         tax_calendar_entry_id=entry.id,
         due_date_original=entry.due_date,
         due_date_effective=entry.due_date,
+        commit=True,
     )
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return item
 
 
 def _url(business, payment) -> str:
@@ -79,10 +66,14 @@ def _url(business, payment) -> str:
     )
 
 
-def test_refresh_turnover_snapshots_filed_report(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_refresh_turnover_snapshots_filed_report(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-10")
-    _vat_item(test_db, business.client_record_id, "2026-10", 70000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-10", 70000, test_user.id
+    )
 
     resp = client.post(_url(business, payment), json={}, headers=advisor_headers)
 
@@ -95,8 +86,10 @@ def test_refresh_turnover_snapshots_filed_report(client, test_db, advisor_header
     assert Decimal(data["expected_amount"]) == Decimal("7000.00")
 
 
-def test_refresh_turnover_404_when_no_vat_report(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_refresh_turnover_404_when_no_vat_report(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-11")
 
     resp = client.post(_url(business, payment), json={}, headers=advisor_headers)
@@ -105,11 +98,14 @@ def test_refresh_turnover_404_when_no_vat_report(client, test_db, advisor_header
     assert resp.json()["error"]["code"] == "ADVANCE_PAYMENT.VAT_TURNOVER_NOT_FOUND"
 
 
-def test_refresh_turnover_409_when_vat_not_filed(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_refresh_turnover_409_when_vat_not_filed(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-09")
     _vat_item(
         test_db,
+        vat_work_item_factory,
         business.client_record_id,
         "2026-09",
         50000,
@@ -134,14 +130,19 @@ def _bulk_url(business) -> str:
     return f"/api/v1/clients/{business.client_record_id}/advance-payments/refresh-turnover"
 
 
-def test_bulk_refresh_reports_each_skip_reason(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_bulk_refresh_reports_each_skip_reason(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     filed = _payment(test_db, business, "2026-01")
     pending = _payment(test_db, business, "2026-02")
     absent = _payment(test_db, business, "2026-03")
-    _vat_item(test_db, business.client_record_id, "2026-01", 60000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-01", 60000, test_user.id
+    )
     _vat_item(
         test_db,
+        vat_work_item_factory,
         business.client_record_id,
         "2026-02",
         50000,
@@ -164,16 +165,20 @@ def test_bulk_refresh_reports_each_skip_reason(client, test_db, advisor_headers,
     }
 
 
-def test_bulk_refresh_rejects_empty_id_list(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_bulk_refresh_rejects_empty_id_list(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     resp = client.post(_bulk_url(business), json={"payment_ids": []}, headers=advisor_headers)
 
     assert resp.status_code == 422
 
 
-def test_bulk_refresh_rejects_duplicate_ids(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_bulk_refresh_rejects_duplicate_ids(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-06")
 
     resp = client.post(
@@ -185,9 +190,11 @@ def test_bulk_refresh_rejects_duplicate_ids(client, test_db, advisor_headers):
     assert resp.status_code == 422
 
 
-def test_bulk_refresh_404_for_another_clients_payment(client, test_db, advisor_headers):
-    business = _business(test_db)
-    other = _business(test_db)
+def test_bulk_refresh_404_for_another_clients_payment(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
+    other = _business(create_client_with_business)
     theirs = _payment(test_db, other, "2026-04")
 
     resp = client.post(
@@ -198,8 +205,10 @@ def test_bulk_refresh_404_for_another_clients_payment(client, test_db, advisor_h
     assert resp.json()["error"]["code"] == "ADVANCE_PAYMENT.NOT_FOUND"
 
 
-def test_bulk_refresh_secretary_forbidden(client, test_db, secretary_headers):
-    business = _business(test_db)
+def test_bulk_refresh_secretary_forbidden(
+    client, test_db, secretary_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-05")
 
     resp = client.post(
@@ -209,8 +218,10 @@ def test_bulk_refresh_secretary_forbidden(client, test_db, secretary_headers):
     assert resp.status_code == 403
 
 
-def test_refresh_turnover_secretary_forbidden(client, test_db, secretary_headers):
-    business = _business(test_db)
+def test_refresh_turnover_secretary_forbidden(
+    client, test_db, secretary_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-12")
 
     resp = client.post(_url(business, payment), json={}, headers=secretary_headers)

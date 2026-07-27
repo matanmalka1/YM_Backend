@@ -1,21 +1,8 @@
-from app.businesses.models.business import BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _biz(test_db, name: str, id_number: str):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name=name,
-        id_number=id_number,
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_charge_list_stats_respect_business_id_filter(client, advisor_headers, test_db):
-    biz_a = _biz(test_db, "StatsAPI BizA", "SA001")
-    biz_b = _biz(test_db, "StatsAPI BizB", "SA002")
+def test_charge_list_stats_respect_business_id_filter(
+    client, advisor_headers, create_client_with_business
+):
+    _client_a, biz_a = create_client_with_business(full_name="StatsAPI BizA", id_number="SA001")
+    _client_b, biz_b = create_client_with_business(full_name="StatsAPI BizB", id_number="SA002")
 
     client.post(
         "/api/v1/charges",
@@ -52,8 +39,10 @@ def test_charge_list_stats_respect_business_id_filter(client, advisor_headers, t
     assert data["stats"]["paid"]["count"] == 0
 
 
-def test_charge_list_stats_respect_period_filter(client, advisor_headers, test_db):
-    biz = _biz(test_db, "StatsAPI Period", "SP001")
+def test_charge_list_stats_respect_period_filter(
+    client, advisor_headers, create_client_with_business
+):
+    _client, biz = create_client_with_business(full_name="StatsAPI Period", id_number="SP001")
 
     client.post(
         "/api/v1/charges",

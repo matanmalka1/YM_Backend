@@ -34,11 +34,21 @@ from app.tax_calendar.services.tax_calendar_bootstrap_service import seed_defaul
 from app.users.models.user import UserRole
 from app.users.services.user_token_service import generate_access_token
 from tests.factories import (
+    AdvancePaymentFactory,
     AnnualReportFactory,
+    AuthorityContactFactory,
+    BinderFactory,
     BusinessFactory,
+    ChargeFactory,
     ClientBusinessFactory,
     ClientFactory,
+    NotificationFactory,
+    PermanentDocumentFactory,
+    SignatureRequestFactory,
+    TaskFactory,
+    TaxCalendarEntryFactory,
     UserFactory,
+    VatWorkItemFactory,
 )
 
 
@@ -98,6 +108,56 @@ def create_client_with_business(test_db):
 @pytest.fixture(scope="function")
 def annual_report_factory(test_db, client_factory):
     return AnnualReportFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def binder_factory(test_db, client_factory):
+    return BinderFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def charge_factory(test_db, client_factory):
+    return ChargeFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def task_factory(test_db):
+    return TaskFactory(test_db)
+
+
+@pytest.fixture(scope="function")
+def tax_calendar_entry_factory(test_db):
+    return TaxCalendarEntryFactory(test_db)
+
+
+@pytest.fixture(scope="function")
+def advance_payment_factory(test_db, client_factory, tax_calendar_entry_factory):
+    return AdvancePaymentFactory(test_db, client_factory, tax_calendar_entry_factory)
+
+
+@pytest.fixture(scope="function")
+def permanent_document_factory(test_db, client_factory):
+    return PermanentDocumentFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def signature_request_factory(test_db, client_factory):
+    return SignatureRequestFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def notification_factory(test_db, client_factory):
+    return NotificationFactory(test_db, client_factory)
+
+
+@pytest.fixture(scope="function")
+def vat_work_item_factory(test_db, client_factory, tax_calendar_entry_factory):
+    return VatWorkItemFactory(test_db, client_factory, tax_calendar_entry_factory)
+
+
+@pytest.fixture(scope="function")
+def authority_contact_factory(test_db, client_factory):
+    return AuthorityContactFactory(test_db, client_factory)
 
 
 @pytest.fixture(scope="function")

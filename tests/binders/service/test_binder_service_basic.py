@@ -34,7 +34,7 @@ def test_delete_binder_soft_deletes_and_returns_true(test_db, test_user):
     assert BinderRepository(test_db).get_by_id(binder.id) is None
 
 
-def test_delete_binder_missing_returns_false(test_db):
+def test_delete_binder_missing_returns_false(test_db, actor_user):
     service = BinderService(test_db)
 
-    assert service.delete_binder(999, actor_id=1) is False
+    assert service.delete_binder(999, actor_id=actor_user.id) is False

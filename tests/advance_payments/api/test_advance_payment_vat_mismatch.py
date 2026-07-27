@@ -1,6 +1,5 @@
 """API tests for the server-computed vat_turnover_mismatch flag (detail routes)."""
 
-from datetime import date
 from decimal import Decimal
 from itertools import count
 
@@ -11,30 +10,19 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)
 
 
-def _business(db, frequency=AdvancePaymentFrequency.MONTHLY) -> Business:
+def _business(create_client_with_business, frequency=AdvancePaymentFrequency.MONTHLY) -> Business:
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    _client, business = create_client_with_business(
         full_name=f"Mismatch Client {idx}",
         id_number=f"MSM{idx:06d}",
+        business_name=f"Mismatch Business {idx}",
         advance_payment_frequency=frequency,
         advance_rate=Decimal("10"),
     )
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Mismatch Business {idx}",
-        opened_at=date.today(),
-    )
-    db.add(business)
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     return business
 
 
@@ -49,10 +37,12 @@ def _payment(db, business, period, turnover=None, period_months_count=1):
     return payment
 
 
-def _vat_item(db, client_id, period, net, user_id, status=VatWorkItemStatus.FILED):
+def _vat_item(
+    db, vat_work_item_factory, client_id, period, net, user_id, status=VatWorkItemStatus.FILED
+):
     entry = TaxCalendarMaterializationService(db).ensure_periodic_entry("vat", period, 1)
     amt = Decimal(str(net))
-    item = VatWorkItem(
+    return vat_work_item_factory(
         client_record_id=client_id,
         created_by=user_id,
         period=period,
@@ -65,20 +55,22 @@ def _vat_item(db, client_id, period, net, user_id, status=VatWorkItemStatus.FILE
         tax_calendar_entry_id=entry.id,
         due_date_original=entry.due_date,
         due_date_effective=entry.due_date,
+        commit=True,
     )
-    db.add(item)
-    db.commit()
-    return item
 
 
 def _url(business, payment) -> str:
     return f"/api/v1/clients/{business.client_record_id}/advance-payments/{payment.id}"
 
 
-def test_mismatch_flagged_when_stored_differs_from_vat(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_mismatch_flagged_when_stored_differs_from_vat(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-03", turnover=Decimal("50000"))
-    _vat_item(test_db, business.client_record_id, "2026-03", 60000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-03", 60000, test_user.id
+    )
 
     resp = client.get(_url(business, payment), headers=advisor_headers)
 
@@ -90,10 +82,14 @@ def test_mismatch_flagged_when_stored_differs_from_vat(client, test_db, advisor_
     assert mismatch["source"] == "vat_filed"
 
 
-def test_no_mismatch_within_tolerance(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_no_mismatch_within_tolerance(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-04", turnover=Decimal("60000.50"))
-    _vat_item(test_db, business.client_record_id, "2026-04", 60000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-04", 60000, test_user.id
+    )
 
     resp = client.get(_url(business, payment), headers=advisor_headers)
 
@@ -101,8 +97,10 @@ def test_no_mismatch_within_tolerance(client, test_db, advisor_headers, test_use
     assert resp.json()["vat_turnover_mismatch"] is None
 
 
-def test_no_mismatch_without_vat_report(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_no_mismatch_without_vat_report(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-05", turnover=Decimal("50000"))
 
     resp = client.get(_url(business, payment), headers=advisor_headers)
@@ -114,11 +112,13 @@ def test_no_mismatch_without_vat_report(client, test_db, advisor_headers):
 
 
 def test_unsnapshotted_period_offers_available_not_mismatch(
-    client, test_db, advisor_headers, test_user
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
 ):
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     payment = _payment(test_db, business, "2026-06")
-    _vat_item(test_db, business.client_record_id, "2026-06", 70000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-06", 70000, test_user.id
+    )
 
     resp = client.get(_url(business, payment), headers=advisor_headers)
 
@@ -129,10 +129,14 @@ def test_unsnapshotted_period_offers_available_not_mismatch(
     assert Decimal(body["available_turnover"]["amount"]) == Decimal("70000")
 
 
-def test_overview_route_carries_mismatch(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_overview_route_carries_mismatch(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     _payment(test_db, business, "2026-08", turnover=Decimal("10000"))
-    _vat_item(test_db, business.client_record_id, "2026-08", 20000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-08", 20000, test_user.id
+    )
 
     resp = client.get(
         f"/api/v1/advance-payments/overview?year=2026&client_record_id={business.client_record_id}",
@@ -146,10 +150,14 @@ def test_overview_route_carries_mismatch(client, test_db, advisor_headers, test_
     assert Decimal(target["vat_turnover_mismatch"]["difference"]) == Decimal("10000")
 
 
-def test_list_route_carries_mismatch(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_list_route_carries_mismatch(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     _payment(test_db, business, "2026-07", turnover=Decimal("10000"))
-    _vat_item(test_db, business.client_record_id, "2026-07", 99000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-07", 99000, test_user.id
+    )
 
     resp = client.get(
         f"/api/v1/clients/{business.client_record_id}/advance-payments?year=2026",
@@ -179,12 +187,18 @@ def _overview(client, headers, business, extra=""):
     return resp.json()
 
 
-def test_filter_keeps_only_rows_carrying_the_flag(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_filter_keeps_only_rows_carrying_the_flag(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     _payment(test_db, business, "2026-02", turnover=Decimal("10000"))  # mismatch
-    _vat_item(test_db, business.client_record_id, "2026-02", 25000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-02", 25000, test_user.id
+    )
     _payment(test_db, business, "2026-03", turnover=Decimal("30000.40"))  # within tolerance
-    _vat_item(test_db, business.client_record_id, "2026-03", 30000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-03", 30000, test_user.id
+    )
     _payment(test_db, business, "2026-04", turnover=Decimal("40000"))  # no VAT return
     _payment(test_db, business, "2026-05")  # unsnapshotted
 
@@ -197,12 +211,18 @@ def test_filter_keeps_only_rows_carrying_the_flag(client, test_db, advisor_heade
     assert Decimal(body["total_expected"]) == Decimal("1000.00")
 
 
-def test_filter_false_drops_the_mismatched_rows(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_filter_false_drops_the_mismatched_rows(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     _payment(test_db, business, "2026-02", turnover=Decimal("10000"))
-    _vat_item(test_db, business.client_record_id, "2026-02", 25000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-02", 25000, test_user.id
+    )
     _payment(test_db, business, "2026-03", turnover=Decimal("30000"))
-    _vat_item(test_db, business.client_record_id, "2026-03", 30000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-03", 30000, test_user.id
+    )
 
     body = _overview(client, advisor_headers, business, extra="&vat_mismatch=false")
 
@@ -210,12 +230,15 @@ def test_filter_false_drops_the_mismatched_rows(client, test_db, advisor_headers
     assert all(item["vat_turnover_mismatch"] is None for item in body["items"])
 
 
-def test_unfiled_vat_return_still_counts_as_a_mismatch(client, test_db, advisor_headers, test_user):
+def test_unfiled_vat_return_still_counts_as_a_mismatch(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
     """A period in review resolves to vat_pending — weaker source, same disagreement."""
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     _payment(test_db, business, "2026-06", turnover=Decimal("10000"))
     _vat_item(
         test_db,
+        vat_work_item_factory,
         business.client_record_id,
         "2026-06",
         90000,
@@ -230,12 +253,14 @@ def test_unfiled_vat_return_still_counts_as_a_mismatch(client, test_db, advisor_
 
 
 def test_half_covered_bimonthly_period_is_not_a_mismatch(
-    client, test_db, advisor_headers, test_user
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
 ):
     """Same all-or-nothing coverage rule as the read path: one of two months is not a figure."""
-    business = _business(test_db, frequency=AdvancePaymentFrequency.BIMONTHLY)
+    business = _business(create_client_with_business, frequency=AdvancePaymentFrequency.BIMONTHLY)
     _payment(test_db, business, "2026-01", turnover=Decimal("10000"), period_months_count=2)
-    _vat_item(test_db, business.client_record_id, "2026-01", 90000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-01", 90000, test_user.id
+    )
 
     body = _overview(client, advisor_headers, business, extra="&vat_mismatch=true")
 
@@ -244,12 +269,16 @@ def test_half_covered_bimonthly_period_is_not_a_mismatch(
 
 
 def test_fully_covered_bimonthly_period_sums_both_months(
-    client, test_db, advisor_headers, test_user
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
 ):
-    business = _business(test_db, frequency=AdvancePaymentFrequency.BIMONTHLY)
+    business = _business(create_client_with_business, frequency=AdvancePaymentFrequency.BIMONTHLY)
     _payment(test_db, business, "2026-03", turnover=Decimal("10000"), period_months_count=2)
-    _vat_item(test_db, business.client_record_id, "2026-03", 20000, test_user.id)
-    _vat_item(test_db, business.client_record_id, "2026-04", 5000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-03", 20000, test_user.id
+    )
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-04", 5000, test_user.id
+    )
 
     body = _overview(client, advisor_headers, business, extra="&vat_mismatch=true")
 
@@ -257,12 +286,18 @@ def test_fully_covered_bimonthly_period_sums_both_months(
     assert Decimal(body["items"][0]["vat_turnover_mismatch"]["vat_amount"]) == Decimal("25000")
 
 
-def test_batches_report_the_mismatch_count(client, test_db, advisor_headers, test_user):
-    business = _business(test_db)
+def test_batches_report_the_mismatch_count(
+    client, test_db, advisor_headers, test_user, create_client_with_business, vat_work_item_factory
+):
+    business = _business(create_client_with_business)
     _payment(test_db, business, "2026-09", turnover=Decimal("10000"))
-    _vat_item(test_db, business.client_record_id, "2026-09", 80000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-09", 80000, test_user.id
+    )
     _payment(test_db, business, "2026-10", turnover=Decimal("10000"))
-    _vat_item(test_db, business.client_record_id, "2026-10", 10000, test_user.id)
+    _vat_item(
+        test_db, vat_work_item_factory, business.client_record_id, "2026-10", 10000, test_user.id
+    )
 
     resp = client.get(
         f"/api/v1/advance-payments/overview/batches?year=2026"

@@ -24,16 +24,14 @@ from app.clients.services.client_update_service import ClientUpdateService
 from app.common.enums import EntityType, IdNumberType, VatType
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_linked_vat_work_item,
     create_tax_calendar_entry_for_annual,
 )
 
 
-def _setup_client_with_cascade_data(db) -> int:
-    seeded = seed_client_identity(
-        db,
+def _setup_client_with_cascade_data(db, client_factory, binder_factory) -> int:
+    seeded = client_factory(
         full_name="Cascade Test Client",
         id_number="CASCADE-001",
         entity_type=EntityType.OSEK_MURSHE,
@@ -71,25 +69,27 @@ def _setup_client_with_cascade_data(db) -> int:
             created_by=1,
         )
     )
-    db.add(
-        Binder(
-            client_record_id=client_id,
-            binder_number="199001/1",
-            period_start=date(2026, 1, 1),
-            created_by=1,
-            location_status=BinderLocationStatus.IN_OFFICE,
-            capacity_status=BinderCapacityStatus.OPEN,
-        )
+    binder_factory(
+        client_record_id=client_id,
+        binder_number="199001/1",
+        period_start=date(2026, 1, 1),
+        created_by=1,
+        location_status=BinderLocationStatus.IN_OFFICE,
+        capacity_status=BinderCapacityStatus.OPEN,
     )
     db.flush()
     return client_id
 
 
-def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(test_db):
+def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(
+    test_db, client_factory, binder_factory, actor_user
+):
     """freeze → status FROZEN, VatWorkItems CANCELED, AnnualReports CANCELED, binder FULL."""
-    client_id = _setup_client_with_cascade_data(test_db)
+    client_id = _setup_client_with_cascade_data(test_db, client_factory, binder_factory)
 
-    ClientUpdateService(test_db).update_client(client_id, actor_id=1, status=ClientStatus.FROZEN)
+    ClientUpdateService(test_db).update_client(
+        client_id, actor_id=actor_user.id, status=ClientStatus.FROZEN
+    )
     test_db.flush()
 
     record = ClientRecordRepository(test_db).get_by_id(client_id)
@@ -114,11 +114,13 @@ def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(test
     assert binders[0].location_status == BinderLocationStatus.IN_OFFICE
 
 
-def test_close_cascade_mirrors_freeze_cascade(test_db):
+def test_close_cascade_mirrors_freeze_cascade(test_db, client_factory, binder_factory, actor_user):
     """close → same cascade as freeze; CLOSED status persists."""
-    client_id = _setup_client_with_cascade_data(test_db)
+    client_id = _setup_client_with_cascade_data(test_db, client_factory, binder_factory)
 
-    ClientUpdateService(test_db).update_client(client_id, actor_id=1, status=ClientStatus.CLOSED)
+    ClientUpdateService(test_db).update_client(
+        client_id, actor_id=actor_user.id, status=ClientStatus.CLOSED
+    )
     test_db.flush()
 
     record = ClientRecordRepository(test_db).get_by_id(client_id)
@@ -134,10 +136,9 @@ def test_close_cascade_mirrors_freeze_cascade(test_db):
     assert all(b.capacity_status == BinderCapacityStatus.FULL for b in binders)
 
 
-def test_freeze_does_not_cancel_filed_vat_items(test_db):
+def test_freeze_does_not_cancel_filed_vat_items(test_db, client_factory, actor_user):
     """FILED VatWorkItems are excluded from bulk cancel on freeze."""
-    seeded = seed_client_identity(
-        test_db,
+    seeded = client_factory(
         full_name="Filed VAT Client",
         id_number="CASCADE-002",
         entity_type=EntityType.OSEK_MURSHE,
@@ -149,37 +150,40 @@ def test_freeze_does_not_cancel_filed_vat_items(test_db):
         client_record_id=seeded.id,
         period="2026-03",
         status=VatWorkItemStatus.FILED,
-        created_by=1,
+        created_by=actor_user.id,
     )
 
-    ClientUpdateService(test_db).update_client(seeded.id, actor_id=1, status=ClientStatus.FROZEN)
+    ClientUpdateService(test_db).update_client(
+        seeded.id, actor_id=actor_user.id, status=ClientStatus.FROZEN
+    )
     test_db.refresh(filed_item)
 
     assert filed_item.status == VatWorkItemStatus.FILED
 
 
-def test_binder_already_full_stays_full_after_cascade(test_db):
+def test_binder_already_full_stays_full_after_cascade(
+    test_db, client_factory, binder_factory, actor_user
+):
     """IN_OFFICE FULL binder stays FULL (idempotent) when client is frozen."""
-    seeded = seed_client_identity(
-        test_db,
+    seeded = client_factory(
         full_name="Full Binder Client",
         id_number="CASCADE-003",
         entity_type=EntityType.OSEK_MURSHE,
         id_number_type=IdNumberType.INDIVIDUAL,
         office_client_number=199003,
     )
-    binder = Binder(
+    binder = binder_factory(
         client_record_id=seeded.id,
         binder_number="199003/1",
         period_start=date(2026, 1, 1),
-        created_by=1,
+        created_by=actor_user.id,
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.FULL,
     )
-    test_db.add(binder)
-    test_db.flush()
 
-    ClientUpdateService(test_db).update_client(seeded.id, actor_id=1, status=ClientStatus.FROZEN)
+    ClientUpdateService(test_db).update_client(
+        seeded.id, actor_id=actor_user.id, status=ClientStatus.FROZEN
+    )
     test_db.refresh(binder)
 
     assert binder.capacity_status == BinderCapacityStatus.FULL

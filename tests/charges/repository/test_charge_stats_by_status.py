@@ -1,27 +1,14 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from app.businesses.models.business import BusinessStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository
-from tests.helpers.identity import seed_client_with_business
 
 
-def _biz(test_db, name: str, id_number: str):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name=name,
-        id_number=id_number,
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_stats_by_status_respects_business_id_filter(test_db):
+def test_stats_by_status_respects_business_id_filter(test_db, create_client_with_business):
     repo = ChargeRepository(test_db)
-    biz_a = _biz(test_db, "Stats BizA", "SB001")
-    biz_b = _biz(test_db, "Stats BizB", "SB002")
+    _client_a, biz_a = create_client_with_business(full_name="Stats BizA", id_number="SB001")
+    _client_b, biz_b = create_client_with_business(full_name="Stats BizB", id_number="SB002")
 
     paid_a = repo.create(
         client_record_id=biz_a.client_id,
@@ -46,9 +33,9 @@ def test_stats_by_status_respects_business_id_filter(test_db):
     assert "paid" not in stats or stats.get("paid", {}).get("count") != 2
 
 
-def test_stats_by_status_respects_period_filter(test_db):
+def test_stats_by_status_respects_period_filter(test_db, create_client_with_business):
     repo = ChargeRepository(test_db)
-    biz = _biz(test_db, "Stats Period", "SP001")
+    _client, biz = create_client_with_business(full_name="Stats Period", id_number="SP001")
 
     mar = repo.create(
         client_record_id=biz.client_id,
@@ -74,9 +61,9 @@ def test_stats_by_status_respects_period_filter(test_db):
     assert Decimal(stats["paid"]["amount"]) == Decimal("200.00")
 
 
-def test_stats_by_status_respects_issued_after_filter(test_db):
+def test_stats_by_status_respects_issued_after_filter(test_db, create_client_with_business):
     repo = ChargeRepository(test_db)
-    biz = _biz(test_db, "Stats IssuedAfter", "SI001")
+    _client, biz = create_client_with_business(full_name="Stats IssuedAfter", id_number="SI001")
 
     old = repo.create(
         client_record_id=biz.client_id,

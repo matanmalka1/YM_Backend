@@ -8,7 +8,6 @@ from app.audit.audit_constants import (
     ACTION_SIGNATURE_REQUEST_SIGNED,
 )
 from app.signature_requests.models.signature_request import (
-    SignatureRequest,
     SignatureRequestStatus,
     SignatureRequestType,
 )
@@ -18,25 +17,20 @@ from app.signature_requests.signature_request_audit import (
     record_signature_user_action,
 )
 from app.timeline.services.timeline_service import TimelineService
-from tests.helpers.identity import seed_business, seed_client_identity
 
 
-def _business(test_db):
-    client = seed_client_identity(test_db, full_name="Timeline Signature", id_number="TSIG100")
-    business = seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
+def _business(create_client_with_business):
+    _, business = create_client_with_business(
+        full_name="Timeline Signature",
+        id_number="TSIG100",
         business_name="Timeline Signature Business",
         opened_at=date(2026, 1, 1),
     )
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_id = client.id
     return business
 
 
-def _signature_request(test_db, business, test_user):
-    req = SignatureRequest(
+def _signature_request(signature_request_factory, business, test_user):
+    return signature_request_factory(
         client_record_id=business.client_id,
         business_id=business.id,
         created_by=test_user.id,
@@ -48,9 +42,6 @@ def _signature_request(test_db, business, test_user):
         sent_at=datetime(2026, 1, 2, 9, 0, tzinfo=UTC),
         signed_at=datetime(2026, 1, 3, 9, 0, tzinfo=UTC),
     )
-    test_db.add(req)
-    test_db.flush()
-    return req
 
 
 def _add_audit(test_db, req, action, occurred_at):
@@ -84,10 +75,12 @@ def _add_audit(test_db, req, action, occurred_at):
     )
 
 
-def test_signature_lifecycle_events_use_audit_source(test_db, test_user):
+def test_signature_lifecycle_events_use_audit_source(
+    test_db, test_user, create_client_with_business, signature_request_factory
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
-    req = _signature_request(test_db, business, test_user)
+    business = _business(create_client_with_business)
+    req = _signature_request(signature_request_factory, business, test_user)
     audit_times = {
         ACTION_SIGNATURE_REQUEST_SENT: datetime(2026, 1, 2, 10, 0, tzinfo=UTC),
         ACTION_SIGNATURE_REQUEST_SIGNED: datetime(2026, 1, 3, 10, 0, tzinfo=UTC),
@@ -119,10 +112,12 @@ def test_signature_lifecycle_events_use_audit_source(test_db, test_user):
     assert "signature_request_created" not in by_type
 
 
-def test_signature_created_only_request_is_excluded(test_db, test_user):
+def test_signature_created_only_request_is_excluded(
+    test_db, test_user, create_client_with_business, signature_request_factory
+):
     service = TimelineService(test_db)
-    business = _business(test_db)
-    _signature_request(test_db, business, test_user)
+    business = _business(create_client_with_business)
+    _signature_request(signature_request_factory, business, test_user)
     test_db.commit()
 
     events, _ = service.get_client_timeline(business.client_id, page=1, page_size=50)

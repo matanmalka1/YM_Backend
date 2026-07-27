@@ -5,7 +5,6 @@ from sqlalchemy import select
 from app.businesses.models.business import Business
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType
-from app.legal_entities.models.legal_entity import LegalEntity
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -14,29 +13,15 @@ from app.notifications.models.notification import (
 from app.notifications.repositories.notification_repository import NotificationRepository
 
 
-def _business(test_db, suffix: str) -> Business:
-    legal_entity = LegalEntity(
-        official_name=f"Notif Repo Client {suffix}",
+def _business(create_client_with_business, suffix: str) -> Business:
+    _, business = create_client_with_business(
+        full_name=f"Notif Repo Client {suffix}",
         id_number=f"7100000{suffix}",
         id_number_type=IdNumberType.CORPORATION,
-    )
-    test_db.add(legal_entity)
-    test_db.commit()
-    test_db.refresh(legal_entity)
-
-    client_record = ClientRecord(legal_entity_id=legal_entity.id)
-    test_db.add(client_record)
-    test_db.commit()
-    test_db.refresh(client_record)
-
-    business = Business(
-        legal_entity_id=legal_entity.id,
         business_name=f"Notif Repo Biz {suffix}",
         opened_at=date(2024, 1, 1),
+        create_person=False,
     )
-    test_db.add(business)
-    test_db.commit()
-    test_db.refresh(business)
     return business
 
 
@@ -46,9 +31,9 @@ def _client_record_id(test_db, business: Business) -> int:
     )
 
 
-def test_notification_repository_lifecycle(test_db):
+def test_notification_repository_lifecycle(test_db, create_client_with_business, actor_user):
     repo = NotificationRepository(test_db)
-    business = _business(test_db, "1")
+    business = _business(create_client_with_business, "1")
     cr_id = _client_record_id(test_db, business)
 
     pending = repo.create(
@@ -59,7 +44,7 @@ def test_notification_repository_lifecycle(test_db):
         recipient="client@example.com",
         content_snapshot="Missing docs",
         subject_snapshot="Subject",
-        triggered_by=123,
+        triggered_by=actor_user.id,
     )
     later = repo.create(
         client_record_id=cr_id,
@@ -91,9 +76,9 @@ def test_notification_repository_lifecycle(test_db):
     assert repo.mark_failed(notification_id=9999, error_message="x") is None
 
 
-def test_skipped_record_created_via_create_with_status(test_db):
+def test_skipped_record_created_via_create_with_status(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "sk1")
+    b = _business(create_client_with_business, "sk1")
     cr_id = _client_record_id(test_db, b)
 
     skipped = repo.create(
@@ -108,9 +93,9 @@ def test_skipped_record_created_via_create_with_status(test_db):
     assert skipped.recipient is None
 
 
-def test_find_by_idempotency_key(test_db):
+def test_find_by_idempotency_key(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "idem1")
+    b = _business(create_client_with_business, "idem1")
     cr_id = _client_record_id(test_db, b)
 
     n = repo.create(
@@ -132,10 +117,10 @@ def test_find_by_idempotency_key(test_db):
     assert not_found is None
 
 
-def test_notification_repository_pagination(test_db):
+def test_notification_repository_pagination(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b1 = _business(test_db, "2")
-    b2 = _business(test_db, "3")
+    b1 = _business(create_client_with_business, "2")
+    b2 = _business(create_client_with_business, "3")
 
     repo.create(
         client_record_id=_client_record_id(test_db, b1),
@@ -172,9 +157,9 @@ def test_notification_repository_pagination(test_db):
     assert len(global_items) == 3
 
 
-def test_list_paginated_filters_by_status(test_db):
+def test_list_paginated_filters_by_status(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "fs1")
+    b = _business(create_client_with_business, "fs1")
     cr_id = _client_record_id(test_db, b)
 
     n_pending = repo.create(
@@ -200,9 +185,9 @@ def test_list_paginated_filters_by_status(test_db):
     assert items[0].id == n_pending.id
 
 
-def test_list_paginated_filters_by_trigger(test_db):
+def test_list_paginated_filters_by_trigger(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "ft1")
+    b = _business(create_client_with_business, "ft1")
     cr_id = _client_record_id(test_db, b)
 
     n_msg = repo.create(
@@ -229,9 +214,9 @@ def test_list_paginated_filters_by_trigger(test_db):
     assert items[0].id == n_msg.id
 
 
-def test_list_paginated_filters_by_channel(test_db):
+def test_list_paginated_filters_by_channel(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "fc1")
+    b = _business(create_client_with_business, "fc1")
     cr_id = _client_record_id(test_db, b)
 
     n_email = repo.create(
@@ -256,9 +241,9 @@ def test_list_paginated_filters_by_channel(test_db):
     assert items[0].id == n_email.id
 
 
-def test_count_by_status_returns_correct_counts(test_db):
+def test_count_by_status_returns_correct_counts(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "cs1")
+    b = _business(create_client_with_business, "cs1")
     cr_id = _client_record_id(test_db, b)
 
     n_sent = repo.create(
@@ -297,9 +282,9 @@ def test_count_by_status_returns_correct_counts(test_db):
     assert counts["total"] == 3
 
 
-def test_count_by_status_returns_zero_for_absent_statuses(test_db):
+def test_count_by_status_returns_zero_for_absent_statuses(test_db, create_client_with_business):
     repo = NotificationRepository(test_db)
-    b = _business(test_db, "cs2")
+    b = _business(create_client_with_business, "cs2")
     cr_id = _client_record_id(test_db, b)
 
     n = repo.create(

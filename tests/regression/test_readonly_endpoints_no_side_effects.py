@@ -11,7 +11,7 @@ from app.clients.models.client_record import ClientRecord
 
 
 def test_readonly_get_endpoints_keep_db_state_intact(
-    client, advisor_headers, test_db, test_user, create_client_with_business
+    client, advisor_headers, test_db, test_user, create_client_with_business, binder_factory
 ):
     today = date.today()
     c, _business = create_client_with_business(
@@ -19,7 +19,7 @@ def test_readonly_get_endpoints_keep_db_state_intact(
         id_number="444444444",
     )
 
-    b_open = Binder(
+    b_open = binder_factory(
         client_record_id=c.id,
         binder_number="BND-OPEN",
         period_start=today,
@@ -27,7 +27,7 @@ def test_readonly_get_endpoints_keep_db_state_intact(
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=test_user.id,
     )
-    b_overdue = Binder(
+    binder_factory(
         client_record_id=c.id,
         binder_number="BND-OVERDUE",
         period_start=today - timedelta(days=100),
@@ -35,7 +35,7 @@ def test_readonly_get_endpoints_keep_db_state_intact(
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=test_user.id,
     )
-    b_due_today = Binder(
+    binder_factory(
         client_record_id=c.id,
         binder_number="BND-DUE",
         period_start=today,
@@ -43,7 +43,6 @@ def test_readonly_get_endpoints_keep_db_state_intact(
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=test_user.id,
     )
-    test_db.add_all([b_open, b_overdue, b_due_today])
     test_db.commit()
 
     test_db.refresh(b_open)

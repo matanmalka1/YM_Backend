@@ -5,23 +5,7 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.businesses.models.business import Business
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
-
-
-def _business(db) -> Business:
-    crm_client = seed_client_identity(db, full_name="AP KPI Client", id_number="APKPI-1")
-    business = seed_business(
-        db,
-        legal_entity_id=crm_client.legal_entity_id,
-        business_name="AP KPI Business",
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = crm_client.id
-    return business
 
 
 def _seed_payments(db, client_record_id: int):
@@ -49,8 +33,10 @@ def _seed_payments(db, client_record_id: int):
     repo.update_payment(mar, paid_amount=Decimal("0"), status=AdvancePaymentStatus.PENDING)
 
 
-def test_kpi_endpoint_returns_collection_rate(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_kpi_endpoint_returns_collection_rate(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(full_name="AP KPI Client", id_number="APKPI-1")
     _seed_payments(test_db, business.client_record_id)
 
     resp = client.get(

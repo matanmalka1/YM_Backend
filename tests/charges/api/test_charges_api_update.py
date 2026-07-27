@@ -1,18 +1,3 @@
-from app.businesses.models.business import BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _business(test_db):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name="Charge Update",
-        id_number="700000009",
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
 def _create_draft(client, advisor_headers, business, **overrides):
     payload = {
         "client_record_id": business.client_id,
@@ -26,8 +11,12 @@ def _create_draft(client, advisor_headers, business, **overrides):
     return response.json()["id"]
 
 
-def test_update_draft_charge_applies_only_sent_fields(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_update_draft_charge_applies_only_sent_fields(
+    client, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge Update", id_number="700000009"
+    )
     charge_id = _create_draft(client, advisor_headers, business, period="2026-03")
 
     response = client.patch(
@@ -47,8 +36,12 @@ def test_update_draft_charge_applies_only_sent_fields(client, advisor_headers, t
     assert payload["updated_at"] is not None
 
 
-def test_update_charge_clears_business_scope_on_explicit_null(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_update_charge_clears_business_scope_on_explicit_null(
+    client, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge Update", id_number="700000009"
+    )
     charge_id = _create_draft(client, advisor_headers, business)
 
     response = client.patch(
@@ -61,8 +54,12 @@ def test_update_charge_clears_business_scope_on_explicit_null(client, advisor_he
     assert response.json()["business_id"] is None
 
 
-def test_update_rejects_explicit_null_on_not_null_field(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_update_rejects_explicit_null_on_not_null_field(
+    client, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge Update", id_number="700000009"
+    )
     charge_id = _create_draft(client, advisor_headers, business)
 
     response = client.patch(
@@ -74,8 +71,10 @@ def test_update_rejects_explicit_null_on_not_null_field(client, advisor_headers,
     assert response.status_code == 422
 
 
-def test_update_rejects_non_positive_amount(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_update_rejects_non_positive_amount(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(
+        full_name="Charge Update", id_number="700000009"
+    )
     charge_id = _create_draft(client, advisor_headers, business)
 
     response = client.patch(
@@ -87,8 +86,10 @@ def test_update_rejects_non_positive_amount(client, advisor_headers, test_db):
     assert response.status_code == 422
 
 
-def test_update_rejects_issued_charge(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_update_rejects_issued_charge(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(
+        full_name="Charge Update", id_number="700000009"
+    )
     charge_id = _create_draft(client, advisor_headers, business)
     assert (
         client.post(f"/api/v1/charges/{charge_id}/issue", headers=advisor_headers).status_code
@@ -115,8 +116,10 @@ def test_update_missing_charge_returns_404(client, advisor_headers):
     assert response.status_code == 404
 
 
-def test_update_records_audit_diff(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_update_records_audit_diff(client, advisor_headers, create_client_with_business):
+    _client, business = create_client_with_business(
+        full_name="Charge Update", id_number="700000009"
+    )
     charge_id = _create_draft(client, advisor_headers, business)
 
     client.patch(

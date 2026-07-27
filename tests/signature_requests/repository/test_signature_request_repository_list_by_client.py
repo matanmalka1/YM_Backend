@@ -1,6 +1,5 @@
 from datetime import date, timedelta
 
-from app.businesses.models.business import Business
 from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
@@ -8,41 +7,29 @@ from app.signature_requests.models.signature_request import (
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.users.models.user import User, UserRole
+from app.users.models.user import User
 from app.utils.time_utils import utcnow
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 
 
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
+def _user(user_factory) -> User:
+    return user_factory(
         full_name="Sig Repo List User",
         email="sig.repo.list@example.com",
         password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
     )
-    return user
 
 
-def _business(test_db, suffix: str) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name=f"Sig Repo List Client {suffix}",
-        id_number=f"SIG-L-{suffix}",
-        business_name=f"Sig Repo List Business {suffix}",
+def test_signature_request_repository_list_by_business_with_status(
+    test_db, user_factory, create_client_with_business
+):
+    repo = SignatureRequestRepository(test_db)
+    user = _user(user_factory)
+    _client, business = create_client_with_business(
+        full_name="Sig Repo List Client A",
+        id_number="SIG-L-A",
+        business_name="Sig Repo List Business A",
         opened_at=date(2026, 1, 1),
     )
-    test_db.commit()
-    return business
-
-
-def test_signature_request_repository_list_by_business_with_status(test_db):
-    repo = SignatureRequestRepository(test_db)
-    user = _user(test_db)
-    business = _business(test_db, "A")
     now = utcnow()
     canceled = repo.create_pending(
         client_record_id=business.client_id,

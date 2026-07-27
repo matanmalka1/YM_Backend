@@ -9,35 +9,28 @@ from app.reminders.schemas.reminder import ReminderCreateRequest
 from app.reminders.services.reminder_service import ReminderService
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
-from tests.helpers.identity import seed_client_identity
 
 
-def _charge_for_client(test_db, client_record_id: int) -> Charge:
-    charge = Charge(
+def _charge_for_client(charge_factory, client_record_id: int) -> Charge:
+    return charge_factory(
         client_record_id=client_record_id,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
         amount=Decimal("100.00"),
     )
-    test_db.add(charge)
-    test_db.flush()
-    return charge
 
 
-def _task_for_source(test_db, *, source_domain: str, source_id: int) -> Task:
-    task = Task(
+def _task_for_source(task_factory, *, source_domain: str, source_id: int) -> Task:
+    return task_factory(
         title="Reminder target task",
         status=TaskStatus.OPEN,
         priority=TaskPriority.NORMAL,
         source_domain=source_domain,
         source_id=source_id,
     )
-    test_db.add(task)
-    test_db.flush()
-    return task
 
 
-def test_create_scheduled_reminder_from_request(test_db):
+def test_create_scheduled_reminder_from_request(test_db, actor_user):
     now = utcnow()
     reminder = ReminderService(test_db).create_from_request(
         ReminderCreateRequest(
@@ -48,7 +41,7 @@ def test_create_scheduled_reminder_from_request(test_db):
             notification_template_key="charge_due",
             payload={"charge_id": 12},
         ),
-        created_by_user_id=5,
+        created_by_user_id=actor_user.id,
     )
 
     assert reminder.status == ReminderStatus.SCHEDULED
@@ -56,15 +49,13 @@ def test_create_scheduled_reminder_from_request(test_db):
     assert reminder.payload == {"charge_id": 12}
 
 
-def test_list_reminders_batch_enriches_client_display(test_db):
-    first = seed_client_identity(
-        test_db,
+def test_list_reminders_batch_enriches_client_display(test_db, client_factory, actor_user):
+    first = client_factory(
         full_name="Reminder Client One",
         id_number="REM001",
         office_client_number=101,
     )
-    second = seed_client_identity(
-        test_db,
+    second = client_factory(
         full_name="Reminder Client Two",
         id_number="REM002",
         office_client_number=202,
@@ -76,7 +67,7 @@ def test_list_reminders_batch_enriches_client_display(test_db):
             action_type=ReminderActionType.SEND_NOTIFICATION,
             payload={"client_record_id": first.id},
         ),
-        created_by_user_id=1,
+        created_by_user_id=actor_user.id,
     )
     service.create_from_request(
         ReminderCreateRequest(
@@ -84,7 +75,7 @@ def test_list_reminders_batch_enriches_client_display(test_db):
             action_type=ReminderActionType.SEND_NOTIFICATION,
             payload={"client_record_id": str(second.id)},
         ),
-        created_by_user_id=1,
+        created_by_user_id=actor_user.id,
     )
 
     reminders, total = service.get_reminders(status="scheduled")
@@ -98,14 +89,15 @@ def test_list_reminders_batch_enriches_client_display(test_db):
     assert profiles[second.id] == ("Reminder Client Two", 202)
 
 
-def test_reminder_response_enriches_client_display_from_source_link(test_db):
-    client = seed_client_identity(
-        test_db,
+def test_reminder_response_enriches_client_display_from_source_link(
+    test_db, client_factory, charge_factory, actor_user
+):
+    client = client_factory(
         full_name="Reminder Source Client",
         id_number="REM003",
         office_client_number=303,
     )
-    charge = _charge_for_client(test_db, client.id)
+    charge = _charge_for_client(charge_factory, client.id)
     service = ReminderService(test_db)
     reminder = service.create_from_request(
         ReminderCreateRequest(
@@ -114,7 +106,7 @@ def test_reminder_response_enriches_client_display_from_source_link(test_db):
             source_domain="charge",
             source_id=charge.id,
         ),
-        created_by_user_id=1,
+        created_by_user_id=actor_user.id,
     )
 
     response = service.to_response(reminder)
@@ -124,15 +116,16 @@ def test_reminder_response_enriches_client_display_from_source_link(test_db):
     assert response.office_client_number == 303
 
 
-def test_reminder_response_enriches_client_display_from_target_task_source(test_db):
-    client = seed_client_identity(
-        test_db,
+def test_reminder_response_enriches_client_display_from_target_task_source(
+    test_db, client_factory, charge_factory, task_factory, actor_user
+):
+    client = client_factory(
         full_name="Reminder Task Client",
         id_number="REM004",
         office_client_number=404,
     )
-    charge = _charge_for_client(test_db, client.id)
-    task = _task_for_source(test_db, source_domain="charge", source_id=charge.id)
+    charge = _charge_for_client(charge_factory, client.id)
+    task = _task_for_source(task_factory, source_domain="charge", source_id=charge.id)
     service = ReminderService(test_db)
     reminder = service.create_from_request(
         ReminderCreateRequest(
@@ -140,7 +133,7 @@ def test_reminder_response_enriches_client_display_from_target_task_source(test_
             action_type=ReminderActionType.CREATE_TASK,
             target_task_id=task.id,
         ),
-        created_by_user_id=1,
+        created_by_user_id=actor_user.id,
     )
 
     response = service.to_response(reminder)
@@ -150,14 +143,14 @@ def test_reminder_response_enriches_client_display_from_target_task_source(test_
     assert response.office_client_number == 404
 
 
-def test_cancel_only_scheduled_reminders(test_db):
+def test_cancel_only_scheduled_reminders(test_db, actor_user):
     service = ReminderService(test_db)
     reminder = service.create_from_request(
         ReminderCreateRequest(
             fire_at=utcnow(),
             action_type=ReminderActionType.CREATE_TASK,
         ),
-        created_by_user_id=1,
+        created_by_user_id=actor_user.id,
     )
 
     canceled = service.cancel_reminder(reminder.id)
@@ -170,14 +163,14 @@ def test_cancel_only_scheduled_reminders(test_db):
     "terminal_status",
     [ReminderStatus.FAILED, ReminderStatus.FIRED],
 )
-def test_cancel_terminal_reminder_rejected(test_db, terminal_status):
+def test_cancel_terminal_reminder_rejected(test_db, terminal_status, actor_user):
     service = ReminderService(test_db)
     reminder = service.create_from_request(
         ReminderCreateRequest(
             fire_at=utcnow(),
             action_type=ReminderActionType.CREATE_TASK,
         ),
-        created_by_user_id=1,
+        created_by_user_id=actor_user.id,
     )
     service.reminder_repo.update_status(reminder.id, terminal_status)
 

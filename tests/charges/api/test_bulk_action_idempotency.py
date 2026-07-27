@@ -1,20 +1,7 @@
-from app.businesses.models.business import BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _biz(test_db, name: str, id_number: str):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name=name,
-        id_number=id_number,
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_bulk_action_missing_idempotency_key_returns_422(client, advisor_headers, test_db):
-    biz = _biz(test_db, "Idem Biz", "IB001")
+def test_bulk_action_missing_idempotency_key_returns_422(
+    client, advisor_headers, create_client_with_business
+):
+    _client, biz = create_client_with_business(full_name="Idem Biz", id_number="IB001")
     charge = client.post(
         "/api/v1/charges",
         headers=advisor_headers,

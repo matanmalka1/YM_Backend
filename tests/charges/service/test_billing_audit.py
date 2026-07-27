@@ -1,5 +1,3 @@
-from itertools import count
-
 from sqlalchemy import select
 
 from app.audit.audit_constants import (
@@ -8,29 +6,16 @@ from app.audit.audit_constants import (
     ACTION_CHARGE_PAID,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
-from app.businesses.models.business import BusinessStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.charges.services.charge_billing_service import BillingService
-from tests.helpers.identity import seed_client_with_business
 
-_seq = count(1)
 _ACTOR_NAME = "Billing Actor"
 
 
-def _business(test_db):
-    idx = next(_seq)
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name=f"Billing Audit Client {idx}",
-        id_number=f"BSA{idx:07d}",
-    )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_issue_charge_audit_preserves_issued_action(test_db, test_user):
-    business = _business(test_db)
+def test_issue_charge_audit_preserves_issued_action(
+    test_db, test_user, create_client_with_business
+):
+    _client, business = create_client_with_business()
     service = BillingService(test_db)
     charge = _charge(service, business, test_user.id)
 
@@ -43,8 +28,8 @@ def test_issue_charge_audit_preserves_issued_action(test_db, test_user):
     assert entry.metadata_json["client_record_id"] == business.client_id
 
 
-def test_paid_charge_audit_preserves_paid_action(test_db, test_user):
-    business = _business(test_db)
+def test_paid_charge_audit_preserves_paid_action(test_db, test_user, create_client_with_business):
+    _client, business = create_client_with_business()
     service = BillingService(test_db)
     charge = _charge(service, business, test_user.id)
     service.issue_charge(charge.id, actor_id=test_user.id, actor_name=_ACTOR_NAME)
@@ -57,8 +42,10 @@ def test_paid_charge_audit_preserves_paid_action(test_db, test_user):
     assert entry.note is None
 
 
-def test_cancel_charge_audit_preserves_canceled_action(test_db, test_user):
-    business = _business(test_db)
+def test_cancel_charge_audit_preserves_canceled_action(
+    test_db, test_user, create_client_with_business
+):
+    _client, business = create_client_with_business()
     service = BillingService(test_db)
     charge = _charge(service, business, test_user.id)
     service.issue_charge(charge.id, actor_id=test_user.id, actor_name=_ACTOR_NAME)

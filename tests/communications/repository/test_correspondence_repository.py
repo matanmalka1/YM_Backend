@@ -1,50 +1,36 @@
 from datetime import date, datetime, timedelta
-from itertools import count
 
-from app.businesses.models.business import Business
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.repositories.correspondence_repository import (
     CorrespondenceRepository,
 )
-from app.users.models.user import User, UserRole
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
-
-_client_seq = count(1)
 
 
-def _business(db) -> Business:
-    idx = next(_client_seq)
-    _, b = seed_client_with_business(
-        db,
+def _business(create_client_with_business, idx: int):
+    _, business = create_client_with_business(
         full_name=f"Correspondence Repo Client {idx}",
         id_number=f"{idx:09d}",
         business_name=f"Correspondence Repo Business {idx}",
         opened_at=date.today(),
     )
-    db.commit()
-    db.refresh(b)
-    return b
+    return business
 
 
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
+def _user(user_factory):
+    return user_factory(
         full_name="Correspondence Repo User",
         email="correspondence.repo@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
         commit=True,
     )
-    return user
 
 
-def test_list_by_client_paginated_and_soft_delete(test_db):
+def test_list_by_client_paginated_and_soft_delete(
+    test_db, user_factory, create_client_with_business
+):
     repo = CorrespondenceRepository(test_db)
-    user = _user(test_db)
-    business_a = _business(test_db)
-    business_b = _business(test_db)
+    user = _user(user_factory)
+    business_a = _business(create_client_with_business, 1)
+    business_b = _business(create_client_with_business, 2)
     base = datetime(2026, 1, 1, 12, 0, 0)
 
     first = repo.create(
@@ -103,10 +89,12 @@ def test_list_by_client_paginated_and_soft_delete(test_db):
     assert repo.soft_delete(999999, deleted_by=user.id) is False
 
 
-def test_list_by_client_filters_business_and_sort(test_db):
+def test_list_by_client_filters_business_and_sort(
+    test_db, user_factory, create_client_with_business
+):
     repo = CorrespondenceRepository(test_db)
-    user = _user(test_db)
-    business = _business(test_db)
+    user = _user(user_factory)
+    business = _business(create_client_with_business, 3)
     base = datetime(2026, 1, 1, 8, 0, 0)
 
     e1 = repo.create(

@@ -3,18 +3,16 @@ from datetime import UTC, datetime, timedelta
 import jwt
 
 from app.config import settings
-from app.users.models.user import User, UserRole
+from app.users.models.user import UserRole
 from app.users.models.user_audit_log import AuditAction, AuditStatus
 from app.users.repositories.user_audit_log_repository import UserAuditLogRepository
 from app.users.repositories.user_repository import UserRepository
 from app.users.services.user_auth_service import AuthService
 from app.users.services.user_token_service import decode_access_token
-from tests.factories import create_user
 
 
-def _user(test_db, *, email: str, is_active: bool = True) -> User:
-    user = create_user(
-        test_db,
+def _user(user_factory, *, email: str, is_active: bool = True):
+    return user_factory(
         full_name="Auth Service User",
         email=email,
         password="password123",
@@ -22,12 +20,11 @@ def _user(test_db, *, email: str, is_active: bool = True) -> User:
         is_active=is_active,
         commit=True,
     )
-    return user
 
 
-def test_authenticate_handles_user_not_found_and_inactive_user(test_db):
+def test_authenticate_handles_user_not_found_and_inactive_user(test_db, user_factory):
     service = AuthService(test_db)
-    inactive_user = _user(test_db, email="inactive.auth@example.com", is_active=False)
+    inactive_user = _user(user_factory, email="inactive.auth@example.com", is_active=False)
 
     assert service.authenticate("missing.auth@example.com", "password123") is None
     assert service.authenticate(inactive_user.email, "password123") is None
@@ -39,10 +36,10 @@ def test_authenticate_handles_user_not_found_and_inactive_user(test_db):
     assert (AuditAction.LOGIN_FAILURE, "inactive_user") in reasons
 
 
-def test_authenticate_success_and_logout_bump_token_and_write_audit(test_db):
+def test_authenticate_success_and_logout_bump_token_and_write_audit(test_db, user_factory):
     service = AuthService(test_db)
     repo = UserRepository(test_db)
-    user = _user(test_db, email="active.auth@example.com", is_active=True)
+    user = _user(user_factory, email="active.auth@example.com", is_active=True)
 
     before = repo.get_by_id(user.id)
     assert before.last_login_at is None

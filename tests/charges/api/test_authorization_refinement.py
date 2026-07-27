@@ -1,26 +1,11 @@
-from datetime import date
-
-from app.businesses.models.business import Business, BusinessStatus
-from tests.helpers.identity import seed_client_identity
-
-
-def test_secretary_sees_charge_amounts(client, secretary_headers, advisor_headers, test_db):
+def test_secretary_sees_charge_amounts(
+    client, secretary_headers, advisor_headers, create_client_with_business
+):
     """Secretary has full charge visibility — same as advisor."""
-    test_client = seed_client_identity(
+    _test_client, test_business = create_client_with_business(
         full_name="Auth Test",
         id_number="700000002",
-        db=test_db,
     )
-    test_business = Business(
-        business_name=test_client.full_name,
-        legal_entity_id=test_client.legal_entity_id,
-        status=BusinessStatus.ACTIVE,
-        opened_at=date.today(),
-    )
-    test_business.client_record_id = test_client.id
-    test_db.add(test_business)
-    test_db.commit()
-    test_db.refresh(test_business)
 
     create_response = client.post(
         "/api/v1/charges",

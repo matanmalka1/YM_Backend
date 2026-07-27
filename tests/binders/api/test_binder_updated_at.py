@@ -8,8 +8,6 @@ created_at. We assert it is present and >= created_at, bumps on a later
 mutation (mark-full), and is set by soft-delete.
 """
 
-from tests.helpers.identity import seed_client_identity
-
 
 def _receive_request(client_record_id: int, received_by: int) -> dict:
     return {
@@ -28,9 +26,8 @@ def _receive_request(client_record_id: int, received_by: int) -> dict:
     }
 
 
-def _create_binder(client, auth_token, test_db, test_user, office_client_number: int) -> int:
-    test_client = seed_client_identity(
-        test_db,
+def _create_binder(client, auth_token, test_user, client_factory, office_client_number: int) -> int:
+    test_client = client_factory(
         full_name="Binder UpdatedAt",
         id_number=f"id-{office_client_number}",
         office_client_number=office_client_number,
@@ -44,9 +41,9 @@ def _create_binder(client, auth_token, test_db, test_user, office_client_number:
     return res.json()["binder"]["id"]
 
 
-def test_updated_at_present_and_bumps_on_mutation(client, auth_token, test_db, test_user):
+def test_updated_at_present_and_bumps_on_mutation(client, auth_token, test_user, client_factory):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    binder_id = _create_binder(client, auth_token, test_db, test_user, 100401)
+    binder_id = _create_binder(client, auth_token, test_user, client_factory, 100401)
 
     # Receive derives period_start + runs lifecycle transitions → real mutation.
     received = client.get(f"/api/v1/binders/{binder_id}", headers=headers).json()
@@ -61,19 +58,20 @@ def test_updated_at_present_and_bumps_on_mutation(client, auth_token, test_db, t
     assert mutated["updated_at"] >= received["updated_at"]
 
 
-def test_column_has_no_default_null_on_bare_insert(test_db, test_user):
+def test_column_has_no_default_null_on_bare_insert(test_db, test_user, client_factory):
     """Guard the no-fake rule: a pure insert leaves updated_at NULL (no default=)."""
     from app.binders.models.binder import Binder
 
-    binder = Binder(client_record_id=1, binder_number="BARE/1", created_by=test_user.id)
+    client = client_factory()
+    binder = Binder(client_record_id=client.id, binder_number="BARE/1", created_by=test_user.id)
     test_db.add(binder)
     test_db.flush()
     assert binder.updated_at is None
 
 
-def test_soft_delete_bumps_updated_at(client, auth_token, test_db, test_user):
+def test_soft_delete_bumps_updated_at(client, auth_token, test_db, test_user, client_factory):
     headers = {"Authorization": f"Bearer {auth_token}"}
-    binder_id = _create_binder(client, auth_token, test_db, test_user, 100402)
+    binder_id = _create_binder(client, auth_token, test_user, client_factory, 100402)
 
     assert client.delete(f"/api/v1/binders/{binder_id}", headers=headers).status_code in (200, 204)
 

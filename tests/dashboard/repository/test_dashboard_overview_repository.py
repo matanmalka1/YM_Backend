@@ -1,67 +1,58 @@
 from datetime import date
 
-from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
-from app.businesses.models.business import Business
 from app.businesses.repositories.business_repository import BusinessRepository
-from app.clients.models.client_record import ClientRecord
 from app.common.enums import IdNumberType
-from app.legal_entities.models.legal_entity import LegalEntity
-from app.users.models.user import UserRole
-from tests.factories import create_user
 
 
-def test_business_and_binder_repository_counts_active_entities(test_db):
-    user = create_user(
-        test_db,
+def test_business_and_binder_repository_counts_active_entities(
+    test_db, user_factory, client_factory, business_factory, binder_factory
+):
+    user = user_factory(
         full_name="Receiver",
         email="receiver@example.com",
         password="pass",
-        role=UserRole.ADVISOR,
         is_active=True,
+        commit=False,
     )
 
-    le_a = LegalEntity(
-        official_name="Alpha Ltd",
+    client_a = client_factory(
+        full_name="Alpha Ltd",
         id_number="C001",
         id_number_type=IdNumberType.INDIVIDUAL,
+        office_client_number=100901,
+        create_person=False,
     )
-    le_b = LegalEntity(
-        official_name="Beta LLC",
+    client_b = client_factory(
+        full_name="Beta LLC",
         id_number="C002",
         id_number_type=IdNumberType.INDIVIDUAL,
+        office_client_number=100902,
+        create_person=False,
     )
-    test_db.add_all([le_a, le_b])
-    test_db.commit()
 
-    cr_a = ClientRecord(legal_entity_id=le_a.id, office_client_number=100901)
-    cr_b = ClientRecord(legal_entity_id=le_b.id, office_client_number=100902)
-    test_db.add_all([cr_a, cr_b])
-    test_db.commit()
-
-    business_active = Business(
-        legal_entity_id=le_a.id,
+    business_factory(
+        legal_entity_id=client_a.legal_entity_id,
         business_name="Alpha Business",
         opened_at=date(2024, 1, 1),
     )
-    business_other = Business(
-        legal_entity_id=le_b.id,
+    business_factory(
+        legal_entity_id=client_b.legal_entity_id,
         business_name="Beta Business",
         opened_at=date(2024, 2, 1),
     )
-    test_db.add_all([business_active, business_other])
-    test_db.commit()
 
-    binder_active = Binder(
-        client_record_id=cr_a.id,
+    binder_factory(
+        client_record_id=client_a.id,
         binder_number="B-1",
         period_start=date(2024, 3, 1),
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=user.id,
     )
-    binder_handed_over = Binder(
-        client_record_id=cr_b.id,
+    binder_factory(
+        client_record_id=client_b.id,
         binder_number="B-2",
         period_start=date(2024, 3, 2),
         handed_over_at=date(2024, 3, 5),
@@ -69,7 +60,6 @@ def test_business_and_binder_repository_counts_active_entities(test_db):
         capacity_status=BinderCapacityStatus.OPEN,
         created_by=user.id,
     )
-    test_db.add_all([binder_active, binder_handed_over])
     test_db.commit()
 
     total_businesses = BusinessRepository(test_db).count()

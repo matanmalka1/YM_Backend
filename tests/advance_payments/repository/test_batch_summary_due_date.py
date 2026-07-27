@@ -1,7 +1,6 @@
 """Tests: batch_summary_by_month returns due_date from TaxCalendarEntry and groups correctly."""
 
 from datetime import date
-from itertools import count
 
 from app.advance_payments.repositories.advance_payment_batch_repository import (
     AdvancePaymentBatchRepository,
@@ -10,29 +9,7 @@ from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.common.enums import AdvancePaymentFrequency, DeadlineRuleType, ObligationType
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.tax_calendar.service.linking_helpers import make_entry
-
-_seq = count(1)
-
-
-def _client_with_business(db, frequency=AdvancePaymentFrequency.MONTHLY):
-    idx = next(_seq)
-    client = seed_client_identity(
-        db,
-        full_name=f"Batch Due Date Client {idx}",
-        id_number=f"BDD{idx:06d}",
-        advance_payment_frequency=frequency,
-    )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Batch Due Date Biz {idx}",
-        opened_at=date.today(),
-    )
-    db.flush()
-    business.client_record_id = client.id
-    return client
 
 
 def _payment(db, client_id, period, period_months_count, entry):
@@ -46,7 +23,9 @@ def _payment(db, client_id, period, period_months_count, entry):
     )
 
 
-def test_batch_summary_returns_due_date_from_tax_calendar_entry(test_db):
+def test_batch_summary_returns_due_date_from_tax_calendar_entry(
+    test_db, create_client_with_business
+):
     """due_date in batch summary must come from TaxCalendarEntry, not hardcoded 15."""
     entry = make_entry(
         test_db,
@@ -59,7 +38,7 @@ def test_batch_summary_returns_due_date_from_tax_calendar_entry(test_db):
     entry.due_date = date(2026, 2, 16)
     test_db.flush()
 
-    client = _client_with_business(test_db)
+    client, _business = create_client_with_business(commit=False)
     _payment(test_db, client.id, "2026-01", 1, entry)
     test_db.flush()
 
@@ -77,6 +56,7 @@ def test_batch_summary_returns_due_date_from_tax_calendar_entry(test_db):
 
 def test_batch_summary_monthly_and_bimonthly_same_start_month_are_separate_rows(
     test_db,
+    create_client_with_business,
 ):
     """Monthly period '2026-01' and bimonthly period '2026-01' must NOT be merged."""
     entry_monthly = make_entry(
@@ -99,8 +79,12 @@ def test_batch_summary_monthly_and_bimonthly_same_start_month_are_separate_rows(
     entry_bimonthly.due_date = date(2026, 3, 15)
     test_db.flush()
 
-    client_m = _client_with_business(test_db, AdvancePaymentFrequency.MONTHLY)
-    client_b = _client_with_business(test_db, AdvancePaymentFrequency.BIMONTHLY)
+    client_m, _business_m = create_client_with_business(
+        commit=False, advance_payment_frequency=AdvancePaymentFrequency.MONTHLY
+    )
+    client_b, _business_b = create_client_with_business(
+        commit=False, advance_payment_frequency=AdvancePaymentFrequency.BIMONTHLY
+    )
     _payment(test_db, client_m.id, "2026-01", 1, entry_monthly)
     _payment(test_db, client_b.id, "2026-01", 2, entry_bimonthly)
     test_db.flush()

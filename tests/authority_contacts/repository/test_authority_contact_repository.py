@@ -2,28 +2,13 @@ from app.authority_contacts.models.authority_contact import ContactType
 from app.authority_contacts.repositories.authority_contact_repository import (
     AuthorityContactRepository,
 )
-from app.users.models.user import UserRole
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_identity
 
 
-def test_authority_contact_repository_crud_flow(test_db):
+def test_authority_contact_repository_crud_flow(test_db, user_factory, client_factory):
     repo = AuthorityContactRepository(test_db)
 
-    user = create_user(
-        test_db,
-        full_name="Advisor",
-        email="advisor@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-    )
-    client = seed_client_identity(
-        test_db,
-        full_name="Client A",
-        id_number="AC001",
-    )
-    test_db.commit()
+    user = user_factory()
+    client = client_factory(full_name="Client A", id_number="AC001")
 
     contact_a = repo.create(
         client_record_id=client.id,

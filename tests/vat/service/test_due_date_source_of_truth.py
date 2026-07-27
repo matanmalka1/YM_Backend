@@ -10,7 +10,7 @@ from app.vat.services.vat_intake_service import create_work_item
 from tests.tax_calendar.service.linking_helpers import make_entry, vat_client
 
 
-def test_serializer_prefers_snapshot_over_computed_deadline(test_db):
+def test_serializer_prefers_snapshot_over_computed_deadline(test_db, actor_user):
     """When due_date_effective is set, submission_deadline must come from snapshot, not period+15."""
     entry = make_entry(
         test_db,
@@ -30,7 +30,7 @@ def test_serializer_prefers_snapshot_over_computed_deadline(test_db):
         test_db,
         client_record_id=client.id,
         period="2026-01",
-        created_by=1,
+        created_by=actor_user.id,
     )
 
     assert item.due_date_effective == date(2026, 2, 16), "snapshot must use entry.due_date=16th"

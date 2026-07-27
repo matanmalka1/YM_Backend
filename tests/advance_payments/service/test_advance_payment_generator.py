@@ -13,7 +13,6 @@ from app.businesses.models.business import Business
 from app.clients.client_enums import ClientStatus
 from app.common.enums import AdvancePaymentFrequency, VatType
 from app.core.exceptions import ForbiddenError, NotFoundError
-from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -31,30 +30,20 @@ def generate_annual_schedule(
 _seq = count(1)
 
 
-def _business(db) -> Business:
+def _business(create_client_with_business) -> Business:
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    _client, business = create_client_with_business(
         full_name=f"Advance Gen Client {idx}",
         id_number=f"555666{idx:03d}",
+        business_name=f"Advance Gen Business {idx}",
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Advance Gen Business {idx}",
-        opened_at=date.today(),
-    )
-    db.add(business)
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     return business
 
 
-def _closed_client_record_id(db) -> int:
+def _closed_client_record_id(client_factory) -> int:
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    client = client_factory(
         full_name=f"Advance Gen Closed Client {idx}",
         id_number=f"555777{idx:03d}",
         status=ClientStatus.CLOSED,
@@ -62,8 +51,8 @@ def _closed_client_record_id(db) -> int:
     return client.id
 
 
-def test_generate_annual_schedule_creates_all_12_months(test_db):
-    business = _business(test_db)
+def test_generate_annual_schedule_creates_all_12_months(test_db, create_client_with_business):
+    business = _business(create_client_with_business)
 
     created, skipped = generate_annual_schedule(
         business.client_record_id, 2026, test_db, reference_date=date(2025, 12, 31)
@@ -76,8 +65,10 @@ def test_generate_annual_schedule_creates_all_12_months(test_db):
     assert all(p.tax_calendar_entry_id is not None for p in created)
 
 
-def test_generate_annual_schedule_is_idempotent_for_existing_periods(test_db):
-    business = _business(test_db)
+def test_generate_annual_schedule_is_idempotent_for_existing_periods(
+    test_db, create_client_with_business
+):
+    business = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
 
     existing = create_linked_advance_payment(
@@ -114,8 +105,8 @@ def test_generate_annual_schedule_missing_business_raises_not_found(test_db):
     assert exc.value.code == "ADVANCE_PAYMENT.CLIENT_RECORD_NOT_FOUND"
 
 
-def test_generate_annual_schedule_closed_client_raises_forbidden(test_db):
-    client_record_id = _closed_client_record_id(test_db)
+def test_generate_annual_schedule_closed_client_raises_forbidden(test_db, client_factory):
+    client_record_id = _closed_client_record_id(client_factory)
 
     with pytest.raises(ForbiddenError) as exc:
         generate_annual_schedule(client_record_id, 2026, test_db)
@@ -123,8 +114,10 @@ def test_generate_annual_schedule_closed_client_raises_forbidden(test_db):
     assert exc.value.code == "CLIENT.CLOSED"
 
 
-def test_generate_annual_schedule_bimonthly_due_dates_rollover_year(test_db):
-    business = _business(test_db)
+def test_generate_annual_schedule_bimonthly_due_dates_rollover_year(
+    test_db, create_client_with_business
+):
+    business = _business(create_client_with_business)
     business.legal_entity.advance_payment_frequency = AdvancePaymentFrequency.BIMONTHLY
     test_db.commit()
 
@@ -144,8 +137,10 @@ def test_generate_annual_schedule_bimonthly_due_dates_rollover_year(test_db):
     assert nov.due_date == date(2027, 1, 17)
 
 
-def test_generate_annual_schedule_skips_periods_before_reference_date(test_db):
-    business = _business(test_db)
+def test_generate_annual_schedule_skips_periods_before_reference_date(
+    test_db, create_client_with_business
+):
+    business = _business(create_client_with_business)
 
     created, skipped = generate_annual_schedule(
         business.client_record_id,
@@ -162,8 +157,9 @@ def test_generate_annual_schedule_skips_periods_before_reference_date(test_db):
 
 def test_generate_annual_schedule_uses_advance_payment_frequency_independent_of_vat(
     test_db,
+    create_client_with_business,
 ):
-    business = _business(test_db)
+    business = _business(create_client_with_business)
     # VAT bimonthly but advance monthly — should produce 12, not 6
     business.legal_entity.vat_reporting_frequency = VatType.BIMONTHLY
     business.legal_entity.advance_payment_frequency = AdvancePaymentFrequency.MONTHLY

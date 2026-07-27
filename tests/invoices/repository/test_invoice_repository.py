@@ -4,29 +4,12 @@ from decimal import Decimal
 from app.charges.models.charge import ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.invoices.repositories.invoice_repository import InvoiceRepository
-from tests.helpers.identity import seed_business, seed_client_identity
 
 
-def _business(test_db):
-    client = seed_client_identity(
-        test_db,
-        full_name="Invoice Client",
-        id_number="INV001",
+def test_invoice_repository_getters(test_db, create_client_with_business):
+    _client, business = create_client_with_business(
+        full_name="Invoice Client", id_number="INV001", opened_at=date(2024, 1, 1)
     )
-    business = seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=client.full_name,
-        opened_at=date(2024, 1, 1),
-    )
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_id = client.id
-    return business
-
-
-def test_invoice_repository_getters(test_db):
-    business = _business(test_db)
     charge_repo = ChargeRepository(test_db)
     invoice_repo = InvoiceRepository(test_db)
 
@@ -53,8 +36,10 @@ def test_invoice_repository_getters(test_db):
     assert invoice_repo.exists_for_charge(9999) is False
 
 
-def test_invoice_repository_list_by_charge_ids(test_db):
-    business = _business(test_db)
+def test_invoice_repository_list_by_charge_ids(test_db, create_client_with_business):
+    _client, business = create_client_with_business(
+        full_name="Invoice Client", id_number="INV001", opened_at=date(2024, 1, 1)
+    )
     charge_repo = ChargeRepository(test_db)
     invoice_repo = InvoiceRepository(test_db)
 

@@ -2,25 +2,17 @@
 
 from datetime import date
 from decimal import Decimal
-from itertools import count
 from uuid import uuid4
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.enums import AdvancePaymentFrequency
-from tests.helpers.identity import seed_client_identity
-
-_seq = count(1)
 
 URL = "/api/v1/advance-payments/bulk-mark-paid"
 
 
-def _client_record(db, advance_rate=Decimal("10")):
-    idx = next(_seq)
-    return seed_client_identity(
-        db,
-        full_name=f"Bulk Paid Client {idx}",
-        id_number=f"BLK{idx:06d}",
+def _client_record(client_factory, advance_rate=Decimal("10")):
+    return client_factory(
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
         advance_rate=advance_rate,
     )
@@ -42,8 +34,10 @@ def _post(client, headers, payload):
     return client.post(URL, json=payload, headers={**headers, "X-Idempotency-Key": str(uuid4())})
 
 
-def test_bulk_mark_paid_tops_up_pending_and_partial(client, test_db, advisor_headers):
-    record = _client_record(test_db)
+def test_bulk_mark_paid_tops_up_pending_and_partial(
+    client, test_db, advisor_headers, client_factory
+):
+    record = _client_record(client_factory)
     pending = _payment(test_db, record, "2026-03")
     partial = _payment(test_db, record, "2026-04", paid=Decimal("1000"))
 
@@ -73,8 +67,8 @@ def test_bulk_mark_paid_tops_up_pending_and_partial(client, test_db, advisor_hea
         assert row.paid_at.date() == date(2026, 4, 16)
 
 
-def test_bulk_mark_paid_skips_by_reason(client, test_db, advisor_headers):
-    record = _client_record(test_db)
+def test_bulk_mark_paid_skips_by_reason(client, test_db, advisor_headers, client_factory):
+    record = _client_record(client_factory)
     already_paid = _payment(test_db, record, "2026-05")
     already_paid = AdvancePaymentService(test_db).update_payment_for_client(
         record.id, already_paid.id, actor_id=None, paid_amount=already_paid.expected_amount
@@ -100,9 +94,9 @@ def test_bulk_mark_paid_skips_by_reason(client, test_db, advisor_headers):
 
 
 def test_bulk_mark_paid_keeps_existing_method_and_reference_when_omitted(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, client_factory
 ):
-    record = _client_record(test_db)
+    record = _client_record(client_factory)
     payment = _payment(test_db, record, "2026-07")
 
     resp = _post(client, advisor_headers, {"payment_ids": [payment.id]})
@@ -115,8 +109,8 @@ def test_bulk_mark_paid_keeps_existing_method_and_reference_when_omitted(
     assert row.payment_reference is None
 
 
-def test_bulk_mark_paid_rejects_duplicates(client, test_db, advisor_headers):
-    record = _client_record(test_db)
+def test_bulk_mark_paid_rejects_duplicates(client, test_db, advisor_headers, client_factory):
+    record = _client_record(client_factory)
     payment = _payment(test_db, record, "2026-08")
 
     resp = _post(client, advisor_headers, {"payment_ids": [payment.id, payment.id]})
@@ -124,8 +118,8 @@ def test_bulk_mark_paid_rejects_duplicates(client, test_db, advisor_headers):
     assert resp.status_code == 422
 
 
-def test_bulk_mark_paid_forbidden_for_secretary(client, test_db, secretary_headers):
-    record = _client_record(test_db)
+def test_bulk_mark_paid_forbidden_for_secretary(client, test_db, secretary_headers, client_factory):
+    record = _client_record(client_factory)
     payment = _payment(test_db, record, "2026-09")
 
     resp = _post(client, secretary_headers, {"payment_ids": [payment.id]})

@@ -10,7 +10,7 @@ from app.clients.services.client_query_service import ClientQueryService
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
 
 
-def test_client_excel_import_skips_blank_and_collects_errors(test_db):
+def test_client_excel_import_skips_blank_and_collects_errors(test_db, actor_user):
     service = ClientExcelService(test_db)
     wb = Workbook()
     ws = wb.active
@@ -24,14 +24,14 @@ def test_client_excel_import_skips_blank_and_collects_errors(test_db):
             if kwargs["id_number"] == "ID1":
                 raise RuntimeError("duplicate")
 
-    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=1)
+    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=actor_user.id)
 
     assert created == 0
     assert len(errors) == 1
     assert errors[0]["row"] == 4
 
 
-def test_client_excel_import_collects_required_field_errors(test_db):
+def test_client_excel_import_collects_required_field_errors(test_db, actor_user):
     service = ClientExcelService(test_db)
     wb = Workbook()
     ws = wb.active
@@ -44,14 +44,14 @@ def test_client_excel_import_collects_required_field_errors(test_db):
         def create_client(self, **_kwargs):
             raise AssertionError("create should not be called for invalid rows")
 
-    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=1)
+    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=actor_user.id)
 
     assert created == 0
     assert len(errors) == 3
     assert {err["row"] for err in errors} == {2, 3, 4}
 
 
-def test_client_excel_import_uses_tax_defaults_when_optional_columns_are_blank(test_db):
+def test_client_excel_import_uses_tax_defaults_when_optional_columns_are_blank(test_db, actor_user):
     service = ClientExcelService(test_db)
     wb = Workbook()
     ws = wb.active
@@ -63,7 +63,7 @@ def test_client_excel_import_uses_tax_defaults_when_optional_columns_are_blank(t
         def create_client(self, **kwargs):
             calls.append(kwargs)
 
-    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=1)
+    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=actor_user.id)
 
     assert created == 1
     assert errors == []
@@ -72,7 +72,7 @@ def test_client_excel_import_uses_tax_defaults_when_optional_columns_are_blank(t
     assert calls[0]["advance_payment_frequency"] == AdvancePaymentFrequency.BIMONTHLY
 
 
-def test_client_excel_import_rolls_back_failed_create_client_row(test_db):
+def test_client_excel_import_rolls_back_failed_create_client_row(test_db, actor_user):
     service = ClientExcelService(test_db)
     wb = Workbook()
     ws = wb.active
@@ -89,14 +89,14 @@ def test_client_excel_import_rolls_back_failed_create_client_row(test_db):
             )
             raise RuntimeError("business failed")
 
-    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=1)
+    created, errors = service.import_clients_from_excel(wb, _ClientSvc(), actor_id=actor_user.id)
 
     assert created == 0
     assert len(errors) == 1
     assert test_db.scalar(select(func.count(ClientRecord.id))) == 0
 
 
-def test_client_excel_export_and_template_generate_files(test_db):
+def test_client_excel_export_and_template_generate_files(test_db, actor_user):
     service = ClientExcelService(test_db)
 
     client_record = create_client_identity_only(
@@ -107,7 +107,7 @@ def test_client_excel_export_and_template_generate_files(test_db):
         entity_type=EntityType.COMPANY_LTD,
         phone="0501234567",
         email="excel@test.com",
-        actor_id=1,
+        actor_id=actor_user.id,
     )
     test_db.commit()
     full_client = ClientQueryService(test_db).get_full_client(client_record.id)

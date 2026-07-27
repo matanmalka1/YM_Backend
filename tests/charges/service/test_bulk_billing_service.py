@@ -29,39 +29,39 @@ class _FakeBilling:
             raise RuntimeError("cancel failed")
 
 
-def test_bulk_action_issue_collects_success_and_failures(test_db):
+def test_bulk_action_issue_collects_success_and_failures(test_db, actor_user):
     fake = _FakeBilling(failures={2})
     service = BulkBillingService(db=test_db)
     service.billing = fake
 
-    succeeded, failed = service.bulk_action([1, 2, 3], action="issue", actor_id=99)
+    succeeded, failed = service.bulk_action([1, 2, 3], action="issue", actor_id=actor_user.id)
 
     assert succeeded == [1, 3]
     assert [f.id for f in failed] == [2]
     assert failed[0].error == "אירעה שגיאה פנימית"
 
 
-def test_bulk_action_uses_domain_error_message_for_app_error(test_db):
+def test_bulk_action_uses_domain_error_message_for_app_error(test_db, actor_user):
     fake = _FakeBilling()
     fake.app_error_ids = {5}
     service = BulkBillingService(db=test_db)
     service.billing = fake
 
-    succeeded, failed = service.bulk_action([5], action="issue", actor_id=12)
+    succeeded, failed = service.bulk_action([5], action="issue", actor_id=actor_user.id)
 
     assert succeeded == []
     assert [f.id for f in failed] == [5]
     assert failed[0].error == "invalid transition"
 
 
-def test_bulk_action_mark_paid_and_cancel_paths(test_db):
+def test_bulk_action_mark_paid_and_cancel_paths(test_db, actor_user):
     service = BulkBillingService(db=test_db)
     fake = _FakeBilling()
     service.billing = fake
 
-    ok_paid, failed_paid = service.bulk_action([10], action="mark-paid", actor_id=7)
+    ok_paid, failed_paid = service.bulk_action([10], action="mark-paid", actor_id=actor_user.id)
     ok_cancel, failed_cancel = service.bulk_action(
-        [11], action="cancel", actor_id=8, cancellation_reason="dup"
+        [11], action="cancel", actor_id=actor_user.id, cancellation_reason="dup"
     )
 
     assert ok_paid == [10]

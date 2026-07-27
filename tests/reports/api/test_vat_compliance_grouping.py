@@ -1,11 +1,8 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 
 from app.common.enums import VatType
 from app.vat.models.vat_enums import VatWorkItemStatus
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
-from tests.reports.api.test_reports_additional_endpoints import (
-    _create_client_and_business,
-)
 
 
 def test_vat_compliance_groups_same_client_by_period_type(
@@ -13,8 +10,11 @@ def test_vat_compliance_groups_same_client_by_period_type(
     test_db,
     advisor_headers,
     test_user,
+    create_client_with_business,
 ):
-    crm_client, _ = _create_client_and_business(test_db, "VAT-GROUP")
+    crm_client, _ = create_client_with_business(
+        full_name="Reports Client VAT-GROUP", id_number="RPT-VAT-GROUP", opened_at=date(2025, 1, 1)
+    )
     now = datetime.now(UTC)
     item1 = create_linked_vat_work_item(
         test_db,

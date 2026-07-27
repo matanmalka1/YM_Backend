@@ -12,7 +12,6 @@ from app.common.enums import IdNumberType
 from app.core.exceptions import AppError
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.services.vat_data_entry_invoice_update_service import update_invoice
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.vat.api.test_vat_reports_utils import (
     create_work_item,
     income_payload,
@@ -74,22 +73,20 @@ def test_f007_filing_with_assignee_succeeds(client, advisor_headers, vat_client,
 
 
 def test_f008_update_invoice_rejects_activity_from_other_entity(
-    client, advisor_headers, vat_client, test_user, test_db
+    client, advisor_headers, vat_client, test_user, client_factory, business_factory
 ):
     """F-008: updating an invoice with a business_activity_id from another legal entity must fail."""
-    other_client = seed_client_identity(
-        test_db,
+    other_client = client_factory(
         full_name="Other Entity Client",
         id_number="987654321",
         id_number_type=IdNumberType.INDIVIDUAL,
     )
-    other_business = seed_business(
-        test_db,
+    other_business = business_factory(
         legal_entity_id=other_client.legal_entity_id,
         business_name="Other Business",
         status=BusinessStatus.ACTIVE,
+        commit=True,
     )
-    test_db.commit()
 
     item_id = create_work_item(client, advisor_headers, vat_client, "2025-09")
     invoice_id = _add_invoice(client, advisor_headers, item_id, "INV-F008-1")
@@ -105,19 +102,18 @@ def test_f008_update_invoice_rejects_activity_from_other_entity(
 
 
 def test_f008_update_invoice_accepts_activity_from_same_entity(
-    client, advisor_headers, vat_client, test_user, test_db
+    client, advisor_headers, vat_client, test_user, business_factory
 ):
     """F-008: updating with a business_activity_id from the same legal entity must succeed."""
     from datetime import date
 
-    same_entity_business = seed_business(
-        test_db,
+    same_entity_business = business_factory(
         legal_entity_id=vat_client.legal_entity_id,
         business_name="Same Entity Second Business",
         status=BusinessStatus.ACTIVE,
         opened_at=date.today(),
+        commit=True,
     )
-    test_db.commit()
 
     item_id = create_work_item(client, advisor_headers, vat_client, "2025-10")
     invoice_id = _add_invoice(client, advisor_headers, item_id, "INV-F008-2")

@@ -5,32 +5,12 @@ from sqlalchemy.exc import IntegrityError
 
 from app.binders.models.binder import BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
-from app.users.models.user import UserRole
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_identity
 
 
-def _user(test_db):
-    user = create_user(
-        test_db,
-        full_name="Binder Unique Admin",
-        email="binder.unique@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _client(test_db, name: str, id_number: str):
-    return seed_client_identity(test_db, full_name=name, id_number=id_number)
-
-
-def test_binder_number_is_unique_per_client_across_statuses(test_db):
+def test_binder_number_is_unique_per_client_across_statuses(test_db, user_factory, client_factory):
     repo = BinderRepository(test_db)
-    user = _user(test_db)
-    client = _client(test_db, "Binder Unique", "BU001")
+    user = user_factory()
+    client = client_factory(full_name="Binder Unique", id_number="BU001")
 
     handed_over = repo.create(
         client_record_id=client.id,
@@ -50,11 +30,11 @@ def test_binder_number_is_unique_per_client_across_statuses(test_db):
         )
 
 
-def test_binder_number_can_repeat_for_different_clients(test_db):
+def test_binder_number_can_repeat_for_different_clients(test_db, user_factory, client_factory):
     repo = BinderRepository(test_db)
-    user = _user(test_db)
-    client_a = _client(test_db, "Binder Unique A", "BU002")
-    client_b = _client(test_db, "Binder Unique B", "BU003")
+    user = user_factory()
+    client_a = client_factory(full_name="Binder Unique A", id_number="BU002")
+    client_b = client_factory(full_name="Binder Unique B", id_number="BU003")
 
     first = repo.create(
         client_record_id=client_a.id,

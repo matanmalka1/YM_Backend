@@ -39,40 +39,44 @@ def _make_send_request(trigger: str, entity_id: int | None = None, business_id: 
 
 
 class TestPreviewTriggerValidation:
-    def test_preview_rejects_binder_ready_for_handover(self, test_db):
+    def test_preview_rejects_binder_ready_for_handover(self, test_db, actor_user):
         svc = NotificationSendService(test_db)
         req = _make_request("binder_ready_for_handover")
         with pytest.raises(AppError) as exc:
-            svc.preview(req, triggered_by=1)
+            svc.preview(req, triggered_by=actor_user.id)
         assert exc.value.code == "NOTIFICATION.AUTO_ONLY_TRIGGER"
 
     @pytest.mark.parametrize(
         "trigger",
         ["annual_report_client_reminder", "annual_report_documents_request"],
     )
-    def test_preview_rejects_annual_trigger_without_entity_id(self, test_db, trigger):
+    def test_preview_rejects_annual_trigger_without_entity_id(self, test_db, trigger, actor_user):
         svc = NotificationSendService(test_db)
         req = _make_request(trigger, entity_id=None)
         with pytest.raises(AppError) as exc:
-            svc.preview(req, triggered_by=1)
+            svc.preview(req, triggered_by=actor_user.id)
         assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
 
-    def test_preview_with_annual_entity_id_reaches_client_lookup(self, test_db):
+    def test_preview_with_annual_entity_id_reaches_client_lookup(self, test_db, actor_user):
         svc = NotificationSendService(test_db)
         req = _make_request("annual_report_client_reminder", entity_id=42)
 
         from app.core.exceptions import NotFoundError
 
         with pytest.raises(NotFoundError):
-            svc.preview(req, triggered_by=1)
+            svc.preview(req, triggered_by=actor_user.id)
 
 
 class TestSendTriggerValidation:
-    def test_send_rejects_binder_ready_for_handover(self, test_db):
+    def test_send_rejects_binder_ready_for_handover(self, test_db, actor_user):
         svc = NotificationSendService(test_db)
         req = _make_send_request("binder_ready_for_handover")
         with pytest.raises(AppError) as exc:
-            svc.send(req, triggered_by=1, idempotency_key="00000000-0000-4000-8000-000000000001")
+            svc.send(
+                req,
+                triggered_by=actor_user.id,
+                idempotency_key="00000000-0000-4000-8000-000000000001",
+            )
         assert exc.value.code == "NOTIFICATION.AUTO_ONLY_TRIGGER"
 
     @pytest.mark.parametrize(
@@ -87,11 +91,12 @@ class TestSendTriggerValidation:
         test_db,
         trigger,
         idempotency_key,
+        actor_user,
     ):
         svc = NotificationSendService(test_db)
         req = _make_send_request(trigger, entity_id=None)
         with pytest.raises(AppError) as exc:
-            svc.send(req, triggered_by=1, idempotency_key=idempotency_key)
+            svc.send(req, triggered_by=actor_user.id, idempotency_key=idempotency_key)
         assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
 
 

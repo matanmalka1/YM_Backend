@@ -1,10 +1,8 @@
-from app.users.models.user import User, UserRole
-from tests.factories import create_user
+from app.users.models.user import UserRole
 
 
-def _create_user(test_db, email: str = "logout.test@example.com") -> User:
-    user = create_user(
-        test_db,
+def _create_user(user_factory, email: str = "logout.test@example.com"):
+    return user_factory(
         full_name="Logout Test User",
         email=email,
         password="password123",
@@ -12,7 +10,6 @@ def _create_user(test_db, email: str = "logout.test@example.com") -> User:
         is_active=True,
         commit=True,
     )
-    return user
 
 
 def _login(client, email: str, password: str) -> str:
@@ -24,9 +21,9 @@ def _login(client, email: str, password: str) -> str:
     return response.json()["access_token"]
 
 
-def test_logout_invalidates_bearer_token(client, test_db):
+def test_logout_invalidates_bearer_token(client, test_db, user_factory):
     """Bearer token must be rejected after logout, before JWT expiry."""
-    user = _create_user(test_db)
+    user = _create_user(user_factory)
     token = _login(client, user.email, "password123")
 
     # Confirm token works before logout
@@ -55,11 +52,11 @@ def test_logout_requires_bearer_token(client):
     assert response.status_code == 401
 
 
-def test_logout_is_audited(client, advisor_headers, test_db):
+def test_logout_is_audited(client, advisor_headers, test_db, user_factory):
     """Logout action must appear in the audit log."""
     from app.users.models.user_audit_log import AuditAction
 
-    user = _create_user(test_db, email="logout.audit@example.com")
+    user = _create_user(user_factory, email="logout.audit@example.com")
     token = _login(client, user.email, "password123")
 
     client.post(
@@ -73,9 +70,9 @@ def test_logout_is_audited(client, advisor_headers, test_db):
     assert AuditAction.LOGOUT.value in actions
 
 
-def test_new_login_after_logout_works(client, test_db):
+def test_new_login_after_logout_works(client, test_db, user_factory):
     """After logout, the user can log in again and receive a valid new token."""
-    user = _create_user(test_db, email="logout.relogin@example.com")
+    user = _create_user(user_factory, email="logout.relogin@example.com")
     old_token = _login(client, user.email, "password123")
 
     client.post(

@@ -3,7 +3,6 @@ from itertools import count
 
 from sqlalchemy import select
 
-from app.businesses.models.business import Business
 from app.clients.client_enums import ClientStatus
 from app.common.enums import (
     AdvancePaymentFrequency,
@@ -71,14 +70,11 @@ def advance_client(db, frequency=AdvancePaymentFrequency.MONTHLY):
         id_number=f"CALADV{idx:04d}",
         advance_payment_frequency=frequency,
     )
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Calendar Advance Biz {idx}",
-        opened_at=date.today(),
+    business = seed_business(
+        db, legal_entity_id=client.legal_entity_id, business_name=f"Calendar Advance Biz {idx}"
     )
-    db.add(business)
-    db.flush()
     business.client_record_id = client.id
+    db.flush()
     return client
 
 

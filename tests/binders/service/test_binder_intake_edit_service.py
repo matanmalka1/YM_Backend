@@ -16,39 +16,22 @@ from app.binders.models.binder_intake import BinderIntake
 from app.binders.models.binder_intake_material import BinderIntakeMaterial, MaterialType
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.businesses.models.business import Business, BusinessStatus
-from app.clients.models.client_record import ClientRecord
 from app.common.enums import VatType
 from app.core.exceptions import AppError
 from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.identity import SeededClient, seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import (
     create_tax_calendar_entry_for_annual,
-    create_tax_calendar_entry_for_period,
 )
 
 
-def _client(db, suffix: str, office_client_number: int) -> SeededClient:
-    return seed_client_identity(
-        db,
-        full_name=f"Edit Intake {suffix}",
-        id_number=f"EDIT-{suffix}",
-        office_client_number=office_client_number,
-    )
-
-
-def _business(db, client_id: int, name: str) -> Business:
-    client_record = db.get(ClientRecord, client_id)
-    business = seed_business(
-        db,
-        legal_entity_id=client_record.legal_entity_id,
+def _business(business_factory, legal_entity_id: int, name: str) -> Business:
+    return business_factory(
+        legal_entity_id=legal_entity_id,
         business_name=name,
         status=BusinessStatus.ACTIVE,
         opened_at=date(2026, 1, 1),
+        commit=True,
     )
-    db.commit()
-    db.refresh(business)
-    business.client_id = client_id
-    return business
 
 
 def _annual_report(db, client_id: int, year: int) -> AnnualReport:
@@ -66,42 +49,34 @@ def _annual_report(db, client_id: int, year: int) -> AnnualReport:
     return report
 
 
-def _vat_work_item(db, client_id: int, period: str, created_by: int) -> VatWorkItem:
-    entry = create_tax_calendar_entry_for_period(db, "vat", period, 1)
-    item = VatWorkItem(
+def _vat_work_item(
+    vat_work_item_factory, client_id: int, period: str, created_by: int
+) -> VatWorkItem:
+    return vat_work_item_factory(
         client_record_id=client_id,
         created_by=created_by,
         period=period,
         period_type=VatType.MONTHLY,
-        tax_calendar_entry_id=entry.id,
-        due_date_original=entry.due_date,
-        due_date_effective=entry.due_date,
+        commit=True,
     )
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return item
 
 
 def _binder(
-    db,
+    binder_factory,
     client_id: int,
     number: str,
     created_by: int,
     location_status: BinderLocationStatus = BinderLocationStatus.IN_OFFICE,
 ) -> Binder:
-    binder = Binder(
+    return binder_factory(
         client_record_id=client_id,
         binder_number=number,
         period_start=date(2026, 1, 1),
         created_by=created_by,
         location_status=location_status,
         capacity_status=BinderCapacityStatus.OPEN,
+        commit=True,
     )
-    db.add(binder)
-    db.commit()
-    db.refresh(binder)
-    return binder
 
 
 def _intake_with_material(
@@ -138,19 +113,30 @@ def _intake_with_material(
     return intake
 
 
-def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(test_db, test_user):
-    source_client = _client(test_db, "001", office_client_number=100401)
-    target_client = _client(test_db, "002", office_client_number=100402)
+def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(
+    test_db,
+    test_user,
+    business_factory,
+    binder_factory,
+    client_factory,
+    vat_work_item_factory,
+):
+    source_client = client_factory(
+        full_name="Edit Intake 001", id_number="EDIT-001", office_client_number=100401
+    )
+    target_client = client_factory(
+        full_name="Edit Intake 002", id_number="EDIT-002", office_client_number=100402
+    )
 
-    source_business = _business(test_db, source_client.id, "Source Biz")
-    target_business = _business(test_db, target_client.id, "Target Biz")
+    source_business = _business(business_factory, source_client.legal_entity_id, "Source Biz")
+    target_business = _business(business_factory, target_client.legal_entity_id, "Target Biz")
     source_report = _annual_report(test_db, source_client.id, 2025)
     target_report = _annual_report(test_db, target_client.id, 2025)
-    source_vat = _vat_work_item(test_db, source_client.id, "2026-02", test_user.id)
-    target_vat = _vat_work_item(test_db, target_client.id, "2026-02", test_user.id)
+    source_vat = _vat_work_item(vat_work_item_factory, source_client.id, "2026-02", test_user.id)
+    target_vat = _vat_work_item(vat_work_item_factory, target_client.id, "2026-02", test_user.id)
 
-    source_binder = _binder(test_db, source_client.id, "100401/1", test_user.id)
-    target_binder = _binder(test_db, target_client.id, "100402/1", test_user.id)
+    source_binder = _binder(binder_factory, source_client.id, "100401/1", test_user.id)
+    target_binder = _binder(binder_factory, target_client.id, "100402/1", test_user.id)
     intake = _intake_with_material(
         test_db,
         binder_id=source_binder.id,
@@ -192,16 +178,27 @@ def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(te
     assert all(row.metadata_json["client_record_id"] for row in rows)
 
 
-def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(test_db, test_user):
-    source_client = _client(test_db, "003", office_client_number=100403)
-    target_client = _client(test_db, "004", office_client_number=100404)
+def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(
+    test_db,
+    test_user,
+    business_factory,
+    binder_factory,
+    client_factory,
+    vat_work_item_factory,
+):
+    source_client = client_factory(
+        full_name="Edit Intake 003", id_number="EDIT-003", office_client_number=100403
+    )
+    target_client = client_factory(
+        full_name="Edit Intake 004", id_number="EDIT-004", office_client_number=100404
+    )
 
-    source_business = _business(test_db, source_client.id, "Source Biz 2")
+    source_business = _business(business_factory, source_client.legal_entity_id, "Source Biz 2")
     source_report = _annual_report(test_db, source_client.id, 2024)
-    source_vat = _vat_work_item(test_db, source_client.id, "2026-03", test_user.id)
+    source_vat = _vat_work_item(vat_work_item_factory, source_client.id, "2026-03", test_user.id)
 
-    source_binder = _binder(test_db, source_client.id, "100403/1", test_user.id)
-    _binder(test_db, target_client.id, "100404/1", test_user.id)
+    source_binder = _binder(binder_factory, source_client.id, "100403/1", test_user.id)
+    _binder(binder_factory, target_client.id, "100404/1", test_user.id)
     intake = _intake_with_material(
         test_db,
         binder_id=source_binder.id,

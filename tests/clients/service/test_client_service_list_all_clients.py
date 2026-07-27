@@ -4,14 +4,14 @@ from app.clients.services.client_query_service import ClientQueryService
 from app.common.enums import EntityType, IdNumberType
 
 
-def test_list_all_clients_returns_only_active_sorted(test_db):
+def test_list_all_clients_returns_only_active_sorted(test_db, actor_user):
     b = create_client_identity_only(
         test_db,
         full_name="B Client",
         id_number="680000007",
         id_number_type=IdNumberType.CORPORATION,
         entity_type=EntityType.COMPANY_LTD,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
     a = create_client_identity_only(
         test_db,
@@ -19,7 +19,7 @@ def test_list_all_clients_returns_only_active_sorted(test_db):
         id_number="680000015",
         id_number_type=IdNumberType.CORPORATION,
         entity_type=EntityType.COMPANY_LTD,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
     d = create_client_identity_only(
         test_db,
@@ -27,10 +27,10 @@ def test_list_all_clients_returns_only_active_sorted(test_db):
         id_number="680000023",
         id_number_type=IdNumberType.CORPORATION,
         entity_type=EntityType.COMPANY_LTD,
-        actor_id=1,
+        actor_id=actor_user.id,
     )
 
-    ClientLifecycleService(test_db).delete_client(d.id, actor_id=1)
+    ClientLifecycleService(test_db).delete_client(d.id, actor_id=actor_user.id)
 
     items = ClientQueryService(test_db).list_all_clients()
 

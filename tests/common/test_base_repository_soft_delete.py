@@ -9,35 +9,26 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.common.enums import IdNumberType, VatType
 from app.utils.time_utils import utcnow
-from tests.helpers.identity import seed_client_identity
 
 
-def _charge(test_db, client_record_id: int) -> Charge:
-    charge = Charge(
-        client_record_id=client_record_id,
-        charge_type=ChargeType.OTHER,
-        status=ChargeStatus.ISSUED,
-        amount=Decimal("100.00"),
-        issued_at=utcnow(),
-    )
-    test_db.add(charge)
-    test_db.flush()
-    return charge
-
-
-def test_get_hides_soft_deleted_by_default(test_db):
-    client = seed_client_identity(
-        test_db,
+def test_get_hides_soft_deleted_by_default(test_db, client_factory, charge_factory):
+    client = client_factory(
         full_name="Base Repo Client",
         id_number="BRC-1",
         id_number_type=IdNumberType.INDIVIDUAL,
         vat_reporting_frequency=VatType.MONTHLY,
     )
-    charge = _charge(test_db, client.id)
+    charge = charge_factory(
+        client_record_id=client.id,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        amount=Decimal("100.00"),
+        issued_at=utcnow(),
+    )
     repo = ChargeRepository(test_db)
 
     # Sanity: visible while not deleted.
@@ -49,15 +40,20 @@ def test_get_hides_soft_deleted_by_default(test_db):
     assert repo.get_by_id(charge.id) is None
 
 
-def test_get_returns_soft_deleted_with_include_deleted(test_db):
-    client = seed_client_identity(
-        test_db,
+def test_get_returns_soft_deleted_with_include_deleted(test_db, client_factory, charge_factory):
+    client = client_factory(
         full_name="Base Repo Client 2",
         id_number="BRC-2",
         id_number_type=IdNumberType.INDIVIDUAL,
         vat_reporting_frequency=VatType.MONTHLY,
     )
-    charge = _charge(test_db, client.id)
+    charge = charge_factory(
+        client_record_id=client.id,
+        charge_type=ChargeType.OTHER,
+        status=ChargeStatus.ISSUED,
+        amount=Decimal("100.00"),
+        issued_at=utcnow(),
+    )
     repo = ChargeRepository(test_db)
     repo.soft_delete(charge.id)
 

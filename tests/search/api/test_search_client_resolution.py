@@ -6,23 +6,20 @@ from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocati
 
 
 def _make_binder(
-    db,
+    binder_factory,
     client_record_id: int,
     binder_number: str,
     user_id: int,
 ) -> Binder:
-    binder = Binder(
+    return binder_factory(
         client_record_id=client_record_id,
         binder_number=binder_number,
         period_start=date.today(),
         created_by=user_id,
         location_status=BinderLocationStatus.IN_OFFICE,
         capacity_status=BinderCapacityStatus.OPEN,
+        commit=True,
     )
-    db.add(binder)
-    db.commit()
-    db.refresh(binder)
-    return binder
 
 
 def test_client_matches_are_paginated(client, advisor_headers, create_client_with_business):
@@ -45,13 +42,13 @@ def test_client_matches_are_paginated(client, advisor_headers, create_client_wit
 
 
 def test_client_appears_once_regardless_of_binder_count(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, binder_factory
 ):
     """The old projection emitted one row per client/binder pair; a client is one row."""
     crm_client, _ = create_client_with_business(full_name="Many Binder Client")
-    _make_binder(test_db, crm_client.id, "MB-001", test_user.id)
-    _make_binder(test_db, crm_client.id, "MB-002", test_user.id)
-    _make_binder(test_db, crm_client.id, "MB-003", test_user.id)
+    _make_binder(binder_factory, crm_client.id, "MB-001", test_user.id)
+    _make_binder(binder_factory, crm_client.id, "MB-002", test_user.id)
+    _make_binder(binder_factory, crm_client.id, "MB-003", test_user.id)
 
     response = client.get("/api/v1/search?search=Many%20Binder", headers=advisor_headers)
 
@@ -61,10 +58,10 @@ def test_client_appears_once_regardless_of_binder_count(
 
 
 def test_binder_number_resolves_to_the_owning_client(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, binder_factory
 ):
     crm_client, _ = create_client_with_business(full_name="Binder Owner")
-    _make_binder(test_db, crm_client.id, "OPS-BINDER-991", test_user.id)
+    _make_binder(binder_factory, crm_client.id, "OPS-BINDER-991", test_user.id)
 
     response = client.get("/api/v1/search?search=OPS-BINDER-991", headers=advisor_headers)
 
@@ -75,10 +72,10 @@ def test_binder_number_resolves_to_the_owning_client(
 
 
 def test_matched_binder_numbers_stay_empty_for_a_name_search(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, binder_factory
 ):
     crm_client, _ = create_client_with_business(full_name="Unique Client Name")
-    _make_binder(test_db, crm_client.id, "UNRELATED-777", test_user.id)
+    _make_binder(binder_factory, crm_client.id, "UNRELATED-777", test_user.id)
 
     response = client.get("/api/v1/search?search=Unique%20Client", headers=advisor_headers)
 
@@ -86,11 +83,11 @@ def test_matched_binder_numbers_stay_empty_for_a_name_search(
 
 
 def test_term_resolves_a_handed_over_binder_to_its_owner(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, binder_factory
 ):
     """Where a binder is now does not change whose it is — the term identifies, it does not filter."""
     owner, _ = create_client_with_business(full_name="Handed Over Owner")
-    binder = _make_binder(test_db, owner.id, "HANDED-4242", test_user.id)
+    binder = _make_binder(binder_factory, owner.id, "HANDED-4242", test_user.id)
     binder.location_status = BinderLocationStatus.HANDED_OVER
     test_db.commit()
 
@@ -102,10 +99,10 @@ def test_term_resolves_a_handed_over_binder_to_its_owner(
 
 
 def test_a_deleted_binder_never_resolves_its_owner(
-    client, test_db, advisor_headers, test_user, create_client_with_business
+    client, test_db, advisor_headers, test_user, create_client_with_business, binder_factory
 ):
     owner, _ = create_client_with_business(full_name="Deleted Binder Owner")
-    binder = _make_binder(test_db, owner.id, "DELETED-9001", test_user.id)
+    binder = _make_binder(binder_factory, owner.id, "DELETED-9001", test_user.id)
     binder.deleted_at = datetime.now(UTC)
     test_db.commit()
 
@@ -149,23 +146,22 @@ def test_a_resolved_search_runs_at_most_four_queries(test_db, create_client_with
     assert len(statements) <= 4
 
 
-def test_an_expansion_runs_at_most_two_queries(test_db, test_user, create_client_with_business):
+def test_an_expansion_runs_at_most_two_queries(
+    test_db, test_user, create_client_with_business, task_factory
+):
     from sqlalchemy import event
 
     from app.search.schemas.search import SearchMatchType
     from app.search.services.search_service import SearchService
-    from app.tasks.models.task import Task
 
     crm_client, _ = create_client_with_business(full_name="Expansion Budget")
     for _ in range(3):
-        test_db.add(
-            Task(
-                title="expansion budget task",
-                client_record_id=crm_client.id,
-                created_by_user_id=test_user.id,
-            )
+        task_factory(
+            title="expansion budget task",
+            client_record_id=crm_client.id,
+            created_by_user_id=test_user.id,
+            commit=True,
         )
-    test_db.commit()
 
     statements: list[str] = []
 

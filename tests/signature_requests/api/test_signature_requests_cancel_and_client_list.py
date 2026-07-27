@@ -5,19 +5,16 @@ from app.signature_requests.models.signature_request import SignatureRequestStat
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from tests.helpers.identity import seed_client_with_business
 
 
-def _business(db, suffix: str) -> Business:
-    _client, business = seed_client_with_business(
-        db,
+def _business(create_client_with_business, suffix: str) -> Business:
+    _client, business = create_client_with_business(
         full_name=f"Signature List Client {suffix}",
         id_number=f"SIG-API-{suffix}",
         email=f"sig{suffix}@example.com",
         business_name=f"Signature List Business {suffix}",
         opened_at=date(2026, 1, 1),
     )
-    db.commit()
     return business
 
 
@@ -37,8 +34,8 @@ def _create_signature_request(api_client, headers, business: Business, title: st
     return resp.json()["id"]
 
 
-def test_cancel_signature_request(client, test_db, advisor_headers):
-    business = _business(test_db, "A")
+def test_cancel_signature_request(client, test_db, advisor_headers, create_client_with_business):
+    business = _business(create_client_with_business, "A")
     request_id = _create_signature_request(client, advisor_headers, business, "Cancelable")
 
     cancel_resp = client.post(
@@ -65,9 +62,11 @@ def test_cancel_signature_request(client, test_db, advisor_headers):
     assert canceled_event["reason"] == "Client asked to stop"
 
 
-def test_list_signature_requests_by_client_with_status_filter(client, test_db, advisor_headers):
-    business_a = _business(test_db, "B")
-    business_b = _business(test_db, "C")
+def test_list_signature_requests_by_client_with_status_filter(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business_a = _business(create_client_with_business, "B")
+    business_b = _business(create_client_with_business, "C")
 
     req_a_pending = _create_signature_request(client, advisor_headers, business_a, "Pending A")
 
@@ -111,9 +110,11 @@ def test_get_signature_request_not_found_returns_404(client, advisor_headers):
     assert resp.json()["error"]["code"] == "SIGNATURE_REQUEST.NOT_FOUND"
 
 
-def test_cancel_signature_request_rejects_mismatched_client_scope(client, test_db, advisor_headers):
-    business_a = _business(test_db, "D")
-    business_b = _business(test_db, "E")
+def test_cancel_signature_request_rejects_mismatched_client_scope(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business_a = _business(create_client_with_business, "D")
+    business_b = _business(create_client_with_business, "E")
     request_id = _create_signature_request(client, advisor_headers, business_a, "Scoped")
 
     resp = client.post(
@@ -129,9 +130,9 @@ def test_cancel_signature_request_rejects_mismatched_client_scope(client, test_d
 
 
 def test_cancel_signature_request_rejects_terminal_status_as_not_found(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, create_client_with_business
 ):
-    business = _business(test_db, "G")
+    business = _business(create_client_with_business, "G")
     request_id = _create_signature_request(client, advisor_headers, business, "Signed")
     SignatureRequestRepository(test_db).update(request_id, status=SignatureRequestStatus.SIGNED)
 
@@ -147,8 +148,10 @@ def test_cancel_signature_request_rejects_terminal_status_as_not_found(
     assert detail.json()["status"] == "signed"
 
 
-def test_bare_cancel_route_is_not_available(client, test_db, advisor_headers):
-    business = _business(test_db, "F")
+def test_bare_cancel_route_is_not_available(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business, "F")
     request_id = _create_signature_request(client, advisor_headers, business, "No bare route")
 
     resp = client.post(

@@ -8,13 +8,10 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
-from app.notifications.repositories.notification_repository import NotificationRepository
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(test_db, suffix: str):
-    return seed_client_identity(
-        test_db,
+def _client(client_factory, suffix: str):
+    return client_factory(
         full_name=f"Notifications Center {suffix}",
         id_number=f"NC-{suffix}",
         email=f"center-{suffix}@example.com",
@@ -22,7 +19,7 @@ def _client(test_db, suffix: str):
 
 
 def _notification(
-    test_db,
+    notification_factory,
     client_record_id: int,
     *,
     trigger: NotificationTrigger = NotificationTrigger.CLIENT_GENERAL_MESSAGE,
@@ -30,7 +27,7 @@ def _notification(
     triggered_by: int | None = None,
     created_at: dt.datetime | None = None,
 ):
-    item = NotificationRepository(test_db).create(
+    return notification_factory(
         client_record_id=client_record_id,
         trigger=trigger,
         channel=NotificationChannel.EMAIL,
@@ -39,16 +36,15 @@ def _notification(
         subject_snapshot="נושא",
         status=status,
         triggered_by=triggered_by,
+        created_at=created_at,
     )
-    if created_at is not None:
-        item.created_at = created_at
-        test_db.flush()
-    return item
 
 
-def test_list_notifications_accepts_page_size_25(client, test_db, advisor_headers):
-    seeded = _client(test_db, "page-size")
-    _notification(test_db, seeded.id)
+def test_list_notifications_accepts_page_size_25(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
+    seeded = _client(client_factory, "page-size")
+    _notification(notification_factory, seeded.id)
     test_db.commit()
 
     response = client.get("/api/v1/notifications?page_size=25", headers=advisor_headers)
@@ -78,9 +74,11 @@ def test_notification_metadata_requires_authentication(client):
     assert response.status_code == 401
 
 
-def test_list_notifications_accepts_page_size_50(client, test_db, advisor_headers):
-    seeded = _client(test_db, "page-size-50")
-    _notification(test_db, seeded.id)
+def test_list_notifications_accepts_page_size_50(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
+    seeded = _client(client_factory, "page-size-50")
+    _notification(notification_factory, seeded.id)
     test_db.commit()
 
     response = client.get("/api/v1/notifications?page_size=50", headers=advisor_headers)
@@ -89,9 +87,11 @@ def test_list_notifications_accepts_page_size_50(client, test_db, advisor_header
     assert response.json()["page_size"] == 50
 
 
-def test_list_notifications_accepts_page_size_at_max(client, test_db, advisor_headers):
-    seeded = _client(test_db, "page-size-max")
-    _notification(test_db, seeded.id)
+def test_list_notifications_accepts_page_size_at_max(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
+    seeded = _client(client_factory, "page-size-max")
+    _notification(notification_factory, seeded.id)
     test_db.commit()
 
     response = client.get(
@@ -124,14 +124,18 @@ def test_list_notifications_openapi_page_size_contract_has_max(client):
     assert page_size_schema["maximum"] == MAX_PAGE_SIZE
 
 
-def test_trigger_filter_returns_only_matching_records(client, test_db, advisor_headers):
-    seeded = _client(test_db, "trigger")
+def test_trigger_filter_returns_only_matching_records(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
+    seeded = _client(client_factory, "trigger")
     wanted = _notification(
-        test_db,
+        notification_factory,
         seeded.id,
         trigger=NotificationTrigger.PAYMENT_REMINDER,
     )
-    _notification(test_db, seeded.id, trigger=NotificationTrigger.CLIENT_GENERAL_MESSAGE)
+    _notification(
+        notification_factory, seeded.id, trigger=NotificationTrigger.CLIENT_GENERAL_MESSAGE
+    )
     test_db.commit()
 
     resp = client.get(
@@ -145,10 +149,12 @@ def test_trigger_filter_returns_only_matching_records(client, test_db, advisor_h
     assert data["items"][0]["id"] == wanted.id
 
 
-def test_status_filter_returns_only_matching_records(client, test_db, advisor_headers):
-    seeded = _client(test_db, "status")
-    wanted = _notification(test_db, seeded.id, status=NotificationStatus.SENT)
-    _notification(test_db, seeded.id, status=NotificationStatus.FAILED)
+def test_status_filter_returns_only_matching_records(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
+    seeded = _client(client_factory, "status")
+    wanted = _notification(notification_factory, seeded.id, status=NotificationStatus.SENT)
+    _notification(notification_factory, seeded.id, status=NotificationStatus.FAILED)
     test_db.commit()
 
     resp = client.get("/api/v1/notifications?status=sent", headers=advisor_headers)
@@ -159,14 +165,16 @@ def test_status_filter_returns_only_matching_records(client, test_db, advisor_he
     assert data["items"][0]["id"] == wanted.id
 
 
-def test_created_after_created_before_boundaries(client, test_db, advisor_headers):
-    seeded = _client(test_db, "dates")
+def test_created_after_created_before_boundaries(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
+    seeded = _client(client_factory, "dates")
     start = dt.datetime(2026, 1, 10, 9, 0, 0)
     end = dt.datetime(2026, 1, 20, 17, 0, 0)
-    first = _notification(test_db, seeded.id, created_at=start)
-    second = _notification(test_db, seeded.id, created_at=end)
-    _notification(test_db, seeded.id, created_at=start - dt.timedelta(seconds=1))
-    _notification(test_db, seeded.id, created_at=end + dt.timedelta(seconds=1))
+    first = _notification(notification_factory, seeded.id, created_at=start)
+    second = _notification(notification_factory, seeded.id, created_at=end)
+    _notification(notification_factory, seeded.id, created_at=start - dt.timedelta(seconds=1))
+    _notification(notification_factory, seeded.id, created_at=end + dt.timedelta(seconds=1))
     test_db.commit()
 
     resp = client.get(
@@ -180,11 +188,13 @@ def test_created_after_created_before_boundaries(client, test_db, advisor_header
     assert {item["id"] for item in data["items"]} == {first.id, second.id}
 
 
-def test_old_date_params_are_ignored(client, test_db, advisor_headers):
+def test_old_date_params_are_ignored(
+    client, test_db, advisor_headers, client_factory, notification_factory
+):
     """Old date_from/date_to are not part of the contract and must not filter."""
-    seeded = _client(test_db, "olddates")
-    _notification(test_db, seeded.id, created_at=dt.datetime(2026, 1, 10, 9, 0, 0))
-    _notification(test_db, seeded.id, created_at=dt.datetime(2026, 1, 20, 17, 0, 0))
+    seeded = _client(client_factory, "olddates")
+    _notification(notification_factory, seeded.id, created_at=dt.datetime(2026, 1, 10, 9, 0, 0))
+    _notification(notification_factory, seeded.id, created_at=dt.datetime(2026, 1, 20, 17, 0, 0))
     test_db.commit()
 
     resp = client.get(
@@ -197,10 +207,12 @@ def test_old_date_params_are_ignored(client, test_db, advisor_headers):
     assert resp.json()["total"] == 2
 
 
-def test_triggered_by_filter(client, test_db, advisor_headers):
-    seeded = _client(test_db, "triggered")
-    wanted = _notification(test_db, seeded.id, triggered_by=10)
-    _notification(test_db, seeded.id, triggered_by=20)
+def test_triggered_by_filter(
+    client, test_db, advisor_headers, client_factory, notification_factory, actor_user
+):
+    seeded = _client(client_factory, "triggered")
+    wanted = _notification(notification_factory, seeded.id, triggered_by=actor_user.id)
+    _notification(notification_factory, seeded.id, triggered_by=actor_user.id)
     test_db.commit()
 
     resp = client.get("/api/v1/notifications?triggered_by=10", headers=advisor_headers)

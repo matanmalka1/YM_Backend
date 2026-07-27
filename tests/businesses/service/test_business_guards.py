@@ -6,7 +6,6 @@ from app.businesses.business_guards import (
 )
 from app.businesses.models.business import Business, BusinessStatus
 from app.core.exceptions import ForbiddenError, NotFoundError
-from tests.helpers.identity import seed_client_identity
 
 
 class _Business:
@@ -28,28 +27,26 @@ def test_assert_business_allows_create_blocks_closed_and_frozen():
     assert frozen.value.code == "BUSINESS.FROZEN"
 
 
-def _create_business(test_db, status: BusinessStatus = BusinessStatus.ACTIVE) -> Business:
+def _create_business(
+    client_factory, business_factory, status: BusinessStatus = BusinessStatus.ACTIVE
+) -> Business:
     from datetime import date
 
-    client = seed_client_identity(
-        test_db,
+    client = client_factory(
         full_name="Business Guard Client",
         id_number=f"BG-{status.value}",
     )
-    business = Business(
+    return business_factory(
         legal_entity_id=client.legal_entity_id,
         business_name="Business Guard Business",
         opened_at=date.today(),
         status=status,
+        commit=True,
     )
-    test_db.add(business)
-    test_db.commit()
-    test_db.refresh(business)
-    return business
 
 
-def test_validate_business_for_create_returns_business(test_db):
-    business = _create_business(test_db)
+def test_validate_business_for_create_returns_business(test_db, client_factory, business_factory):
+    business = _create_business(client_factory, business_factory)
     validated = validate_business_for_create(test_db, business.id)
     assert validated.id == business.id
 
@@ -60,8 +57,8 @@ def test_validate_business_for_create_raises_not_found(test_db):
     assert exc.value.code == "BUSINESS.NOT_FOUND"
 
 
-def test_validate_business_for_create_blocks_frozen(test_db):
-    business = _create_business(test_db, status=BusinessStatus.FROZEN)
+def test_validate_business_for_create_blocks_frozen(test_db, client_factory, business_factory):
+    business = _create_business(client_factory, business_factory, status=BusinessStatus.FROZEN)
     with pytest.raises(ForbiddenError) as exc:
         validate_business_for_create(test_db, business.id)
     assert exc.value.code == "BUSINESS.FROZEN"

@@ -32,35 +32,35 @@ def _seed(
 
 
 class TestCreateWorkItem:
-    def test_happy_path_material_received(self, test_db):
+    def test_happy_path_material_received(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000001")
         repo = VatWorkItemRepository(test_db)
         result = intake.create_work_item(
-            repo, test_db, client_record_id=c.id, period="2026-01", created_by=1
+            repo, test_db, client_record_id=c.id, period="2026-01", created_by=actor_user.id
         )
         assert result.status == VatWorkItemStatus.MATERIAL_RECEIVED
 
-    def test_client_not_found_raises(self, test_db):
+    def test_client_not_found_raises(self, test_db, actor_user):
         repo = VatWorkItemRepository(test_db)
         with pytest.raises(NotFoundError) as exc_info:
             intake.create_work_item(
-                repo, test_db, client_record_id=99999, period="2026-01", created_by=1
+                repo, test_db, client_record_id=99999, period="2026-01", created_by=actor_user.id
             )
         assert exc_info.value.code == "VAT.NOT_FOUND"
 
-    def test_duplicate_period_raises(self, test_db):
+    def test_duplicate_period_raises(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000002")
         repo = VatWorkItemRepository(test_db)
         intake.create_work_item(
-            repo, test_db, client_record_id=c.id, period="2026-01", created_by=1
+            repo, test_db, client_record_id=c.id, period="2026-01", created_by=actor_user.id
         )
         with pytest.raises(ConflictError) as exc_info:
             intake.create_work_item(
-                repo, test_db, client_record_id=c.id, period="2026-01", created_by=1
+                repo, test_db, client_record_id=c.id, period="2026-01", created_by=actor_user.id
             )
         assert exc_info.value.code == "VAT.CONFLICT"
 
-    def test_pending_without_note_raises(self, test_db):
+    def test_pending_without_note_raises(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000003")
         repo = VatWorkItemRepository(test_db)
         with pytest.raises(AppError) as exc_info:
@@ -69,12 +69,12 @@ class TestCreateWorkItem:
                 test_db,
                 client_record_id=c.id,
                 period="2026-01",
-                created_by=1,
+                created_by=actor_user.id,
                 mark_pending=True,
             )
         assert exc_info.value.code == "VAT.PENDING_NOTE_REQUIRED"
 
-    def test_pending_with_note_creates_item(self, test_db):
+    def test_pending_with_note_creates_item(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000004")
         repo = VatWorkItemRepository(test_db)
         result = intake.create_work_item(
@@ -82,27 +82,27 @@ class TestCreateWorkItem:
             test_db,
             client_record_id=c.id,
             period="2026-01",
-            created_by=1,
+            created_by=actor_user.id,
             mark_pending=True,
             pending_materials_note="Missing Q4",
         )
         assert result.status == VatWorkItemStatus.PENDING_MATERIALS
 
-    def test_exempt_vat_type_rejected(self, test_db):
+    def test_exempt_vat_type_rejected(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000005", vat_type=VatType.EXEMPT)
         repo = VatWorkItemRepository(test_db)
         with pytest.raises(AppError) as exc_info:
             intake.create_work_item(
-                repo, test_db, client_record_id=c.id, period="2026-01", created_by=1
+                repo, test_db, client_record_id=c.id, period="2026-01", created_by=actor_user.id
             )
         assert exc_info.value.code == "VAT.CLIENT_EXEMPT"
 
-    def test_bimonthly_rejects_even_month(self, test_db):
+    def test_bimonthly_rejects_even_month(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000006", vat_type=VatType.BIMONTHLY)
         repo = VatWorkItemRepository(test_db)
         with pytest.raises(AppError) as exc_info:
             intake.create_work_item(
-                repo, test_db, client_record_id=c.id, period="2026-02", created_by=1
+                repo, test_db, client_record_id=c.id, period="2026-02", created_by=actor_user.id
             )
         assert exc_info.value.code == "VAT.INVALID_PERIOD_FOR_FREQUENCY"
 

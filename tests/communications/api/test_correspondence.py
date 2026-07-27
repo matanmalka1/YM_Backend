@@ -1,41 +1,34 @@
 from datetime import date, datetime
 
-from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
-from app.businesses.models.business import Business
+from app.authority_contacts.models.authority_contact import ContactType
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.services.correspondence_service import CorrespondenceService
-from tests.helpers.identity import seed_client_with_business
 
 
-def _create_business(test_db, id_number: str = "777777777") -> Business:
-    _, business = seed_client_with_business(
-        test_db,
+def _create_business(create_client_with_business, id_number: str = "777777777"):
+    _, business = create_client_with_business(
         full_name="Correspondence Client",
         id_number=id_number,
         business_name=f"Business {id_number}",
         opened_at=date.today(),
     )
-    test_db.commit()
-    test_db.refresh(business)
     return business
 
 
-def _create_contact(test_db, client_id: int) -> AuthorityContact:
-    contact = AuthorityContact(
+def _create_contact(authority_contact_factory, client_id: int):
+    return authority_contact_factory(
         client_record_id=client_id,
         contact_type=ContactType.ASSESSING_OFFICER,
         name="Assessing Officer",
         phone="0501234567",
     )
-    test_db.add(contact)
-    test_db.commit()
-    test_db.refresh(contact)
-    return contact
 
 
-def test_create_correspondence_with_business_context(client, test_db, advisor_headers, test_user):
-    business = _create_business(test_db)
-    contact = _create_contact(test_db, business.client_id)
+def test_create_correspondence_with_business_context(
+    client, advisor_headers, test_user, create_client_with_business, authority_contact_factory
+):
+    business = _create_business(create_client_with_business)
+    contact = _create_contact(authority_contact_factory, business.client_id)
 
     response = client.post(
         f"/api/v1/clients/{business.client_id}/correspondence",
@@ -60,8 +53,10 @@ def test_create_correspondence_with_business_context(client, test_db, advisor_he
     assert data["created_by"] == test_user.id
 
 
-def test_create_correspondence_invalid_type_returns_422(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_create_correspondence_invalid_type_returns_422(
+    client, advisor_headers, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
 
     response = client.post(
         f"/api/v1/clients/{business.client_id}/correspondence",
@@ -78,10 +73,12 @@ def test_create_correspondence_invalid_type_returns_422(client, test_db, advisor
     assert response.json()["error"]["code"] == "validation_error"
 
 
-def test_create_correspondence_contact_mismatch_returns_403(client, test_db, advisor_headers):
-    owner_business = _create_business(test_db, id_number="777777777")
-    other_business = _create_business(test_db, id_number="888888888")
-    contact = _create_contact(test_db, owner_business.client_id)
+def test_create_correspondence_contact_mismatch_returns_403(
+    client, advisor_headers, create_client_with_business, authority_contact_factory
+):
+    owner_business = _create_business(create_client_with_business, id_number="777777777")
+    other_business = _create_business(create_client_with_business, id_number="888888888")
+    contact = _create_contact(authority_contact_factory, owner_business.client_id)
 
     response = client.post(
         f"/api/v1/clients/{other_business.client_id}/correspondence",
@@ -100,9 +97,9 @@ def test_create_correspondence_contact_mismatch_returns_403(client, test_db, adv
 
 
 def test_list_correspondence_ordered_desc_and_get_by_id(
-    client, test_db, advisor_headers, test_user
+    client, test_db, advisor_headers, test_user, create_client_with_business
 ):
-    business = _create_business(test_db)
+    business = _create_business(create_client_with_business)
     service = CorrespondenceService(test_db)
 
     earlier = service.add_entry(
@@ -141,8 +138,10 @@ def test_list_correspondence_ordered_desc_and_get_by_id(
     assert get_response.json()["id"] == later.id
 
 
-def test_list_correspondence_occurred_range_filter(client, test_db, advisor_headers, test_user):
-    business = _create_business(test_db)
+def test_list_correspondence_occurred_range_filter(
+    client, test_db, advisor_headers, test_user, create_client_with_business
+):
+    business = _create_business(create_client_with_business)
     service = CorrespondenceService(test_db)
 
     earlier = service.add_entry(
@@ -181,10 +180,10 @@ def test_list_correspondence_occurred_range_filter(client, test_db, advisor_head
 
 
 def test_list_correspondence_old_date_params_are_ignored(
-    client, test_db, advisor_headers, test_user
+    client, test_db, advisor_headers, test_user, create_client_with_business
 ):
     """Old from_date/to_date are not part of the contract and must not filter."""
-    business = _create_business(test_db)
+    business = _create_business(create_client_with_business)
     service = CorrespondenceService(test_db)
     for day in (1, 5):
         service.add_entry(

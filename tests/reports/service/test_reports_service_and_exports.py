@@ -5,49 +5,36 @@ from types import SimpleNamespace
 
 from sqlalchemy import event
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.reports.advance_payment_report import AdvancePaymentReportService
 from app.reports.services.report_export_service import ExportService
 from app.reports.services.report_service import AgingReportService
-from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
-def _client_and_business(db, suffix: str):
-    client, business = seed_client_with_business(
-        db,
-        full_name=f"Aging Service Client {suffix}",
-        id_number=f"{100000000 + int(suffix):09d}",
-        business_name=f"Aging Service Client {suffix}",
-        opened_at=date.today(),
-    )
-    db.commit()
-    return client, business
-
-
-def _charge(db, client_record_id: int, business_id: int, amount: str, issued_days_ago: int):
+def _charge(
+    charge_factory, client_record_id: int, business_id: int, amount: str, issued_days_ago: int
+):
     issued_at = date.today() - timedelta(days=issued_days_ago)
-    charge = Charge(
+    return charge_factory(
         client_record_id=client_record_id,
         business_id=business_id,
         amount=Decimal(amount),
         charge_type=ChargeType.CONSULTATION_FEE,
         status=ChargeStatus.ISSUED,
         issued_at=issued_at,
-        created_at=issued_at,
+        commit=True,
     )
-    db.add(charge)
-    db.commit()
-    db.refresh(charge)
-    return charge
 
 
-def test_aging_report_service_calculates_buckets(test_db):
-    c, b = _client_and_business(test_db, "1")
-    _charge(test_db, c.id, b.id, "100.00", 5)
-    _charge(test_db, c.id, b.id, "200.00", 40)
-    _charge(test_db, c.id, b.id, "300.00", 70)
-    _charge(test_db, c.id, b.id, "400.00", 120)
+def test_aging_report_service_calculates_buckets(
+    test_db, create_client_with_business, charge_factory
+):
+    c, b = create_client_with_business()
+    _charge(charge_factory, c.id, b.id, "100.00", 5)
+    _charge(charge_factory, c.id, b.id, "200.00", 40)
+    _charge(charge_factory, c.id, b.id, "300.00", 70)
+    _charge(charge_factory, c.id, b.id, "400.00", 120)
 
     report = AgingReportService(test_db).generate_aging_report()
 
@@ -58,10 +45,12 @@ def test_aging_report_service_calculates_buckets(test_db):
     assert report["summary"]["total_90_plus"] == 400.0
 
 
-def test_aging_report_service_batches_client_name_lookup(test_db):
-    for suffix in range(10, 18):
-        c, b = _client_and_business(test_db, str(suffix))
-        _charge(test_db, c.id, b.id, "100.00", 45)
+def test_aging_report_service_batches_client_name_lookup(
+    test_db, create_client_with_business, charge_factory
+):
+    for _suffix in range(10, 18):
+        c, b = create_client_with_business()
+        _charge(charge_factory, c.id, b.id, "100.00", 45)
 
     query_count = 0
 
@@ -80,9 +69,11 @@ def test_aging_report_service_batches_client_name_lookup(test_db):
     assert query_count <= 6
 
 
-def test_export_service_generates_excel_and_pdf_files(test_db):
-    c, b = _client_and_business(test_db, "2")
-    _charge(test_db, c.id, b.id, "150.00", 20)
+def test_export_service_generates_excel_and_pdf_files(
+    test_db, create_client_with_business, charge_factory
+):
+    c, b = create_client_with_business()
+    _charge(charge_factory, c.id, b.id, "150.00", 20)
 
     report_data = AgingReportService(test_db).generate_aging_report()
     exporter = ExportService()
@@ -172,9 +163,9 @@ def test_advance_payment_report_uses_client_record_legal_entity_names(test_db):
     ]
 
 
-def test_advance_payment_report_batches_client_name_lookup(test_db):
-    for suffix in range(20, 28):
-        client, _business = _client_and_business(test_db, str(suffix))
+def test_advance_payment_report_batches_client_name_lookup(test_db, create_client_with_business):
+    for _suffix in range(20, 28):
+        client, _business = create_client_with_business()
         create_linked_advance_payment(
             test_db,
             client_record_id=client.id,

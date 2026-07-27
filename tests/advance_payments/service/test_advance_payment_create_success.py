@@ -9,27 +9,27 @@ from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import AdvancePaymentFrequency
 from app.core.exceptions import ForbiddenError, NotFoundError
-from tests.helpers.identity import seed_client_identity
 
 _seq = count(1)
 
 
-def _client_record(db, *, status: ClientStatus = ClientStatus.ACTIVE) -> ClientRecord:
+def _client_record(
+    test_db, client_factory, *, status: ClientStatus = ClientStatus.ACTIVE
+) -> ClientRecord:
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    seeded = client_factory(
         full_name=f"AP Create Client {idx}",
         id_number=f"991199{idx:03d}",
         status=status,
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    record = db.get(ClientRecord, client.id)
+    record = test_db.get(ClientRecord, seeded.id)
     assert record is not None
     return record
 
 
-def test_create_payment_success_sets_defaults(test_db):
-    client_record = _client_record(test_db)
+def test_create_payment_success_sets_defaults(test_db, client_factory):
+    client_record = _client_record(test_db, client_factory)
     service = AdvancePaymentService(test_db)
 
     payment = service.create_payment_for_client(
@@ -54,8 +54,8 @@ def test_create_payment_success_sets_defaults(test_db):
     assert payment.notes == "first advance"
 
 
-def test_due_date_original_cannot_change_after_first_set(test_db):
-    client_record = _client_record(test_db)
+def test_due_date_original_cannot_change_after_first_set(test_db, client_factory):
+    client_record = _client_record(test_db, client_factory)
     service = AdvancePaymentService(test_db)
     payment = service.create_payment_for_client(
         client_record_id=client_record.id,
@@ -70,8 +70,8 @@ def test_due_date_original_cannot_change_after_first_set(test_db):
     test_db.rollback()
 
 
-def test_due_date_effective_can_change_with_override_reason(test_db):
-    client_record = _client_record(test_db)
+def test_due_date_effective_can_change_with_override_reason(test_db, client_factory):
+    client_record = _client_record(test_db, client_factory)
     service = AdvancePaymentService(test_db)
     payment = service.create_payment_for_client(
         client_record_id=client_record.id,
@@ -88,8 +88,8 @@ def test_due_date_effective_can_change_with_override_reason(test_db):
     assert payment.due_date_effective == date(2026, 2, 20)
 
 
-def test_due_date_effective_requires_reason_when_changed(test_db):
-    client_record = _client_record(test_db)
+def test_due_date_effective_requires_reason_when_changed(test_db, client_factory):
+    client_record = _client_record(test_db, client_factory)
     service = AdvancePaymentService(test_db)
     payment = service.create_payment_for_client(
         client_record_id=client_record.id,
@@ -104,8 +104,8 @@ def test_due_date_effective_requires_reason_when_changed(test_db):
     test_db.rollback()
 
 
-def test_due_date_effective_equal_original_does_not_require_reason(test_db):
-    client_record = _client_record(test_db)
+def test_due_date_effective_equal_original_does_not_require_reason(test_db, client_factory):
+    client_record = _client_record(test_db, client_factory)
     service = AdvancePaymentService(test_db)
     payment = service.create_payment_for_client(
         client_record_id=client_record.id,
@@ -131,8 +131,8 @@ def test_create_payment_missing_business_raises(test_db):
         )
 
 
-def test_create_payment_closed_client_raises_client_closed(test_db):
-    client_record = _client_record(test_db, status=ClientStatus.CLOSED)
+def test_create_payment_closed_client_raises_client_closed(test_db, client_factory):
+    client_record = _client_record(test_db, client_factory, status=ClientStatus.CLOSED)
     service = AdvancePaymentService(test_db)
 
     with pytest.raises(ForbiddenError) as exc_info:

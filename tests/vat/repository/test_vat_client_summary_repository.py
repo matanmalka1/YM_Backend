@@ -1,52 +1,21 @@
 from datetime import date
 from decimal import Decimal
-from itertools import count
 
-from app.businesses.models.business import Business
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
-_seq = count(1)
 
-
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
-        full_name="VAT Summary Repo User",
-        email="vat.summary.repo@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _business(test_db) -> tuple[Business, int]:
-    idx = next(_seq)
-    client, business = seed_client_with_business(
-        test_db,
-        full_name=f"VAT Summary Client {idx}",
-        id_number=f"VAT-SUM-{idx}",
-        opened_at=date(2026, 1, 1),
-    )
-    test_db.commit()
-    test_db.refresh(business)
-    return business, client.id
-
-
-def test_vat_client_summary_repository_periods_and_annual_aggregates(test_db):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_vat_client_summary_repository_periods_and_annual_aggregates(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     work_repo = VatWorkItemRepository(test_db)
     summary_repo = VatClientSummaryRepository(test_db)
 
@@ -100,11 +69,13 @@ def test_vat_client_summary_repository_periods_and_annual_aggregates(test_db):
     assert annual[0]["filed_count"] == 1
 
 
-def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(test_db):
-    user = _user(test_db)
-    _, first_client_id = _business(test_db)
-    _, second_client_id = _business(test_db)
-    _, unused_client_id = _business(test_db)
+def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    first_client_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
+    second_client_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
+    unused_client_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     work_repo = VatWorkItemRepository(test_db)
     summary_repo = VatClientSummaryRepository(test_db)
 
@@ -186,10 +157,12 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(test_d
     }
 
 
-def test_vat_work_item_repository_list_by_business(test_db):
-    user = _user(test_db)
-    _, cr_id_1 = _business(test_db)
-    _, cr_id_2 = _business(test_db)
+def test_vat_work_item_repository_list_by_business(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    cr_id_1 = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
+    cr_id_2 = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
 
     repo = VatWorkItemRepository(test_db)
     a = create_linked_vat_work_item(
@@ -221,9 +194,11 @@ def test_vat_work_item_repository_list_by_business(test_db):
     assert [r.id for r in rows] == [a.id, b.id]
 
 
-def test_vat_work_item_repository_list_by_business_applies_limit(test_db):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_vat_work_item_repository_list_by_business_applies_limit(
+    test_db, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(opened_at=date(2026, 1, 1))[0].id
     repo = VatWorkItemRepository(test_db)
 
     for month in range(1, 301):

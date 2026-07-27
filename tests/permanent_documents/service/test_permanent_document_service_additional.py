@@ -2,14 +2,12 @@ from io import BytesIO
 
 import pytest
 
-from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
 from app.core.exceptions import AppError, NotFoundError
 from app.documents.permanent_documents.models.permanent_document import PermanentDocumentType
 from app.documents.permanent_documents.services.permanent_document_service import (
     PermanentDocumentService,
 )
-from tests.helpers.identity import seed_client_with_business
 
 
 class _Storage:
@@ -27,19 +25,19 @@ class _Storage:
         return f"/dl/{key}?exp={expires_in}"
 
 
-def _business(test_db, *, suffix: str) -> Business:
-    _client, b = seed_client_with_business(
-        test_db,
+def _business(create_client_with_business, *, suffix: str):
+    _client, business = create_client_with_business(
         full_name=f"PermDoc Extra {suffix}",
         id_number=f"7102000{suffix}",
         id_number_type=IdNumberType.CORPORATION,
     )
-    test_db.commit()
-    return b
+    return business
 
 
-def test_permanent_document_size_mime_and_download_not_found(test_db, test_user):
-    b = _business(test_db, suffix="1")
+def test_permanent_document_size_mime_and_download_not_found(
+    test_db, test_user, create_client_with_business
+):
+    b = _business(create_client_with_business, suffix="1")
     service = PermanentDocumentService(test_db, storage=_Storage())
 
     with pytest.raises(AppError) as size_exc:
@@ -72,8 +70,10 @@ def test_permanent_document_size_mime_and_download_not_found(test_db, test_user)
         service.get_download_url(b.client_id, 999999)
 
 
-def test_permanent_document_replace_and_version_increment(test_db, test_user):
-    b = _business(test_db, suffix="2")
+def test_permanent_document_replace_and_version_increment(
+    test_db, test_user, create_client_with_business
+):
+    b = _business(create_client_with_business, suffix="2")
     storage = _Storage()
     service = PermanentDocumentService(test_db, storage=storage)
     doc = service.upload_document(

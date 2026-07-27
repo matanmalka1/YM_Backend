@@ -1,20 +1,9 @@
-from app.businesses.models.business import BusinessStatus
-from tests.helpers.identity import seed_client_with_business
-
-
-def _business(test_db):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name="Charge API Extra",
-        id_number="700000001",
+def test_get_charge_as_advisor_and_delete_paths(
+    client, advisor_headers, test_db, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge API Extra", id_number="700000001"
     )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_get_charge_as_advisor_and_delete_paths(client, advisor_headers, test_db):
-    business = _business(test_db)
     create = client.post(
         "/api/v1/charges",
         headers=advisor_headers,
@@ -45,8 +34,12 @@ def test_get_charge_as_advisor_and_delete_paths(client, advisor_headers, test_db
     assert delete_missing.status_code == 404
 
 
-def test_bulk_action_endpoint_and_invalid_period_validation(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_bulk_action_endpoint_and_invalid_period_validation(
+    client, advisor_headers, test_db, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge API Extra", id_number="700000001"
+    )
     first = client.post(
         "/api/v1/charges",
         headers=advisor_headers,
@@ -97,8 +90,12 @@ def test_bulk_action_endpoint_and_invalid_period_validation(client, advisor_head
     assert invalid_period.status_code == 422
 
 
-def test_create_charge_supports_bimonthly_period(client, advisor_headers, test_db):
-    business = _business(test_db)
+def test_create_charge_supports_bimonthly_period(
+    client, advisor_headers, test_db, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Charge API Extra", id_number="700000001"
+    )
 
     response = client.post(
         "/api/v1/charges",

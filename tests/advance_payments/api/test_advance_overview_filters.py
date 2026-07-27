@@ -11,35 +11,25 @@ from app.advance_payments.repositories.advance_payment_repository import (
 )
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import AdvancePaymentFrequency
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 _seq = count(1)
 PATH = "/api/v1/advance-payments/overview"
 
 
-def _business(db):
+def _business(create_client_with_business):
     idx = next(_seq)
-    client = seed_client_identity(
-        db,
+    _client, business = create_client_with_business(
         full_name=f"Overview Test Client {idx}",
         id_number=f"OVW{idx:06d}",
+        business_name=f"Overview Biz {idx}",
         advance_payment_frequency=AdvancePaymentFrequency.MONTHLY,
     )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"Overview Biz {idx}",
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
-    business.client_record_id = client.id
     return business
 
 
-def test_overview_filter_by_due_date(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_filter_by_due_date(client, test_db, advisor_headers, create_client_with_business):
+    b = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -69,8 +59,10 @@ def test_overview_filter_by_due_date(client, test_db, advisor_headers):
     assert data["items"][0]["due_date"] == "2026-02-15"
 
 
-def test_overview_response_includes_effective_due_date(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_response_includes_effective_due_date(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
         test_db,
@@ -99,8 +91,10 @@ def test_overview_response_includes_effective_due_date(client, test_db, advisor_
     assert data["items"][0]["due_date_effective"] == "2026-02-20"
 
 
-def test_overview_response_allows_null_effective_due_date(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_response_allows_null_effective_due_date(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
         test_db,
@@ -135,9 +129,10 @@ def test_overview_due_date_includes_monthly_and_bimonthly_rows(
     client,
     test_db,
     advisor_headers,
+    create_client_with_business,
 ):
-    monthly_business = _business(test_db)
-    bimonthly_business = _business(test_db)
+    monthly_business = _business(create_client_with_business)
+    bimonthly_business = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     shared_due_date = date(2026, 3, 15)
     monthly = create_linked_advance_payment(
@@ -169,8 +164,10 @@ def test_overview_due_date_includes_monthly_and_bimonthly_rows(
     assert {item["period_months_count"] for item in data["items"]} == {1, 2}
 
 
-def test_overview_filter_by_period_months_count(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_filter_by_period_months_count(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -200,8 +197,10 @@ def test_overview_filter_by_period_months_count(client, test_db, advisor_headers
     assert data["items"][0]["period_months_count"] == 2
 
 
-def test_overview_client_search_by_official_name(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_client_search_by_official_name(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -222,8 +221,10 @@ def test_overview_client_search_by_official_name(client, test_db, advisor_header
     assert resp.json()["total"] >= 1
 
 
-def test_overview_client_search_by_id_number(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_client_search_by_id_number(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b = _business(create_client_with_business)
     repo = AdvancePaymentRepository(test_db)
     create_linked_advance_payment(
         test_db,
@@ -244,8 +245,10 @@ def test_overview_client_search_by_id_number(client, test_db, advisor_headers):
     assert resp.json()["total"] == 1
 
 
-def test_overview_client_search_by_office_client_number(client, test_db, advisor_headers):
-    b = _business(test_db)
+def test_overview_client_search_by_office_client_number(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    b = _business(create_client_with_business)
     cr = test_db.get(ClientRecord, b.client_record_id)
     cr.office_client_number = 88771
     test_db.commit()
@@ -269,9 +272,11 @@ def test_overview_client_search_by_office_client_number(client, test_db, advisor
     assert resp.json()["total"] == 1
 
 
-def test_overview_filter_by_exact_client_record_id(client, test_db, advisor_headers):
-    target = _business(test_db)
-    same_name = _business(test_db)
+def test_overview_filter_by_exact_client_record_id(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    target = _business(create_client_with_business)
+    same_name = _business(create_client_with_business)
     same_name.legal_entity.official_name = target.legal_entity.official_name
     test_db.commit()
 

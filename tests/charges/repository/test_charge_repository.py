@@ -1,43 +1,21 @@
 from datetime import date, datetime
 from decimal import Decimal
 
-from app.businesses.models.business import BusinessStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.charges.repositories.charge_repository import ChargeRepository
-from app.users.models.user import UserRole
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 
 
-def _user(test_db):
-    user = create_user(
-        test_db,
+def test_list_count_and_soft_delete(test_db, user_factory, create_client_with_business):
+    repo = ChargeRepository(test_db)
+    user = user_factory(
         full_name="Charge Admin",
         email="charge.admin@example.com",
         password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
     )
-    return user
-
-
-def _business(test_db, name: str, id_number: str):
-    _client, business = seed_client_with_business(
-        test_db,
-        full_name=name,
-        id_number=id_number,
+    _client_a, business = create_client_with_business(full_name="Charge Client", id_number="CH001")
+    _client_b, other_business = create_client_with_business(
+        full_name="Other Client", id_number="CH002"
     )
-    business.status = BusinessStatus.ACTIVE
-    test_db.commit()
-    return business
-
-
-def test_list_count_and_soft_delete(test_db):
-    repo = ChargeRepository(test_db)
-    user = _user(test_db)
-    business = _business(test_db, "Charge Client", "CH001")
-    other_business = _business(test_db, "Other Client", "CH002")
 
     draft = repo.create(
         client_record_id=business.client_id,
@@ -83,9 +61,11 @@ def test_list_count_and_soft_delete(test_db):
     assert repo.soft_delete(999999, deleted_by=user.id) is False
 
 
-def test_get_aging_buckets_includes_only_issued_and_not_deleted(test_db):
+def test_get_aging_buckets_includes_only_issued_and_not_deleted(
+    test_db, create_client_with_business, actor_user
+):
     repo = ChargeRepository(test_db)
-    business = _business(test_db, "Aging Client", "CH003")
+    _client, business = create_client_with_business(full_name="Aging Client", id_number="CH003")
 
     current = repo.create(
         client_record_id=business.client_id,
@@ -108,7 +88,7 @@ def test_get_aging_buckets_includes_only_issued_and_not_deleted(test_db):
 
     repo.update_status(current.id, ChargeStatus.ISSUED, issued_at=datetime(2026, 3, 10))
     repo.update_status(old.id, ChargeStatus.ISSUED, issued_at=datetime(2025, 12, 1))
-    repo.soft_delete(old.id, deleted_by=1)
+    repo.soft_delete(old.id, deleted_by=actor_user.id)
 
     rows, total = repo.get_aging_buckets_paginated(
         as_of_date=date(2026, 3, 22),

@@ -1,61 +1,40 @@
 from datetime import date, timedelta
 from decimal import Decimal
-from itertools import count
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from tests.helpers.identity import seed_business, seed_client_identity
-
-_client_seq = count(1)
+from app.charges.models.charge import ChargeStatus, ChargeType
 
 
-def _client_and_business(db):
-    seq = next(_client_seq)
-    client = seed_client_identity(
-        db,
-        full_name=f"Aging Client {seq}",
-        id_number=f"11111111{seq}",
-    )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=client.full_name,
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
-    business.client_id = client.id
-    return client, business
-
-
-def _charge(db, client_id: int, business_id: int, amount: Decimal, issued_days_ago: int):
+def _charge(
+    charge_factory, client_id: int, business_id: int, amount: Decimal, issued_days_ago: int
+):
     issued_at = date.today() - timedelta(days=issued_days_ago)
-    charge = Charge(
+    return charge_factory(
         client_record_id=client_id,
         business_id=business_id,
         amount=amount,
         charge_type=ChargeType.CONSULTATION_FEE,
         status=ChargeStatus.ISSUED,
         issued_at=issued_at,
-        created_at=issued_at,
+        commit=True,
     )
-    db.add(charge)
-    db.commit()
-    db.refresh(charge)
-    return charge
 
 
-def test_aging_report_buckets_and_sorting(client, test_db, advisor_headers):
-    client_a, business_a = _client_and_business(test_db)
-    client_b, business_b = _client_and_business(test_db)
+def test_aging_report_buckets_and_sorting(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    client_a, business_a = create_client_with_business()
+    client_b, business_b = create_client_with_business()
 
     # Client A: mix across buckets
-    _charge(test_db, client_a.id, business_a.id, Decimal("100"), issued_days_ago=10)  # current
-    _charge(test_db, client_a.id, business_a.id, Decimal("200"), issued_days_ago=45)  # 30
-    _charge(test_db, client_a.id, business_a.id, Decimal("300"), issued_days_ago=75)  # 60
-    _charge(test_db, client_a.id, business_a.id, Decimal("400"), issued_days_ago=120)  # 90+
+    _charge(
+        charge_factory, client_a.id, business_a.id, Decimal("100"), issued_days_ago=10
+    )  # current
+    _charge(charge_factory, client_a.id, business_a.id, Decimal("200"), issued_days_ago=45)  # 30
+    _charge(charge_factory, client_a.id, business_a.id, Decimal("300"), issued_days_ago=75)  # 60
+    _charge(charge_factory, client_a.id, business_a.id, Decimal("400"), issued_days_ago=120)  # 90+
 
     # Client B: single 90+ should sort below A because total is smaller
-    _charge(test_db, client_b.id, business_b.id, Decimal("150"), issued_days_ago=200)
+    _charge(charge_factory, client_b.id, business_b.id, Decimal("150"), issued_days_ago=200)
 
     resp = client.get("/api/v1/reports/aging", headers=advisor_headers)
     assert resp.status_code == 200
@@ -79,10 +58,12 @@ def test_aging_report_buckets_and_sorting(client, test_db, advisor_headers):
     assert items[0]["oldest_invoice_days"] >= 120
 
 
-def test_aging_report_paginated_large_dataset(client, test_db, advisor_headers):
+def test_aging_report_paginated_large_dataset(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
     for _ in range(55):
-        seeded_client, b = _client_and_business(test_db)
-        _charge(test_db, seeded_client.id, b.id, Decimal("1"), issued_days_ago=5)
+        seeded_client, b = create_client_with_business()
+        _charge(charge_factory, seeded_client.id, b.id, Decimal("1"), issued_days_ago=5)
 
     resp = client.get("/api/v1/reports/aging", headers=advisor_headers)
     assert resp.status_code == 200

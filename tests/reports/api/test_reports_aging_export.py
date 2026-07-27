@@ -4,43 +4,31 @@ from decimal import Decimal
 
 import openpyxl
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from tests.helpers.identity import seed_business, seed_client_identity
+from app.charges.models.charge import ChargeStatus, ChargeType
 
 
-def _seed_charges(db):
-    client = seed_client_identity(
-        db,
-        full_name="Export Aging Client",
-        id_number="AGING-EXP-1",
+def _seed_charges(create_client_with_business, charge_factory):
+    client, business = create_client_with_business(
+        full_name="Export Aging Client", id_number="AGING-EXP-1"
     )
-    business = seed_business(
-        db,
-        legal_entity_id=client.legal_entity_id,
-        business_name=client.full_name,
-        opened_at=date.today(),
-    )
-    db.commit()
-    db.refresh(business)
 
     issued_at = date.today() - timedelta(days=40)
-    charge = Charge(
+    charge_factory(
         client_record_id=client.id,
         business_id=business.id,
         amount=Decimal("250.00"),
         charge_type=ChargeType.CONSULTATION_FEE,
         status=ChargeStatus.ISSUED,
         issued_at=issued_at,
-        created_at=issued_at,
+        commit=True,
     )
-    db.add(charge)
-    db.commit()
-    db.refresh(charge)
     return client
 
 
-def test_aging_excel_exporter(client, test_db, advisor_headers):
-    crm_client = _seed_charges(test_db)
+def test_aging_excel_exporter(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    crm_client = _seed_charges(create_client_with_business, charge_factory)
 
     resp = client.get("/api/v1/reports/aging/export?format=excel", headers=advisor_headers)
     assert resp.status_code == 200
@@ -57,8 +45,10 @@ def test_aging_excel_exporter(client, test_db, advisor_headers):
     assert crm_client.full_name in client_names
 
 
-def test_aging_pdf_exporter(client, test_db, advisor_headers):
-    _seed_charges(test_db)
+def test_aging_pdf_exporter(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    _seed_charges(create_client_with_business, charge_factory)
 
     resp = client.get("/api/v1/reports/aging/export?format=pdf", headers=advisor_headers)
     assert resp.status_code == 200

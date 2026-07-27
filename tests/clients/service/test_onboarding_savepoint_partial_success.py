@@ -16,12 +16,10 @@ from app.actions.services.obligation_orchestrator import generate_client_obligat
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.services.annual_report_create_service import AnnualReportCreateService
 from app.common.enums import EntityType, IdNumberType
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(db, id_number: str) -> int:
-    return seed_client_identity(
-        db,
+def _client(client_factory, id_number: str) -> int:
+    return client_factory(
         full_name="Savepoint Test Client",
         id_number=id_number,
         entity_type=EntityType.OSEK_MURSHE,
@@ -42,12 +40,12 @@ def _fail_on_second_call(original):
     return patched
 
 
-def test_best_effort_year1_persists_when_year2_fails(test_db):
+def test_best_effort_year1_persists_when_year2_fails(test_db, client_factory, actor_user):
     """
     best_effort=True + year-2 failure: year-1 SAVEPOINT is RELEASED before the failure,
     so year-1 AnnualReport survives. result.errors records the failed year.
     """
-    client_id = _client(test_db, "SP-TEST-001")
+    client_id = _client(client_factory, "SP-TEST-001")
     # December reference_date → _years_to_generate returns [year, year+1]
     reference_date = date(2025, 12, 31)
 
@@ -56,7 +54,7 @@ def test_best_effort_year1_persists_when_year2_fails(test_db):
         result = generate_client_obligations_result(
             test_db,
             client_id,
-            actor_id=1,
+            actor_id=actor_user.id,
             entity_type=EntityType.OSEK_MURSHE,
             reference_date=reference_date,
             best_effort=True,
@@ -71,9 +69,9 @@ def test_best_effort_year1_persists_when_year2_fails(test_db):
     assert len(reports) == 1, "only year 1 report persists; year 2 SAVEPOINT was rolled back"
 
 
-def test_best_effort_true_continues_after_year2_failure(test_db):
+def test_best_effort_true_continues_after_year2_failure(test_db, client_factory, actor_user):
     """best_effort=True does not raise; result.errors carries the failure record."""
-    client_id = _client(test_db, "SP-TEST-003")
+    client_id = _client(client_factory, "SP-TEST-003")
     reference_date = date(2025, 12, 31)
 
     patched = _fail_on_second_call(AnnualReportCreateService.create_report)
@@ -81,7 +79,7 @@ def test_best_effort_true_continues_after_year2_failure(test_db):
         result = generate_client_obligations_result(
             test_db,
             client_id,
-            actor_id=1,
+            actor_id=actor_user.id,
             entity_type=EntityType.OSEK_MURSHE,
             reference_date=reference_date,
             best_effort=True,
@@ -91,12 +89,14 @@ def test_best_effort_true_continues_after_year2_failure(test_db):
     assert len(result.errors) == 1
 
 
-def test_best_effort_false_propagates_exception_on_year2_failure(test_db):
+def test_best_effort_false_propagates_exception_on_year2_failure(
+    test_db, client_factory, actor_user
+):
     """
     best_effort=False: year-2 failure re-raises immediately.
     The caller (get_db / request handler) is responsible for rolling back.
     """
-    client_id = _client(test_db, "SP-TEST-002")
+    client_id = _client(client_factory, "SP-TEST-002")
     reference_date = date(2025, 12, 31)
 
     patched = _fail_on_second_call(AnnualReportCreateService.create_report)
@@ -105,7 +105,7 @@ def test_best_effort_false_propagates_exception_on_year2_failure(test_db):
             generate_client_obligations_result(
                 test_db,
                 client_id,
-                actor_id=1,
+                actor_id=actor_user.id,
                 entity_type=EntityType.OSEK_MURSHE,
                 reference_date=reference_date,
                 best_effort=False,

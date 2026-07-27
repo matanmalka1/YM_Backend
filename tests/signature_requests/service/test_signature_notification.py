@@ -12,18 +12,12 @@ from app.notifications.schemas.notification_schemas import (
     NotificationSendRequest,
 )
 from app.notifications.services.notification_send_service import NotificationSendService
-from app.signature_requests.models.signature_request import (
-    SignatureRequest,
-    SignatureRequestStatus,
-    SignatureRequestType,
-)
+from app.signature_requests.models.signature_request import SignatureRequestStatus
 from app.utils.time_utils import utcnow
-from tests.helpers.identity import seed_client_identity
 
 
-def _client(test_db, suffix: str, *, email: str | None = "client@example.com"):
-    return seed_client_identity(
-        test_db,
+def _client(client_factory, suffix: str, *, email: str | None = "client@example.com"):
+    return client_factory(
         full_name=f"Signature Notification {suffix}",
         id_number=f"SN-{suffix}",
         email=email,
@@ -31,7 +25,7 @@ def _client(test_db, suffix: str, *, email: str | None = "client@example.com"):
 
 
 def _signature(
-    test_db,
+    signature_request_factory,
     client_record_id: int,
     user_id: int,
     *,
@@ -40,10 +34,9 @@ def _signature(
     status: SignatureRequestStatus = SignatureRequestStatus.PENDING_SIGNATURE,
     signing_token: str | None = "sig-token",
 ):
-    sig = SignatureRequest(
+    return signature_request_factory(
         client_record_id=client_record_id,
         created_by=user_id,
-        request_type=SignatureRequestType.CUSTOM,
         title="אישור מסמך",
         signer_name="לקוח",
         signer_email=signer_email,
@@ -51,9 +44,6 @@ def _signature(
         signing_token=signing_token,
         expires_at=expires_at if expires_at is not None else utcnow() + dt.timedelta(days=7),
     )
-    test_db.add(sig)
-    test_db.flush()
-    return sig
 
 
 def test_signature_request_sent_preview_blocked_no_entity_id(test_db, test_user):
@@ -70,10 +60,12 @@ def test_signature_request_sent_preview_blocked_no_entity_id(test_db, test_user)
     assert exc.value.code == "NOTIFICATION.MISSING_ENTITY_ID"
 
 
-def test_signature_request_sent_preview_blocked_expired(test_db, test_user):
-    client = _client(test_db, "expired")
+def test_signature_request_sent_preview_blocked_expired(
+    test_db, test_user, client_factory, signature_request_factory
+):
+    client = _client(client_factory, "expired")
     sig = _signature(
-        test_db,
+        signature_request_factory,
         client.id,
         test_user.id,
         expires_at=utcnow() - dt.timedelta(days=1),
@@ -93,9 +85,11 @@ def test_signature_request_sent_preview_blocked_expired(test_db, test_user):
     assert result.can_send is False
 
 
-def test_signature_request_sent_send_saves_signature_request_id(test_db, test_user):
-    client = _client(test_db, "valid")
-    sig = _signature(test_db, client.id, test_user.id)
+def test_signature_request_sent_send_saves_signature_request_id(
+    test_db, test_user, client_factory, signature_request_factory
+):
+    client = _client(client_factory, "valid")
+    sig = _signature(signature_request_factory, client.id, test_user.id)
     svc = NotificationSendService(test_db)
 
     result = svc.send(
@@ -116,10 +110,12 @@ def test_signature_request_sent_send_saves_signature_request_id(test_db, test_us
     assert record.signature_request_id == sig.id
 
 
-def test_signature_request_sent_skipped_when_no_signer_email(test_db, test_user):
+def test_signature_request_sent_skipped_when_no_signer_email(
+    test_db, test_user, client_factory, signature_request_factory
+):
     # Client has an email — skip must be driven by missing signer_email, not client email.
-    client = _client(test_db, "no-signer-email", email="client@example.com")
-    sig = _signature(test_db, client.id, test_user.id, signer_email=None)
+    client = _client(client_factory, "no-signer-email", email="client@example.com")
+    sig = _signature(signature_request_factory, client.id, test_user.id, signer_email=None)
     svc = NotificationSendService(test_db)
 
     result = svc.send(
@@ -142,10 +138,14 @@ def test_signature_request_sent_skipped_when_no_signer_email(test_db, test_user)
     assert record.signature_request_id == sig.id
 
 
-def test_signature_request_sent_uses_signer_email_not_client_email(test_db, test_user):
+def test_signature_request_sent_uses_signer_email_not_client_email(
+    test_db, test_user, client_factory, signature_request_factory
+):
     # signer_email differs from client contact email — recipient must be signer_email.
-    client = _client(test_db, "signer-email", email="client@example.com")
-    sig = _signature(test_db, client.id, test_user.id, signer_email="signer@different.com")
+    client = _client(client_factory, "signer-email", email="client@example.com")
+    sig = _signature(
+        signature_request_factory, client.id, test_user.id, signer_email="signer@different.com"
+    )
     svc = NotificationSendService(test_db)
 
     result = svc.send(

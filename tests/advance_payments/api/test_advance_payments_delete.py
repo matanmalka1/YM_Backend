@@ -10,31 +10,15 @@ from app.audit.audit_constants import (
     ENTITY_ADVANCE_PAYMENT,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
-from app.businesses.models.business import Business
-from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
-def _create_business(test_db) -> Business:
-    client = seed_client_identity(
-        test_db,
-        full_name="Advance Delete Client",
-        id_number="ADV-DEL-001",
+def test_delete_advance_payment_success(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Delete Client", id_number="ADV-DEL-001"
     )
-    business = seed_business(
-        test_db,
-        legal_entity_id=client.legal_entity_id,
-        business_name="Advance Delete Business",
-        opened_at=date.today(),
-    )
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_record_id = client.id
-    return business
-
-
-def test_delete_advance_payment_success(client, test_db, advisor_headers):
-    business = _create_business(test_db)
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
         test_db,
@@ -66,8 +50,12 @@ def test_delete_advance_payment_success(client, test_db, advisor_headers):
     assert logged[0].metadata_json["reason"] == "נוצר בטעות"
 
 
-def test_delete_advance_payment_requires_reason(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_delete_advance_payment_requires_reason(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Delete Client", id_number="ADV-DEL-001"
+    )
     repo = AdvancePaymentRepository(test_db)
     payment = create_linked_advance_payment(
         test_db,
@@ -87,8 +75,12 @@ def test_delete_advance_payment_requires_reason(client, test_db, advisor_headers
     assert repo.get_by_id(payment.id) is not None
 
 
-def test_delete_advance_payment_not_found(client, test_db, advisor_headers):
-    business = _create_business(test_db)
+def test_delete_advance_payment_not_found(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Advance Delete Client", id_number="ADV-DEL-001"
+    )
     resp = client.request(
         "DELETE",
         f"/api/v1/clients/{business.client_record_id}/advance-payments/999999",

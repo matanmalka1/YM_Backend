@@ -7,18 +7,6 @@ from app.documents.permanent_documents.models.permanent_document import (
 from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
-from tests.helpers.identity import seed_client_with_business
-
-
-def _business(db) -> Business:
-    _client, business = seed_client_with_business(
-        db,
-        full_name="Perm Action API Client",
-        id_number="71070001",
-        id_number_type=IdNumberType.CORPORATION,
-    )
-    db.commit()
-    return business
 
 
 def _doc(db, business: Business, annual_report_id: int | None = None):
@@ -33,8 +21,14 @@ def _doc(db, business: Business, annual_report_id: int | None = None):
     )
 
 
-def test_actions_endpoints_versions_and_list(client, test_db, advisor_headers):
-    business = _business(test_db)
+def test_actions_endpoints_versions_and_list(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    _client, business = create_client_with_business(
+        full_name="Perm Action API Client",
+        id_number="71070001",
+        id_number_type=IdNumberType.CORPORATION,
+    )
     _doc(test_db, business, annual_report_id=55)
 
     versions = client.get(

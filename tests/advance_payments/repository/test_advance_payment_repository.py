@@ -1,6 +1,5 @@
 from datetime import date
 from decimal import Decimal
-from itertools import count
 
 from sqlalchemy import text
 
@@ -11,54 +10,22 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.businesses.models.business import Business
 from app.common.enums import VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.users.models.user import UserRole
 from app.vat.models.vat_enums import VatWorkItemStatus
-from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
-_seq = count(1)
 
-
-def _create_user(test_db):
-    user = create_user(
-        test_db,
-        full_name="Creator",
-        email=f"creator{next(_seq)}@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _create_business(test_db, name: str, id_number: str):
-    client = seed_client_identity(test_db, full_name=name, id_number=id_number)
-    business = Business(
-        legal_entity_id=client.legal_entity_id,
-        business_name=f"{name} Business",
-        opened_at=date(2024, 1, 1),
-    )
-    test_db.add(business)
-    test_db.commit()
-    test_db.refresh(business)
-    business.client_record_id = client.id
-    return business
-
-
-def test_list_by_client_record_year_filters_and_orders(test_db):
+def test_list_by_client_record_year_filters_and_orders(test_db, create_client_with_business):
     repo = AdvancePaymentRepository(test_db)
-    business = _create_business(test_db, "Client One", "100000001")
+    _client, business = create_client_with_business(
+        full_name="Client One", id_number="100000001", opened_at=date(2024, 1, 1)
+    )
 
     january = create_linked_advance_payment(
         test_db,
@@ -95,16 +62,20 @@ def test_list_by_client_record_year_filters_and_orders(test_db):
     assert pending_items[0].id == january.id
 
 
-def test_get_annual_output_vat_returns_sum_or_none(test_db):
+def test_get_annual_output_vat_returns_sum_or_none(
+    test_db, create_client_with_business, user_factory, vat_work_item_factory
+):
     repo = VatClientSummaryRepository(test_db)
-    business = _create_business(test_db, "VAT Client", "100000002")
-    user = _create_user(test_db)
+    _client, business = create_client_with_business(
+        full_name="VAT Client", id_number="100000002", opened_at=date(2024, 1, 1)
+    )
+    user = user_factory(full_name="Creator", password="pass")
     materializer = TaxCalendarMaterializationService(test_db)
     jan_entry = materializer.ensure_periodic_entry("vat", "2025-01", 1)
     feb_entry = materializer.ensure_periodic_entry("vat", "2025-02", 1)
     prev_entry = materializer.ensure_periodic_entry("vat", "2024-12", 1)
 
-    january = VatWorkItem(
+    vat_work_item_factory(
         client_record_id=business.client_record_id,
         created_by=user.id,
         period="2025-01",
@@ -117,7 +88,7 @@ def test_get_annual_output_vat_returns_sum_or_none(test_db):
         due_date_original=jan_entry.due_date,
         due_date_effective=jan_entry.due_date,
     )
-    february = VatWorkItem(
+    vat_work_item_factory(
         client_record_id=business.client_record_id,
         created_by=user.id,
         period="2025-02",
@@ -130,7 +101,7 @@ def test_get_annual_output_vat_returns_sum_or_none(test_db):
         due_date_original=feb_entry.due_date,
         due_date_effective=feb_entry.due_date,
     )
-    previous_year = VatWorkItem(
+    vat_work_item_factory(
         client_record_id=business.client_record_id,
         created_by=user.id,
         period="2024-12",
@@ -143,7 +114,6 @@ def test_get_annual_output_vat_returns_sum_or_none(test_db):
         due_date_original=prev_entry.due_date,
         due_date_effective=prev_entry.due_date,
     )
-    test_db.add_all([january, february, previous_year])
     test_db.commit()
 
     assert repo.get_annual_output_vat(
@@ -151,11 +121,15 @@ def test_get_annual_output_vat_returns_sum_or_none(test_db):
     ) == Decimal("300.00")
 
 
-def test_list_overview_payments_filters_by_month_and_status(test_db):
+def test_list_overview_payments_filters_by_month_and_status(test_db, create_client_with_business):
     repo = AdvancePaymentRepository(test_db)
     aggregation_repo = AdvancePaymentAggregationRepository(test_db)
-    business_a = _create_business(test_db, "Alpha", "100000003")
-    business_b = _create_business(test_db, "Beta", "100000004")
+    _client_a, business_a = create_client_with_business(
+        full_name="Alpha", id_number="100000003", opened_at=date(2024, 1, 1)
+    )
+    _client_b, business_b = create_client_with_business(
+        full_name="Beta", id_number="100000004", opened_at=date(2024, 1, 1)
+    )
 
     payment_a = create_linked_advance_payment(
         test_db,
@@ -196,10 +170,12 @@ def test_list_overview_payments_filters_by_month_and_status(test_db):
     assert payment_b.id in ids
 
 
-def test_list_by_client_record_year_handles_partial_status(test_db):
+def test_list_by_client_record_year_handles_partial_status(test_db, create_client_with_business):
     """PARTIAL status round-trips through ORM correctly."""
     repo = AdvancePaymentRepository(test_db)
-    business = _create_business(test_db, "Legacy Client", "100000005")
+    _client, business = create_client_with_business(
+        full_name="Legacy Client", id_number="100000005", opened_at=date(2024, 1, 1)
+    )
 
     payment = create_linked_advance_payment(
         test_db,

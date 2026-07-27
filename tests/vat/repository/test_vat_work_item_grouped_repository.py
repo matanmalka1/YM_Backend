@@ -3,35 +3,22 @@
 from datetime import UTC, datetime
 
 from app.common.enums import VatType
-from app.users.models.user import UserRole
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_grouped_repository import (
     list_by_due_date_paginated,
     list_due_date_groups,
 )
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_identity
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
-def _user(db):
-    user = create_user(
-        db,
-        full_name="Grouped Repo Test User",
-        email="grouped.repo.test@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-    )
-    return user
-
-
-def test_grouped_due_date_uses_due_date_effective_not_online_extension(test_db):
+def test_grouped_due_date_uses_due_date_effective_not_online_extension(
+    test_db, user_factory, client_factory
+):
     """Group key must equal due_date_effective (statutory), not due_date_effective + 4 days."""
     from datetime import timedelta
 
-    user = _user(test_db)
-    client = seed_client_identity(test_db, full_name="Grouped Client", id_number="GC001")
+    user = user_factory()
+    client = client_factory(full_name="Grouped Client", id_number="GC001")
 
     item = create_linked_vat_work_item(
         test_db,
@@ -49,10 +36,11 @@ def test_grouped_due_date_uses_due_date_effective_not_online_extension(test_db):
     assert group["due_date"] != item.due_date_effective + timedelta(days=4)
 
 
-def test_paginated_due_date_count_excludes_soft_deleted_items(test_db):
-    user = _user(test_db)
-    client = seed_client_identity(
-        test_db,
+def test_paginated_due_date_count_excludes_soft_deleted_items(
+    test_db, user_factory, client_factory
+):
+    user = user_factory()
+    client = client_factory(
         full_name="Grouped Count Client",
         id_number="GC002",
     )
@@ -76,7 +64,7 @@ def test_paginated_due_date_count_excludes_soft_deleted_items(test_db):
 # ── New tests for SQL-level aggregation correctness ──────────────────────────
 
 
-def test_groups_counts_filed_pending_not_filed_overdue(test_db):
+def test_groups_counts_filed_pending_not_filed_overdue(test_db, user_factory, client_factory):
     """filed_count, pending_count, not_filed_count, overdue_count are correct.
 
     Three clients each have one item for the same period so they share
@@ -84,10 +72,10 @@ def test_groups_counts_filed_pending_not_filed_overdue(test_db):
     """
     from datetime import date
 
-    user = _user(test_db)
-    client_a = seed_client_identity(test_db, full_name="Count Client A", id_number="GC003A")
-    client_b = seed_client_identity(test_db, full_name="Count Client B", id_number="GC003B")
-    client_c = seed_client_identity(test_db, full_name="Count Client C", id_number="GC003C")
+    user = user_factory()
+    client_a = client_factory(full_name="Count Client A", id_number="GC003A")
+    client_b = client_factory(full_name="Count Client B", id_number="GC003B")
+    client_c = client_factory(full_name="Count Client C", id_number="GC003C")
 
     filed_item = create_linked_vat_work_item(
         test_db,
@@ -129,10 +117,10 @@ def test_groups_counts_filed_pending_not_filed_overdue(test_db):
     assert grp["overdue_count"] == expected_overdue
 
 
-def test_groups_excludes_soft_deleted_items(test_db):
+def test_groups_excludes_soft_deleted_items(test_db, user_factory, client_factory):
     """Soft-deleted VatWorkItems must not appear in group counts."""
-    user = _user(test_db)
-    client = seed_client_identity(test_db, full_name="Deleted Item Client", id_number="GC004")
+    user = user_factory()
+    client = client_factory(full_name="Deleted Item Client", id_number="GC004")
 
     item = create_linked_vat_work_item(
         test_db,
@@ -147,14 +135,14 @@ def test_groups_excludes_soft_deleted_items(test_db):
     assert groups == []
 
 
-def test_groups_excludes_soft_deleted_client_records(test_db):
+def test_groups_excludes_soft_deleted_client_records(test_db, user_factory, client_factory):
     """VAT items whose ClientRecord is soft-deleted must not appear."""
     from sqlalchemy import select
 
     from app.clients.models.client_record import ClientRecord
 
-    user = _user(test_db)
-    client = seed_client_identity(test_db, full_name="Deleted Client", id_number="GC005")
+    user = user_factory()
+    client = client_factory(full_name="Deleted Client", id_number="GC005")
 
     create_linked_vat_work_item(
         test_db,
@@ -170,14 +158,14 @@ def test_groups_excludes_soft_deleted_client_records(test_db):
     assert groups == []
 
 
-def test_groups_periods_list_is_correct(test_db):
+def test_groups_periods_list_is_correct(test_db, user_factory, client_factory):
     """periods[] contains all distinct (period, period_type) combos for the due_date.
 
     Two clients, same period — same due_date from calendar, both periods appear in the list.
     """
-    user = _user(test_db)
-    client_a = seed_client_identity(test_db, full_name="Periods Client A", id_number="GC006")
-    client_b = seed_client_identity(test_db, full_name="Periods Client B", id_number="GC007")
+    user = user_factory()
+    client_a = client_factory(full_name="Periods Client A", id_number="GC006")
+    client_b = client_factory(full_name="Periods Client B", id_number="GC007")
 
     item_a = create_linked_vat_work_item(
         test_db,
@@ -207,11 +195,11 @@ def test_groups_periods_list_is_correct(test_db):
     assert grp["total_count"] == 2
 
 
-def test_groups_sorted_by_due_date(test_db):
+def test_groups_sorted_by_due_date(test_db, user_factory, client_factory):
     """groups[] is sorted ascending by due_date."""
-    user = _user(test_db)
-    client_a = seed_client_identity(test_db, full_name="Sort Client A", id_number="GC008")
-    client_b = seed_client_identity(test_db, full_name="Sort Client B", id_number="GC009")
+    user = user_factory()
+    client_a = client_factory(full_name="Sort Client A", id_number="GC008")
+    client_b = client_factory(full_name="Sort Client B", id_number="GC009")
 
     create_linked_vat_work_item(
         test_db, client_record_id=client_a.id, period="2026-11", created_by=user.id
@@ -227,7 +215,7 @@ def test_groups_sorted_by_due_date(test_db):
 
 
 def test_status_summary_no_filter_returns_correct_counts_without_legal_entity_join(
-    test_db,
+    test_db, user_factory, client_factory
 ):
     """count_by_status_summary with no filter must not require LegalEntity join.
 
@@ -238,8 +226,8 @@ def test_status_summary_no_filter_returns_correct_counts_without_legal_entity_jo
         VatWorkItemQueryRepository,
     )
 
-    user = _user(test_db)
-    client = seed_client_identity(test_db, full_name="Summary Client", id_number="GC010")
+    user = user_factory()
+    client = client_factory(full_name="Summary Client", id_number="GC010")
     repo = VatWorkItemQueryRepository(test_db)
 
     before = repo.count_by_status_summary()
@@ -269,17 +257,15 @@ def test_status_summary_no_filter_returns_correct_counts_without_legal_entity_jo
     assert after.get(VatWorkItemStatus.FILED, 0) == before.get(VatWorkItemStatus.FILED, 0) + 1
 
 
-def test_status_summary_client_name_filter_still_works(test_db):
+def test_status_summary_client_name_filter_still_works(test_db, user_factory, client_factory):
     """count_by_status_summary with client_name must still apply LegalEntity join correctly."""
     from app.vat.repositories.vat_work_item_query_repository import (
         VatWorkItemQueryRepository,
     )
 
-    user = _user(test_db)
-    target_client = seed_client_identity(
-        test_db, full_name="Target Filter Client", id_number="GC011"
-    )
-    other_client = seed_client_identity(test_db, full_name="Other Filter Client", id_number="GC012")
+    user = user_factory()
+    target_client = client_factory(full_name="Target Filter Client", id_number="GC011")
+    other_client = client_factory(full_name="Other Filter Client", id_number="GC012")
 
     create_linked_vat_work_item(
         test_db,

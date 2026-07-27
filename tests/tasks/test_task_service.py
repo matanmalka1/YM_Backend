@@ -1,12 +1,11 @@
 import pytest
 
-from app.charges.models.charge import Charge, ChargeStatus, ChargeType
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.core.exceptions import ConflictError, NotFoundError
 from app.tasks.models.task import TaskPriority, TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository
 from app.tasks.schemas.task import TaskCreateRequest, TaskUpdateRequest
 from app.tasks.services.task_service import TaskService
-from tests.helpers.task_helpers import create_business
 
 
 def _create(db, title="Test Task", **kwargs) -> int:
@@ -107,17 +106,16 @@ def test_list_filter_by_priority(test_db):
     assert items[0].title == "Urgent"
 
 
-def test_list_filter_by_source_domain(test_db):
-    biz = create_business(test_db)
-    charge = Charge(
+def test_list_filter_by_source_domain(test_db, create_client_with_business, charge_factory):
+    _, biz = create_client_with_business(full_name="Task Test Client")
+    charge = charge_factory(
         client_record_id=biz.client_id,
         business_id=biz.id,
         amount=100,
         charge_type=ChargeType.OTHER,
         status=ChargeStatus.ISSUED,
+        commit=True,
     )
-    test_db.add(charge)
-    test_db.commit()
     _create(test_db, title="From charges", source_domain="charge", source_id=charge.id)
     _create(test_db, title="Other")
 

@@ -6,20 +6,14 @@ real update, and set on soft-delete. Never faked from created_at.
 
 from datetime import date
 
-from app.businesses.models.business import Business
-from tests.helpers.identity import seed_client_with_business
 
-
-def _business(test_db, id_number: str) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
+def _business(create_client_with_business, id_number: str):
+    _client, business = create_client_with_business(
         full_name="Corr UpdatedAt",
         id_number=id_number,
         business_name=f"Corr {id_number}",
         opened_at=date.today(),
     )
-    test_db.commit()
-    test_db.refresh(business)
     return business
 
 
@@ -38,8 +32,10 @@ def _create_entry(client, headers, business) -> int:
     return res.json()["id"]
 
 
-def test_updated_at_null_on_create_set_after_patch(client, test_db, advisor_headers):
-    business = _business(test_db, "910910910")
+def test_updated_at_null_on_create_set_after_patch(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business, "910910910")
     entry_id = _create_entry(client, advisor_headers, business)
 
     created = client.get(
@@ -65,8 +61,10 @@ def test_updated_at_null_on_create_set_after_patch(client, test_db, advisor_head
     assert after["updated_at"] >= after["created_at"]
 
 
-def test_soft_delete_bumps_updated_at(client, test_db, advisor_headers):
-    business = _business(test_db, "911911911")
+def test_soft_delete_bumps_updated_at(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    business = _business(create_client_with_business, "911911911")
     entry_id = _create_entry(client, advisor_headers, business)
 
     assert client.delete(

@@ -1,7 +1,6 @@
 from sqlalchemy import String, cast
 from sqlalchemy.dialects import postgresql
 
-from app.businesses.models.business import Business
 from app.common.enums import IdNumberType
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
@@ -11,42 +10,34 @@ from app.documents.permanent_documents.models.permanent_document import (
 from app.documents.permanent_documents.repositories.permanent_document_repository import (
     PermanentDocumentRepository,
 )
-from app.users.models.user import User, UserRole
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 
 
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
+def _user(user_factory):
+    return user_factory(
         full_name="Permanent Doc Admin",
         email="permdoc.admin@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
         commit=True,
     )
-    return user
 
 
-def _business(test_db, *, suffix: str) -> Business:
-    _client, business = seed_client_with_business(
-        test_db,
+def _business(create_client_with_business, *, suffix: str):
+    _client, business = create_client_with_business(
         full_name=f"Permanent Client {suffix}",
         id_number=f"7105000{suffix}",
         id_number_type=IdNumberType.CORPORATION,
     )
-    test_db.commit()
     return business
 
 
-def test_count_by_business_ignores_soft_deleted_documents(test_db):
-    user = _user(test_db)
+def test_count_by_business_ignores_soft_deleted_documents(
+    test_db, user_factory, create_client_with_business, permanent_document_factory
+):
+    user = _user(user_factory)
     repo = PermanentDocumentRepository(test_db)
-    business_a = _business(test_db, suffix="1")
-    business_b = _business(test_db, suffix="2")
+    business_a = _business(create_client_with_business, suffix="1")
+    business_b = _business(create_client_with_business, suffix="2")
 
-    active = repo.create(
+    active = permanent_document_factory(
         client_record_id=business_a.client_id,
         business_id=business_a.id,
         scope=DocumentScope.BUSINESS,
@@ -54,7 +45,7 @@ def test_count_by_business_ignores_soft_deleted_documents(test_db):
         storage_key="businesses/1/tax_form/a.pdf",
         uploaded_by=user.id,
     )
-    deleted = repo.create(
+    deleted = permanent_document_factory(
         client_record_id=business_a.client_id,
         business_id=business_a.id,
         scope=DocumentScope.BUSINESS,
@@ -62,7 +53,7 @@ def test_count_by_business_ignores_soft_deleted_documents(test_db):
         storage_key="businesses/1/bank_approval/b.pdf",
         uploaded_by=user.id,
     )
-    repo.create(
+    permanent_document_factory(
         client_record_id=business_b.client_id,
         business_id=business_b.id,
         scope=DocumentScope.BUSINESS,

@@ -1,16 +1,12 @@
 """API tests for the office-wide annual generation endpoints."""
 
 from decimal import Decimal
-from itertools import count
 from uuid import uuid4
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.clients.client_enums import ClientStatus
 from app.common.enums import AdvancePaymentFrequency
 from app.utils.time_utils import israel_today, utcnow
-from tests.helpers.identity import seed_client_identity
-
-_seq = count(1)
 
 PREVIEW_URL = "/api/v1/advance-payments/bulk-generate/preview"
 GENERATE_URL = "/api/v1/advance-payments/bulk-generate"
@@ -21,25 +17,21 @@ FUTURE_YEAR = israel_today().year + 1
 
 
 def _client_record(
-    db,
+    client_factory,
     *,
     frequency=AdvancePaymentFrequency.BIMONTHLY,
     status=ClientStatus.ACTIVE,
     name=None,
     deleted_at=None,
 ):
-    idx = next(_seq)
-    record = seed_client_identity(
-        db,
-        full_name=name or f"Bulk Gen Client {idx}",
-        id_number=f"BGN{idx:06d}",
+    return client_factory(
+        full_name=name,
         advance_payment_frequency=frequency,
         advance_rate=Decimal("10"),
         status=status,
         deleted_at=deleted_at,
+        commit=True,
     )
-    db.commit()
-    return record
 
 
 def _generate(client, headers, payload):
@@ -49,11 +41,11 @@ def _generate(client, headers, payload):
 
 
 def test_preview_counts_eligible_and_names_clients_without_frequency(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, client_factory
 ):
-    _client_record(test_db)
-    _client_record(test_db)
-    _client_record(test_db, frequency=None, name="ללא תדירות")
+    _client_record(client_factory)
+    _client_record(client_factory)
+    _client_record(client_factory, frequency=None, name="ללא תדירות")
 
     resp = client.get(PREVIEW_URL, headers=advisor_headers)
 
@@ -69,15 +61,17 @@ def test_preview_counts_eligible_and_names_clients_without_frequency(
     ]
 
 
-def test_preview_excludes_frozen_closed_and_deleted_clients(client, test_db, advisor_headers):
-    _client_record(test_db)
-    _client_record(test_db, status=ClientStatus.FROZEN)
-    _client_record(test_db, status=ClientStatus.CLOSED)
-    _client_record(test_db, deleted_at=utcnow())
+def test_preview_excludes_frozen_closed_and_deleted_clients(
+    client, test_db, advisor_headers, client_factory
+):
+    _client_record(client_factory)
+    _client_record(client_factory, status=ClientStatus.FROZEN)
+    _client_record(client_factory, status=ClientStatus.CLOSED)
+    _client_record(client_factory, deleted_at=utcnow())
     # A frozen client with no frequency must not surface as an exception either:
     # it is out of scope entirely, so reporting it would be noise.
-    _client_record(test_db, frequency=None, status=ClientStatus.FROZEN)
-    _client_record(test_db, frequency=None, deleted_at=utcnow())
+    _client_record(client_factory, frequency=None, status=ClientStatus.FROZEN)
+    _client_record(client_factory, frequency=None, deleted_at=utcnow())
 
     resp = client.get(PREVIEW_URL, headers=advisor_headers)
 
@@ -87,9 +81,9 @@ def test_preview_excludes_frozen_closed_and_deleted_clients(client, test_db, adv
     assert data["ineligible"] == []
 
 
-def test_bulk_generate_skips_soft_deleted_clients(client, test_db, advisor_headers):
-    _client_record(test_db)
-    _client_record(test_db, deleted_at=utcnow())
+def test_bulk_generate_skips_soft_deleted_clients(client, test_db, advisor_headers, client_factory):
+    _client_record(client_factory)
+    _client_record(client_factory, deleted_at=utcnow())
 
     resp = _generate(client, advisor_headers, {"year": FUTURE_YEAR})
 
@@ -98,12 +92,12 @@ def test_bulk_generate_skips_soft_deleted_clients(client, test_db, advisor_heade
 
 
 def test_bulk_generate_creates_schedules_for_every_eligible_client(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, client_factory
 ):
-    first = _client_record(test_db)
-    second = _client_record(test_db)
-    _client_record(test_db, status=ClientStatus.FROZEN)
-    _client_record(test_db, frequency=None)
+    first = _client_record(client_factory)
+    second = _client_record(client_factory)
+    _client_record(client_factory, status=ClientStatus.FROZEN)
+    _client_record(client_factory, frequency=None)
 
     resp = _generate(client, advisor_headers, {"year": FUTURE_YEAR})
 
@@ -123,8 +117,10 @@ def test_bulk_generate_creates_schedules_for_every_eligible_client(
         assert len(rows) == 6
 
 
-def test_bulk_generate_skips_periods_that_already_exist(client, test_db, advisor_headers):
-    _client_record(test_db)
+def test_bulk_generate_skips_periods_that_already_exist(
+    client, test_db, advisor_headers, client_factory
+):
+    _client_record(client_factory)
 
     first = _generate(client, advisor_headers, {"year": FUTURE_YEAR})
     assert first.json()["created"] == 6
@@ -138,13 +134,13 @@ def test_bulk_generate_skips_periods_that_already_exist(client, test_db, advisor
 
 
 def test_bulk_generate_walks_the_office_in_cursor_chunks(
-    client, test_db, advisor_headers, monkeypatch
+    client, test_db, advisor_headers, monkeypatch, client_factory
 ):
     monkeypatch.setattr(
         "app.advance_payments.services.advance_payment_service.BULK_GENERATE_CLIENT_CHUNK_SIZE",
         2,
     )
-    records = [_client_record(test_db) for _ in range(3)]
+    records = [_client_record(client_factory) for _ in range(3)]
 
     first = _generate(client, advisor_headers, {"year": FUTURE_YEAR})
     assert first.status_code == 200
@@ -164,11 +160,13 @@ def test_bulk_generate_walks_the_office_in_cursor_chunks(
     assert test_db.query(AdvancePayment).count() == 18
 
 
-def test_bulk_generate_marks_the_audit_entries_as_bulk(client, test_db, advisor_headers):
+def test_bulk_generate_marks_the_audit_entries_as_bulk(
+    client, test_db, advisor_headers, client_factory
+):
     from app.audit.audit_constants import ACTION_ADVANCE_PAYMENT_CREATED
     from app.audit.models.audit_entity_audit_log import EntityAuditLog
 
-    _client_record(test_db)
+    _client_record(client_factory)
 
     assert _generate(client, advisor_headers, {"year": FUTURE_YEAR}).status_code == 200
 
@@ -182,11 +180,11 @@ def test_bulk_generate_marks_the_audit_entries_as_bulk(client, test_db, advisor_
 
 
 def test_bulk_generate_reports_stale_cadence_and_clears_it_on_confirm(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, client_factory
 ):
     from app.legal_entities.models.legal_entity import LegalEntity
 
-    record = _client_record(test_db, frequency=AdvancePaymentFrequency.MONTHLY)
+    record = _client_record(client_factory, frequency=AdvancePaymentFrequency.MONTHLY)
     assert _generate(client, advisor_headers, {"year": FUTURE_YEAR}).json()["created"] == 12
 
     legal_entity = test_db.get(LegalEntity, record.legal_entity_id)
@@ -206,8 +204,8 @@ def test_bulk_generate_reports_stale_cadence_and_clears_it_on_confirm(
     assert test_db.query(AdvancePayment).filter(AdvancePayment.deleted_at.is_(None)).count() == 6
 
 
-def test_bulk_generate_is_advisor_only(client, test_db, secretary_headers):
-    _client_record(test_db)
+def test_bulk_generate_is_advisor_only(client, test_db, secretary_headers, client_factory):
+    _client_record(client_factory)
 
     resp = _generate(client, secretary_headers, {"year": FUTURE_YEAR})
 

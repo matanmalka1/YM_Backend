@@ -2,25 +2,27 @@ from datetime import date, timedelta
 
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
 from app.core.pagination import MAX_PAGE_SIZE
-from app.tasks.models.task import Task, TaskStatus
+from app.tasks.models.task import TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.items.common import source_route
 from app.work_queue.schemas.work_queue import WorkQueueSourceType
 from app.work_queue.services.work_queue_service import WorkQueueService
 from tests.helpers.identity import seed_client_identity
-from tests.helpers.task_helpers import create_business
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
-def test_work_queue_api_returns_clean_advance_payment_contract(client, test_db, advisor_headers):
-    biz = create_business(test_db)
-    test_db.get(ClientRecord, biz.client_id).office_client_number = 100001
+def test_work_queue_api_returns_clean_advance_payment_contract(
+    client, test_db, advisor_headers, create_client_with_business
+):
+    seeded_client, _biz = create_client_with_business(full_name="Task Test Client")
+    test_db.get(ClientRecord, seeded_client.id).office_client_number = 100001
     due_date = date.today() - timedelta(days=1)
     payment = create_linked_advance_payment(
         test_db,
-        client_record_id=biz.client_id,
+        client_record_id=seeded_client.id,
         period="2026-02",
         due_date=due_date,
         expected_amount=1000,
@@ -54,21 +56,18 @@ def test_tasks_route_exists(client, advisor_headers):
     assert response.status_code == 200
 
 
-def test_work_queue_api_pagination(client, test_db, advisor_headers):
-    from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-    from tests.helpers.task_helpers import create_business
-
-    biz = create_business(test_db)
+def test_work_queue_api_pagination(
+    client, test_db, advisor_headers, create_client_with_business, charge_factory
+):
+    seeded_client, biz = create_client_with_business()
     for days_ago in [31, 32, 33]:
-        test_db.add(
-            Charge(
-                client_record_id=biz.client_id,
-                business_id=biz.id,
-                amount=100,
-                charge_type=ChargeType.OTHER,
-                status=ChargeStatus.ISSUED,
-                issued_at=date.today() - timedelta(days=days_ago),
-            )
+        charge_factory(
+            client=seeded_client,
+            business=biz,
+            amount=100,
+            charge_type=ChargeType.OTHER,
+            status=ChargeStatus.ISSUED,
+            issued_at=date.today() - timedelta(days=days_ago),
         )
     test_db.commit()
 
@@ -95,29 +94,10 @@ def test_work_queue_api_page_size_max_enforced(client, advisor_headers):
     assert response.status_code == 422
 
 
-def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers):
-    test_db.add_all(
-        [
-            Task(
-                title="Open task A",
-                status=TaskStatus.OPEN,
-                created_at=utcnow(),
-                updated_at=utcnow(),
-            ),
-            Task(
-                title="Open task B",
-                status=TaskStatus.OPEN,
-                created_at=utcnow(),
-                updated_at=utcnow(),
-            ),
-            Task(
-                title="Done task",
-                status=TaskStatus.DONE,
-                created_at=utcnow(),
-                updated_at=utcnow(),
-            ),
-        ]
-    )
+def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers, task_factory):
+    task_factory(title="Open task A", status=TaskStatus.OPEN)
+    task_factory(title="Open task B", status=TaskStatus.OPEN)
+    task_factory(title="Done task", status=TaskStatus.DONE)
     test_db.commit()
 
     active = client.get("/api/v1/work-queue?page_size=1", headers=advisor_headers)
@@ -134,7 +114,7 @@ def test_work_queue_list_summary_not_page_based(client, test_db, advisor_headers
 
 
 def test_annual_report_work_queue_route_targets_existing_detail_api(
-    client, test_db, advisor_headers
+    client, test_db, advisor_headers, actor_user
 ):
     client_record = seed_client_identity(
         test_db, full_name="Work Queue Annual Route", id_number="WQAR001"
@@ -143,7 +123,7 @@ def test_annual_report_work_queue_route_targets_existing_detail_api(
         client_record_id=client_record.id,
         tax_year=2026,
         client_type="corporation",
-        created_by=1,
+        created_by=actor_user.id,
         created_by_name="Tester",
         deadline_type="standard",
     )

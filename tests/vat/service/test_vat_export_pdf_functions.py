@@ -4,45 +4,20 @@ from pathlib import Path
 
 import pytest
 
-from app.businesses.models.business import Business
 from app.common.enums import VatType
-from app.users.models.user import User, UserRole
 from app.vat.exporters.pdf_exporter import export_vat_to_pdf
 from app.vat.services.vat_export_service import export_to_pdf
 from app.vat.services.vat_report_service import VatReportService
-from tests.factories import create_user
-from tests.helpers.identity import seed_client_with_business
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
-def _user(test_db) -> User:
-    user = create_user(
-        test_db,
-        full_name="VAT Export User",
-        email="vat.export.user@example.com",
-        password="pass",
-        role=UserRole.ADVISOR,
-        is_active=True,
-        commit=True,
-    )
-    return user
-
-
-def _business(test_db) -> tuple[Business, int]:
-    client, business = seed_client_with_business(
-        test_db,
-        full_name="VAT Export Client",
-        id_number="VEP001",
-        opened_at=date(2026, 1, 1),
-    )
-    test_db.commit()
-    test_db.refresh(business)
-    return business, client.id
-
-
-def test_export_to_pdf_filters_periods_by_year_and_delegates(test_db, monkeypatch):
-    user = _user(test_db)
-    _, client_record_id = _business(test_db)
+def test_export_to_pdf_filters_periods_by_year_and_delegates(
+    test_db, monkeypatch, user_factory, create_client_with_business
+):
+    user = user_factory()
+    client_record_id = create_client_with_business(
+        full_name="VAT Export Client", id_number="VEP001", opened_at=date(2026, 1, 1)
+    )[0].id
     service = VatReportService(test_db)
     item_2026 = create_linked_vat_work_item(
         test_db,
