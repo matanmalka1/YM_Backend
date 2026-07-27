@@ -164,7 +164,7 @@ def test_restore_business_restores_soft_deleted_business_and_writes_audit(
 ):
     business = _create_business_row(client_factory, business_factory, status=BusinessStatus.CLOSED)
     business.deleted_at = utcnow()
-    business.deleted_by = 4
+    business.deleted_by = actor_user.id
     test_db.commit()
 
     restored = BusinessService(test_db).restore_business(
@@ -176,7 +176,7 @@ def test_restore_business_restores_soft_deleted_business_and_writes_audit(
     assert restored.id == business.id
     assert restored.deleted_at is None
     assert restored.status == BusinessStatus.ACTIVE
-    assert restored.restored_by == 9
+    assert restored.restored_by == actor_user.id
 
     audit = test_db.scalars(
         select(EntityAuditLog).filter(
@@ -185,7 +185,7 @@ def test_restore_business_restores_soft_deleted_business_and_writes_audit(
             EntityAuditLog.action == entity_action(ENTITY_BUSINESS, ACTION_RESTORED),
         )
     ).one()
-    assert audit.performed_by == 9
+    assert audit.performed_by == actor_user.id
 
 
 def test_list_businesses_for_client_raises_when_client_missing(test_db):

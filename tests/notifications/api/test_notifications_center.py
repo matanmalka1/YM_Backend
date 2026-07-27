@@ -152,14 +152,23 @@ def test_old_date_params_are_ignored(
 
 
 def test_triggered_by_filter(
-    client, test_db, advisor_headers, client_factory, notification_factory, actor_user
+    client,
+    test_db,
+    advisor_headers,
+    client_factory,
+    notification_factory,
+    actor_user,
+    user_factory,
 ):
     seeded = _client(client_factory, "triggered")
     wanted = _notification(notification_factory, seeded.id, triggered_by=actor_user.id)
-    _notification(notification_factory, seeded.id, triggered_by=actor_user.id)
+    other_actor = user_factory()
+    _notification(notification_factory, seeded.id, triggered_by=other_actor.id)
     test_db.commit()
 
-    resp = client.get("/api/v1/notifications?triggered_by=10", headers=advisor_headers)
+    resp = client.get(
+        f"/api/v1/notifications?triggered_by={actor_user.id}", headers=advisor_headers
+    )
 
     assert resp.status_code == 200
     data = resp.json()

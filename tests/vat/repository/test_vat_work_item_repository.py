@@ -103,6 +103,14 @@ def test_mark_filed_persists_amendment_and_reference_fields(
         period_type=VatType.MONTHLY,
         created_by=user.id,
     )
+    amended_item = create_linked_vat_work_item(
+        test_db,
+        repo=repo,
+        client_record_id=client_record_id,
+        period="2026-10",
+        period_type=VatType.MONTHLY,
+        created_by=user.id,
+    )
 
     filed = repo.mark_filed(
         item_id=item.id,
@@ -113,7 +121,7 @@ def test_mark_filed_persists_amendment_and_reference_fields(
         override_justification="manual override",
         submission_reference="REF-321",
         is_amendment=True,
-        amends_item_id=999,
+        amends_item_id=amended_item.id,
     )
 
     assert filed is not None
@@ -121,7 +129,7 @@ def test_mark_filed_persists_amendment_and_reference_fields(
     assert float(filed.final_vat_amount) == 321.5
     assert filed.submission_reference == "REF-321"
     assert filed.is_amendment is True
-    assert filed.amends_item_id == 999
+    assert filed.amends_item_id == amended_item.id
 
     assert (
         repo.mark_filed(

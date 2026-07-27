@@ -30,7 +30,7 @@ def _create_client(
     )
 
 
-def _svc_create(service, *, full_name, id_number, actor_id=3):
+def _svc_create(service, *, full_name, id_number, actor_id):
     """Helper: create via service, return ClientRecord."""
     return create_client_identity_only(
         service.db,
@@ -42,23 +42,32 @@ def _svc_create(service, *, full_name, id_number, actor_id=3):
     )
 
 
-def test_create_client_success(test_db):
+def test_create_client_success(test_db, actor_user):
     service = CreateClientService(test_db)
 
-    cr = _svc_create(service, full_name="Service Client", id_number="610000002")
+    cr = _svc_create(
+        service,
+        full_name="Service Client",
+        id_number="610000002",
+        actor_id=actor_user.id,
+    )
 
     assert cr.id is not None
     assert cr.office_client_number == 100001
-    assert cr.created_by == 3
+    assert cr.created_by == actor_user.id
 
 
 def test_create_client_assigns_next_office_client_number_and_creates_initial_binder(
-    test_db,
+    test_db, actor_user
 ):
     service = CreateClientService(test_db)
 
-    first = _svc_create(service, full_name="First Client", id_number="610000010")
-    created = _svc_create(service, full_name="Binder Client", id_number="610000028")
+    first = _svc_create(
+        service, full_name="First Client", id_number="610000010", actor_id=actor_user.id
+    )
+    created = _svc_create(
+        service, full_name="Binder Client", id_number="610000028", actor_id=actor_user.id
+    )
 
     assert first.office_client_number == 100001
     assert created.office_client_number == 100002
@@ -161,7 +170,7 @@ def test_update_delete_restore_flow(test_db, actor_user):
     restored_record = ClientRecordRepository(test_db).get_by_id(created.id)
     assert restored_record is not None
     assert restored_record.deleted_at is None
-    assert restored_record.restored_by == 12
+    assert restored_record.restored_by == actor_user.id
     assert restored["id"] == created.id
 
 
@@ -224,6 +233,7 @@ def test_delete_raises_not_found_when_client_already_deleted(test_db, actor_user
         CreateClientService(test_db),
         full_name="Delete Twice",
         id_number="640000014",
+        actor_id=actor_user.id,
     )
     service = ClientLifecycleService(test_db)
     service.delete_client(created.id, actor_id=actor_user.id)
@@ -261,8 +271,18 @@ def test_restore_raises_when_active_duplicate_exists(test_db, client_factory, ac
 
 def test_list_clients_and_conflict_info(test_db, actor_user):
     creation_service = CreateClientService(test_db)
-    one = _svc_create(creation_service, full_name="Alpha", id_number="670000009")
-    two = _svc_create(creation_service, full_name="Beta", id_number="670000017")
+    one = _svc_create(
+        creation_service,
+        full_name="Alpha",
+        id_number="670000009",
+        actor_id=actor_user.id,
+    )
+    two = _svc_create(
+        creation_service,
+        full_name="Beta",
+        id_number="670000017",
+        actor_id=actor_user.id,
+    )
     ClientLifecycleService(test_db).delete_client(two.id, actor_id=actor_user.id)
 
     query_service = ClientQueryService(test_db)
@@ -325,7 +345,7 @@ def test_list_clients_entity_type_stats_respect_non_type_filters(test_db, client
     }
 
 
-def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch):
+def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch, actor_user):
     """The clients list returns the thin ClientRecordListItem.
 
     The thin row does not expose annual turnover, so the list must not perform
@@ -336,11 +356,13 @@ def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch
         creation_service,
         full_name="Reported Turnover",
         id_number="670000041",
+        actor_id=actor_user.id,
     )
     manual = _svc_create(
         creation_service,
         full_name="Manual Turnover",
         id_number="670000050",
+        actor_id=actor_user.id,
     )
 
     def fail_batch(self, _client_record_ids, _year):
@@ -366,10 +388,14 @@ def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch
 
 def test_create_client_does_not_reuse_deleted_office_client_number(test_db, actor_user):
     service = CreateClientService(test_db)
-    first = _svc_create(service, full_name="First", id_number="670000025")
+    first = _svc_create(
+        service, full_name="First", id_number="670000025", actor_id=actor_user.id
+    )
     ClientLifecycleService(test_db).delete_client(first.id, actor_id=actor_user.id)
 
-    second = _svc_create(service, full_name="Second", id_number="670000033")
+    second = _svc_create(
+        service, full_name="Second", id_number="670000033", actor_id=actor_user.id
+    )
 
     assert first.office_client_number == 100001
     assert second.office_client_number == 100002
@@ -410,6 +436,7 @@ def test_restore_raises_not_found_when_repo_restore_returns_none(test_db, monkey
         CreateClientService(test_db),
         full_name="To Restore",
         id_number="690000013",
+        actor_id=actor_user.id,
     )
     service = ClientLifecycleService(test_db)
     service.delete_client(created.id, actor_id=actor_user.id)

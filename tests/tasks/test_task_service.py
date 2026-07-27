@@ -39,10 +39,10 @@ def test_open_to_canceled(test_db):
     assert result.canceled_at is not None
 
 
-def test_completed_by_user_id_set(test_db):
+def test_completed_by_user_id_set(test_db, actor_user):
     task_id = _create(test_db)
-    result = TaskService(test_db).complete(task_id, completed_by_user_id=99)
-    assert result.completed_by_user_id == 99
+    result = TaskService(test_db).complete(task_id, completed_by_user_id=actor_user.id)
+    assert result.completed_by_user_id == actor_user.id
 
 
 # ── Terminal state rejections ─────────────────────────────────────────────────

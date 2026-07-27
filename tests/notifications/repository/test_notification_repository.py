@@ -55,7 +55,7 @@ def test_notification_repository_lifecycle(test_db, create_client_with_business,
         content_snapshot="General message",
     )
 
-    assert pending.triggered_by == 123
+    assert pending.triggered_by == actor_user.id
     assert pending.status == NotificationStatus.PENDING
 
     sent = repo.mark_sent(pending.id)

@@ -1,5 +1,6 @@
 from sqlalchemy import select
 
+from app.common.enums import DeadlineRuleType
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.services.tax_calendar_bootstrap_service import (
@@ -29,7 +30,8 @@ def test_list_rules_ordering(test_db):
 
     rules = list_rules(test_db)
     keys = [(r.rule_type, r.effective_from) for r in rules]
-    assert keys == sorted(keys, key=lambda x: (str(x[0]), x[1]))
+    enum_order = {rule_type: index for index, rule_type in enumerate(DeadlineRuleType)}
+    assert keys == sorted(keys, key=lambda x: (enum_order[x[0]], x[1]))
 
 
 def test_list_entries_year_filter(test_db):

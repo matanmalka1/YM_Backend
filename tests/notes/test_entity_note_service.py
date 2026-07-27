@@ -53,7 +53,7 @@ def test_missing_creator_does_not_fallback_to_another_user(test_db, test_user, c
         entity_type="client",
         entity_id=client.id,
         note="יוצר חסר",
-        created_by=test_user.id + 999,
+        created_by=None,
     )
     test_db.commit()
 

@@ -116,19 +116,37 @@ def test_signature_request_repository_pending_and_expired_queries(
 
 
 def test_repository_update_missing_id_and_pending_by_annual_report(
-    test_db, user_factory, create_client_with_business
+    test_db, user_factory, create_client_with_business, annual_report_model_factory
 ):
     repo = SignatureRequestRepository(test_db)
     user = _user(user_factory)
     business = _business(create_client_with_business, suffix="AR")
+    report = annual_report_model_factory(client_record_id=business.client_id, tax_year=2026)
+    other_report = annual_report_model_factory(client_record_id=business.client_id, tax_year=2025)
     assert repo.update(999999, status=SignatureRequestStatus.CANCELED) is None
-    pending = _create(repo, business, user_id=user.id, title="Annual Pending", annual_report_id=77)
+    pending = _create(
+        repo,
+        business,
+        user_id=user.id,
+        title="Annual Pending",
+        annual_report_id=report.id,
+    )
     canceled = _create(
-        repo, business, user_id=user.id, title="Annual Canceled", annual_report_id=77
+        repo,
+        business,
+        user_id=user.id,
+        title="Annual Canceled",
+        annual_report_id=report.id,
     )
     repo.update(canceled.id, status=SignatureRequestStatus.CANCELED)
-    other = _create(repo, business, user_id=user.id, title="Different Report", annual_report_id=88)
+    other = _create(
+        repo,
+        business,
+        user_id=user.id,
+        title="Different Report",
+        annual_report_id=other_report.id,
+    )
     repo.update(pending.id, status=SignatureRequestStatus.PENDING_SIGNATURE)
     repo.update(other.id, status=SignatureRequestStatus.PENDING_SIGNATURE)
-    assert [item.id for item in repo.list_pending_by_annual_report(77)] == [pending.id]
-    assert canceled.id not in [item.id for item in repo.list_pending_by_annual_report(77)]
+    assert [item.id for item in repo.list_pending_by_annual_report(report.id)] == [pending.id]
+    assert canceled.id not in [item.id for item in repo.list_pending_by_annual_report(report.id)]

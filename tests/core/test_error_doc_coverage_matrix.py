@@ -71,6 +71,7 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     # Bulk refresh reports unsnapshottable periods as counts, so it has no 409.
     ("POST", "/api/v1/clients/{client_record_id}/advance-payments/refresh-turnover"): {"400"},
     ("POST", "/api/v1/advance-payments/bulk-mark-paid"): {"400"},
+    ("POST", "/api/v1/advance-payments/bulk-generate"): {"400"},
     # documents
     ("POST", "/api/v1/documents/upload"): {"400", "500"},
     ("PUT", "/api/v1/documents/client/{client_record_id}/{document_id}/replace"): {"400", "500"},

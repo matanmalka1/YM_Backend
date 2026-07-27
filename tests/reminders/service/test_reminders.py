@@ -45,7 +45,7 @@ def test_create_scheduled_reminder_from_request(test_db, actor_user):
     )
 
     assert reminder.status == ReminderStatus.SCHEDULED
-    assert reminder.created_by_user_id == 5
+    assert reminder.created_by_user_id == actor_user.id
     assert reminder.payload == {"charge_id": 12}
 
 

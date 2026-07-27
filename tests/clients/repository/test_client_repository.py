@@ -73,7 +73,7 @@ def test_restore_clears_deleted_fields(test_db, actor_user):
     assert restored.deleted_at is None
     assert restored.deleted_by is None
     assert restored.restored_at is not None
-    assert restored.restored_by == 7
+    assert restored.restored_by == actor_user.id
     assert repo.restore(restored.id, restored_by=actor_user.id) is None
 
 

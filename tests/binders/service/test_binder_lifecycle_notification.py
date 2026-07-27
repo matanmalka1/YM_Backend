@@ -118,7 +118,9 @@ def test_mark_ready_for_handover_bulk_collects_results(test_db, test_user):
     assert b2.id not in [r[0].id for r in results]
 
 
-def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, monkeypatch):
+def test_auto_send_idempotency_same_key_returns_same_record(
+    test_db, test_user, monkeypatch, binder_factory
+):
     """Two auto_send calls with identical key produce one DB record, same notification_id."""
 
     from app.notifications.models.notification import NotificationTrigger
@@ -130,6 +132,7 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
     client = seed_client_identity(
         test_db, full_name="Idem Client", id_number="NB-IDEM-DIRECT", email=None
     )
+    binder = binder_factory(client=client, actor=test_user)
     idempotency_key = f"test_idem_{client.id}"
 
     svc = NotificationAutoSendService(test_db)
@@ -142,16 +145,16 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
         client_record_id=client.id,
         idempotency_key=idempotency_key,
-        binder_id=999,
-        entity_id=999,
+        binder_id=binder.id,
+        entity_id=binder.id,
         entity_type="binder",
     )
     r2 = svc.auto_send(
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
         client_record_id=client.id,
         idempotency_key=idempotency_key,
-        binder_id=999,
-        entity_id=999,
+        binder_id=binder.id,
+        entity_id=binder.id,
         entity_type="binder",
     )
 
@@ -164,7 +167,7 @@ def test_auto_send_idempotency_same_key_returns_same_record(test_db, test_user, 
 
 
 def test_auto_send_idempotency_different_entity_id_returns_cached_record(
-    test_db, test_user, monkeypatch
+    test_db, test_user, monkeypatch, binder_factory
 ):
     """Same key but different entity_id: hash mismatch is logged, cached record still returned."""
     from app.notifications.models.notification import NotificationTrigger
@@ -176,6 +179,8 @@ def test_auto_send_idempotency_different_entity_id_returns_cached_record(
     client = seed_client_identity(
         test_db, full_name="Hash Mismatch Client", id_number="NB-HASH-MISMATCH", email=None
     )
+    first_binder = binder_factory(client=client, actor=test_user)
+    second_binder = binder_factory(client=client, actor=test_user)
     key = f"test_hash_mismatch_{client.id}"
 
     svc = NotificationAutoSendService(test_db)
@@ -187,16 +192,16 @@ def test_auto_send_idempotency_different_entity_id_returns_cached_record(
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
         client_record_id=client.id,
         idempotency_key=key,
-        binder_id=1,
-        entity_id=1,
+        binder_id=first_binder.id,
+        entity_id=first_binder.id,
         entity_type="binder",
     )
     r2 = svc.auto_send(
         trigger=NotificationTrigger.BINDER_READY_FOR_HANDOVER,
         client_record_id=client.id,
         idempotency_key=key,
-        binder_id=2,
-        entity_id=2,
+        binder_id=second_binder.id,
+        entity_id=second_binder.id,
         entity_type="binder",
     )
 

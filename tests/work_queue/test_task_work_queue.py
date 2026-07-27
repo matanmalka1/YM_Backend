@@ -120,7 +120,7 @@ def test_task_work_queue_item_metadata(test_db, task_factory, actor_user):
     assert match.metadata["status"] == "open"
     assert match.metadata["priority"] == "high"
     assert match.metadata["description"] == "Some details"
-    assert match.metadata["assigned_to_user_id"] == 5
+    assert match.metadata["assigned_to_user_id"] == actor_user.id
     assert match.metadata["assigned_role"] == "advisor"
     assert match.metadata["action_key"] == "review"
     assert match.metadata["action_payload"] == {"key": "val"}

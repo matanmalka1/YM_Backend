@@ -249,7 +249,7 @@ def test_vat_exempt_keeps_existing_rejection_before_calendar_linking(test_db, ac
     assert test_db.scalar(select(func.count()).select_from(VatWorkItem)) == 0
 
 
-def test_annual_report_creation_links_matching_tax_calendar_entry(test_db):
+def test_annual_report_creation_links_matching_tax_calendar_entry(test_db, actor_user):
     entry = make_entry(
         test_db,
         obligation_type=ObligationType.ANNUAL_REPORT,
@@ -261,7 +261,7 @@ def test_annual_report_creation_links_matching_tax_calendar_entry(test_db):
     client = annual_client(test_db)
 
     report = AnnualReportService(test_db).create_report(
-        client.id, 2026, "corporation", 1, "Advisor"
+        client.id, 2026, "corporation", actor_user.id, actor_user.full_name
     )
 
     assert report.tax_calendar_entry_id == entry.id
@@ -269,11 +269,11 @@ def test_annual_report_creation_links_matching_tax_calendar_entry(test_db):
     assert report.filing_deadline.date() == date(2027, 7, 31)
 
 
-def test_annual_report_creation_creates_missing_tax_calendar_entry(test_db):
+def test_annual_report_creation_creates_missing_tax_calendar_entry(test_db, actor_user):
     client = annual_client(test_db)
 
     report = AnnualReportService(test_db).create_report(
-        client.id, 2026, "corporation", 1, "Advisor"
+        client.id, 2026, "corporation", actor_user.id, actor_user.full_name
     )
 
     entry = test_db.get(TaxCalendarEntry, report.tax_calendar_entry_id)
@@ -356,7 +356,7 @@ def test_bootstrap_entries_allow_business_objects_to_link(test_db, actor_user):
         created_by=actor_user.id,
     )
     report = AnnualReportService(test_db).create_report(
-        annual.id, 2026, "corporation", 1, "Advisor"
+        annual.id, 2026, "corporation", actor_user.id, actor_user.full_name
     )
 
     assert skipped == 0

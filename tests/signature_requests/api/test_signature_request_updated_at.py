@@ -69,15 +69,16 @@ def test_cancel_bumps_updated_at(client, test_db, advisor_headers, create_client
         assert after["updated_at"] >= before["updated_at"]
 
 
-def test_column_has_no_default_null_on_bare_insert(test_db, actor_user):
+def test_column_has_no_default_null_on_bare_insert(test_db, actor_user, client_factory):
     """Guard the no-fake rule: a pure insert leaves updated_at NULL (no default=)."""
     from app.signature_requests.models.signature_request import (
         SignatureRequest,
         SignatureRequestType,
     )
 
+    seeded_client = client_factory()
     req = SignatureRequest(
-        client_record_id=1,
+        client_record_id=seeded_client.id,
         created_by=actor_user.id,
         request_type=SignatureRequestType.CUSTOM,
         title="Bare",
