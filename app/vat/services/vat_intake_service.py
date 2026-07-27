@@ -5,7 +5,6 @@ from app.audit.audit_constants import (
     ENTITY_VAT_WORK_ITEM,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.clients.client_enums import ClientStatus
 from app.common.enums import ObligationType, VatType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
@@ -19,9 +18,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
 from app.vat.services.vat_client_context_service import VatClientContextService
 from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_messages import (
-    VAT_CLIENT_CLOSED_CREATE_ITEM,
     VAT_CLIENT_EXEMPT,
-    VAT_CLIENT_FROZEN_CREATE_ITEM,
     VAT_INVALID_BIMONTHLY_PERIOD,
     VAT_ITEM_NOT_FOUND,
     VAT_MATERIALS_COMPLETE_INVALID_STATUS,
@@ -60,13 +57,10 @@ def create_work_item(
     pending_materials_note: str | None = None,
     actor_display_name: str | None = None,
 ):
-    client_record, legal_entity = VatClientContextService(db).get_active_client_and_entity(
-        client_record_id
-    )
-    if client_record.status == ClientStatus.CLOSED:
-        raise AppError(VAT_CLIENT_CLOSED_CREATE_ITEM, ErrorCode.VAT_CLIENT_CLOSED)
-    if client_record.status == ClientStatus.FROZEN:
-        raise AppError(VAT_CLIENT_FROZEN_CREATE_ITEM, ErrorCode.VAT_CLIENT_FROZEN)
+    # get_active_client_and_entity already applies the shared client-eligibility guard
+    # (assert_client_record_is_active), which raises for CLOSED and FROZEN. A second
+    # check here used to re-raise with VAT-local codes and was unreachable.
+    _, legal_entity = VatClientContextService(db).get_active_client_and_entity(client_record_id)
     effective_vat_type = resolve_effective_vat_type(legal_entity)
     _validate_period_for_vat_type(period, effective_vat_type)
 

@@ -68,6 +68,18 @@ class AdvancePaymentStatus(str, PyEnum):
     PARTIAL = "partial"  # Paid partially
 
 
+_RESOLVED_STATUSES = frozenset({AdvancePaymentStatus.PAID})
+
+
+def is_advance_payment_resolved(status: AdvancePaymentStatus) -> bool:
+    """Whether an advance period needs no further work.
+
+    PARTIAL is not resolved — money is still owed. The tax calendar used to
+    hardcode this set.
+    """
+    return status in _RESOLVED_STATUSES
+
+
 class PaymentMethod(str, PyEnum):
     """Supported payment methods for an advance payment."""
 

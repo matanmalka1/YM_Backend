@@ -3,8 +3,8 @@ from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.advance_payments.models.advance_payment import is_advance_payment_resolved
+from app.annual_reports.models.annual_report_enums import is_annual_report_resolved
 from app.common.enums import ObligationType
 from app.core.pagination import paginate_sequence
 from app.tax_calendar.repositories.tax_calendar_grouped_repository import (
@@ -16,14 +16,16 @@ from app.tax_calendar.schemas.tax_calendar_grouped import (
     TaxCalendarGroupsSummary,
 )
 from app.utils.time_utils import israel_today
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import is_vat_work_item_resolved
 
-VAT_DONE = {VatWorkItemStatus.FILED}
-ADVANCE_DONE = {AdvancePaymentStatus.PAID}
-ANNUAL_DONE = {
-    AnnualReportStatus.SUBMITTED,
-    AnnualReportStatus.CLOSED,
-    AnnualReportStatus.CANCELED,
+# Each domain answers "does this obligation still need work?" for itself. This module
+# only routes to the owning domain's predicate; it does not decide. Three literal
+# status sets used to live here, so adding a status to any domain silently required
+# editing this file to stay correct — and nothing said so.
+_RESOLVED_BY_OBLIGATION = {
+    ObligationType.VAT: is_vat_work_item_resolved,
+    ObligationType.ADVANCE_PAYMENT: is_advance_payment_resolved,
+    ObligationType.ANNUAL_REPORT: is_annual_report_resolved,
 }
 
 
@@ -219,10 +221,7 @@ def _done_count(obligation_type, rows: list) -> int:
 
 
 def _is_done(obligation_type, row) -> bool:
-    if obligation_type == ObligationType.VAT:
-        return row.status in VAT_DONE
-    if obligation_type == ObligationType.ADVANCE_PAYMENT:
-        return row.status in ADVANCE_DONE
-    if obligation_type == ObligationType.ANNUAL_REPORT:
-        return row.status in ANNUAL_DONE
-    return False
+    is_resolved = _RESOLVED_BY_OBLIGATION.get(obligation_type)
+    if is_resolved is None:
+        return False
+    return is_resolved(row.status)

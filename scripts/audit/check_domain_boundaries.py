@@ -77,12 +77,6 @@ ALLOWED_REPOSITORY_MODEL_IMPORTS: dict[str, str] = {
     # active-client scoping is mandated by architecture.md and cannot avoid the join.
     "*:app.clients.models": "active-client scoping join (mandated by architecture.md)",
     "*:app.legal_entities.models": "legal-entity scoping join through ClientRecord",
-    # KNOWN VIOLATION, tracked for removal. This repository owns VAT's filing semantics
-    # (which statuses resolve a turnover) from inside advance_payments. Removing it means
-    # VAT publishing that rule as a service contract. See the tax-lifecycle plan.
-    "advance_payments/repositories/advance_payment_turnover_lookup_repository.py:app.vat.models": (
-        "TRACKED VIOLATION: VAT turnover-resolution rule owned by the wrong domain"
-    ),
     # TRACKED VIOLATION: signature_requests owns workflow state of its own, so it is not
     # a read-model domain, yet its repository reads annual-report status directly.
     "signature_requests/repositories/signature_request_crud.py:app.annual_reports.models": (

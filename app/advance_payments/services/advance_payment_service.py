@@ -34,12 +34,12 @@ from app.audit.audit_constants import (
     ENTITY_ADVANCE_PAYMENT,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.clients.client_enums import ClientStatus
+from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationType
 from app.common.period_utils import parse_period_month, parse_period_year
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import AppError, ConflictError, ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
@@ -162,11 +162,10 @@ class AdvancePaymentService:
         return record
 
     def _assert_client_allows_create(self, client_record_id: int) -> None:
-        record = self._get_record_or_raise(client_record_id)
-        if record.status == ClientStatus.CLOSED:
-            raise ForbiddenError("לקוח סגור — לא ניתן ליצור מקדמה", ErrorCode.CLIENT_CLOSED)
-        if record.status == ClientStatus.FROZEN:
-            raise ForbiddenError("לקוח מוקפא — לא ניתן ליצור מקדמה", ErrorCode.CLIENT_FROZEN)
+        # The shared guard is the single client-eligibility rule across domains; this
+        # used to re-derive it locally and raise 403 CLIENT.CLOSED / CLIENT.FROZEN,
+        # which meant no caller could detect "not eligible" generically.
+        assert_client_record_is_active(self._get_record_or_raise(client_record_id))
 
     def default_period_months_count_for_client(self, client_record_id: int) -> int:
         record = self._get_record_or_raise(client_record_id)

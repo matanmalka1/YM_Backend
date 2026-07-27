@@ -42,6 +42,24 @@ class AnnualReportStatus(str, PyEnum):
     CANCELED = "canceled"
 
 
+_RESOLVED_STATUSES = frozenset(
+    {
+        AnnualReportStatus.SUBMITTED,
+        AnnualReportStatus.CLOSED,
+        AnnualReportStatus.CANCELED,
+    }
+)
+
+
+def is_annual_report_resolved(status: AnnualReportStatus) -> bool:
+    """Whether an annual report needs no further work.
+
+    Includes CANCELED: a cancelled report is not outstanding work, even though it
+    was never filed. The tax calendar used to hardcode this set.
+    """
+    return status in _RESOLVED_STATUSES
+
+
 class AnnualReportSchedule(str, PyEnum):
     """Annexes / schedules that may be required alongside the main form."""
 

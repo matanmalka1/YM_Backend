@@ -8,7 +8,7 @@ from app.advance_payments.services.advance_payment_service import AdvancePayment
 from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import AdvancePaymentFrequency
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError
 
 _seq = count(1)
 
@@ -131,15 +131,40 @@ def test_create_payment_missing_business_raises(test_db):
         )
 
 
-def test_create_payment_closed_client_raises_client_closed(test_db, client_factory):
-    client_record = _client_record(test_db, client_factory, status=ClientStatus.CLOSED)
+@pytest.mark.parametrize("status", [ClientStatus.CLOSED, ClientStatus.FROZEN])
+def test_create_payment_ineligible_client_raises_shared_guard_code(test_db, client_factory, status):
+    """One code and status across domains; only the message says which state it was.
+
+    This domain used to raise 403 CLIENT.CLOSED / CLIENT.FROZEN of its own. The block
+    is a fact about the client record's state, not the caller's permissions, so it is
+    a 409 from the shared guard.
+    """
+    client_record = _client_record(test_db, client_factory, status=status)
     service = AdvancePaymentService(test_db)
 
-    with pytest.raises(ForbiddenError) as exc_info:
+    with pytest.raises(ConflictError) as exc_info:
         service.create_payment_for_client(
             client_record_id=client_record.id,
             period="2026-05",
             period_months_count=1,
         )
 
-    assert getattr(exc_info.value, "code", None) == "CLIENT.CLOSED"
+    assert getattr(exc_info.value, "code", None) == "CLIENT_RECORD.CLOSED"
+
+
+def test_ineligible_client_messages_distinguish_closed_from_frozen(test_db, client_factory):
+    """A frozen client can be thawed and a closed one generally cannot — the advisor
+    has to be able to tell which one blocked them, even though the code is uniform."""
+    service = AdvancePaymentService(test_db)
+    messages = {}
+    for status in (ClientStatus.CLOSED, ClientStatus.FROZEN):
+        record = _client_record(test_db, client_factory, status=status)
+        with pytest.raises(ConflictError) as exc_info:
+            service.create_payment_for_client(
+                client_record_id=record.id,
+                period="2026-05",
+                period_months_count=1,
+            )
+        messages[status] = str(exc_info.value)
+
+    assert messages[ClientStatus.CLOSED] != messages[ClientStatus.FROZEN]

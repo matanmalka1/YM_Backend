@@ -12,6 +12,9 @@ class VatWorkItemStatus(str, PyEnum):
     CANCELED = "canceled"
 
 
+_RESOLVED_STATUSES = frozenset({VatWorkItemStatus.FILED})
+
+
 class CounterpartyIdType(str, PyEnum):
     IL_BUSINESS = "il_business"  # עוסק מורשה / ח"פ — ספרת ביקורת ישראלית
     IL_PERSONAL = "il_personal"  # ת"ז ישראלית — ספרת ביקורת ישראלית
@@ -75,10 +78,21 @@ class DocumentType(str, PyEnum):
     CREDIT_NOTE = "credit_note"
 
 
+def is_vat_work_item_resolved(status: "VatWorkItemStatus") -> bool:
+    """Whether a VAT period needs no further work.
+
+    VAT's own answer to the question the tax calendar asks about every obligation.
+    The calendar used to hardcode this set; a status added here must not require
+    editing another domain to stay correct.
+    """
+    return status in _RESOLVED_STATUSES
+
+
 __all__ = [
     "DocumentType",
     "ExpenseCategory",
     "InvoiceType",
     "VatRateType",
     "VatWorkItemStatus",
+    "is_vat_work_item_resolved",
 ]

@@ -8,23 +8,26 @@ generated for, before any payment row exists.
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
-from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.clients.repositories.client_active_scope import (
+    eligible_client_status_expr,
+    scope_to_active_clients_stmt,
+)
 from app.legal_entities.models.legal_entity import LegalEntity
 
 
 def _generation_scope_stmt(stmt):
     """The canonical active-client scope, narrowed to clients we may generate for.
 
-    Soft-delete scoping and the legal-entity join are the shared helper's job.
-    The extra ``status == ACTIVE`` predicate is this domain's own rule: closed
-    and frozen clients are excluded here rather than skipped later, because
-    ``_assert_client_allows_create`` forbids creating an advance for them and a
-    bulk run must never reach them.
+    Soft-delete scoping and the legal-entity join are the shared helper's job. The
+    eligibility predicate is the SQL twin of ``assert_client_record_is_active`` —
+    ineligible clients are excluded here rather than skipped later, because that
+    guard forbids creating an advance for them and a bulk run must never reach
+    them. This used to inline its own ``status == ACTIVE``, a fourth copy of the
+    rule.
     """
     return scope_to_active_clients_stmt(stmt, ClientRecord, join_legal_entity=True).where(
-        ClientRecord.status == ClientStatus.ACTIVE
+        eligible_client_status_expr()
     )
 
 

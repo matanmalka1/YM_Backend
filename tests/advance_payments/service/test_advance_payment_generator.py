@@ -12,7 +12,7 @@ from app.advance_payments.services.advance_payment_service import AdvancePayment
 from app.businesses.models.business import Business
 from app.clients.client_enums import ClientStatus
 from app.common.enums import AdvancePaymentFrequency, VatType
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.exceptions import ConflictError, NotFoundError
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -105,13 +105,21 @@ def test_generate_annual_schedule_missing_business_raises_not_found(test_db):
     assert exc.value.code == "ADVANCE_PAYMENT.CLIENT_RECORD_NOT_FOUND"
 
 
-def test_generate_annual_schedule_closed_client_raises_forbidden(test_db, client_factory):
+def test_generate_annual_schedule_ineligible_client_raises_shared_guard_code(
+    test_db, client_factory
+):
+    """Schedule generation blocks on the same shared guard as single create.
+
+    Previously 403 CLIENT.CLOSED from this domain's own check; now 409
+    CLIENT_RECORD.CLOSED, because the block is a fact about the client record's
+    state rather than the caller's permissions.
+    """
     client_record_id = _closed_client_record_id(client_factory)
 
-    with pytest.raises(ForbiddenError) as exc:
+    with pytest.raises(ConflictError) as exc:
         generate_annual_schedule(client_record_id, 2026, test_db)
 
-    assert exc.value.code == "CLIENT.CLOSED"
+    assert exc.value.code == "CLIENT_RECORD.CLOSED"
 
 
 def test_generate_annual_schedule_bimonthly_due_dates_rollover_year(

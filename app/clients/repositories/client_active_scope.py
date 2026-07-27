@@ -1,5 +1,20 @@
+from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.legal_entities.models.legal_entity import LegalEntity
+
+
+def eligible_client_status_expr():
+    """The SQL twin of ``assert_client_record_is_active``.
+
+    A set-based command (bulk generation) cannot call a per-row Python guard, so
+    the rule has to exist in both forms. They must change together: a client the
+    guard rejects must be a client this predicate excludes.
+
+    An allowlist, not "everything except closed and frozen", per
+    ``docs/agent/decision-making.md``: a status added later must not become
+    silently eligible.
+    """
+    return ClientRecord.status == ClientStatus.ACTIVE
 
 
 def scope_to_active_clients_stmt(stmt, owner_model, *, join_legal_entity: bool = False):

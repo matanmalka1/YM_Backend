@@ -10,13 +10,17 @@ from app.core.openapi_responses import (
 ADVANCE_PAYMENT_CREATE_RESPONSES = error_responses(
     bad_request_response(description="נתוני המקדמה אינם תקינים"),
     not_found_response(description="הלקוח המבוקש לא נמצא"),
-    conflict_response(description="תדירות או תקופת המקדמה אינן נתמכות"),
+    conflict_response(
+        description="תדירות או תקופת המקדמה אינן נתמכות, או שתיק הלקוח סגור או מוקפא"
+    ),
 )
 
 ADVANCE_PAYMENT_GENERATE_RESPONSES = error_responses(
     bad_request_response(description="נתוני יצירת לוח המקדמות אינם תקינים"),
     not_found_response(description="הלקוח המבוקש לא נמצא"),
-    conflict_response(description="לא ניתן ליצור לוח מקדמות במצב הנוכחי"),
+    conflict_response(
+        description="לא ניתן ליצור לוח מקדמות במצב הנוכחי, או שתיק הלקוח סגור או מוקפא"
+    ),
 )
 
 ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES = error_responses(
