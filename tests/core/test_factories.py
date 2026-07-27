@@ -1,4 +1,10 @@
+from datetime import date
+
+import pytest
+
+from app.binders.models.binder_intake_material import MaterialType
 from app.businesses.models.business import BusinessStatus
+from app.common.enums import ObligationType
 from app.users.models.user import UserRole
 
 
@@ -47,3 +53,45 @@ def test_annual_report_factory_accepts_an_actor_and_custom_fields(
     assert report.created_by == actor.id
     assert report.deadline_type.value == "custom"
     assert report.notes == "Factory report"
+
+
+def test_binder_intake_material_factory_preserves_explicit_zero_month_end(
+    binder_intake_material_factory,
+):
+    material = binder_intake_material_factory(
+        material_type=MaterialType.OTHER,
+        period_month_start=1,
+        period_month_end=0,
+    )
+
+    assert material.period_month_end == 0
+
+
+def test_tax_calendar_entry_factory_rejects_zero_period_months_count(
+    tax_calendar_entry_factory,
+):
+    with pytest.raises(ValueError, match="period_months_count must be 1 or 2"):
+        tax_calendar_entry_factory(
+            obligation_type=ObligationType.VAT,
+            period="2026-01",
+            period_months_count=0,
+        )
+
+
+def test_tax_calendar_entry_factory_rejects_conflicting_existing_fields(
+    tax_calendar_entry_factory,
+):
+    tax_calendar_entry_factory(
+        obligation_type=ObligationType.VAT,
+        period="2026-01",
+        period_months_count=1,
+        due_date=date(2026, 2, 15),
+    )
+
+    with pytest.raises(ValueError, match="due_date"):
+        tax_calendar_entry_factory(
+            obligation_type=ObligationType.VAT,
+            period="2026-01",
+            period_months_count=1,
+            due_date=date(2026, 2, 20),
+        )

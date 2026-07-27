@@ -69,6 +69,19 @@ from app.users.models.user import User, UserRole
 from app.users.services.user_auth_service import AuthService
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
+from tests.helpers.factory_utils import (
+    TEST_DATETIME,
+    TEST_DUE_DATE,
+    TEST_TAX_YEAR,
+    ClientRef,
+    resolve_exclusive,
+)
+from tests.helpers.factory_utils import (
+    resolve_exclusive as _resolve_exclusive,
+)
+from tests.helpers.factory_utils import (
+    sequence_period as _sequence_period,
+)
 from tests.helpers.identity import (
     SeededClient,
     seed_business,
@@ -116,7 +129,7 @@ class UserFactory:
         password: str = "password123",
         role: UserRole = UserRole.ADVISOR,
         is_active: bool = True,
-        commit: bool = True,
+        commit: bool = False,
     ) -> User:
         sequence = next(self._sequence)
         return create_user(
@@ -273,7 +286,7 @@ class ClientBusinessFactory:
         business_status: BusinessStatus = BusinessStatus.ACTIVE,
         business_created_by: int | None = None,
         business_notes: str | None = None,
-        commit: bool = True,
+        commit: bool = False,
         **client_fields: Any,
     ) -> tuple[SeededClient, Business]:
         sequence = next(self._sequence)
@@ -296,29 +309,19 @@ class ClientBusinessFactory:
         return client, business
 
 
-def _resolve_exclusive(one: Any, other: Any, *, names: str) -> None:
-    if one is not None and other is not None:
-        raise ValueError(f"Pass either {names}, not both")
-
-
-def _sequence_period(sequence: int, *, start_year: int = 2026) -> str:
-    year = start_year + (sequence - 1) // 12
-    month = (sequence - 1) % 12 + 1
-    return f"{year}-{month:02d}"
-
-
 class BinderFactory:
     """Model-level Binder factory: no BinderService side effects (audit/timeline)."""
 
-    def __init__(self, db: Session, client_factory: ClientFactory) -> None:
+    def __init__(self, db: Session, client_factory: ClientFactory, actor_user: User) -> None:
         self.db = db
         self.client_factory = client_factory
+        self.actor_user = actor_user
         self._sequence = count(1)
 
     def __call__(
         self,
         *,
-        client: Any = None,
+        client: ClientRef | None = None,
         client_record_id: int | None = None,
         actor: User | None = None,
         created_by: int | None = None,
@@ -335,22 +338,14 @@ class BinderFactory:
         deleted_by: int | None = None,
         commit: bool = False,
     ) -> Binder:
-        _resolve_exclusive(client, client_record_id, names="client or client_record_id")
-        _resolve_exclusive(actor, created_by, names="actor or created_by")
+        resolve_exclusive(client, client_record_id, names="client or client_record_id")
+        resolve_exclusive(actor, created_by, names="actor or created_by")
         sequence = next(self._sequence)
         if client is None and client_record_id is None:
             client = self.client_factory()
         resolved_client_id = client_record_id if client_record_id is not None else client.id
         if created_by is None:
-            created_by = (
-                actor.id
-                if actor is not None
-                else create_user(
-                    self.db,
-                    full_name=f"Binder Actor {sequence}",
-                    email=f"binder-actor-{sequence}@example.com",
-                ).id
-            )
+            created_by = actor.id if actor is not None else self.actor_user.id
         binder = Binder(
             client_record_id=resolved_client_id,
             binder_number=binder_number or f"BIN-{sequence:04d}",
@@ -377,9 +372,10 @@ class BinderFactory:
 class ChargeFactory:
     """Model-level Charge factory: no BillingService side effects (audit/timeline)."""
 
-    def __init__(self, db: Session, client_factory: ClientFactory) -> None:
+    def __init__(self, db: Session, client_factory: ClientFactory, actor_user: User) -> None:
         self.db = db
         self.client_factory = client_factory
+        self.actor_user = actor_user
         self._sequence = count(1)
 
     def __call__(
@@ -410,8 +406,8 @@ class ChargeFactory:
         deleted_by: int | None = None,
         commit: bool = False,
     ) -> Charge:
-        _resolve_exclusive(client, client_record_id, names="client or client_record_id")
-        _resolve_exclusive(business, business_id, names="business or business_id")
+        resolve_exclusive(client, client_record_id, names="client or client_record_id")
+        resolve_exclusive(business, business_id, names="business or business_id")
         next(self._sequence)
         if client is None and client_record_id is None:
             client = self.client_factory()
@@ -526,9 +522,10 @@ class TaskFactory:
 class BinderIntakeFactory:
     """Model-level BinderIntake factory."""
 
-    def __init__(self, db: Session, binder_factory: BinderFactory) -> None:
+    def __init__(self, db: Session, binder_factory: BinderFactory, actor_user: User) -> None:
         self.db = db
         self.binder_factory = binder_factory
+        self.actor_user = actor_user
 
     def __call__(
         self,
@@ -548,13 +545,7 @@ class BinderIntakeFactory:
             binder = self.binder_factory()
         if received_by is None:
             received_by = (
-                received_by_user.id
-                if received_by_user is not None
-                else create_user(
-                    self.db,
-                    full_name="Binder Intake Receiver",
-                    email=f"binder-intake-receiver-{id(self)}@example.com",
-                ).id
+                received_by_user.id if received_by_user is not None else self.actor_user.id
             )
         fields: dict[str, Any] = {
             "binder_id": binder_id if binder_id is not None else binder.id,
@@ -621,7 +612,9 @@ class BinderIntakeMaterialFactory:
             "material_type": material_type,
             "period_year": period_year,
             "period_month_start": period_month_start,
-            "period_month_end": period_month_end or period_month_start,
+            "period_month_end": (
+                period_month_start if period_month_end is None else period_month_end
+            ),
             "description": description,
         }
         if created_at is not None:
@@ -714,7 +707,7 @@ class InvoiceFactory:
             "provider": provider,
             "external_invoice_id": external_invoice_id or f"TEST-INV-{sequence:04d}",
             "document_url": document_url,
-            "issued_at": issued_at or datetime(2026, 1, 1),
+            "issued_at": issued_at or TEST_DATETIME,
         }
         if created_at is not None:
             fields["created_at"] = created_at
@@ -740,8 +733,8 @@ class TaxCalendarEntryFactory:
         obligation_type: ObligationType = ObligationType.VAT,
         period: str | None = None,
         period_months_count: int | None = None,
-        tax_year: int = 2026,
-        due_date: date = date(2026, 2, 15),
+        tax_year: int = TEST_TAX_YEAR,
+        due_date: date = TEST_DUE_DATE,
         deadline_rule_id: int | None = None,
         created_at: datetime | None = None,
         updated_at: datetime | None = None,
@@ -754,7 +747,7 @@ class TaxCalendarEntryFactory:
             rule_type = DeadlineRuleType.ANNUAL_REPORT
         else:
             resolved_period = period or _sequence_period(sequence, start_year=tax_year)
-            resolved_months_count = period_months_count or 1
+            resolved_months_count = 1 if period_months_count is None else period_months_count
             rule_type = (
                 DeadlineRuleType.VAT_BIMONTHLY
                 if obligation_type == ObligationType.VAT and resolved_months_count == 2
@@ -792,6 +785,22 @@ class TaxCalendarEntryFactory:
             )
         existing = self.db.scalars(existing_stmt.limit(1)).first()
         if existing is not None:
+            conflicts = {
+                field: (current, requested)
+                for field, current, requested in (
+                    ("due_date", existing.due_date, due_date),
+                    ("deadline_rule_id", existing.deadline_rule_id, deadline_rule_id),
+                )
+                if current != requested
+            }
+            if created_at is not None and existing.created_at != created_at:
+                conflicts["created_at"] = (existing.created_at, created_at)
+            if updated_at is not None and existing.updated_at != updated_at:
+                conflicts["updated_at"] = (existing.updated_at, updated_at)
+            if conflicts:
+                raise ValueError(
+                    f"Existing TaxCalendarEntry conflicts with requested fields: {conflicts}"
+                )
             return existing
         entry_fields: dict[str, Any] = {
             "obligation_type": obligation_type,
@@ -921,9 +930,10 @@ class AdvancePaymentFactory:
 class PermanentDocumentFactory:
     """Model-level PermanentDocument factory."""
 
-    def __init__(self, db: Session, client_factory: ClientFactory) -> None:
+    def __init__(self, db: Session, client_factory: ClientFactory, actor_user: User) -> None:
         self.db = db
         self.client_factory = client_factory
+        self.actor_user = actor_user
         self._sequence = count(1)
 
     def __call__(
@@ -961,11 +971,7 @@ class PermanentDocumentFactory:
         if client is None and client_record_id is None:
             client = self.client_factory()
         if uploaded_by is None:
-            uploaded_by = create_user(
-                self.db,
-                full_name=f"Document Uploader {sequence}",
-                email=f"document-uploader-{sequence}@example.com",
-            ).id
+            uploaded_by = self.actor_user.id
         document_fields: dict[str, Any] = {
             "client_record_id": (client_record_id if client_record_id is not None else client.id),
             "business_id": business_id
@@ -1005,9 +1011,10 @@ class PermanentDocumentFactory:
 class SignatureRequestFactory:
     """Model-level SignatureRequest factory."""
 
-    def __init__(self, db: Session, client_factory: ClientFactory) -> None:
+    def __init__(self, db: Session, client_factory: ClientFactory, actor_user: User) -> None:
         self.db = db
         self.client_factory = client_factory
+        self.actor_user = actor_user
         self._sequence = count(1)
 
     def __call__(
@@ -1053,11 +1060,7 @@ class SignatureRequestFactory:
         if client is None and client_record_id is None:
             client = self.client_factory()
         if created_by is None:
-            created_by = create_user(
-                self.db,
-                full_name=f"Signature Actor {sequence}",
-                email=f"signature-actor-{sequence}@example.com",
-            ).id
+            created_by = self.actor_user.id
         request_fields: dict[str, Any] = {
             "client_record_id": (client_record_id if client_record_id is not None else client.id),
             "business_id": business_id
@@ -1186,10 +1189,12 @@ class VatWorkItemFactory:
         db: Session,
         client_factory: ClientFactory,
         tax_calendar_entry_factory: TaxCalendarEntryFactory,
+        actor_user: User,
     ) -> None:
         self.db = db
         self.client_factory = client_factory
         self.tax_calendar_entry_factory = tax_calendar_entry_factory
+        self.actor_user = actor_user
         self._sequence = count(1)
 
     def __call__(
@@ -1232,11 +1237,7 @@ class VatWorkItemFactory:
         if client is None and client_record_id is None:
             client = self.client_factory()
         if created_by is None:
-            created_by = create_user(
-                self.db,
-                full_name=f"VAT Actor {sequence}",
-                email=f"vat-actor-{sequence}@example.com",
-            ).id
+            created_by = self.actor_user.id
         resolved_period = period or _sequence_period(sequence)
         months_count = 2 if period_type == VatType.BIMONTHLY else 1
         if tax_calendar_entry_id is None:
@@ -1346,10 +1347,10 @@ class AuthorityContactFactory:
 
 
 class AnnualReportFactory:
-    def __init__(self, db: Session, client_factory: ClientFactory) -> None:
+    def __init__(self, db: Session, client_factory: ClientFactory, actor_user: User) -> None:
         self.db = db
         self.client_factory = client_factory
-        self._actor_sequence = count(1)
+        self.actor_user = actor_user
 
     def __call__(
         self,
@@ -1361,7 +1362,7 @@ class AnnualReportFactory:
         actor: User | None = None,
         created_by: int | None = None,
         created_by_name: str | None = None,
-        tax_year: int = 2026,
+        tax_year: int = TEST_TAX_YEAR,
         client_type: str = "corporation",
         deadline_type: str = "standard",
         **report_fields: Any,
@@ -1373,7 +1374,8 @@ class AnnualReportFactory:
                 full_name=client_full_name,
                 id_number=client_id_number,
             )
-        assert client_record_id is not None or client is not None
+        if client_record_id is None and client is None:
+            raise ValueError("A client or client_record_id is required")
         resolved_client_id = client_record_id if client_record_id is not None else client.id
         if actor is not None:
             resolved_actor_id = actor.id
@@ -1382,12 +1384,7 @@ class AnnualReportFactory:
             resolved_actor_id = created_by
             resolved_actor_name = created_by_name or "Test Actor"
         else:
-            actor_sequence = next(self._actor_sequence)
-            actor = create_user(
-                self.db,
-                full_name=f"Annual Report Actor {actor_sequence}",
-                email=f"annual-report-actor-{actor_sequence}@example.com",
-            )
+            actor = self.actor_user
             resolved_actor_id = actor.id
             resolved_actor_name = created_by_name or actor.full_name
         return AnnualReportService(self.db).create_report(
@@ -1413,11 +1410,12 @@ class AnnualReportModelFactory:
         db: Session,
         client_factory: ClientFactory,
         tax_calendar_entry_factory: TaxCalendarEntryFactory,
+        actor_user: User,
     ) -> None:
         self.db = db
         self.client_factory = client_factory
         self.tax_calendar_entry_factory = tax_calendar_entry_factory
-        self._sequence = count(1)
+        self.actor_user = actor_user
 
     def __call__(
         self,
@@ -1454,16 +1452,11 @@ class AnnualReportModelFactory:
         commit: bool = False,
     ) -> AnnualReport:
         _resolve_exclusive(client, client_record_id, names="client or client_record_id")
-        sequence = next(self._sequence)
         if client is None and client_record_id is None:
             client = self.client_factory()
         resolved_client_id = client_record_id if client_record_id is not None else client.id
         if created_by is None:
-            created_by = create_user(
-                self.db,
-                full_name=f"Annual Report Model Actor {sequence}",
-                email=f"annual-report-model-actor-{sequence}@example.com",
-            ).id
+            created_by = self.actor_user.id
         if tax_calendar_entry_id is None:
             entry = self.tax_calendar_entry_factory(
                 obligation_type=ObligationType.ANNUAL_REPORT,

@@ -111,18 +111,18 @@ def create_client_with_business(test_db):
 
 
 @pytest.fixture(scope="function")
-def annual_report_factory(test_db, client_factory):
-    return AnnualReportFactory(test_db, client_factory)
+def annual_report_factory(test_db, client_factory, actor_user):
+    return AnnualReportFactory(test_db, client_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
-def annual_report_model_factory(test_db, client_factory, tax_calendar_entry_factory):
-    return AnnualReportModelFactory(test_db, client_factory, tax_calendar_entry_factory)
+def annual_report_model_factory(test_db, client_factory, tax_calendar_entry_factory, actor_user):
+    return AnnualReportModelFactory(test_db, client_factory, tax_calendar_entry_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
-def binder_factory(test_db, client_factory):
-    return BinderFactory(test_db, client_factory)
+def binder_factory(test_db, client_factory, actor_user):
+    return BinderFactory(test_db, client_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
@@ -136,8 +136,8 @@ def task_factory(test_db):
 
 
 @pytest.fixture(scope="function")
-def binder_intake_factory(test_db, binder_factory):
-    return BinderIntakeFactory(test_db, binder_factory)
+def binder_intake_factory(test_db, binder_factory, actor_user):
+    return BinderIntakeFactory(test_db, binder_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
@@ -166,13 +166,13 @@ def advance_payment_factory(test_db, client_factory, tax_calendar_entry_factory)
 
 
 @pytest.fixture(scope="function")
-def permanent_document_factory(test_db, client_factory):
-    return PermanentDocumentFactory(test_db, client_factory)
+def permanent_document_factory(test_db, client_factory, actor_user):
+    return PermanentDocumentFactory(test_db, client_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
-def signature_request_factory(test_db, client_factory):
-    return SignatureRequestFactory(test_db, client_factory)
+def signature_request_factory(test_db, client_factory, actor_user):
+    return SignatureRequestFactory(test_db, client_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
@@ -181,8 +181,8 @@ def notification_factory(test_db, client_factory):
 
 
 @pytest.fixture(scope="function")
-def vat_work_item_factory(test_db, client_factory, tax_calendar_entry_factory):
-    return VatWorkItemFactory(test_db, client_factory, tax_calendar_entry_factory)
+def vat_work_item_factory(test_db, client_factory, tax_calendar_entry_factory, actor_user):
+    return VatWorkItemFactory(test_db, client_factory, tax_calendar_entry_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
@@ -200,24 +200,25 @@ def client(test_db):
         finally:
             pass
 
-    main_module.app.dependency_overrides[get_db] = override_get_db
     original_expire = background_jobs_module.expire_overdue_requests
     original_signature_service = background_jobs_module.SignatureRequestService
-    background_jobs_module.expire_overdue_requests = lambda repo: 0
-    background_jobs_module.SignatureRequestService = lambda db: SimpleNamespace(
-        reconcile_signed_annual_report_approvals=lambda: SimpleNamespace(
-            processed=0,
-            submitted=0,
-            failed=0,
+    main_module.app.dependency_overrides[get_db] = override_get_db
+    try:
+        background_jobs_module.expire_overdue_requests = lambda repo: 0
+        background_jobs_module.SignatureRequestService = lambda db: SimpleNamespace(
+            reconcile_signed_annual_report_approvals=lambda: SimpleNamespace(
+                processed=0,
+                submitted=0,
+                failed=0,
+            )
         )
-    )
 
-    with TestClient(main_module.app) as test_client:
-        yield test_client
-
-    main_module.app.dependency_overrides.clear()
-    background_jobs_module.expire_overdue_requests = original_expire
-    background_jobs_module.SignatureRequestService = original_signature_service
+        with TestClient(main_module.app) as test_client:
+            yield test_client
+    finally:
+        main_module.app.dependency_overrides.pop(get_db, None)
+        background_jobs_module.expire_overdue_requests = original_expire
+        background_jobs_module.SignatureRequestService = original_signature_service
 
 
 @pytest.fixture(scope="function")
