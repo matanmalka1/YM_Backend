@@ -36,13 +36,13 @@ def test_identity_factories_build_complete_client_business_graphs(
     assert business.client_record_id == client.id
 
 
-def test_annual_report_factory_accepts_an_actor_and_custom_fields(
-    annual_report_factory,
+def test_annual_report_service_factory_accepts_an_actor_and_custom_fields(
+    annual_report_service_factory,
     user_factory,
 ):
     actor = user_factory(full_name="Annual Report Creator")
 
-    report = annual_report_factory(
+    report = annual_report_service_factory(
         actor=actor,
         tax_year=2025,
         deadline_type="custom",

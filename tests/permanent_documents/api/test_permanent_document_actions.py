@@ -23,14 +23,14 @@ def test_actions_endpoints_versions_and_list(
     advisor_headers,
     create_client_with_business,
     permanent_document_factory,
-    annual_report_model_factory,
+    annual_report_row_factory,
 ):
     _client, business = create_client_with_business(
         full_name="Perm Action API Client",
         id_number="71070001",
         id_number_type=IdNumberType.CORPORATION,
     )
-    report = annual_report_model_factory(client_record_id=business.client_id)
+    report = annual_report_row_factory(client_record_id=business.client_id)
     _doc(permanent_document_factory, business, annual_report_id=report.id)
 
     versions = client.get(

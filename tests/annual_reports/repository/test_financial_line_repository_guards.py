@@ -11,10 +11,10 @@ from app.annual_reports.repositories.annual_report_income_repository import (
 
 
 def test_scoped_lookup_cannot_access_line_from_another_report(
-    test_db, test_user, annual_report_factory
+    test_db, test_user, annual_report_service_factory
 ):
-    report_a = annual_report_factory(actor=test_user)
-    report_b = annual_report_factory(actor=test_user)
+    report_a = annual_report_service_factory(actor=test_user)
+    report_b = annual_report_service_factory(actor=test_user)
     income_repo = AnnualReportIncomeRepository(test_db)
     expense_repo = AnnualReportExpenseRepository(test_db)
 

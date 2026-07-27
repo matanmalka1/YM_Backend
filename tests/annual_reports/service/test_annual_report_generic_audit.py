@@ -27,8 +27,8 @@ def _entry(db, report_id, action):
     ).one()
 
 
-def test_detail_update_writes_generic_audit(test_db, test_user, annual_report_factory):
-    report = annual_report_factory(actor=test_user, deadline_type="custom")
+def test_detail_update_writes_generic_audit(test_db, test_user, annual_report_service_factory):
+    report = annual_report_service_factory(actor=test_user, deadline_type="custom")
 
     AnnualReportDetailService(test_db).update_detail(
         report.id,
@@ -49,9 +49,9 @@ def test_detail_update_writes_generic_audit(test_db, test_user, annual_report_fa
 
 
 def test_detail_update_skips_audit_when_values_do_not_change(
-    test_db, test_user, annual_report_factory
+    test_db, test_user, annual_report_service_factory
 ):
-    report = annual_report_factory(actor=test_user, deadline_type="custom")
+    report = annual_report_service_factory(actor=test_user, deadline_type="custom")
     service = AnnualReportDetailService(test_db)
     service.update_detail(report.id, actor_id=test_user.id, donation_amount=250)
 
@@ -66,8 +66,8 @@ def test_detail_update_skips_audit_when_values_do_not_change(
     assert len(entries) == 1
 
 
-def test_deadline_update_writes_generic_audit(test_db, test_user, annual_report_factory):
-    report = annual_report_factory(actor=test_user, deadline_type="custom")
+def test_deadline_update_writes_generic_audit(test_db, test_user, annual_report_service_factory):
+    report = annual_report_service_factory(actor=test_user, deadline_type="custom")
 
     AnnualReportService(test_db).update_deadline(
         report.id,
@@ -85,8 +85,8 @@ def test_deadline_update_writes_generic_audit(test_db, test_user, annual_report_
     assert entry.new_value["deadline_type"] == "standard"
 
 
-def test_annex_add_update_delete_write_generic_audit(test_db, test_user, annual_report_factory):
-    report = annual_report_factory(actor=test_user, deadline_type="custom")
+def test_annex_add_update_delete_write_generic_audit(test_db, test_user, annual_report_service_factory):
+    report = annual_report_service_factory(actor=test_user, deadline_type="custom")
     service = AnnualReportService(test_db)
     schedule = AnnualReportSchedule.SCHEDULE_B
 

@@ -1,5 +1,5 @@
-def test_transition_stage_success_and_not_found(client, advisor_headers, annual_report_factory):
-    report_id = annual_report_factory().id
+def test_transition_stage_success_and_not_found(client, advisor_headers, annual_report_service_factory):
+    report_id = annual_report_service_factory().id
 
     ok = client.post(
         f"/api/v1/annual-reports/{report_id}/transition",

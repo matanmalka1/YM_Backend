@@ -7,13 +7,13 @@ def _force_submitted(db, report_id: int):
 
 
 def test_annual_report_overdue_endpoint(
-    client, advisor_headers, test_user, client_factory, annual_report_factory
+    client, advisor_headers, test_user, client_factory, annual_report_service_factory
 ):
     old_client = client_factory()
     new_client = client_factory()
 
-    annual_report_factory(actor=test_user, client=old_client, tax_year=2020)
-    annual_report_factory(actor=test_user, client=new_client, tax_year=2099)
+    annual_report_service_factory(actor=test_user, client=old_client, tax_year=2020)
+    annual_report_service_factory(actor=test_user, client=new_client, tax_year=2099)
 
     resp = client.get("/api/v1/annual-reports/overdue", headers=advisor_headers)
 
@@ -28,10 +28,10 @@ def test_annual_report_overdue_endpoint(
 
 
 def test_annual_report_amend_endpoint(
-    client, test_db, advisor_headers, test_user, client_factory, annual_report_factory
+    client, test_db, advisor_headers, test_user, client_factory, annual_report_service_factory
 ):
     crm_client = client_factory()
-    report_id = annual_report_factory(actor=test_user, client=crm_client).id
+    report_id = annual_report_service_factory(actor=test_user, client=crm_client).id
     _force_submitted(test_db, report_id)
 
     amend_resp = client.post(
@@ -52,15 +52,15 @@ def test_annual_report_schedule_complete_and_season_summary(
     advisor_headers,
     test_user,
     client_factory,
-    annual_report_factory,
+    annual_report_service_factory,
 ):
     c1 = client_factory()
     c2 = client_factory()
     c3 = client_factory()
 
-    report_id = annual_report_factory(actor=test_user, client=c1).id
-    completed_report_id = annual_report_factory(actor=test_user, client=c2).id
-    canceled_report_id = annual_report_factory(actor=test_user, client=c3).id
+    report_id = annual_report_service_factory(actor=test_user, client=c1).id
+    completed_report_id = annual_report_service_factory(actor=test_user, client=c2).id
+    canceled_report_id = annual_report_service_factory(actor=test_user, client=c3).id
     AnnualReportService(test_db).repo.update(canceled_report_id, status=AnnualReportStatus.CANCELED)
 
     add_schedule_resp = client.post(

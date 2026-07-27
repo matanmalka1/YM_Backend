@@ -35,8 +35,8 @@ from app.users.models.user import UserRole
 from app.users.services.user_token_service import generate_access_token
 from tests.factories import (
     AdvancePaymentFactory,
-    AnnualReportFactory,
-    AnnualReportModelFactory,
+    AnnualReportRowFactory,
+    AnnualReportServiceFactory,
     AuthorityContactFactory,
     BinderFactory,
     BinderIntakeFactory,
@@ -111,13 +111,13 @@ def create_client_with_business(test_db):
 
 
 @pytest.fixture(scope="function")
-def annual_report_factory(test_db, client_factory, actor_user):
-    return AnnualReportFactory(test_db, client_factory, actor_user)
+def annual_report_service_factory(test_db, client_factory, actor_user):
+    return AnnualReportServiceFactory(test_db, client_factory, actor_user)
 
 
 @pytest.fixture(scope="function")
-def annual_report_model_factory(test_db, client_factory, tax_calendar_entry_factory, actor_user):
-    return AnnualReportModelFactory(test_db, client_factory, tax_calendar_entry_factory, actor_user)
+def annual_report_row_factory(test_db, client_factory, tax_calendar_entry_factory, actor_user):
+    return AnnualReportRowFactory(test_db, client_factory, tax_calendar_entry_factory, actor_user)
 
 
 @pytest.fixture(scope="function")

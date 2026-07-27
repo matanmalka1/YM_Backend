@@ -1,5 +1,5 @@
-def test_get_detail_returns_blank_when_missing(client, advisor_headers, annual_report_factory):
-    report = annual_report_factory(
+def test_get_detail_returns_blank_when_missing(client, advisor_headers, annual_report_service_factory):
+    report = annual_report_service_factory(
         client_full_name="Annual Report Client",
         client_id_number="333333333",
         tax_year=2025,
@@ -25,8 +25,8 @@ def test_get_detail_returns_blank_when_missing(client, advisor_headers, annual_r
     assert "tax_due_amount" not in data
 
 
-def test_update_detail_creates_and_updates(client, advisor_headers, annual_report_factory):
-    report = annual_report_factory(
+def test_update_detail_creates_and_updates(client, advisor_headers, annual_report_service_factory):
+    report = annual_report_service_factory(
         client_full_name="Annual Report Client",
         client_id_number="333333333",
         tax_year=2025,

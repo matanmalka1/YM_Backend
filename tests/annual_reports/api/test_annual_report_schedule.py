@@ -1,5 +1,5 @@
-def test_get_schedules_returns_entries_for_report(client, advisor_headers, annual_report_factory):
-    report_id = annual_report_factory().id
+def test_get_schedules_returns_entries_for_report(client, advisor_headers, annual_report_service_factory):
+    report_id = annual_report_service_factory().id
 
     create_resp = client.post(
         f"/api/v1/annual-reports/{report_id}/schedules",
@@ -30,9 +30,9 @@ def test_get_schedules_returns_404_for_missing_report(client, advisor_headers):
 
 
 def test_schedule_invalid_type_and_complete_missing_schedule(
-    client, advisor_headers, annual_report_factory
+    client, advisor_headers, annual_report_service_factory
 ):
-    report_id = annual_report_factory().id
+    report_id = annual_report_service_factory().id
 
     invalid = client.post(
         f"/api/v1/annual-reports/{report_id}/schedules",

@@ -1,10 +1,8 @@
 from app.users.models.user import User, UserRole
-from tests.factories import create_user
 
 
-def _make_user(test_db, email: str, role: UserRole = UserRole.SECRETARY) -> User:
-    user = create_user(
-        test_db,
+def _make_user(user_factory, email: str, role: UserRole = UserRole.SECRETARY) -> User:
+    user = user_factory(
         full_name="Reset Target",
         email=email,
         password="password123",
@@ -15,8 +13,8 @@ def _make_user(test_db, email: str, role: UserRole = UserRole.SECRETARY) -> User
     return user
 
 
-def test_reset_password_endpoint_success(client, test_db, advisor_headers):
-    target = _make_user(test_db, "reset.endpoint@example.com")
+def test_reset_password_endpoint_success(client, test_db, advisor_headers, user_factory):
+    target = _make_user(user_factory, "reset.endpoint@example.com")
 
     response = client.post(
         f"/api/v1/users/{target.id}/reset-password",

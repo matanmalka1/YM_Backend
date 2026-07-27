@@ -7,12 +7,10 @@ from app.users.repositories.user_audit_log_repository import UserAuditLogReposit
 from app.users.repositories.user_repository import UserRepository
 from app.users.services.user_auth_service import AuthService
 from app.users.services.user_management_service import UserManagementService
-from tests.factories import create_user
 
 
-def _managed_user(test_db, *, email: str, is_active: bool = True) -> User:
-    user = create_user(
-        test_db,
+def _managed_user(user_factory, *, email: str, is_active: bool = True) -> User:
+    user = user_factory(
         full_name="Managed Account",
         email=email,
         password="password123",
@@ -23,11 +21,11 @@ def _managed_user(test_db, *, email: str, is_active: bool = True) -> User:
     return user
 
 
-def test_list_users_and_reset_password(test_db, test_user):
+def test_list_users_and_reset_password(test_db, test_user, user_factory):
     service = UserManagementService(test_db)
     user_repo = UserRepository(test_db)
-    target = _managed_user(test_db, email="reset.target@example.com")
-    inactive = _managed_user(test_db, email="reset.other@example.com", is_active=False)
+    target = _managed_user(user_factory, email="reset.target@example.com")
+    inactive = _managed_user(user_factory, email="reset.other@example.com", is_active=False)
 
     items, total = service.list_users(actor_role=UserRole.ADVISOR, page=1, page_size=10)
     assert total >= 3
@@ -82,11 +80,11 @@ def test_list_users_and_reset_password(test_db, test_user):
         )
 
 
-def test_list_users_filters_by_search(test_db):
+def test_list_users_filters_by_search(test_db, user_factory):
     service = UserManagementService(test_db)
-    name_match = _managed_user(test_db, email="name-match@example.com")
+    name_match = _managed_user(user_factory, email="name-match@example.com")
     name_match.full_name = "Dana Search"
-    email_match = _managed_user(test_db, email="mail.match@example.com")
+    email_match = _managed_user(user_factory, email="mail.match@example.com")
     email_match.full_name = "Different Name"
     test_db.commit()
 

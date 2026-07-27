@@ -6,6 +6,7 @@ from typing import Protocol
 TEST_TAX_YEAR = 2026
 TEST_DUE_DATE = date(TEST_TAX_YEAR, 2, 15)
 TEST_DATETIME = datetime(TEST_TAX_YEAR, 1, 1)
+TEST_DATE = TEST_DATETIME.date()
 
 
 class ClientRef(Protocol):

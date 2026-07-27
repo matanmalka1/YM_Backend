@@ -1,11 +1,9 @@
 from app.users.models.user import User, UserRole
 from app.users.models.user_audit_log import AuditAction
-from tests.factories import create_user
 
 
-def _create_target_user(test_db) -> User:
-    user = create_user(
-        test_db,
+def _create_target_user(user_factory) -> User:
+    user = user_factory(
         full_name="Audit Target",
         email="audit.target@example.com",
         password="password123",
@@ -36,8 +34,8 @@ def test_login_events_are_persisted_in_audit_log(client, advisor_headers):
     assert AuditAction.LOGIN_FAILURE.value in actions
 
 
-def test_user_actions_are_persisted_in_audit_log(client, advisor_headers, test_db):
-    target = _create_target_user(test_db)
+def test_user_actions_are_persisted_in_audit_log(client, advisor_headers, test_db, user_factory):
+    target = _create_target_user(user_factory)
 
     update_response = client.patch(
         f"/api/v1/users/{target.id}",

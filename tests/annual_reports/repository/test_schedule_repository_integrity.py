@@ -7,8 +7,8 @@ from app.annual_reports.repositories.annual_report_schedule_repository import (
 )
 
 
-def test_schedule_repository_rejects_duplicate_schedule_per_report(test_db, annual_report_factory):
-    report = annual_report_factory()
+def test_schedule_repository_rejects_duplicate_schedule_per_report(test_db, annual_report_service_factory):
+    report = annual_report_service_factory()
     repo = AnnualReportScheduleRepository(test_db)
 
     repo.add_schedule(report.id, AnnualReportSchedule.SCHEDULE_A)

@@ -27,8 +27,8 @@ def _business(business_factory, legal_entity_id: int, name: str) -> Business:
     )
 
 
-def _annual_report(annual_report_model_factory, client_id: int, year: int) -> AnnualReport:
-    return annual_report_model_factory(
+def _annual_report(annual_report_row_factory, client_id: int, year: int) -> AnnualReport:
+    return annual_report_row_factory(
         client_record_id=client_id,
         tax_year=year,
         commit=True,
@@ -102,7 +102,7 @@ def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(
     binder_factory,
     client_factory,
     vat_work_item_factory,
-    annual_report_model_factory,
+    annual_report_row_factory,
     binder_intake_factory,
     binder_intake_material_factory,
 ):
@@ -115,8 +115,8 @@ def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(
 
     source_business = _business(business_factory, source_client.legal_entity_id, "Source Biz")
     target_business = _business(business_factory, target_client.legal_entity_id, "Target Biz")
-    source_report = _annual_report(annual_report_model_factory, source_client.id, 2025)
-    target_report = _annual_report(annual_report_model_factory, target_client.id, 2025)
+    source_report = _annual_report(annual_report_row_factory, source_client.id, 2025)
+    target_report = _annual_report(annual_report_row_factory, target_client.id, 2025)
     source_vat = _vat_work_item(vat_work_item_factory, source_client.id, "2026-02", test_user.id)
     target_vat = _vat_work_item(vat_work_item_factory, target_client.id, "2026-02", test_user.id)
 
@@ -171,7 +171,7 @@ def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(
     binder_factory,
     client_factory,
     vat_work_item_factory,
-    annual_report_model_factory,
+    annual_report_row_factory,
     binder_intake_factory,
     binder_intake_material_factory,
 ):
@@ -183,7 +183,7 @@ def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(
     )
 
     source_business = _business(business_factory, source_client.legal_entity_id, "Source Biz 2")
-    source_report = _annual_report(annual_report_model_factory, source_client.id, 2024)
+    source_report = _annual_report(annual_report_row_factory, source_client.id, 2024)
     source_vat = _vat_work_item(vat_work_item_factory, source_client.id, "2026-03", test_user.id)
 
     source_binder = _binder(binder_factory, source_client.id, "100403/1", test_user.id)

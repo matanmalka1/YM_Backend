@@ -30,13 +30,6 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
 from app.vat.models.vat_enums import VatWorkItemStatus
 
 _seq = count(1)
-_vat_work_item_factory = None
-
-
-@pytest.fixture(autouse=True)
-def _use_vat_work_item_factory(vat_work_item_factory):
-    global _vat_work_item_factory
-    _vat_work_item_factory = vat_work_item_factory
 
 
 def _make_business(create_client_with_business, frequency, advance_rate=None) -> Business:
@@ -64,11 +57,19 @@ def _bimonthly_business(create_client_with_business, advance_rate=None) -> Busin
     )
 
 
-def _vat_item(db, client_id, period, total_output_net, user_id, status=VatWorkItemStatus.FILED):
+def _vat_item(
+    vat_work_item_factory,
+    db,
+    client_id,
+    period,
+    total_output_net,
+    user_id,
+    status=VatWorkItemStatus.FILED,
+):
     mat = TaxCalendarMaterializationService(db)
     entry = mat.ensure_periodic_entry("vat", period, 1)
     net = Decimal(str(total_output_net))
-    return _vat_work_item_factory(
+    return vat_work_item_factory(
         client_record_id=client_id,
         created_by=user_id,
         period=period,
@@ -353,10 +354,17 @@ class TestResolveTurnover:
             business.client_record_id, period, months_count
         )
 
-    def test_monthly_filed(self, test_db, test_user, create_client_with_business):
+    def test_monthly_filed(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         business = _business(create_client_with_business)
         item = _vat_item(
-            test_db, business.client_record_id, "2026-01", Decimal("60000"), test_user.id
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-01",
+            Decimal("60000"),
+            test_user.id,
         )
 
         resolution = self._resolve(test_db, business, "2026-01")
@@ -366,9 +374,12 @@ class TestResolveTurnover:
         assert resolution.source == TurnoverSource.VAT_FILED
         assert resolution.vat_work_item_ids == [item.id]
 
-    def test_monthly_pending(self, test_db, test_user, create_client_with_business):
+    def test_monthly_pending(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         business = _business(create_client_with_business)
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-02",
@@ -392,13 +403,25 @@ class TestResolveTurnover:
         assert resolution.source is None
         assert resolution.vat_work_item_ids == []
 
-    def test_bimonthly_both_filed_sums(self, test_db, test_user, create_client_with_business):
+    def test_bimonthly_both_filed_sums(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         business = _bimonthly_business(create_client_with_business)
         first = _vat_item(
-            test_db, business.client_record_id, "2026-05", Decimal("60000"), test_user.id
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-05",
+            Decimal("60000"),
+            test_user.id,
         )
         second = _vat_item(
-            test_db, business.client_record_id, "2026-06", Decimal("40000"), test_user.id
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-06",
+            Decimal("40000"),
+            test_user.id,
         )
 
         resolution = self._resolve(test_db, business, "2026-05", months_count=2)
@@ -408,22 +431,37 @@ class TestResolveTurnover:
         assert resolution.vat_work_item_ids == [first.id, second.id]
 
     def test_bimonthly_half_covered_is_unresolved(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """Never report a halved turnover as if it covered the whole period."""
         business = _bimonthly_business(create_client_with_business)
-        _vat_item(test_db, business.client_record_id, "2026-07", Decimal("60000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-07",
+            Decimal("60000"),
+            test_user.id,
+        )
 
         resolution = self._resolve(test_db, business, "2026-07", months_count=2)
 
         assert not resolution.is_resolved
 
     def test_bimonthly_one_unfiled_month_downgrades_to_pending(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _bimonthly_business(create_client_with_business)
-        _vat_item(test_db, business.client_record_id, "2026-09", Decimal("60000"), test_user.id)
         _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-09",
+            Decimal("60000"),
+            test_user.id,
+        )
+        _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-10",
@@ -437,10 +475,26 @@ class TestResolveTurnover:
         assert resolution.amount == Decimal("100000")
         assert resolution.source == TurnoverSource.VAT_PENDING
 
-    def test_bimonthly_spans_year_boundary(self, test_db, test_user, create_client_with_business):
+    def test_bimonthly_spans_year_boundary(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         business = _bimonthly_business(create_client_with_business)
-        _vat_item(test_db, business.client_record_id, "2026-11", Decimal("10000"), test_user.id)
-        _vat_item(test_db, business.client_record_id, "2026-12", Decimal("20000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-11",
+            Decimal("10000"),
+            test_user.id,
+        )
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-12",
+            Decimal("20000"),
+            test_user.id,
+        )
 
         resolution = self._resolve(test_db, business, "2026-11", months_count=2)
 
@@ -456,15 +510,23 @@ class TestRefreshTurnoverBulk:
         )
 
     def test_counts_each_skip_reason_separately(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """Chasing a missing return and waiting for a pending one are different jobs."""
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         filed = self._payment(test_db, business, "2026-01")
         pending = self._payment(test_db, business, "2026-02")
         absent = self._payment(test_db, business, "2026-03")
-        _vat_item(test_db, business.client_record_id, "2026-01", Decimal("60000"), test_user.id)
         _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-01",
+            Decimal("60000"),
+            test_user.id,
+        )
+        _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-02",
@@ -483,7 +545,9 @@ class TestRefreshTurnoverBulk:
         assert pending.turnover_amount is None
         assert absent.turnover_amount is None
 
-    def test_never_flips_a_settled_payment(self, test_db, test_user, create_client_with_business):
+    def test_never_flips_a_settled_payment(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         """A settled row must not drop to PARTIAL because someone clicked once.
 
         Recording a payment before its VAT return arrives is normal, so a PAID
@@ -498,7 +562,14 @@ class TestRefreshTurnoverBulk:
             paid_amount=Decimal("100"),
         )
         assert payment.status == AdvancePaymentStatus.PAID
-        _vat_item(test_db, business.client_record_id, "2026-11", Decimal("60000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-11",
+            Decimal("60000"),
+            test_user.id,
+        )
 
         result = svc.refresh_turnover_bulk(business.client_record_id, [payment.id])
 
@@ -507,7 +578,7 @@ class TestRefreshTurnoverBulk:
         assert payment.turnover_amount is None
 
     def test_single_command_still_refreshes_a_settled_payment(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """The per-row command keeps the escape hatch the bulk one gives up."""
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
@@ -518,7 +589,14 @@ class TestRefreshTurnoverBulk:
             period_months_count=1,
             paid_amount=Decimal("100"),
         )
-        _vat_item(test_db, business.client_record_id, "2026-12", Decimal("60000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-12",
+            Decimal("60000"),
+            test_user.id,
+        )
 
         updated = svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
 
@@ -526,12 +604,13 @@ class TestRefreshTurnoverBulk:
         assert updated.status == AdvancePaymentStatus.PARTIAL
 
     def test_never_snapshots_pending_even_in_bulk(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """confirm_pending is a per-period judgement and has no bulk equivalent."""
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-04")
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-04",
@@ -547,14 +626,28 @@ class TestRefreshTurnoverBulk:
         assert payment.turnover_source is None
 
     def test_one_unresolvable_period_does_not_block_its_neighbours(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         first = self._payment(test_db, business, "2026-05")
         gap = self._payment(test_db, business, "2026-06")
         last = self._payment(test_db, business, "2026-07")
-        _vat_item(test_db, business.client_record_id, "2026-05", Decimal("10000"), test_user.id)
-        _vat_item(test_db, business.client_record_id, "2026-07", Decimal("30000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-05",
+            Decimal("10000"),
+            test_user.id,
+        )
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-07",
+            Decimal("30000"),
+            test_user.id,
+        )
         svc = AdvancePaymentService(test_db)
 
         result = svc.refresh_turnover_bulk(business.client_record_id, [first.id, gap.id, last.id])
@@ -565,14 +658,21 @@ class TestRefreshTurnoverBulk:
         assert gap.turnover_amount is None
 
     def test_foreign_payment_id_fails_whole_request_before_writing(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """A malformed request is a caller bug, not a skip — and must write nothing."""
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         other = _business(create_client_with_business, advance_rate=Decimal("10"))
         mine = self._payment(test_db, business, "2026-08")
         theirs = self._payment(test_db, other, "2026-08")
-        _vat_item(test_db, business.client_record_id, "2026-08", Decimal("60000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-08",
+            Decimal("60000"),
+            test_user.id,
+        )
         svc = AdvancePaymentService(test_db)
 
         with pytest.raises(NotFoundError) as exc:
@@ -581,13 +681,27 @@ class TestRefreshTurnoverBulk:
         assert mine.turnover_amount is None
 
     def test_writes_one_audit_entry_per_refreshed_payment(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         first = self._payment(test_db, business, "2026-09")
         second = self._payment(test_db, business, "2026-10")
-        _vat_item(test_db, business.client_record_id, "2026-09", Decimal("10000"), test_user.id)
-        _vat_item(test_db, business.client_record_id, "2026-10", Decimal("20000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-09",
+            Decimal("10000"),
+            test_user.id,
+        )
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-10",
+            Decimal("20000"),
+            test_user.id,
+        )
         svc = AdvancePaymentService(test_db)
 
         svc.refresh_turnover_bulk(
@@ -605,12 +719,19 @@ class TestRefreshTurnoverBulk:
         assert {log.entity_id for log in logged} == {first.id, second.id}
 
     def test_duplicate_ids_snapshot_and_audit_once(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """The API schema 422s duplicates; a direct caller still gets one write."""
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-11")
-        _vat_item(test_db, business.client_record_id, "2026-11", Decimal("40000"), test_user.id)
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-11",
+            Decimal("40000"),
+            test_user.id,
+        )
         svc = AdvancePaymentService(test_db)
 
         result = svc.refresh_turnover_bulk(
@@ -642,11 +763,12 @@ class TestRefreshTurnoverFromVat:
         )
 
     def test_snapshots_filed_turnover_and_recomputes(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-07")
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-07",
@@ -666,11 +788,12 @@ class TestRefreshTurnoverFromVat:
         assert updated.status == AdvancePaymentStatus.PENDING
 
     def test_pending_vat_requires_confirmation(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-08")
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-08",
@@ -691,12 +814,13 @@ class TestRefreshTurnoverFromVat:
         assert updated.turnover_amount == Decimal("30000")
 
     def test_bimonthly_partly_filed_is_pending(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         """One filed + one unfiled month is worth only the weaker of the two."""
         business = _bimonthly_business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-03", months_count=2)
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-03",
@@ -705,6 +829,7 @@ class TestRefreshTurnoverFromVat:
             VatWorkItemStatus.FILED,
         )
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-04",
@@ -733,10 +858,13 @@ class TestRefreshTurnoverFromVat:
             svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
         assert exc.value.code == ErrorCode.ADVANCE_PAYMENT_VAT_TURNOVER_NOT_FOUND
 
-    def test_bimonthly_sums_both_months(self, test_db, test_user, create_client_with_business):
+    def test_bimonthly_sums_both_months(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         business = _bimonthly_business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-07", months_count=2)
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-07",
@@ -745,6 +873,7 @@ class TestRefreshTurnoverFromVat:
             VatWorkItemStatus.FILED,
         )
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-08",
@@ -760,11 +889,12 @@ class TestRefreshTurnoverFromVat:
         assert updated.calculated_amount == Decimal("10000.00")
 
     def test_bimonthly_rejects_half_covered_period(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _bimonthly_business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-09", months_count=2)
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-09",
@@ -778,7 +908,9 @@ class TestRefreshTurnoverFromVat:
             svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
         assert exc.value.code == ErrorCode.ADVANCE_PAYMENT_VAT_TURNOVER_NOT_FOUND
 
-    def test_override_survives_refresh(self, test_db, test_user, create_client_with_business):
+    def test_override_survives_refresh(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         svc = AdvancePaymentService(test_db)
         payment = svc.create_payment_for_client(
@@ -788,6 +920,7 @@ class TestRefreshTurnoverFromVat:
             override_amount=Decimal("4500"),
         )
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-11",
@@ -802,11 +935,12 @@ class TestRefreshTurnoverFromVat:
         assert updated.expected_amount == Decimal("4500.00")
 
     def test_manual_patch_clears_vat_provenance(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-12")
         _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-12",
@@ -827,11 +961,12 @@ class TestRefreshTurnoverFromVat:
         assert updated.calculated_amount == Decimal("5500.00")
 
     def test_writes_turnover_refreshed_audit_entry(
-        self, test_db, test_user, create_client_with_business
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         payment = self._payment(test_db, business, "2026-05")
         item = _vat_item(
+            vat_work_item_factory,
             test_db,
             business.client_record_id,
             "2026-05",

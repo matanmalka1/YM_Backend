@@ -13,9 +13,9 @@ def _transition_to_collecting_docs(client, advisor_headers, report_id: int) -> N
 
 
 def test_generic_annual_report_audit_returns_status_entries(
-    client, advisor_headers, test_user, annual_report_factory
+    client, advisor_headers, test_user, annual_report_service_factory
 ):
-    report = annual_report_factory(actor=test_user)
+    report = annual_report_service_factory(actor=test_user)
     _transition_to_collecting_docs(client, advisor_headers, report.id)
 
     resp = client.get(
@@ -44,9 +44,9 @@ def test_generic_annual_report_audit_returns_status_entries(
 
 
 def test_generic_annual_report_audit_is_readable_by_secretary(
-    client, advisor_headers, secretary_headers, test_user, annual_report_factory
+    client, advisor_headers, secretary_headers, test_user, annual_report_service_factory
 ):
-    report = annual_report_factory(actor=test_user)
+    report = annual_report_service_factory(actor=test_user)
     _transition_to_collecting_docs(client, advisor_headers, report.id)
 
     resp = client.get(f"/api/v1/audit/annual_report/{report.id}", headers=secretary_headers)
@@ -62,9 +62,9 @@ def test_generic_annual_report_audit_404_when_missing(client, advisor_headers):
 
 
 def test_annual_report_legacy_audit_route_is_removed(
-    client, advisor_headers, test_user, annual_report_factory
+    client, advisor_headers, test_user, annual_report_service_factory
 ):
-    report_id = annual_report_factory(actor=test_user).id
+    report_id = annual_report_service_factory(actor=test_user).id
 
     resp = client.get(f"/api/v1/annual-reports/{report_id}/audit", headers=advisor_headers)
 

@@ -26,10 +26,10 @@ def _patch_decimal_tax_input(monkeypatch):
 
 
 def test_advances_summary_reports_refund_when_advances_exceed_tax(
-    client, test_db, advisor_headers, monkeypatch, annual_report_factory
+    client, test_db, advisor_headers, monkeypatch, annual_report_service_factory
 ):
     _patch_decimal_tax_input(monkeypatch)
-    report = annual_report_factory()
+    report = annual_report_service_factory()
     # No income/expense → tax_after_credits = 0
 
     repo = AdvancePaymentRepository(test_db)
@@ -59,10 +59,10 @@ def test_advances_summary_reports_refund_when_advances_exceed_tax(
 
 
 def test_advances_summary_zero_balance_without_paid_advances(
-    client, advisor_headers, monkeypatch, annual_report_factory
+    client, advisor_headers, monkeypatch, annual_report_service_factory
 ):
     _patch_decimal_tax_input(monkeypatch)
-    report = annual_report_factory()
+    report = annual_report_service_factory()
     resp = client.get(
         f"/api/v1/annual-reports/{report.id}/advances-summary",
         headers=advisor_headers,

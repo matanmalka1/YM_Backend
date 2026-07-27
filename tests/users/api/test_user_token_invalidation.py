@@ -1,10 +1,8 @@
 from app.users.models.user import User, UserRole
-from tests.factories import create_user
 
 
-def _create_managed_user(test_db) -> User:
-    user = create_user(
-        test_db,
+def _create_managed_user(user_factory) -> User:
+    user = user_factory(
         full_name="Managed User",
         email="managed.user@example.com",
         password="password123",
@@ -24,8 +22,8 @@ def _login(client, email: str, password: str) -> str:
     return response.json()["access_token"]
 
 
-def test_password_reset_invalidates_old_token(client, advisor_headers, test_db):
-    user = _create_managed_user(test_db)
+def test_password_reset_invalidates_old_token(client, advisor_headers, test_db, user_factory):
+    user = _create_managed_user(user_factory)
     old_token = _login(client, user.email, "password123")
 
     reset_response = client.post(
@@ -42,8 +40,10 @@ def test_password_reset_invalidates_old_token(client, advisor_headers, test_db):
     assert protected_response.status_code == 401
 
 
-def test_deactivate_then_activate_does_not_restore_old_token(client, advisor_headers, test_db):
-    user = _create_managed_user(test_db)
+def test_deactivate_then_activate_does_not_restore_old_token(
+    client, advisor_headers, test_db, user_factory
+):
+    user = _create_managed_user(user_factory)
     old_token = _login(client, user.email, "password123")
 
     deactivate_response = client.post(

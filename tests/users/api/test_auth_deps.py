@@ -5,7 +5,6 @@ import jwt
 from app.config import settings
 from app.users.models.user import UserRole
 from app.users.services.user_token_service import generate_access_token
-from tests.factories import create_user
 
 
 def test_users_endpoint_requires_token(client):
@@ -44,9 +43,8 @@ def test_users_endpoint_rejects_invalid_and_malformed_tokens(client):
     assert malformed_response.json()["error"]["message"] == "פורמט הטוקן אינו תקין"
 
 
-def test_inactive_user_token_is_rejected(client, test_db):
-    user = create_user(
-        test_db,
+def test_inactive_user_token_is_rejected(client, test_db, user_factory):
+    user = user_factory(
         full_name="Inactive Auth User",
         email="inactive.token@example.com",
         password="password123",

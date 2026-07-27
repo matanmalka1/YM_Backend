@@ -1,10 +1,8 @@
 from app.users.models.user import User, UserRole
-from tests.factories import create_user
 
 
-def _make_user(test_db, email: str, role: UserRole = UserRole.SECRETARY) -> User:
-    user = create_user(
-        test_db,
+def _make_user(user_factory, email: str, role: UserRole = UserRole.SECRETARY) -> User:
+    user = user_factory(
         full_name="Managed User",
         email=email,
         password="password123",
@@ -39,9 +37,9 @@ def test_advisor_can_create_list_and_get_users(client, advisor_headers):
     assert get_response.json()["email"] == "new.secretary@example.com"
 
 
-def test_list_users_supports_is_active_filter(client, advisor_headers, test_db):
-    active_user = _make_user(test_db, "active.only@example.com")
-    inactive_user = _make_user(test_db, "inactive.only@example.com")
+def test_list_users_supports_is_active_filter(client, advisor_headers, test_db, user_factory):
+    active_user = _make_user(user_factory, "active.only@example.com")
+    inactive_user = _make_user(user_factory, "inactive.only@example.com")
     inactive_user.is_active = False
     test_db.commit()
 
@@ -66,10 +64,10 @@ def test_list_users_supports_is_active_filter(client, advisor_headers, test_db):
     assert all(item["is_active"] is False for item in inactive_body["items"])
 
 
-def test_list_users_supports_search_filter(client, advisor_headers, test_db):
-    name_match = _make_user(test_db, "dana.search@example.com")
+def test_list_users_supports_search_filter(client, advisor_headers, test_db, user_factory):
+    name_match = _make_user(user_factory, "dana.search@example.com")
     name_match.full_name = "Dana Search"
-    email_match = _make_user(test_db, "mail.findme@example.com")
+    email_match = _make_user(user_factory, "mail.findme@example.com")
     email_match.full_name = "Other User"
     test_db.commit()
 
@@ -91,8 +89,10 @@ def test_secretary_cannot_access_user_management(client, secretary_headers):
     assert response.status_code == 403
 
 
-def test_advisor_can_update_and_activate_deactivate_user(client, advisor_headers, test_db):
-    target = _make_user(test_db, "target@example.com")
+def test_advisor_can_update_and_activate_deactivate_user(
+    client, advisor_headers, test_db, user_factory
+):
+    target = _make_user(user_factory, "target@example.com")
 
     update_response = client.patch(
         f"/api/v1/users/{target.id}",
@@ -119,8 +119,8 @@ def test_advisor_can_update_and_activate_deactivate_user(client, advisor_headers
     assert activate_response.json()["is_active"] is True
 
 
-def test_can_update_email_field(client, advisor_headers, test_db):
-    target = _make_user(test_db, "immutable@example.com")
+def test_can_update_email_field(client, advisor_headers, test_db, user_factory):
+    target = _make_user(user_factory, "immutable@example.com")
     response = client.patch(
         f"/api/v1/users/{target.id}",
         headers=advisor_headers,

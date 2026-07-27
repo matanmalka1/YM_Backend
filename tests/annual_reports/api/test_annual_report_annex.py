@@ -1,5 +1,5 @@
-def test_annex_crud_flow(client, advisor_headers, annual_report_factory):
-    report = annual_report_factory()
+def test_annex_crud_flow(client, advisor_headers, annual_report_service_factory):
+    report = annual_report_service_factory()
     schedule = "schedule_b"
 
     create = client.post(

@@ -1,8 +1,8 @@
-def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_report_factory):
+def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_report_service_factory):
     missing = client.get("/api/v1/annual-reports/999999", headers=advisor_headers)
     assert missing.status_code == 404
 
-    report_id = annual_report_factory(client_full_name="AR CreateRead Additional").id
+    report_id = annual_report_service_factory(client_full_name="AR CreateRead Additional").id
     get_ok = client.get(f"/api/v1/annual-reports/{report_id}", headers=advisor_headers)
     assert get_ok.status_code == 200
     body = get_ok.json()
@@ -17,14 +17,14 @@ def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_r
     assert del_missing.status_code == 404
 
 
-def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_report_factory):
+def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_report_service_factory):
     """Regression guard for the list/detail DTO split (items 35-37).
 
     GET /annual-reports rows must be the thin AnnualReportListItem (no
     detail/calc/action fields); GET /annual-reports/{id} must keep the full
     detail shape with grouped tax_calculation and no duplicate *_amount fields.
     """
-    report_id = annual_report_factory(client_full_name="AR CreateRead Additional").id
+    report_id = annual_report_service_factory(client_full_name="AR CreateRead Additional").id
 
     list_resp = client.get("/api/v1/annual-reports", headers=advisor_headers)
     assert list_resp.status_code == 200

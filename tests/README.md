@@ -18,7 +18,7 @@ Source of truth: reference
   - API/route tests live in `tests/<domain>/api/` with any API helpers alongside.
   - Service/unit tests live in `tests/<domain>/service/` with domain fakes/enums beside them.
 - Cross-domain suites stay in `tests/regression/`; shared fixtures stay in `tests/conftest.py`.
-- Central model factories live in `tests/factories.py` and are exposed only through fixtures in
+- Central model factories live in domain modules under `tests/factories/` and are exposed only through fixtures in
   `tests/conftest.py`. The canonical conventions and complete fixture inventory live in
   `docs/backend/testing.md`.
 - Shared tax-calendar linked-object setup lives in `tests/helpers/tax_calendar_links.py`.

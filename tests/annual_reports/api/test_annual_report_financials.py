@@ -1,8 +1,8 @@
 from app.annual_reports.api import annual_report_routes_financials as financials_api
 
 
-def test_create_income_line_accepts_zero_amount(client, advisor_headers, annual_report_factory):
-    report = annual_report_factory()
+def test_create_income_line_accepts_zero_amount(client, advisor_headers, annual_report_service_factory):
+    report = annual_report_service_factory()
 
     resp = client.post(
         f"/api/v1/annual-reports/{report.id}/income",
