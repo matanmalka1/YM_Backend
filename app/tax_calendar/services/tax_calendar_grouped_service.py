@@ -70,9 +70,23 @@ def list_groups_paginated(
     )
     groups = _filter_groups_by_status(groups, status)
     if due_after is not None:
-        groups = [group for group in groups if group.effective_due_date_min >= due_after]
+        # A group with no known deadline cannot satisfy "due after X".
+        groups = [
+            group
+            for group in groups
+            if group.effective_due_date_min is not None
+            and group.effective_due_date_min >= due_after
+        ]
     if order == "due":
-        groups = sorted(groups, key=lambda group: group.effective_due_date_min)
+        # Undated groups sort last: they are real work, but there is no date to place
+        # them among the dated ones.
+        groups = sorted(
+            groups,
+            key=lambda group: (
+                group.effective_due_date_min is None,
+                group.effective_due_date_min or date.min,
+            ),
+        )
     total = len(groups)
     summary = TaxCalendarGroupsSummary(
         groups=total,
@@ -125,11 +139,14 @@ def _build_groups(
         effective_min, effective_max = _effective_due_dates(entry, rows)
         done_count = _done_count(entry.obligation_type, rows)
         open_count = len(rows) - done_count
+        # A row with no known deadline cannot be overdue — there is nothing to be
+        # late against. It used to inherit the entry's date and be judged by it.
         overdue_count = sum(
             1
             for row in rows
             if not _is_done(entry.obligation_type, row)
-            and _row_due_date(entry.obligation_type, row, entry.due_date) < today
+            and (due := _row_due_date(entry.obligation_type, row, entry.due_date)) is not None
+            and due < today
         )
         groups.append(
             TaxCalendarGroupResponse(
@@ -138,7 +155,7 @@ def _build_groups(
                 period=entry.period,
                 period_months_count=entry.period_months_count,
                 tax_year=entry.tax_year,
-                regulatory_due_date=entry.due_date,
+                regulatory_due_date=_regulatory_due_date(entry),
                 effective_due_date_min=effective_min,
                 effective_due_date_max=effective_max,
                 linked_count=len(rows),
@@ -203,17 +220,51 @@ def _linked_rows_by_entry(
     return rows
 
 
-def _effective_due_dates(entry, rows: list) -> tuple[date, date]:
-    if not rows:
-        return entry.due_date, entry.due_date
-    due_dates = [_row_due_date(entry.obligation_type, row, entry.due_date) for row in rows]
+def _regulatory_due_date(entry) -> date | None:
+    """The one statutory date every client shares for this entry, if there is one.
+
+    There is none for an annual report: the deadline varies by entity type, while an
+    annual entry is unique per ``(obligation_type, tax_year)`` — a single row for the
+    whole office. Its stored ``due_date`` comes from a seeded rule and describes no
+    particular client, so it is not published as one.
+    """
+    if entry.obligation_type == ObligationType.ANNUAL_REPORT:
+        return None
+    return entry.due_date
+
+
+def _effective_due_dates(entry, rows: list) -> tuple[date | None, date | None]:
+    """The span of real deadlines among the linked rows.
+
+    ``(None, None)`` when nothing linked has a known deadline — the group has work
+    but no date to place it on, which is different from having no work.
+    """
+    due_dates = [
+        due
+        for due in (_row_due_date(entry.obligation_type, row, entry.due_date) for row in rows)
+        if due is not None
+    ]
+    if not due_dates:
+        return _regulatory_due_date(entry), _regulatory_due_date(entry)
     return min(due_dates), max(due_dates)
 
 
-def _row_due_date(obligation_type, row, fallback: date) -> date:
+def _row_due_date(obligation_type, row, entry_due_date: date) -> date | None:
+    """One linked row's effective deadline, or ``None`` when it has none.
+
+    An annual report never falls back to the entry's date. The two come from
+    different authorities — ``filing_deadline`` from ``tax_rules_config``, the entry
+    from a seeded ``DeadlineRule`` — so borrowing one for the other invents a
+    deadline. A CUSTOM-deadline report has ``filing_deadline`` NULL by design and
+    genuinely has no computed date.
+
+    VAT and advance rows do fall back, because ``due_date_effective`` is a snapshot
+    of that very entry and is null only on legacy rows.
+    """
     if obligation_type == ObligationType.ANNUAL_REPORT:
-        return _date_value(getattr(row, "filing_deadline", None), fallback)
-    return _date_value(getattr(row, "due_date_effective", None), fallback)
+        value = getattr(row, "filing_deadline", None)
+        return None if value is None else _date_value(value, entry_due_date)
+    return _date_value(getattr(row, "due_date_effective", None), entry_due_date)
 
 
 def _done_count(obligation_type, rows: list) -> int:

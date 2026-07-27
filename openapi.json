@@ -34711,18 +34711,39 @@
             "title": "Tax Year"
           },
           "regulatory_due_date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Regulatory Due Date"
           },
           "effective_due_date_min": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Effective Due Date Min"
           },
           "effective_due_date_max": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Effective Due Date Max"
           },
           "linked_count": {
@@ -34747,9 +34768,6 @@
           "tax_calendar_entry_id",
           "obligation_type",
           "tax_year",
-          "regulatory_due_date",
-          "effective_due_date_min",
-          "effective_due_date_max",
           "linked_count",
           "open_count",
           "done_count",
