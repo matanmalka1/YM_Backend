@@ -1,10 +1,9 @@
 from datetime import date
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
-from app.binders.models.binder_intake import BinderIntake
 
 
-def _seed_binder_and_intakes(db, binder_factory, user_id: int, count: int = 1):
+def _seed_binder_and_intakes(binder_factory, binder_intake_factory, user_id: int, count: int = 1):
     binder = binder_factory(
         binder_number="BIN-1",
         period_start=date.today(),
@@ -15,22 +14,25 @@ def _seed_binder_and_intakes(db, binder_factory, user_id: int, count: int = 1):
     )
 
     for i in range(count):
-        intake = BinderIntake(
-            binder_id=binder.id,
+        binder_intake_factory(
+            binder=binder,
             received_by=user_id,
             received_at=date(2024, 1, i + 1),
             notes=f"docs-{i}",
         )
-        db.add(intake)
-    db.commit()
 
     return binder
 
 
 def test_binder_intakes_endpoint_success_and_not_found(
-    client, test_db, advisor_headers, test_user, binder_factory
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    binder_factory,
+    binder_intake_factory,
 ):
-    binder = _seed_binder_and_intakes(test_db, binder_factory, test_user.id)
+    binder = _seed_binder_and_intakes(binder_factory, binder_intake_factory, test_user.id)
 
     ok = client.get(f"/api/v1/binders/{binder.id}/intakes", headers=advisor_headers)
     assert ok.status_code == 200
@@ -48,8 +50,15 @@ def test_binder_intakes_endpoint_success_and_not_found(
     assert missing.status_code == 404
 
 
-def test_binder_intakes_pagination(client, test_db, advisor_headers, test_user, binder_factory):
-    binder = _seed_binder_and_intakes(test_db, binder_factory, test_user.id, count=3)
+def test_binder_intakes_pagination(
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    binder_factory,
+    binder_intake_factory,
+):
+    binder = _seed_binder_and_intakes(binder_factory, binder_intake_factory, test_user.id, count=3)
 
     resp = client.get(
         f"/api/v1/binders/{binder.id}/intakes",

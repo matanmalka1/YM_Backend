@@ -1,6 +1,5 @@
 from app.common.enums import DeadlineRuleType, ObligationType
-from tests.tax_calendar.api.grouped_helpers import PATH, headers
-from tests.tax_calendar.service.linking_helpers import make_entry
+from tests.helpers.tax_calendar_links import PATH, headers, make_entry
 
 
 def _make_vat(db, period: str, months: int, tax_year: int):

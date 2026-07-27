@@ -4,7 +4,7 @@ from datetime import date
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.common.enums import DeadlineRuleType, ObligationType
-from tests.tax_calendar.service.linking_helpers import advance_client, make_entry
+from tests.helpers.tax_calendar_links import advance_client, make_entry
 
 
 def generate_annual_schedule(

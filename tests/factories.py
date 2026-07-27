@@ -29,6 +29,8 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.authority_contacts.models.authority_contact import AuthorityContact, ContactType
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
+from app.binders.models.binder_intake import BinderIntake
+from app.binders.models.binder_intake_material import BinderIntakeMaterial, MaterialType
 from app.businesses.models.business import Business, BusinessStatus
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
 from app.clients.client_enums import ClientStatus
@@ -46,6 +48,7 @@ from app.documents.permanent_documents.models.permanent_document import (
     PermanentDocument,
     PermanentDocumentType,
 )
+from app.invoices.models.invoice import Invoice
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.notifications.models.notification import (
     Notification,
@@ -53,6 +56,7 @@ from app.notifications.models.notification import (
     NotificationStatus,
     NotificationTrigger,
 )
+from app.reminders.models.reminder import Reminder, ReminderActionType, ReminderStatus
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
     SignatureRequestStatus,
@@ -517,6 +521,210 @@ class TaskFactory:
             self.db.commit()
             self.db.refresh(task)
         return task
+
+
+class BinderIntakeFactory:
+    """Model-level BinderIntake factory."""
+
+    def __init__(self, db: Session, binder_factory: BinderFactory) -> None:
+        self.db = db
+        self.binder_factory = binder_factory
+
+    def __call__(
+        self,
+        *,
+        binder: Binder | None = None,
+        binder_id: int | None = None,
+        received_by_user: User | None = None,
+        received_by: int | None = None,
+        received_at: date = date(2026, 1, 1),
+        notes: str | None = None,
+        created_at: datetime | None = None,
+        commit: bool = False,
+    ) -> BinderIntake:
+        _resolve_exclusive(binder, binder_id, names="binder or binder_id")
+        _resolve_exclusive(received_by_user, received_by, names="received_by_user or received_by")
+        if binder is None and binder_id is None:
+            binder = self.binder_factory()
+        if received_by is None:
+            received_by = (
+                received_by_user.id
+                if received_by_user is not None
+                else create_user(
+                    self.db,
+                    full_name="Binder Intake Receiver",
+                    email=f"binder-intake-receiver-{id(self)}@example.com",
+                ).id
+            )
+        fields: dict[str, Any] = {
+            "binder_id": binder_id if binder_id is not None else binder.id,
+            "received_at": received_at,
+            "received_by": received_by,
+            "notes": notes,
+        }
+        if created_at is not None:
+            fields["created_at"] = created_at
+        intake = BinderIntake(**fields)
+        self.db.add(intake)
+        self.db.flush()
+        if commit:
+            self.db.commit()
+            self.db.refresh(intake)
+        return intake
+
+
+class BinderIntakeMaterialFactory:
+    """Model-level BinderIntakeMaterial factory."""
+
+    def __init__(self, db: Session, binder_intake_factory: BinderIntakeFactory) -> None:
+        self.db = db
+        self.binder_intake_factory = binder_intake_factory
+
+    def __call__(
+        self,
+        *,
+        intake: BinderIntake | None = None,
+        intake_id: int | None = None,
+        business: Business | None = None,
+        business_id: int | None = None,
+        annual_report: AnnualReport | None = None,
+        annual_report_id: int | None = None,
+        vat_work_item: VatWorkItem | None = None,
+        vat_report_id: int | None = None,
+        material_type: MaterialType = MaterialType.OTHER,
+        period_year: int = 2026,
+        period_month_start: int = 1,
+        period_month_end: int | None = None,
+        description: str | None = None,
+        created_at: datetime | None = None,
+        commit: bool = False,
+    ) -> BinderIntakeMaterial:
+        _resolve_exclusive(intake, intake_id, names="intake or intake_id")
+        _resolve_exclusive(business, business_id, names="business or business_id")
+        _resolve_exclusive(
+            annual_report, annual_report_id, names="annual_report or annual_report_id"
+        )
+        _resolve_exclusive(vat_work_item, vat_report_id, names="vat_work_item or vat_report_id")
+        if intake is None and intake_id is None:
+            intake = self.binder_intake_factory()
+        fields: dict[str, Any] = {
+            "intake_id": intake_id if intake_id is not None else intake.id,
+            "business_id": business_id
+            if business_id is not None
+            else getattr(business, "id", None),
+            "annual_report_id": annual_report_id
+            if annual_report_id is not None
+            else getattr(annual_report, "id", None),
+            "vat_report_id": vat_report_id
+            if vat_report_id is not None
+            else getattr(vat_work_item, "id", None),
+            "material_type": material_type,
+            "period_year": period_year,
+            "period_month_start": period_month_start,
+            "period_month_end": period_month_end or period_month_start,
+            "description": description,
+        }
+        if created_at is not None:
+            fields["created_at"] = created_at
+        material = BinderIntakeMaterial(**fields)
+        self.db.add(material)
+        self.db.flush()
+        if commit:
+            self.db.commit()
+            self.db.refresh(material)
+        return material
+
+
+class ReminderFactory:
+    """Model-level Reminder factory."""
+
+    def __init__(self, db: Session) -> None:
+        self.db = db
+
+    def __call__(
+        self,
+        *,
+        fire_at: datetime,
+        action_type: ReminderActionType = ReminderActionType.SEND_NOTIFICATION,
+        status: ReminderStatus = ReminderStatus.SCHEDULED,
+        source_domain: str | None = None,
+        source_id: int | None = None,
+        target_task_id: int | None = None,
+        notification_template_key: str | None = None,
+        payload: dict[str, Any] | None = None,
+        created_by_user_id: int | None = None,
+        fired_at: datetime | None = None,
+        failure_reason: str | None = None,
+        created_at: datetime | None = None,
+        updated_at: datetime | None = None,
+        commit: bool = False,
+    ) -> Reminder:
+        fields: dict[str, Any] = {
+            "fire_at": fire_at,
+            "action_type": action_type,
+            "status": status,
+            "source_domain": source_domain,
+            "source_id": source_id,
+            "target_task_id": target_task_id,
+            "notification_template_key": notification_template_key,
+            "payload": payload,
+            "created_by_user_id": created_by_user_id,
+            "fired_at": fired_at,
+            "failure_reason": failure_reason,
+        }
+        if created_at is not None:
+            fields["created_at"] = created_at
+        if updated_at is not None:
+            fields["updated_at"] = updated_at
+        reminder = Reminder(**fields)
+        self.db.add(reminder)
+        self.db.flush()
+        if commit:
+            self.db.commit()
+            self.db.refresh(reminder)
+        return reminder
+
+
+class InvoiceFactory:
+    """Model-level Invoice factory."""
+
+    def __init__(self, db: Session, charge_factory: ChargeFactory) -> None:
+        self.db = db
+        self.charge_factory = charge_factory
+        self._sequence = count(1)
+
+    def __call__(
+        self,
+        *,
+        charge: Charge | None = None,
+        charge_id: int | None = None,
+        provider: str = "test",
+        external_invoice_id: str | None = None,
+        document_url: str | None = None,
+        issued_at: datetime | None = None,
+        created_at: datetime | None = None,
+        commit: bool = False,
+    ) -> Invoice:
+        _resolve_exclusive(charge, charge_id, names="charge or charge_id")
+        sequence = next(self._sequence)
+        if charge is None and charge_id is None:
+            charge = self.charge_factory()
+        fields: dict[str, Any] = {
+            "charge_id": charge_id if charge_id is not None else charge.id,
+            "provider": provider,
+            "external_invoice_id": external_invoice_id or f"TEST-INV-{sequence:04d}",
+            "document_url": document_url,
+            "issued_at": issued_at or datetime(2026, 1, 1),
+        }
+        if created_at is not None:
+            fields["created_at"] = created_at
+        invoice = Invoice(**fields)
+        self.db.add(invoice)
+        self.db.flush()
+        if commit:
+            self.db.commit()
+            self.db.refresh(invoice)
+        return invoice
 
 
 class TaxCalendarEntryFactory:

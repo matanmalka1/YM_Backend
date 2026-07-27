@@ -1,10 +1,10 @@
 from datetime import date, datetime, timedelta
 
+from app.authority_contacts.models.authority_contact import ContactType
 from app.communications.models.correspondence import CorrespondenceType
 from app.communications.repositories.correspondence_repository import (
     CorrespondenceRepository,
 )
-from app.authority_contacts.models.authority_contact import ContactType
 
 
 def _business(create_client_with_business, idx: int):

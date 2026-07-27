@@ -39,12 +39,16 @@ from tests.factories import (
     AnnualReportModelFactory,
     AuthorityContactFactory,
     BinderFactory,
+    BinderIntakeFactory,
+    BinderIntakeMaterialFactory,
     BusinessFactory,
     ChargeFactory,
     ClientBusinessFactory,
     ClientFactory,
+    InvoiceFactory,
     NotificationFactory,
     PermanentDocumentFactory,
+    ReminderFactory,
     SignatureRequestFactory,
     TaskFactory,
     TaxCalendarEntryFactory,
@@ -129,6 +133,26 @@ def charge_factory(test_db, client_factory):
 @pytest.fixture(scope="function")
 def task_factory(test_db):
     return TaskFactory(test_db)
+
+
+@pytest.fixture(scope="function")
+def binder_intake_factory(test_db, binder_factory):
+    return BinderIntakeFactory(test_db, binder_factory)
+
+
+@pytest.fixture(scope="function")
+def binder_intake_material_factory(test_db, binder_intake_factory):
+    return BinderIntakeMaterialFactory(test_db, binder_intake_factory)
+
+
+@pytest.fixture(scope="function")
+def reminder_factory(test_db):
+    return ReminderFactory(test_db)
+
+
+@pytest.fixture(scope="function")
+def invoice_factory(test_db, charge_factory):
+    return InvoiceFactory(test_db, charge_factory)
 
 
 @pytest.fixture(scope="function")

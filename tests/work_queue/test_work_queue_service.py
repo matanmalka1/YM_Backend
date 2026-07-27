@@ -3,7 +3,7 @@ from datetime import date, timedelta
 from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
-from app.reminders.models.reminder import Reminder, ReminderActionType, ReminderStatus
+from app.reminders.models.reminder import ReminderActionType, ReminderStatus
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.items.common import normalize_source_domain, source_route
@@ -56,18 +56,16 @@ def test_unpaid_charge_before_threshold_excluded(
     assert [i for i in items if i.source_type == WorkQueueSourceType.CHARGE] == []
 
 
-def test_work_queue_excludes_reminders(test_db, create_client_with_business):
+def test_work_queue_excludes_reminders(test_db, create_client_with_business, reminder_factory):
     _, biz = create_client_with_business(full_name="Task Test Client")
-    test_db.add(
-        Reminder(
-            fire_at=utcnow(),
-            action_type=ReminderActionType.SEND_NOTIFICATION,
-            status=ReminderStatus.SCHEDULED,
-            source_domain="client_record",
-            source_id=biz.client_id,
-        )
+    reminder_factory(
+        fire_at=utcnow(),
+        action_type=ReminderActionType.SEND_NOTIFICATION,
+        status=ReminderStatus.SCHEDULED,
+        source_domain="client_record",
+        source_id=biz.client_id,
+        commit=True,
     )
-    test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
 

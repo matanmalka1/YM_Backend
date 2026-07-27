@@ -22,7 +22,7 @@ from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from app.vat.services.vat_intake_service import create_work_item
-from tests.tax_calendar.service.linking_helpers import (
+from tests.helpers.tax_calendar_links import (
     advance_client,
     annual_client,
     make_entry,
@@ -281,7 +281,9 @@ def test_annual_report_creation_creates_missing_tax_calendar_entry(test_db, acto
     assert entry.tax_year == 2026
 
 
-def test_mismatched_existing_tax_calendar_fk_raises_conflict(test_db, actor_user):
+def test_mismatched_existing_tax_calendar_fk_raises_conflict(
+    test_db, actor_user, vat_work_item_factory
+):
     wrong = make_entry(
         test_db,
         obligation_type=ObligationType.VAT,
@@ -291,7 +293,7 @@ def test_mismatched_existing_tax_calendar_fk_raises_conflict(test_db, actor_user
         tax_year=2026,
     )
     client = vat_client(test_db, VatType.MONTHLY)
-    item = VatWorkItem(
+    item = vat_work_item_factory(
         client_record_id=client.id,
         period="2026-01",
         period_type=VatType.MONTHLY,
@@ -300,8 +302,6 @@ def test_mismatched_existing_tax_calendar_fk_raises_conflict(test_db, actor_user
         due_date_original=wrong.due_date,
         due_date_effective=wrong.due_date,
     )
-    test_db.add(item)
-    test_db.flush()
 
     with pytest.raises(ConflictError):
         TaxCalendarMaterializationService(test_db).link_vat_work_item(item)

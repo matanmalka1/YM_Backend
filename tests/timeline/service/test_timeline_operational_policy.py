@@ -22,7 +22,6 @@ from app.charges.models.charge import ChargeStatus, ChargeType
 from app.common.enums import ObligationType
 from app.notifications.models.notification import NotificationChannel, NotificationTrigger
 from app.reminders.models.reminder import (
-    Reminder,
     ReminderActionType,
     ReminderStatus,
 )
@@ -142,19 +141,18 @@ def test_timeline_date_range_excludes_out_of_range_events(test_db, create_client
 
 
 def test_timeline_excludes_scheduler_reminder_with_source_reference(
-    test_db, create_client_with_business
+    test_db, create_client_with_business, reminder_factory
 ):
     service = TimelineService(test_db)
     business = _business(create_client_with_business)
-    reminder = Reminder(
+    reminder_factory(
         fire_at=datetime(2026, 1, 10, tzinfo=UTC),
         action_type=ReminderActionType.SEND_NOTIFICATION,
         status=ReminderStatus.SCHEDULED,
         source_domain="client_record",
         source_id=business.client_id,
+        commit=True,
     )
-    test_db.add(reminder)
-    test_db.commit()
 
     events, _ = service.get_client_timeline(business.client_id, page=1, page_size=50)
 

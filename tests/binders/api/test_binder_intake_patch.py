@@ -1,10 +1,9 @@
 from datetime import date
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
-from app.binders.models.binder_intake import BinderIntake
 
 
-def _seed(db, binder_factory, user_id: int, *, binder_number: str):
+def _seed(binder_factory, binder_intake_factory, user_id: int, *, binder_number: str):
     binder = binder_factory(
         binder_number=binder_number,
         period_start=date(2026, 1, 1),
@@ -14,23 +13,28 @@ def _seed(db, binder_factory, user_id: int, *, binder_number: str):
         commit=True,
     )
 
-    intake = BinderIntake(
-        binder_id=binder.id,
+    intake = binder_intake_factory(
+        binder=binder,
         received_by=user_id,
         received_at=date(2026, 3, 1),
         notes="original notes",
+        commit=True,
     )
-    db.add(intake)
-    db.commit()
-    db.refresh(intake)
 
     return binder, intake
 
 
 def test_patch_binder_intake_updates_notes(
-    client, test_db, advisor_headers, test_user, binder_factory
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    binder_factory,
+    binder_intake_factory,
 ):
-    binder, intake = _seed(test_db, binder_factory, test_user.id, binder_number="BPATCH-001")
+    binder, intake = _seed(
+        binder_factory, binder_intake_factory, test_user.id, binder_number="BPATCH-001"
+    )
 
     resp = client.patch(
         f"/api/v1/binders/{binder.id}/intakes/{intake.id}",
@@ -46,10 +50,19 @@ def test_patch_binder_intake_updates_notes(
 
 
 def test_patch_binder_intake_wrong_binder_returns_404(
-    client, test_db, advisor_headers, test_user, binder_factory
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    binder_factory,
+    binder_intake_factory,
 ):
-    binder_a, intake_a = _seed(test_db, binder_factory, test_user.id, binder_number="BPATCH-002")
-    binder_b, _ = _seed(test_db, binder_factory, test_user.id, binder_number="BPATCH-003")
+    binder_a, intake_a = _seed(
+        binder_factory, binder_intake_factory, test_user.id, binder_number="BPATCH-002"
+    )
+    binder_b, _ = _seed(
+        binder_factory, binder_intake_factory, test_user.id, binder_number="BPATCH-003"
+    )
 
     resp = client.patch(
         f"/api/v1/binders/{binder_b.id}/intakes/{intake_a.id}",
@@ -61,9 +74,16 @@ def test_patch_binder_intake_wrong_binder_returns_404(
 
 
 def test_patch_binder_intake_nonexistent_intake_returns_404(
-    client, test_db, advisor_headers, test_user, binder_factory
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    binder_factory,
+    binder_intake_factory,
 ):
-    binder, _ = _seed(test_db, binder_factory, test_user.id, binder_number="BPATCH-004")
+    binder, _ = _seed(
+        binder_factory, binder_intake_factory, test_user.id, binder_number="BPATCH-004"
+    )
 
     resp = client.patch(
         f"/api/v1/binders/{binder.id}/intakes/999999",
@@ -75,9 +95,16 @@ def test_patch_binder_intake_nonexistent_intake_returns_404(
 
 
 def test_patch_binder_intake_updates_received_at(
-    client, test_db, advisor_headers, test_user, binder_factory
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    binder_factory,
+    binder_intake_factory,
 ):
-    binder, intake = _seed(test_db, binder_factory, test_user.id, binder_number="BPATCH-005")
+    binder, intake = _seed(
+        binder_factory, binder_intake_factory, test_user.id, binder_number="BPATCH-005"
+    )
 
     resp = client.patch(
         f"/api/v1/binders/{binder.id}/intakes/{intake.id}",

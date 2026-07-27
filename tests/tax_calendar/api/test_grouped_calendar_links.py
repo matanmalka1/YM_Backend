@@ -4,15 +4,15 @@ from app.advance_payments.models.advance_payment import (
     AdvancePayment,
     AdvancePaymentStatus,
 )
-from tests.tax_calendar.api.grouped_helpers import (
+from tests.helpers.tax_calendar_links import (
     PATH,
     add_advance_payment,
     add_vat_item,
+    advance_client,
     advance_entry,
     headers,
     vat_entry,
 )
-from tests.tax_calendar.service.linking_helpers import advance_client
 
 
 def test_vat_linked_item_uses_snapshot_effective_due_date(client, auth_token, test_db, test_user):

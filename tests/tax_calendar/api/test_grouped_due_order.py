@@ -6,7 +6,7 @@ These back the dashboard "upcoming deadlines" panel, which delegates its
 
 from datetime import date
 
-from tests.tax_calendar.api.grouped_helpers import (
+from tests.helpers.tax_calendar_links import (
     PATH,
     add_advance_payment,
     advance_entry,

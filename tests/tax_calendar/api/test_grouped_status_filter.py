@@ -2,25 +2,28 @@
 
 from datetime import date
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
-from tests.tax_calendar.api.grouped_helpers import (
+from app.advance_payments.models.advance_payment import AdvancePaymentStatus
+from app.common.enums import AdvancePaymentFrequency
+from tests.helpers.tax_calendar_links import (
     PATH,
     advance_entry,
     headers,
 )
-from tests.tax_calendar.service.linking_helpers import advance_client
 
 
 def _make_past_entry(db):
     return advance_entry(db, year=2020)
 
 
-def _add_payment(db, entry, client_record, status, due_date=date(2020, 2, 15)):
-    payment = AdvancePayment(
-        client_record_id=client_record.id,
+def _add_payment(
+    advance_payment_factory,
+    entry,
+    client_record,
+    status,
+    due_date=date(2020, 2, 15),
+):
+    return advance_payment_factory(
+        client=client_record,
         period="2020-01",
         period_months_count=1,
         due_date=entry.due_date,
@@ -28,15 +31,18 @@ def _add_payment(db, entry, client_record, status, due_date=date(2020, 2, 15)):
         status=status,
         tax_calendar_entry_id=entry.id,
     )
-    db.add(payment)
-    db.flush()
-    return payment
 
 
-def test_status_open_returns_only_groups_with_open_items(client, auth_token, test_db):
+def _advance_client(client_factory):
+    return client_factory(advance_payment_frequency=AdvancePaymentFrequency.MONTHLY)
+
+
+def test_status_open_returns_only_groups_with_open_items(
+    client, auth_token, test_db, client_factory, advance_payment_factory
+):
     entry = _make_past_entry(test_db)
-    c = advance_client(test_db)
-    _add_payment(test_db, entry, c, AdvancePaymentStatus.PENDING)
+    c = _advance_client(client_factory)
+    _add_payment(advance_payment_factory, entry, c, AdvancePaymentStatus.PENDING)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=open", headers=headers(auth_token))
@@ -46,10 +52,12 @@ def test_status_open_returns_only_groups_with_open_items(client, auth_token, tes
     assert resp.json()["items"][0]["open_count"] > 0
 
 
-def test_status_open_excludes_fully_done_groups(client, auth_token, test_db):
+def test_status_open_excludes_fully_done_groups(
+    client, auth_token, test_db, client_factory, advance_payment_factory
+):
     entry = _make_past_entry(test_db)
-    c = advance_client(test_db)
-    _add_payment(test_db, entry, c, AdvancePaymentStatus.PAID)
+    c = _advance_client(client_factory)
+    _add_payment(advance_payment_factory, entry, c, AdvancePaymentStatus.PAID)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=open", headers=headers(auth_token))
@@ -58,10 +66,12 @@ def test_status_open_excludes_fully_done_groups(client, auth_token, test_db):
     assert resp.json()["total"] == 0
 
 
-def test_status_overdue_returns_groups_with_overdue_items(client, auth_token, test_db):
+def test_status_overdue_returns_groups_with_overdue_items(
+    client, auth_token, test_db, client_factory, advance_payment_factory
+):
     entry = _make_past_entry(test_db)
-    c = advance_client(test_db)
-    _add_payment(test_db, entry, c, AdvancePaymentStatus.PENDING)
+    c = _advance_client(client_factory)
+    _add_payment(advance_payment_factory, entry, c, AdvancePaymentStatus.PENDING)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=overdue", headers=headers(auth_token))
@@ -71,13 +81,15 @@ def test_status_overdue_returns_groups_with_overdue_items(client, auth_token, te
     assert resp.json()["items"][0]["overdue_count"] > 0
 
 
-def test_status_done_requires_all_items_closed(client, auth_token, test_db):
+def test_status_done_requires_all_items_closed(
+    client, auth_token, test_db, client_factory, advance_payment_factory
+):
     """Group with 1 paid + 1 pending must NOT appear as done."""
     entry = _make_past_entry(test_db)
-    c1 = advance_client(test_db)
-    c2 = advance_client(test_db)
-    _add_payment(test_db, entry, c1, AdvancePaymentStatus.PAID)
-    _add_payment(test_db, entry, c2, AdvancePaymentStatus.PENDING)
+    c1 = _advance_client(client_factory)
+    c2 = _advance_client(client_factory)
+    _add_payment(advance_payment_factory, entry, c1, AdvancePaymentStatus.PAID)
+    _add_payment(advance_payment_factory, entry, c2, AdvancePaymentStatus.PENDING)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=done", headers=headers(auth_token))
@@ -86,12 +98,14 @@ def test_status_done_requires_all_items_closed(client, auth_token, test_db):
     assert resp.json()["total"] == 0
 
 
-def test_status_done_returns_group_when_all_paid(client, auth_token, test_db):
+def test_status_done_returns_group_when_all_paid(
+    client, auth_token, test_db, client_factory, advance_payment_factory
+):
     entry = _make_past_entry(test_db)
-    c1 = advance_client(test_db)
-    c2 = advance_client(test_db)
-    _add_payment(test_db, entry, c1, AdvancePaymentStatus.PAID)
-    _add_payment(test_db, entry, c2, AdvancePaymentStatus.PAID)
+    c1 = _advance_client(client_factory)
+    c2 = _advance_client(client_factory)
+    _add_payment(advance_payment_factory, entry, c1, AdvancePaymentStatus.PAID)
+    _add_payment(advance_payment_factory, entry, c2, AdvancePaymentStatus.PAID)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=done", headers=headers(auth_token))

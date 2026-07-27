@@ -2,10 +2,6 @@ from datetime import date
 
 import pytest
 
-from app.annual_reports.models.annual_report_enums import (
-    ClientAnnualFilingType,
-    PrimaryAnnualReportForm,
-)
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.audit.audit_constants import ACTION_BINDER_INTAKE_UPDATED, ENTITY_BINDER_INTAKE
 from app.audit.repositories.audit_entity_audit_log_repository import (
@@ -13,15 +9,12 @@ from app.audit.repositories.audit_entity_audit_log_repository import (
 )
 from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocationStatus
 from app.binders.models.binder_intake import BinderIntake
-from app.binders.models.binder_intake_material import BinderIntakeMaterial, MaterialType
+from app.binders.models.binder_intake_material import MaterialType
 from app.binders.services.binder_intake_edit_service import BinderIntakeEditService
 from app.businesses.models.business import Business, BusinessStatus
 from app.common.enums import VatType
 from app.core.exceptions import AppError
 from app.vat.models.vat_work_item import VatWorkItem
-from tests.helpers.tax_calendar_links import (
-    create_tax_calendar_entry_for_annual,
-)
 
 
 def _business(business_factory, legal_entity_id: int, name: str) -> Business:
@@ -34,19 +27,12 @@ def _business(business_factory, legal_entity_id: int, name: str) -> Business:
     )
 
 
-def _annual_report(db, client_id: int, year: int) -> AnnualReport:
-    entry = create_tax_calendar_entry_for_annual(db, year)
-    report = AnnualReport(
+def _annual_report(annual_report_model_factory, client_id: int, year: int) -> AnnualReport:
+    return annual_report_model_factory(
         client_record_id=client_id,
         tax_year=year,
-        client_type=ClientAnnualFilingType.SELF_EMPLOYED,
-        form_type=PrimaryAnnualReportForm.FORM_1301,
-        tax_calendar_entry_id=entry.id,
+        commit=True,
     )
-    db.add(report)
-    db.commit()
-    db.refresh(report)
-    return report
 
 
 def _vat_work_item(
@@ -80,7 +66,8 @@ def _binder(
 
 
 def _intake_with_material(
-    db,
+    binder_intake_factory,
+    binder_intake_material_factory,
     *,
     binder_id: int,
     received_by: int,
@@ -88,28 +75,23 @@ def _intake_with_material(
     annual_report_id: int,
     vat_report_id: int,
 ) -> BinderIntake:
-    intake = BinderIntake(
+    intake = binder_intake_factory(
         binder_id=binder_id,
         received_at=date(2026, 2, 8),
         received_by=received_by,
         notes="original notes",
     )
-    db.add(intake)
-    db.flush()
-    db.add(
-        BinderIntakeMaterial(
-            intake_id=intake.id,
-            material_type=MaterialType.OTHER,
-            business_id=business_id,
-            annual_report_id=annual_report_id,
-            vat_report_id=vat_report_id,
-            period_year=2026,
-            period_month_start=2,
-            period_month_end=2,
-        )
+    binder_intake_material_factory(
+        intake=intake,
+        material_type=MaterialType.OTHER,
+        business_id=business_id,
+        annual_report_id=annual_report_id,
+        vat_report_id=vat_report_id,
+        period_year=2026,
+        period_month_start=2,
+        period_month_end=2,
+        commit=True,
     )
-    db.commit()
-    db.refresh(intake)
     return intake
 
 
@@ -120,6 +102,9 @@ def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(
     binder_factory,
     client_factory,
     vat_work_item_factory,
+    annual_report_model_factory,
+    binder_intake_factory,
+    binder_intake_material_factory,
 ):
     source_client = client_factory(
         full_name="Edit Intake 001", id_number="EDIT-001", office_client_number=100401
@@ -130,15 +115,16 @@ def test_edit_intake_moves_to_target_client_active_binder_and_logs_fk_changes(
 
     source_business = _business(business_factory, source_client.legal_entity_id, "Source Biz")
     target_business = _business(business_factory, target_client.legal_entity_id, "Target Biz")
-    source_report = _annual_report(test_db, source_client.id, 2025)
-    target_report = _annual_report(test_db, target_client.id, 2025)
+    source_report = _annual_report(annual_report_model_factory, source_client.id, 2025)
+    target_report = _annual_report(annual_report_model_factory, target_client.id, 2025)
     source_vat = _vat_work_item(vat_work_item_factory, source_client.id, "2026-02", test_user.id)
     target_vat = _vat_work_item(vat_work_item_factory, target_client.id, "2026-02", test_user.id)
 
     source_binder = _binder(binder_factory, source_client.id, "100401/1", test_user.id)
     target_binder = _binder(binder_factory, target_client.id, "100402/1", test_user.id)
     intake = _intake_with_material(
-        test_db,
+        binder_intake_factory,
+        binder_intake_material_factory,
         binder_id=source_binder.id,
         received_by=test_user.id,
         business_id=source_business.id,
@@ -185,6 +171,9 @@ def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(
     binder_factory,
     client_factory,
     vat_work_item_factory,
+    annual_report_model_factory,
+    binder_intake_factory,
+    binder_intake_material_factory,
 ):
     source_client = client_factory(
         full_name="Edit Intake 003", id_number="EDIT-003", office_client_number=100403
@@ -194,13 +183,14 @@ def test_edit_intake_rejects_cross_client_transfer_with_foreign_linked_entities(
     )
 
     source_business = _business(business_factory, source_client.legal_entity_id, "Source Biz 2")
-    source_report = _annual_report(test_db, source_client.id, 2024)
+    source_report = _annual_report(annual_report_model_factory, source_client.id, 2024)
     source_vat = _vat_work_item(vat_work_item_factory, source_client.id, "2026-03", test_user.id)
 
     source_binder = _binder(binder_factory, source_client.id, "100403/1", test_user.id)
     _binder(binder_factory, target_client.id, "100404/1", test_user.id)
     intake = _intake_with_material(
-        test_db,
+        binder_intake_factory,
+        binder_intake_material_factory,
         binder_id=source_binder.id,
         received_by=test_user.id,
         business_id=source_business.id,

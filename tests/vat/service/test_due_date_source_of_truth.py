@@ -7,7 +7,7 @@ from app.vat.api.vat_serializers import serialize_enriched_work_item
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from app.vat.schemas.vat_report import VatBreakdownResponse
 from app.vat.services.vat_intake_service import create_work_item
-from tests.tax_calendar.service.linking_helpers import make_entry, vat_client
+from tests.helpers.tax_calendar_links import make_entry, vat_client
 
 
 def test_serializer_prefers_snapshot_over_computed_deadline(test_db, actor_user):

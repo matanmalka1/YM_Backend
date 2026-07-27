@@ -40,8 +40,6 @@ def test_actions_endpoints_versions_and_list(
     assert versions.status_code == 200
     assert len(versions.json()["items"]) == 1
 
-    by_report = client.get(
-        f"/api/v1/documents/annual-report/{report.id}", headers=advisor_headers
-    )
+    by_report = client.get(f"/api/v1/documents/annual-report/{report.id}", headers=advisor_headers)
     assert by_report.status_code == 200
     assert len(by_report.json()["items"]) == 1

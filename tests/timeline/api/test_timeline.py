@@ -3,13 +3,8 @@ from decimal import Decimal
 
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.invoices.models.invoice import Invoice
 from app.notifications.models.notification import NotificationChannel, NotificationTrigger
-from app.reminders.models.reminder import (
-    Reminder,
-    ReminderActionType,
-    ReminderStatus,
-)
+from app.reminders.models.reminder import ReminderActionType, ReminderStatus
 from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
     SignatureRequestType,
@@ -27,6 +22,8 @@ def test_timeline_orders_events_newest_first(
     charge_factory,
     signature_request_factory,
     notification_factory,
+    reminder_factory,
+    invoice_factory,
 ):
     _, business = create_client_with_business(full_name="Timeline Client")
     monkeypatch.setattr(
@@ -67,7 +64,7 @@ def test_timeline_orders_events_newest_first(
         sent_at=datetime.now(UTC) - timedelta(days=5),
     )
 
-    reminder = Reminder(
+    reminder_factory(
         fire_at=datetime.now(UTC) - timedelta(days=7),
         action_type=ReminderActionType.SEND_NOTIFICATION,
         status=ReminderStatus.SCHEDULED,
@@ -75,7 +72,6 @@ def test_timeline_orders_events_newest_first(
         source_id=business.client_id,
         created_at=datetime.now(UTC) - timedelta(days=7),
     )
-    test_db.add(reminder)
 
     notification_factory(
         client_record_id=business.client_id,
@@ -87,16 +83,14 @@ def test_timeline_orders_events_newest_first(
         created_at=datetime.now(UTC) - timedelta(days=8),
     )
 
-    test_db.flush()
-    invoice = Invoice(
-        charge_id=charge.id,
+    invoice_factory(
+        charge=charge,
         provider="dummy",
         external_invoice_id="INV-1",
         issued_at=datetime.now(UTC) - timedelta(days=2),
         created_at=datetime.now(UTC) - timedelta(days=2),
+        commit=True,
     )
-    test_db.add(invoice)
-    test_db.commit()
 
     resp = client.get(
         f"/api/v1/clients/{business.client_id}/timeline?page=1",

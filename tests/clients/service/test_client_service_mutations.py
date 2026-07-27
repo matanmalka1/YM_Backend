@@ -388,14 +388,10 @@ def test_list_clients_uses_thin_dto_without_turnover_lookup(test_db, monkeypatch
 
 def test_create_client_does_not_reuse_deleted_office_client_number(test_db, actor_user):
     service = CreateClientService(test_db)
-    first = _svc_create(
-        service, full_name="First", id_number="670000025", actor_id=actor_user.id
-    )
+    first = _svc_create(service, full_name="First", id_number="670000025", actor_id=actor_user.id)
     ClientLifecycleService(test_db).delete_client(first.id, actor_id=actor_user.id)
 
-    second = _svc_create(
-        service, full_name="Second", id_number="670000033", actor_id=actor_user.id
-    )
+    second = _svc_create(service, full_name="Second", id_number="670000033", actor_id=actor_user.id)
 
     assert first.office_client_number == 100001
     assert second.office_client_number == 100002

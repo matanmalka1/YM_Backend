@@ -1,6 +1,6 @@
 from app.clients.models.client_record import ClientRecord
 from app.utils.time_utils import utcnow
-from tests.tax_calendar.api.grouped_helpers import (
+from tests.helpers.tax_calendar_links import (
     PATH,
     add_advance_payment,
     add_annual_report,

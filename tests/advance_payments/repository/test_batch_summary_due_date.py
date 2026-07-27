@@ -9,7 +9,7 @@ from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.common.enums import AdvancePaymentFrequency, DeadlineRuleType, ObligationType
-from tests.tax_calendar.service.linking_helpers import make_entry
+from tests.helpers.tax_calendar_links import make_entry
 
 
 def _payment(db, client_id, period, period_months_count, entry):
