@@ -48,7 +48,7 @@ def test_advance_payment_generation_links_matching_tax_calendar_entry(test_db):
     assert skipped == 0
     assert jan.tax_calendar_entry_id == entry.id
     assert jan.due_date == date(2026, 2, 15)
-    assert jan.status.value == "pending"
+    assert jan.status.value == "awaiting_input"
 
 
 def test_advance_payment_generation_creates_missing_tax_calendar_entry(test_db):
