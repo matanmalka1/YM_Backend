@@ -1,12 +1,7 @@
 from datetime import UTC, date, datetime
 
 from app.common.enums import VatType
-from app.vat.models.vat_enums import (
-    DocumentType,
-    ExpenseCategory,
-    InvoiceType,
-    VatRateType,
-)
+from app.vat.models.vat_enums import DocumentType, ExpenseCategory, InvoiceType, VatRateType
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item

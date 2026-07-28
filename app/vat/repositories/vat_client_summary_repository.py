@@ -5,8 +5,9 @@ from decimal import Decimal
 from sqlalchemy import Integer, case, cast, func, select
 from sqlalchemy.orm import Session
 
+from app.common.enums import ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
-from app.vat.models.vat_enums import InvoiceType, VatWorkItemStatus
+from app.vat.models.vat_enums import InvoiceType
 from app.vat.models.vat_invoice import VatInvoice
 from app.vat.models.vat_work_item import VatWorkItem
 
@@ -24,7 +25,7 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             select(func.sum(VatWorkItem.total_output_vat)).where(
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.period.like(f"{year}-%"),
-                VatWorkItem.status == VatWorkItemStatus.FILED,
+                VatWorkItem.status == ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
             )
         )
@@ -88,7 +89,7 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             select(func.sum(VatWorkItem.total_output_net)).where(
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.period.like(f"{year}-%"),
-                VatWorkItem.status == VatWorkItemStatus.FILED,
+                VatWorkItem.status == ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
             )
         )
@@ -110,7 +111,7 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.client_record_id.in_(client_record_ids),
                 VatWorkItem.period >= f"{year}-01",
                 VatWorkItem.period <= f"{year}-12",
-                VatWorkItem.status == VatWorkItemStatus.FILED,
+                VatWorkItem.status == ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
             )
             .group_by(VatWorkItem.client_record_id)
@@ -130,7 +131,7 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             func.sum(VatWorkItem.total_input_vat).label("total_input_vat"),
             func.sum(VatWorkItem.net_vat).label("net_vat"),
             func.count(VatWorkItem.id).label("periods_count"),
-            func.sum(case((VatWorkItem.status == VatWorkItemStatus.FILED, 1), else_=0)).label(
+            func.sum(case((VatWorkItem.status == ObligationStatus.SUBMITTED, 1), else_=0)).label(
                 "filed_count"
             ),
         ).where(

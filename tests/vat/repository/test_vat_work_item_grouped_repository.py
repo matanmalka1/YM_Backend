@@ -2,8 +2,7 @@
 
 from datetime import UTC, datetime
 
-from app.common.enums import VatType
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import ObligationStatus, VatType
 from app.vat.repositories.vat_work_item_grouped_repository import (
     list_by_due_date_paginated,
     list_due_date_groups,
@@ -82,21 +81,21 @@ def test_groups_counts_filed_pending_not_filed_overdue(test_db, user_factory, cl
         client_record_id=client_a.id,
         period="2026-01",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     pending_item = create_linked_vat_work_item(
         test_db,
         client_record_id=client_b.id,
         period="2026-01",
         created_by=user.id,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
     )
     data_entry_item = create_linked_vat_work_item(
         test_db,
         client_record_id=client_c.id,
         period="2026-01",
         created_by=user.id,
-        status=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
+        status=ObligationStatus.IN_PROGRESS,
     )
     test_db.commit()
 
@@ -237,24 +236,24 @@ def test_status_summary_no_filter_returns_correct_counts_without_legal_entity_jo
         client_record_id=client.id,
         period="2026-01",
         created_by=user.id,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
     )
     create_linked_vat_work_item(
         test_db,
         client_record_id=client.id,
         period="2026-02",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     test_db.commit()
 
     after = repo.count_by_status_summary()
 
     assert (
-        after.get(VatWorkItemStatus.MATERIAL_RECEIVED, 0)
-        == before.get(VatWorkItemStatus.MATERIAL_RECEIVED, 0) + 1
+        after.get(ObligationStatus.INPUT_RECEIVED, 0)
+        == before.get(ObligationStatus.INPUT_RECEIVED, 0) + 1
     )
-    assert after.get(VatWorkItemStatus.FILED, 0) == before.get(VatWorkItemStatus.FILED, 0) + 1
+    assert after.get(ObligationStatus.SUBMITTED, 0) == before.get(ObligationStatus.SUBMITTED, 0) + 1
 
 
 def test_status_summary_client_name_filter_still_works(test_db, user_factory, client_factory):
@@ -272,19 +271,19 @@ def test_status_summary_client_name_filter_still_works(test_db, user_factory, cl
         client_record_id=target_client.id,
         period="2026-03",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     create_linked_vat_work_item(
         test_db,
         client_record_id=other_client.id,
         period="2026-03",
         created_by=user.id,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
     )
     test_db.commit()
 
     repo = VatWorkItemQueryRepository(test_db)
     counts = repo.count_by_status_summary(client_name="Target Filter Client")
 
-    assert counts.get(VatWorkItemStatus.FILED, 0) >= 1
-    assert counts.get(VatWorkItemStatus.MATERIAL_RECEIVED, 0) == 0
+    assert counts.get(ObligationStatus.SUBMITTED, 0) >= 1
+    assert counts.get(ObligationStatus.INPUT_RECEIVED, 0) == 0

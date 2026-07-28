@@ -4,11 +4,10 @@ from datetime import date
 
 from pydantic import BaseModel, Field, field_validator
 
-from app.common.enums import SubmissionMethod, VatType
+from app.common.enums import ObligationStatus, SubmissionMethod, VatType
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 # ── Work Item ─────────────────────────────────────────────────────────────────
 
@@ -53,7 +52,7 @@ class VatWorkItemResponse(BaseModel):
     client_status: str | None = None  # enriched by service
     period: str
     period_type: VatType  # snapshot at creation — immutable historical record
-    status: VatWorkItemStatus
+    status: ObligationStatus
     pending_materials_note: str | None = None
     total_output_vat: ApiDecimal
     total_input_vat: ApiDecimal
@@ -103,7 +102,7 @@ class VatWorkItemListItem(BaseModel):
     client_id_number: str | None = None  # enriched by service
     period: str
     period_type: VatType
-    status: VatWorkItemStatus
+    status: ObligationStatus
     net_vat: ApiDecimal
     final_vat_amount: ApiDecimal | None = None
     is_overridden: bool
@@ -123,7 +122,7 @@ class VatWorkItemListResponse(PaginatedResponse[VatWorkItemListItem]):
     pass
 
 
-class VatWorkItemStatusSummaryResponse(BaseModel):
+class ObligationStatusSummaryResponse(BaseModel):
     pending_materials: int = 0
     material_received: int = 0
     data_entry_in_progress: int = 0
@@ -206,7 +205,7 @@ class SendBackForCorrectionRequest(BaseModel):
 
 class VatWorkItemLookupResponse(BaseModel):
     id: int
-    status: VatWorkItemStatus
+    status: ObligationStatus
     period: str
 
     model_config = {"from_attributes": True}

@@ -27,14 +27,14 @@ from decimal import Decimal
 from sqlalchemy import Integer, cast, func, literal, select
 from sqlalchemy.orm import Session
 
+from app.common.enums import ObligationStatus
 from app.common.period_utils import parse_period
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
 # FILED items are settled figures. READY_FOR_REVIEW ones can still change before
 # filing, so they are resolvable but never count as settled.
-FILED_STATUSES = (VatWorkItemStatus.FILED,)
-UNFILED_STATUSES = (VatWorkItemStatus.READY_FOR_REVIEW,)
+FILED_STATUSES = (ObligationStatus.SUBMITTED,)
+UNFILED_STATUSES = (ObligationStatus.AWAITING_VERIFICATION,)
 RESOLVABLE_STATUSES = (*FILED_STATUSES, *UNFILED_STATUSES)
 
 

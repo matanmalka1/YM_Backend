@@ -1,9 +1,8 @@
 from sqlalchemy import func, select, tuple_
 from sqlalchemy.orm import Session
 
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.common.repositories.base_repository import BaseRepository
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
 
@@ -16,7 +15,7 @@ class VatWorkItemStatsRepository(BaseRepository[VatWorkItem]):
             select(func.count(VatWorkItem.id)).where(
                 VatWorkItem.period == period,
                 VatWorkItem.period_type == vat_type,
-                VatWorkItem.status == VatWorkItemStatus.FILED,
+                VatWorkItem.status == ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
             )
         )
@@ -29,7 +28,7 @@ class VatWorkItemStatsRepository(BaseRepository[VatWorkItem]):
         stmt = (
             select(VatWorkItem.period, VatWorkItem.period_type, func.count(VatWorkItem.id))
             .where(
-                VatWorkItem.status == VatWorkItemStatus.FILED,
+                VatWorkItem.status == ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
                 tuple_(VatWorkItem.period, VatWorkItem.period_type).in_(period_types),
             )

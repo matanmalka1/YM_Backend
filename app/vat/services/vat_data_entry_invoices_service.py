@@ -12,6 +12,7 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.enums import ObligationStatus
 from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
@@ -22,7 +23,6 @@ from app.vat.models.vat_enums import (
     ExpenseCategory,
     InvoiceType,
     VatRateType,
-    VatWorkItemStatus,
 )
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
@@ -149,21 +149,21 @@ def add_invoice(
 
     original_status = item.status
 
-    if original_status == VatWorkItemStatus.MATERIAL_RECEIVED:
-        work_item_repo.update_status(item_id, VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS)
+    if original_status == ObligationStatus.INPUT_RECEIVED:
+        work_item_repo.update_status(item_id, ObligationStatus.IN_PROGRESS)
         writer.record_status_change(
             ENTITY_VAT_WORK_ITEM,
             item_id,
             created_by,
-            VatWorkItemStatus.MATERIAL_RECEIVED.value,
-            VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS.value,
+            ObligationStatus.INPUT_RECEIVED.value,
+            ObligationStatus.IN_PROGRESS.value,
             note=VAT_AUTO_STATUS_CHANGE_ON_FIRST_INVOICE,
             actor_display_name=actor_display_name,
             metadata_json=work_item_metadata(item),
         )
     elif original_status not in (
-        VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
-        VatWorkItemStatus.READY_FOR_REVIEW,
+        ObligationStatus.IN_PROGRESS,
+        ObligationStatus.AWAITING_VERIFICATION,
     ):
         raise AppError(
             VAT_ADD_INVOICE_INVALID_STATUS.format(status=original_status.value),

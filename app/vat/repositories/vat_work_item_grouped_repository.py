@@ -6,13 +6,9 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
-from app.common.enums import VatType
+from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus, VatType
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import israel_today
-from app.vat.models.vat_enums import (
-    RESOLVED_VAT_WORK_ITEM_STATUSES,
-    VatWorkItemStatus,
-)
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_filters import (
     apply_vat_work_item_filters,
@@ -30,7 +26,7 @@ def list_due_date_groups(
     *,
     period_type: VatType | None = None,
     client_record_ids: list[int] | None = None,
-    status: VatWorkItemStatus | None = None,
+    status: ObligationStatus | None = None,
     year: int | None = None,
 ) -> list[dict]:
     """One summary dict per operational due date.
@@ -41,7 +37,7 @@ def list_due_date_groups(
     """
     today = israel_today()
 
-    filed = VatWorkItemStatus.FILED
+    filed = ObligationStatus.SUBMITTED
 
     # ── Query 1: aggregated counts per due_date_effective ────────────────────
     counts_stmt = apply_vat_work_item_filters(
@@ -51,18 +47,18 @@ def list_due_date_groups(
                 func.count(VatWorkItem.id).label("total_count"),
                 func.sum(case((VatWorkItem.status == filed, 1), else_=0)).label("filed_count"),
                 func.sum(
-                    case((VatWorkItem.status == VatWorkItemStatus.PENDING_MATERIALS, 1), else_=0)
+                    case((VatWorkItem.status == ObligationStatus.AWAITING_INPUT, 1), else_=0)
                 ).label("pending_count"),
                 func.sum(
                     case(
-                        (VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES), 1),
+                        (VatWorkItem.status.notin_(RESOLVED_OBLIGATION_STATUSES), 1),
                         else_=0,
                     )
                 ).label("not_filed_count"),
                 func.sum(
                     case(
                         (
-                            VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES)
+                            VatWorkItem.status.notin_(RESOLVED_OBLIGATION_STATUSES)
                             & (VatWorkItem.due_date_effective < today),
                             1,
                         ),
@@ -152,7 +148,7 @@ def list_by_due_date_paginated(
     page: int = 1,
     page_size: int = 50,
     client_record_ids: list[int] | None = None,
-    status: VatWorkItemStatus | None = None,
+    status: ObligationStatus | None = None,
 ) -> tuple[list[VatWorkItem], int]:
     count_stmt = apply_vat_work_item_filters(
         scope_to_active_clients_stmt(select(func.count(VatWorkItem.id)), VatWorkItem).where(

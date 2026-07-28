@@ -2,8 +2,7 @@
 
 from datetime import date
 
-from app.common.enums import IdNumberType, VatType
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import IdNumberType, ObligationStatus, VatType
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
@@ -24,7 +23,7 @@ def _item(db, repo, client_record_id, user_id, period, **overrides):
         period=period,
         period_type=VatType.MONTHLY,
         created_by=user_id,
-        status=overrides.get("status", VatWorkItemStatus.MATERIAL_RECEIVED),
+        status=overrides.get("status", ObligationStatus.INPUT_RECEIVED),
     )
     if "assigned_to" in overrides:
         item.assigned_to = overrides["assigned_to"]
@@ -65,11 +64,11 @@ def test_work_items_filter_by_status(test_db, user_factory, client_factory):
     repo = VatWorkItemRepository(test_db)
     user = user_factory()
     cr = _client_record(client_factory)
-    ready = _item(test_db, repo, cr, user.id, "2026-01", status=VatWorkItemStatus.READY_FOR_REVIEW)
-    _item(test_db, repo, cr, user.id, "2026-02", status=VatWorkItemStatus.MATERIAL_RECEIVED)
+    ready = _item(test_db, repo, cr, user.id, "2026-01", status=ObligationStatus.AWAITING_VERIFICATION)
+    _item(test_db, repo, cr, user.id, "2026-02", status=ObligationStatus.INPUT_RECEIVED)
 
-    items = repo.list_by_client_record_paginated(cr, status=VatWorkItemStatus.READY_FOR_REVIEW)
-    total = repo.count_by_client_record(cr, status=VatWorkItemStatus.READY_FOR_REVIEW)
+    items = repo.list_by_client_record_paginated(cr, status=ObligationStatus.AWAITING_VERIFICATION)
+    total = repo.count_by_client_record(cr, status=ObligationStatus.AWAITING_VERIFICATION)
 
     assert total == 1
     assert [i.id for i in items] == [ready.id]
@@ -135,16 +134,16 @@ def test_work_items_filters_combined_with_and(test_db, user_factory, client_fact
     repo = VatWorkItemRepository(test_db)
     user = user_factory()
     cr = _client_record(client_factory)
-    match = _item(test_db, repo, cr, user.id, "2026-04", status=VatWorkItemStatus.READY_FOR_REVIEW)
+    match = _item(test_db, repo, cr, user.id, "2026-04", status=ObligationStatus.AWAITING_VERIFICATION)
     # Right year, wrong status.
-    _item(test_db, repo, cr, user.id, "2026-05", status=VatWorkItemStatus.MATERIAL_RECEIVED)
+    _item(test_db, repo, cr, user.id, "2026-05", status=ObligationStatus.INPUT_RECEIVED)
     # Wrong year, right status.
-    _item(test_db, repo, cr, user.id, "2025-04", status=VatWorkItemStatus.READY_FOR_REVIEW)
+    _item(test_db, repo, cr, user.id, "2025-04", status=ObligationStatus.AWAITING_VERIFICATION)
 
     items = repo.list_by_client_record_paginated(
-        cr, year=2026, status=VatWorkItemStatus.READY_FOR_REVIEW
+        cr, year=2026, status=ObligationStatus.AWAITING_VERIFICATION
     )
-    total = repo.count_by_client_record(cr, year=2026, status=VatWorkItemStatus.READY_FOR_REVIEW)
+    total = repo.count_by_client_record(cr, year=2026, status=ObligationStatus.AWAITING_VERIFICATION)
 
     assert total == 1
     assert [i.id for i in items] == [match.id]

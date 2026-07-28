@@ -1,9 +1,8 @@
 import pytest
 
 from app.clients.client_enums import ClientStatus
-from app.common.enums import EntityType, VatType
+from app.common.enums import EntityType, ObligationStatus, VatType
 from app.core.exceptions import AppError, ConflictError, NotFoundError
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from app.vat.services import vat_intake_service as intake
 from tests.helpers.identity import seed_business, seed_client_identity
@@ -38,7 +37,7 @@ class TestCreateWorkItem:
         result = intake.create_work_item(
             repo, test_db, client_record_id=c.id, period="2026-01", created_by=actor_user.id
         )
-        assert result.status == VatWorkItemStatus.MATERIAL_RECEIVED
+        assert result.status == ObligationStatus.INPUT_RECEIVED
 
     def test_client_not_found_raises(self, test_db, actor_user):
         repo = VatWorkItemRepository(test_db)
@@ -86,7 +85,7 @@ class TestCreateWorkItem:
             mark_pending=True,
             pending_materials_note="Missing Q4",
         )
-        assert result.status == VatWorkItemStatus.PENDING_MATERIALS
+        assert result.status == ObligationStatus.AWAITING_INPUT
 
     def test_exempt_vat_type_rejected(self, test_db, actor_user):
         c = _seed(test_db, id_number="100000005", vat_type=VatType.EXEMPT)
@@ -114,21 +113,21 @@ class TestMarkMaterialsComplete:
         from unittest.mock import MagicMock
 
         work_item_repo = MagicMock()
-        item = make_item(status=VatWorkItemStatus.PENDING_MATERIALS)
+        item = make_item(status=ObligationStatus.AWAITING_INPUT)
         work_item_repo.get_by_id_for_update.return_value = item
         work_item_repo.update_status.return_value = make_item(
-            status=VatWorkItemStatus.MATERIAL_RECEIVED
+            status=ObligationStatus.INPUT_RECEIVED
         )
 
         result = intake.mark_materials_complete(work_item_repo, item_id=1, performed_by=1)
-        assert result.status == VatWorkItemStatus.MATERIAL_RECEIVED
+        assert result.status == ObligationStatus.INPUT_RECEIVED
 
     def test_wrong_status_raises(self):
         from unittest.mock import MagicMock
 
         work_item_repo = MagicMock()
         work_item_repo.get_by_id_for_update.return_value = make_item(
-            status=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS
+            status=ObligationStatus.IN_PROGRESS
         )
 
         with pytest.raises(AppError) as exc_info:

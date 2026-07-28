@@ -7,13 +7,9 @@ from sqlalchemy.orm import Session
 
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
-from app.common.enums import VatType
+from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus, VatType
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
-from app.vat.models.vat_enums import (
-    RESOLVED_VAT_WORK_ITEM_STATUSES,
-    VatWorkItemStatus,
-)
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_filters import (
     apply_vat_work_item_filters,
@@ -26,7 +22,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
     def __init__(self, db: Session):
         super().__init__(db)
 
-    def _query(self, status: VatWorkItemStatus | None = None):
+    def _query(self, status: ObligationStatus | None = None):
         stmt = scope_to_active_clients_stmt(
             select(VatWorkItem),
             VatWorkItem,
@@ -35,7 +31,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def _filtered_query(
         self,
-        status: VatWorkItemStatus | None = None,
+        status: ObligationStatus | None = None,
         period: str | None = None,
         client_record_ids: list[int] | None = None,
         period_type: VatType | None = None,
@@ -81,7 +77,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         *,
         year: int | None = None,
         period: str | None = None,
-        status: VatWorkItemStatus | None = None,
+        status: ObligationStatus | None = None,
         assigned_to: int | None = None,
         due_after: date | None = None,
         due_before: date | None = None,
@@ -118,7 +114,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         *,
         year: int | None = None,
         period: str | None = None,
-        status: VatWorkItemStatus | None = None,
+        status: ObligationStatus | None = None,
         assigned_to: int | None = None,
         due_after: date | None = None,
         due_before: date | None = None,
@@ -145,7 +141,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         *,
         year: int | None = None,
         period: str | None = None,
-        status: VatWorkItemStatus | None = None,
+        status: ObligationStatus | None = None,
         assigned_to: int | None = None,
         due_after: date | None = None,
         due_before: date | None = None,
@@ -180,7 +176,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def list_by_status(
         self,
-        status: VatWorkItemStatus,
+        status: ObligationStatus,
         page: int = 1,
         page_size: int = 20,
         period: str | None = None,
@@ -194,7 +190,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def count_by_status(
         self,
-        status: VatWorkItemStatus,
+        status: ObligationStatus,
         period: str | None = None,
         client_record_ids: list[int] | None = None,
         period_type: VatType | None = None,
@@ -211,7 +207,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         period_type: VatType | None = None,
         client_record_id: int | None = None,
         client_name: str | None = None,
-    ) -> dict[VatWorkItemStatus, int]:
+    ) -> dict[ObligationStatus, int]:
         stmt = scope_to_active_clients_stmt(
             select(VatWorkItem.status, func.count(VatWorkItem.id)),
             VatWorkItem,
@@ -261,7 +257,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             .join(ClientRecord, ClientRecord.id == VatWorkItem.client_record_id)
             .where(
                 VatWorkItem.period == period,
-                VatWorkItem.status != VatWorkItemStatus.FILED,
+                VatWorkItem.status != ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
                 ClientRecord.deleted_at.is_(None),
             )
@@ -284,7 +280,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             scope_to_active_clients_stmt(select(VatWorkItem), VatWorkItem)
             .where(
                 VatWorkItem.period == period,
-                VatWorkItem.status != VatWorkItemStatus.FILED,
+                VatWorkItem.status != ObligationStatus.SUBMITTED,
                 VatWorkItem.deleted_at.is_(None),
             )
             .order_by(VatWorkItem.created_at.asc())
@@ -296,7 +292,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             scope_to_active_clients_stmt(select(VatWorkItem), VatWorkItem)
             .where(
                 VatWorkItem.period <= up_to_period,
-                VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES),
+                VatWorkItem.status.notin_(RESOLVED_OBLIGATION_STATUSES),
                 VatWorkItem.deleted_at.is_(None),
             )
             .order_by(VatWorkItem.period.asc())

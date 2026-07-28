@@ -1,14 +1,14 @@
 from datetime import UTC, datetime
 
-from app.common.enums import SubmissionMethod, VatType
+from app.common.enums import ObligationStatus, SubmissionMethod, VatType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
-from app.vat.models.vat_enums import InvoiceType, VatWorkItemStatus
+from app.vat.models.vat_enums import InvoiceType
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.schemas.vat_report import VatWorkItemStatusSummaryResponse
+from app.vat.schemas.vat_report import ObligationStatusSummaryResponse
 from app.vat.vat_messages import VAT_ITEM_NOT_FOUND
 
 
@@ -84,7 +84,7 @@ def get_work_item_by_client_period(
 
 def list_work_items_by_status(
     work_item_repo: VatWorkItemRepository,
-    status: VatWorkItemStatus,
+    status: ObligationStatus,
     page: int = 1,
     page_size: int = 50,
     period: str | None = None,
@@ -144,15 +144,15 @@ def get_status_summary(
     period_type: VatType | None = None,
     client_record_id: int | None = None,
     client_name: str | None = None,
-) -> VatWorkItemStatusSummaryResponse:
+) -> ObligationStatusSummaryResponse:
     counts = work_item_repo.count_by_status_summary(
         year=year,
         period_type=period_type,
         client_record_id=client_record_id,
         client_name=client_name,
     )
-    return VatWorkItemStatusSummaryResponse(
-        **{status.value: counts.get(status, 0) for status in VatWorkItemStatus}
+    return ObligationStatusSummaryResponse(
+        **{status.value: counts.get(status, 0) for status in ObligationStatus}
     )
 
 

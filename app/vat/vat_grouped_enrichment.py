@@ -3,10 +3,9 @@
 from datetime import date
 
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.users.models.user import UserRole
 from app.vat.api.vat_serializers import serialize_enriched_work_item_list
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories import (
     vat_work_item_grouped_repository as grouped_repo,
 )
@@ -19,7 +18,7 @@ def get_groups(
     period_type: VatType | None = None,
     client_record_id: int | None = None,
     client_name: str | None = None,
-    status: VatWorkItemStatus | None = None,
+    status: ObligationStatus | None = None,
     year: int | None = None,
 ) -> list[dict]:
     client_record_ids = _resolve_client_ids(db, client_record_id, client_name)
@@ -42,7 +41,7 @@ def get_group_items_enriched(
     page_size: int,
     client_record_id: int | None = None,
     client_name: str | None = None,
-    status: VatWorkItemStatus | None = None,
+    status: ObligationStatus | None = None,
     user_role: UserRole | str | None = None,
 ) -> dict:
     due_date = _parse_due_date_group_key(group_key)

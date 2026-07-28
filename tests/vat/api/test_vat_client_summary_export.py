@@ -5,11 +5,10 @@ from decimal import Decimal
 import openpyxl
 import pytest
 
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.services.vat_client_summary_service import get_client_summary
 from app.vat.services.vat_export_service import _load as export_load
@@ -27,7 +26,7 @@ def _seed_work_items(db, client_record_id: int, created_by: int):
             created_by=created_by,
             period="2026-02",
             period_type=VatType.MONTHLY,
-            status=VatWorkItemStatus.READY_FOR_REVIEW,
+            status=ObligationStatus.AWAITING_VERIFICATION,
             total_output_vat=Decimal("1500.00"),
             total_input_vat=Decimal("500.00"),
             net_vat=Decimal("1000.00"),
@@ -43,7 +42,7 @@ def _seed_work_items(db, client_record_id: int, created_by: int):
             created_by=created_by,
             period="2026-01",
             period_type=VatType.MONTHLY,
-            status=VatWorkItemStatus.FILED,
+            status=ObligationStatus.SUBMITTED,
             total_output_vat=Decimal("800.00"),
             total_input_vat=Decimal("200.00"),
             net_vat=Decimal("600.00"),

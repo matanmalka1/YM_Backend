@@ -37,9 +37,9 @@ from app.database import Base
 
 if TYPE_CHECKING:
     from app.vat.models.vat_invoice import VatInvoice
+from app.common.enums import ObligationStatus
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 
 class VatWorkItem(Base):
@@ -59,10 +59,10 @@ class VatWorkItem(Base):
     )  # snapshot at creation — immutable
 
     # Status lifecycle
-    status: Mapped[VatWorkItemStatus] = mapped_column(
-        pg_enum(VatWorkItemStatus),
+    status: Mapped[ObligationStatus] = mapped_column(
+        pg_enum(ObligationStatus),
         nullable=False,
-        default=VatWorkItemStatus.MATERIAL_RECEIVED,
+        default=ObligationStatus.INPUT_RECEIVED,
     )
     pending_materials_note: Mapped[str | None] = mapped_column(Text, nullable=True)
 

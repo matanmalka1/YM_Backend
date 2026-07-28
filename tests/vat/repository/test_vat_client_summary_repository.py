@@ -1,9 +1,8 @@
 from datetime import date
 from decimal import Decimal
 
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
@@ -26,7 +25,7 @@ def test_vat_client_summary_repository_periods_and_annual_aggregates(
         period="2026-02",
         period_type=VatType.MONTHLY,
         created_by=user.id,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
     )
     i2 = create_linked_vat_work_item(
         test_db,
@@ -35,7 +34,7 @@ def test_vat_client_summary_repository_periods_and_annual_aggregates(
         period="2026-01",
         period_type=VatType.MONTHLY,
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
 
     work_repo.update_vat_totals(
@@ -85,7 +84,7 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
         client_record_id=first_client_id,
         period="2026-01",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     first_dec = create_linked_vat_work_item(
         test_db,
@@ -93,7 +92,7 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
         client_record_id=first_client_id,
         period="2026-12",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     ignored_previous_year = create_linked_vat_work_item(
         test_db,
@@ -101,7 +100,7 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
         client_record_id=first_client_id,
         period="2025-12",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     ignored_unfiled = create_linked_vat_work_item(
         test_db,
@@ -109,7 +108,7 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
         client_record_id=first_client_id,
         period="2026-02",
         created_by=user.id,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
     )
     ignored_deleted = create_linked_vat_work_item(
         test_db,
@@ -117,7 +116,7 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
         client_record_id=second_client_id,
         period="2026-03",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     second = create_linked_vat_work_item(
         test_db,
@@ -125,7 +124,7 @@ def test_get_annual_turnover_by_client_ids_groups_clients_and_bounds_year(
         client_record_id=second_client_id,
         period="2026-04",
         created_by=user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
 
     for item, amount in (

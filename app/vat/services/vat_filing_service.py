@@ -6,10 +6,9 @@ from app.audit.audit_constants import (
     ENTITY_VAT_WORK_ITEM,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.common.enums import SubmissionMethod
+from app.common.enums import ObligationStatus, SubmissionMethod
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -42,7 +41,7 @@ def _validate_amendment(
         raise AppError(
             AMENDED_ITEM_WRONG_CLIENT, code=ErrorCode.VAT_AMENDED_ITEM_WRONG_CLIENT, status_code=400
         )
-    if amended_item.status != VatWorkItemStatus.FILED:
+    if amended_item.status != ObligationStatus.SUBMITTED:
         raise AppError(
             AMENDED_ITEM_NOT_FILED, code=ErrorCode.VAT_AMENDED_ITEM_NOT_FILED, status_code=400
         )
@@ -75,7 +74,7 @@ def file_vat_return(
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
-    assert_transition_allowed(item, VatWorkItemStatus.FILED)
+    assert_transition_allowed(item, ObligationStatus.SUBMITTED)
 
     if item.assigned_to is None:
         raise AppError(VAT_ASSIGNEE_REQUIRED, code=ErrorCode.VAT_ASSIGNEE_REQUIRED, status_code=400)

@@ -6,11 +6,8 @@ from sqlalchemy import case, func, select
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
-from app.vat.models.vat_enums import (
-    RESOLVED_VAT_WORK_ITEM_STATUSES,
-    VatWorkItemStatus,
-)
 from app.vat.models.vat_work_item import VatWorkItem
 
 
@@ -20,7 +17,7 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
 
     def _compliance_aggregates_base_stmt(self, year: int):
         year_str = str(year)
-        filed_case = case((VatWorkItem.status == VatWorkItemStatus.FILED, 1), else_=0)
+        filed_case = case((VatWorkItem.status == ObligationStatus.SUBMITTED, 1), else_=0)
         return (
             scope_to_active_clients_stmt(
                 select(
@@ -69,7 +66,7 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
             VatWorkItem,
         ).where(
             func.substr(VatWorkItem.period, 1, 4) == year_str,
-            VatWorkItem.status == VatWorkItemStatus.FILED,
+            VatWorkItem.status == ObligationStatus.SUBMITTED,
             VatWorkItem.filed_at.isnot(None),
             VatWorkItem.deleted_at.is_(None),
             VatWorkItem.client_record_id.in_(client_record_ids),
@@ -88,7 +85,7 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem,
             )
             .where(
-                VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES),
+                VatWorkItem.status.notin_(RESOLVED_OBLIGATION_STATUSES),
                 VatWorkItem.deleted_at.is_(None),
                 func.substr(VatWorkItem.period, 1, 7) < reference_date.strftime("%Y-%m"),
             )
@@ -109,7 +106,7 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem,
             )
             .where(
-                VatWorkItem.status == VatWorkItemStatus.PENDING_MATERIALS,
+                VatWorkItem.status == ObligationStatus.AWAITING_INPUT,
                 func.substr(VatWorkItem.period, 1, 4) == year_str,
                 VatWorkItem.deleted_at.is_(None),
             )

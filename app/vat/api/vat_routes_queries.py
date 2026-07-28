@@ -4,7 +4,7 @@ from datetime import date
 
 from fastapi import APIRouter, Depends, Query
 
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
@@ -15,14 +15,13 @@ from app.vat.api.vat_serializers import (
     serialize_enriched_work_items,
 )
 from app.vat.integrations.tax_rules_financials import get_vat_deduction_rules_metadata
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.schemas.vat_report import (
+    ObligationStatusSummaryResponse,
     VatDeductionMetadataResponse,
     VatPeriodOptionsResponse,
     VatWorkItemListResponse,
     VatWorkItemLookupResponse,
     VatWorkItemResponse,
-    VatWorkItemStatusSummaryResponse,
 )
 from app.vat.services.vat_report_service import VatReportService
 
@@ -82,7 +81,7 @@ def get_period_options(
 
 @router.get(
     "/work-items/status-summary",
-    response_model=VatWorkItemStatusSummaryResponse,
+    response_model=ObligationStatusSummaryResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 def get_status_summary(
@@ -136,7 +135,7 @@ def list_client_work_items(
     page_size: int = Query(default=200, ge=1, le=MAX_PAGE_SIZE),
     year: int | None = Query(default=None),
     period: str | None = Query(default=None),
-    status: VatWorkItemStatus | None = Query(default=None),
+    status: ObligationStatus | None = Query(default=None),
     assigned_to: int | None = Query(default=None),
     due_after: date | None = Query(default=None),
     due_before: date | None = Query(default=None),
@@ -173,7 +172,7 @@ def list_client_work_items(
 def list_work_items(
     db: DBSession,
     current_user: CurrentUser,
-    status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
+    status_filter: ObligationStatus | None = Query(default=None, alias="status"),
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=20, ge=1, le=MAX_PAGE_SIZE),
     period: str | None = Query(None),

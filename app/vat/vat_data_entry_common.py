@@ -2,7 +2,10 @@
 
 from decimal import Decimal
 
-from app.common.enums import EntityType
+from app.common.enums import EntityType, ObligationStatus
+from app.common.obligation_lifecycle import (
+    assert_transition_allowed as assert_obligation_transition_allowed,
+)
 from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
@@ -10,19 +13,15 @@ from app.vat.integrations.tax_rules_financials import (
     get_financial_value,
     get_vat_deduction_rate_for_category,
 )
-from app.vat.models.vat_enums import DocumentType, InvoiceType, VatWorkItemStatus
+from app.vat.models.vat_enums import DocumentType, InvoiceType
 from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
-from app.vat.vat_constants import (
-    OSEK_PATUR_CEILING_WARNING_RATE,
-    VALID_TRANSITIONS,
-)
+from app.vat.vat_constants import OSEK_PATUR_CEILING_WARNING_RATE
 from app.vat.vat_messages import (
     VAT_EXPENSE_CATEGORY_REQUIRED,
     VAT_FILED_ITEM_IMMUTABLE,
-    VAT_INVALID_TRANSITION,
     VAT_NEGATIVE_AMOUNT,
     VAT_NET_AMOUNT_POSITIVE_REQUIRED,
     VAT_OSEK_PATUR_CEILING_EXCEEDED,
@@ -32,21 +31,20 @@ from app.vat.vat_messages import (
 
 def assert_editable(item) -> None:
     """Raise if the work item is FILED (immutable)."""
-    if item.status == VatWorkItemStatus.FILED:
+    if item.status == ObligationStatus.SUBMITTED:
         raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
 
-def assert_transition_allowed(item, target_status: VatWorkItemStatus) -> None:
-    """Validate status transition against the central transition table."""
-    allowed = VALID_TRANSITIONS.get(item.status, set())
-    if target_status not in allowed:
-        raise AppError(
-            VAT_INVALID_TRANSITION.format(
-                current_status=item.status.value,
-                target_status=target_status.value,
-            ),
-            ErrorCode.VAT_INVALID_TRANSITION,
-        )
+def assert_transition_allowed(
+    item, target_status: ObligationStatus, *, reason: str | None = None
+) -> None:
+    """Validate a status change against the shared obligation graph.
+
+    VAT kept its own VALID_TRANSITIONS table, which was the shared ladder minus a
+    cancel edge — VAT could reach ``canceled`` in the database but never through a
+    transition check.
+    """
+    assert_obligation_transition_allowed(item.status, target_status, reason=reason)
 
 
 def recalculate_totals(

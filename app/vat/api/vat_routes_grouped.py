@@ -2,12 +2,11 @@
 
 from fastapi import APIRouter, Depends, Query
 
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
 from app.vat import vat_grouped_enrichment
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.schemas.vat_report import (
     VatWorkItemGroupItemsResponse,
     VatWorkItemGroupsResponse,
@@ -26,7 +25,7 @@ def list_work_item_groups(
     db: DBSession,
     current_user: CurrentUser,
     period_type: VatType | None = Query(None),
-    status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
+    status_filter: ObligationStatus | None = Query(default=None, alias="status"),
     client_record_id: int | None = Query(None),
     client_name: str | None = Query(None),
     year: int | None = Query(None),
@@ -53,7 +52,7 @@ def list_work_item_group_items(
     current_user: CurrentUser,
     page: int = Query(default=1, ge=1),
     page_size: int = Query(default=DEFAULT_PAGE_SIZE, ge=1, le=MAX_PAGE_SIZE),
-    status_filter: VatWorkItemStatus | None = Query(default=None, alias="status"),
+    status_filter: ObligationStatus | None = Query(default=None, alias="status"),
     client_record_id: int | None = Query(None),
     client_name: str | None = Query(None),
 ):

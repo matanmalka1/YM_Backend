@@ -5,15 +5,15 @@ from decimal import Decimal
 
 from pydantic import BaseModel
 
+from app.common.enums import ObligationStatus
 from app.core.api_types import ApiDateTime, ApiDecimal
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 
 class VatPeriodRow(BaseModel):
     work_item_id: int = 0
     period: str
     period_type: str | None = None
-    status: VatWorkItemStatus
+    status: ObligationStatus
     total_output_vat: ApiDecimal
     total_input_vat: ApiDecimal
     net_vat: ApiDecimal

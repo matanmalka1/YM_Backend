@@ -2,9 +2,9 @@
 
 from app.audit.audit_constants import ENTITY_VAT_WORK_ITEM
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -28,7 +28,7 @@ def update_work_item_metadata(
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
-    if item.status == VatWorkItemStatus.FILED:
+    if item.status == ObligationStatus.SUBMITTED:
         raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
     fields = {key: value for key, value in patch.items() if key in _UPDATEABLE_FIELDS}
@@ -61,7 +61,7 @@ def soft_delete_work_item(
     item = work_item_repo.get_by_id_for_update(item_id)
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
-    if item.status == VatWorkItemStatus.FILED:
+    if item.status == ObligationStatus.SUBMITTED:
         raise AppError(VAT_FILED_ITEM_IMMUTABLE, ErrorCode.VAT_FILED_IMMUTABLE)
 
     metadata = work_item_metadata(item)

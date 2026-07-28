@@ -10,10 +10,9 @@ from datetime import date
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.common.enums import SubmissionMethod
+from app.common.enums import ObligationStatus, SubmissionMethod
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_query_repository import (
     VatWorkItemQueryRepository,
@@ -43,7 +42,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         *,
         year: int | None = None,
         period: str | None = None,
-        status: VatWorkItemStatus | None = None,
+        status: ObligationStatus | None = None,
         assigned_to: int | None = None,
         due_after: date | None = None,
         due_before: date | None = None,
@@ -66,7 +65,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         *,
         year: int | None = None,
         period: str | None = None,
-        status: VatWorkItemStatus | None = None,
+        status: ObligationStatus | None = None,
         assigned_to: int | None = None,
         due_after: date | None = None,
         due_before: date | None = None,
@@ -92,7 +91,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
     def count_by_status(self, status, **kwargs) -> int:
         return self._query.count_by_status(status, **kwargs)
 
-    def count_by_status_summary(self, **kwargs) -> dict[VatWorkItemStatus, int]:
+    def count_by_status_summary(self, **kwargs) -> dict[ObligationStatus, int]:
         return self._query.count_by_status_summary(**kwargs)
 
     def list_all(self, **kwargs) -> list[VatWorkItem]:
@@ -120,7 +119,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         period: str,
         period_type=None,
         created_by: int,
-        status: VatWorkItemStatus = VatWorkItemStatus.MATERIAL_RECEIVED,
+        status: ObligationStatus = ObligationStatus.INPUT_RECEIVED,
         pending_materials_note: str | None = None,
         assigned_to: int | None = None,
         tax_calendar_entry_id: int,
@@ -149,7 +148,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
     def update_status(
         self,
         item_id: int,
-        new_status: VatWorkItemStatus,
+        new_status: ObligationStatus,
         item: VatWorkItem | None = None,
         **extra_fields,
     ) -> VatWorkItem | None:
@@ -204,11 +203,11 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
             select(VatWorkItem).where(
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.deleted_at.is_(None),
-                VatWorkItem.status.notin_([VatWorkItemStatus.FILED]),
+                VatWorkItem.status.notin_([ObligationStatus.SUBMITTED]),
             )
         ).all()
         for row in rows:
-            row.status = VatWorkItemStatus.CANCELED
+            row.status = ObligationStatus.CANCELED
             row.updated_at = utcnow()
         if rows:
             self.db.flush()
@@ -254,7 +253,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         item = item or self.get_by_id(item_id)
         if not item:
             return None
-        item.status = VatWorkItemStatus.FILED
+        item.status = ObligationStatus.SUBMITTED
         item.final_vat_amount = final_vat_amount
         item.submission_method = submission_method
         item.filed_at = utcnow()

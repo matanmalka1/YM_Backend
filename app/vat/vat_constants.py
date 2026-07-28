@@ -1,28 +1,10 @@
-"""VAT workflow constants — status transitions and validation rules."""
+"""VAT workflow constants.
+
+Status transitions are not here: VAT runs the shared graph in
+``app/common/obligation_lifecycle.py``.
+"""
 
 from decimal import Decimal
-
-from app.vat.models.vat_enums import VatWorkItemStatus
-
-# Valid status transitions: from → set of allowed next statuses
-VALID_TRANSITIONS: dict[VatWorkItemStatus, set[VatWorkItemStatus]] = {
-    VatWorkItemStatus.PENDING_MATERIALS: {
-        VatWorkItemStatus.MATERIAL_RECEIVED,
-    },
-    VatWorkItemStatus.MATERIAL_RECEIVED: {
-        VatWorkItemStatus.PENDING_MATERIALS,  # send back if incomplete
-        VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
-    },
-    VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS: {
-        VatWorkItemStatus.READY_FOR_REVIEW,
-        VatWorkItemStatus.MATERIAL_RECEIVED,  # rollback
-    },
-    VatWorkItemStatus.READY_FOR_REVIEW: {
-        VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,  # advisor sends back for correction
-        VatWorkItemStatus.FILED,
-    },
-    VatWorkItemStatus.FILED: set(),  # terminal — immutable
-}
 
 # VAT audit actions are now namespaced EntityAuditLog constants in
 # app/audit/audit_constants.py (ACTION_VAT_WORK_ITEM_* / ACTION_VAT_INVOICE_*);
@@ -62,5 +44,4 @@ OSEK_PATUR_CEILING_WARNING_RATE: Decimal = Decimal("0.80")
 __all__ = [
     "CATEGORY_LABELS_SERVER",
     "OSEK_PATUR_CEILING_WARNING_RATE",
-    "VALID_TRANSITIONS",
 ]

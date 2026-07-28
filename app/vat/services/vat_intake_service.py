@@ -5,13 +5,12 @@ from app.audit.audit_constants import (
     ENTITY_VAT_WORK_ITEM,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
-from app.common.enums import ObligationType, VatType
+from app.common.enums import ObligationStatus, ObligationType, VatType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -77,9 +76,9 @@ def create_work_item(
                 VAT_PENDING_MATERIALS_NOTE_REQUIRED,
                 ErrorCode.VAT_PENDING_NOTE_REQUIRED,
             )
-        status = VatWorkItemStatus.PENDING_MATERIALS
+        status = ObligationStatus.AWAITING_INPUT
     else:
-        status = VatWorkItemStatus.MATERIAL_RECEIVED
+        status = ObligationStatus.INPUT_RECEIVED
 
     materializer = TaxCalendarMaterializationService(db)
     tax_calendar_entry = materializer.ensure_periodic_entry(
@@ -127,7 +126,7 @@ def mark_materials_complete(
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
-    if item.status != VatWorkItemStatus.PENDING_MATERIALS:
+    if item.status != ObligationStatus.AWAITING_INPUT:
         raise AppError(
             VAT_MATERIALS_COMPLETE_INVALID_STATUS.format(status=item.status.value),
             ErrorCode.VAT_INVALID_TRANSITION,
@@ -136,7 +135,7 @@ def mark_materials_complete(
     old_status = item.status.value
     updated = work_item_repo.update_status(
         item_id,
-        VatWorkItemStatus.MATERIAL_RECEIVED,
+        ObligationStatus.INPUT_RECEIVED,
         item=item,
         pending_materials_note=None,
     )
@@ -146,7 +145,7 @@ def mark_materials_complete(
         item_id,
         performed_by,
         old_status,
-        VatWorkItemStatus.MATERIAL_RECEIVED.value,
+        ObligationStatus.INPUT_RECEIVED.value,
         actor_display_name=actor_display_name,
         metadata_json=work_item_metadata(item),
     )

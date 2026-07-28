@@ -1,31 +1,10 @@
-"""VAT Report enums."""
+"""VAT-specific enums.
+
+The lifecycle status is not here: VAT runs the shared ``ObligationStatus``
+(``app/common/enums.py``) like every other tax obligation.
+"""
 
 from enum import Enum as PyEnum
-
-
-class VatWorkItemStatus(str, PyEnum):
-    PENDING_MATERIALS = "pending_materials"
-    MATERIAL_RECEIVED = "material_received"
-    DATA_ENTRY_IN_PROGRESS = "data_entry_in_progress"
-    READY_FOR_REVIEW = "ready_for_review"
-    FILED = "filed"
-    CANCELED = "canceled"
-
-
-# The one definition of "this VAT period needs no further work", shared by the
-# Python predicate below and every SQL query that asks the same question. A set
-# both forms read is the twin — two parallel implementations would be one more
-# thing to keep in step.
-#
-# CANCELED belongs here. It was previously omitted while the SQL side excluded
-# it, so a cancelled period read open on one screen and closed on another.
-# is_annual_report_resolved has always included its CANCELED.
-RESOLVED_VAT_WORK_ITEM_STATUSES: frozenset[VatWorkItemStatus] = frozenset(
-    {
-        VatWorkItemStatus.FILED,
-        VatWorkItemStatus.CANCELED,
-    }
-)
 
 
 class CounterpartyIdType(str, PyEnum):
@@ -91,22 +70,9 @@ class DocumentType(str, PyEnum):
     CREDIT_NOTE = "credit_note"
 
 
-def is_vat_work_item_resolved(status: "VatWorkItemStatus") -> bool:
-    """Whether a VAT period needs no further work.
-
-    VAT's own answer to the question the tax calendar asks about every obligation.
-    The calendar used to hardcode this set; a status added here must not require
-    editing another domain to stay correct.
-    """
-    return status in RESOLVED_VAT_WORK_ITEM_STATUSES
-
-
 __all__ = [
-    "RESOLVED_VAT_WORK_ITEM_STATUSES",
     "DocumentType",
     "ExpenseCategory",
     "InvoiceType",
     "VatRateType",
-    "VatWorkItemStatus",
-    "is_vat_work_item_resolved",
 ]

@@ -9,12 +9,7 @@ from pydantic import Field, field_validator, model_validator
 
 from app.core.api_types import ApiDecimal
 from app.core.schemas.validation import NonEmptyUpdateMixin
-from app.vat.models.vat_enums import (
-    CounterpartyIdType,
-    DocumentType,
-    ExpenseCategory,
-    VatRateType,
-)
+from app.vat.models.vat_enums import CounterpartyIdType, DocumentType, ExpenseCategory, VatRateType
 from app.vat.schemas.vat_invoice_schema import (
     MAX_COUNTERPARTY_ID_LENGTH,
     MAX_COUNTERPARTY_NAME_LENGTH,

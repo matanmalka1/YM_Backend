@@ -8,9 +8,8 @@ from types import SimpleNamespace
 import pytest
 
 from app.businesses.models.business import BusinessStatus
-from app.common.enums import IdNumberType
+from app.common.enums import IdNumberType, ObligationStatus
 from app.core.exceptions import AppError
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.services.vat_data_entry_invoice_update_service import update_invoice
 from tests.vat.api.test_vat_reports_utils import (
     create_work_item,
@@ -137,7 +136,7 @@ def test_update_invoice_raises_vat_net_not_positive_code():
         id=1,
         client_record_id=1,
         period="2026-01",
-        status=VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
+        status=ObligationStatus.IN_PROGRESS,
         deleted_at=None,
     )
     invoice = SimpleNamespace(

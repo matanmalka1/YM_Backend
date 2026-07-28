@@ -4,9 +4,9 @@ from types import SimpleNamespace
 import pytest
 from tax_rules import get_financial
 
-from app.common.enums import EntityType
+from app.common.enums import EntityType, ObligationStatus
 from app.core.exceptions import AppError
-from app.vat.models.vat_enums import InvoiceType, VatWorkItemStatus
+from app.vat.models.vat_enums import InvoiceType
 from app.vat.vat_constants import OSEK_PATUR_CEILING_WARNING_RATE
 from app.vat.vat_data_entry_common import (
     assert_transition_allowed,
@@ -18,9 +18,9 @@ OSEK_PATUR_CEILING_ILS = Decimal(str(get_financial(2026, "osek_patur_ceiling_ils
 
 
 def test_data_entry_common_rejects_invalid_transition_and_derives_invoice_fields():
-    item = SimpleNamespace(status=VatWorkItemStatus.PENDING_MATERIALS)
+    item = SimpleNamespace(status=ObligationStatus.AWAITING_INPUT)
     with pytest.raises(AppError):
-        assert_transition_allowed(item, VatWorkItemStatus.FILED)
+        assert_transition_allowed(item, ObligationStatus.SUBMITTED)
 
     derived = resolve_invoice_derived_fields(
         invoice_type=InvoiceType.INCOME,

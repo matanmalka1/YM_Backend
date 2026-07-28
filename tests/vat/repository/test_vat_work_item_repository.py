@@ -2,8 +2,7 @@ from datetime import date
 
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.common.enums import VatType
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import ObligationStatus, VatType
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
@@ -20,7 +19,7 @@ def test_status_listing_and_totals(test_db, user_factory, create_client_with_bus
         period="2026-01",
         period_type=VatType.MONTHLY,
         created_by=user.id,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
     )
     newest = create_linked_vat_work_item(
         test_db,
@@ -29,7 +28,7 @@ def test_status_listing_and_totals(test_db, user_factory, create_client_with_bus
         period="2026-03",
         period_type=VatType.MONTHLY,
         created_by=user.id,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
     )
     middle = create_linked_vat_work_item(
         test_db,
@@ -38,12 +37,12 @@ def test_status_listing_and_totals(test_db, user_factory, create_client_with_bus
         period="2026-02",
         period_type=VatType.MONTHLY,
         created_by=user.id,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
     )
 
-    by_status = repo.list_by_status(VatWorkItemStatus.PENDING_MATERIALS, page=1, page_size=10)
+    by_status = repo.list_by_status(ObligationStatus.AWAITING_INPUT, page=1, page_size=10)
     assert [item.id for item in by_status] == [newest.id, middle.id]
-    assert repo.count_by_status(VatWorkItemStatus.PENDING_MATERIALS) == 2
+    assert repo.count_by_status(ObligationStatus.AWAITING_INPUT) == 2
 
     all_items = repo.list_all(page=1, page_size=10)
     assert [item.period for item in all_items] == ["2026-03", "2026-02", "2026-01"]
@@ -74,7 +73,7 @@ def test_global_work_item_lists_hide_deleted_clients_and_restore_visibility(
         period="2026-04",
         period_type=VatType.MONTHLY,
         created_by=user.id,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
     )
 
     record_repo = ClientRecordRepository(test_db)
@@ -125,7 +124,7 @@ def test_mark_filed_persists_amendment_and_reference_fields(
     )
 
     assert filed is not None
-    assert filed.status == VatWorkItemStatus.FILED
+    assert filed.status == ObligationStatus.SUBMITTED
     assert float(filed.final_vat_amount) == 321.5
     assert filed.submission_reference == "REF-321"
     assert filed.is_amendment is True
