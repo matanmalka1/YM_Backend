@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import BusinessStatus
 from app.common.enums import ObligationType, VatType
+from app.common.period_utils import parse_period_year
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
@@ -96,7 +97,7 @@ def _vat_due_date(db, period: str, vat_type: VatType) -> date:
 
 
 def _status_for_period(rng: Random, period: str, reference_date: date) -> VatWorkItemStatus:
-    period_year = int(period.split("-")[0])
+    period_year = parse_period_year(period)
     if period_year <= reference_date.year - 2:
         return VatWorkItemStatus.FILED
 
@@ -187,7 +188,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
             if existing_item is not None:
                 # If onboarding created this with a non-final status for a pre-current-year
                 # period, upgrade it now.
-                period_year = int(period.split("-")[0])
+                period_year = parse_period_year(period)
                 if (
                     period_year < cfg.reference_date.year
                     and existing_item.status != VatWorkItemStatus.FILED
@@ -217,7 +218,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
             else:
                 status = _status_for_period(rng, period, cfg.reference_date)
 
-            period_year = int(period.split("-")[0])
+            period_year = parse_period_year(period)
             _FINAL_VAT = (
                 VatWorkItemStatus.FILED,
                 VatWorkItemStatus.CANCELED,

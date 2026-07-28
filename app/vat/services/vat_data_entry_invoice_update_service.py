@@ -10,6 +10,7 @@ from app.audit.audit_constants import (
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat.integrations.tax_rules_financials import (
@@ -145,7 +146,7 @@ def update_invoice(
         net_amount, vat_amount = split_gross_amount(
             effective_gross,
             effective_rate_type,
-            int(item.period[:4]),
+            parse_period_year(item.period),
         )
         update_fields["net_amount"] = float(net_amount)
         update_fields["vat_amount"] = float(vat_amount)
@@ -156,10 +157,14 @@ def update_invoice(
     # rejects a null category, so a sent value is always a real category).
     if _sent("expense_category"):
         update_fields["deduction_rate"] = get_vat_deduction_rate_for_category(
-            int(item.period[:4]), expense_category.value
+            parse_period_year(item.period), expense_category.value
         )
     _threshold = Decimal(
-        str(get_financial_value(int(item.period[:4]), "exceptional_invoice_threshold_ils").value)
+        str(
+            get_financial_value(
+                parse_period_year(item.period), "exceptional_invoice_threshold_ils"
+            ).value
+        )
     )
     update_fields["is_exceptional"] = Decimal(str(effective_net)) > _threshold
 

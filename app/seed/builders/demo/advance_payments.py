@@ -14,6 +14,7 @@ from app.advance_payments.models.advance_payment import (
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType, ObligationType
 from app.common.obligation_plan import advance_payment_obligation_plan
+from app.common.period_utils import parse_period_year
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
@@ -46,7 +47,7 @@ _HISTORICAL_YEARS = 3
 
 
 def _resolve_status(period: str, current_year: int) -> AdvancePaymentStatus:
-    period_year = int(period.split("-")[0])
+    period_year = parse_period_year(period)
     if period_year < current_year:
         return AdvancePaymentStatus.PAID
     return AdvancePaymentStatus.PENDING

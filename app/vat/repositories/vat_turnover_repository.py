@@ -27,6 +27,7 @@ from decimal import Decimal
 from sqlalchemy import Integer, cast, func, literal, select
 from sqlalchemy.orm import Session
 
+from app.common.period_utils import parse_period
 from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
@@ -39,8 +40,7 @@ RESOLVABLE_STATUSES = (*FILED_STATUSES, *UNFILED_STATUSES)
 
 def expand_span(period: str, months_count: int) -> list[str]:
     """The ``YYYY-MM`` months a span starting at ``period`` covers."""
-    year = int(period[:4])
-    month = int(period[5:7])
+    year, month = parse_period(period)
     result = []
     for offset in range(months_count):
         absolute = year * 12 + month - 1 + offset

@@ -3,6 +3,7 @@
 from decimal import Decimal
 
 from app.common.enums import EntityType
+from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.vat.integrations.tax_rules_financials import (
@@ -113,7 +114,7 @@ def check_osek_patur_ceiling(
     is_osek_patur = getattr(client, "entity_type", None) == EntityType.OSEK_PATUR
     if not is_osek_patur:
         return False
-    year = int(period[:4])
+    year = parse_period_year(period)
     ceiling = Decimal(str(get_financial_value(year, "osek_patur_ceiling_ils").value))
     current_total = Decimal(str(invoice_repo.sum_income_net_by_client_year(client_record_id, year)))
     new_total = current_total + Decimal(str(new_net_amount))

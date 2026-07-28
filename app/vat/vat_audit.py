@@ -8,12 +8,9 @@ so they are validated fail-closed and appended in the caller's transaction (§17
 
 from __future__ import annotations
 
+from app.common.period_utils import parse_period_year
 from app.vat.models.vat_invoice import VatInvoice
 from app.vat.models.vat_work_item import VatWorkItem
-
-
-def _tax_year(period: str) -> int:
-    return int(period[:4])
 
 
 def work_item_metadata(item: VatWorkItem) -> dict:
@@ -21,7 +18,7 @@ def work_item_metadata(item: VatWorkItem) -> dict:
     return {
         "client_record_id": item.client_record_id,
         "period": item.period,
-        "tax_year": _tax_year(item.period),
+        "tax_year": parse_period_year(item.period),
     }
 
 
@@ -32,7 +29,7 @@ def invoice_metadata(item: VatWorkItem, *, invoice_number: str, business_id: int
         "vat_work_item_id": item.id,
         "invoice_number": invoice_number,
         "period": item.period,
-        "tax_year": _tax_year(item.period),
+        "tax_year": parse_period_year(item.period),
     }
     if business_id is not None:
         meta["business_id"] = business_id

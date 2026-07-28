@@ -12,6 +12,7 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
@@ -100,7 +101,9 @@ def add_invoice(
     if gross_amount <= 0:
         raise AppError(VAT_NET_AMOUNT_POSITIVE_REQUIRED, ErrorCode.VAT_NET_NOT_POSITIVE)
 
-    net_amount, vat_amount = split_gross_amount(gross_amount, rate_type, int(item.period[:4]))
+    net_amount, vat_amount = split_gross_amount(
+        gross_amount, rate_type, parse_period_year(item.period)
+    )
 
     derived = resolve_invoice_derived_fields(
         invoice_type,
@@ -109,7 +112,7 @@ def add_invoice(
         counterparty_id,
         float(net_amount),
         float(vat_amount),
-        year=int(item.period[:4]),
+        year=parse_period_year(item.period),
     )
     deduction_rate = derived["deduction_rate"]
     is_exceptional = derived["is_exceptional"]

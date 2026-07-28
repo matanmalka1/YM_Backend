@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from datetime import date
 
 from sqlalchemy.exc import IntegrityError
@@ -8,6 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.common.enums import DeadlineRuleType as DRT
 from app.common.enums import ObligationType
+from app.common.period_utils import parse_period
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
@@ -27,7 +27,6 @@ _PERIODIC_RULES = {
     (ObligationType.ADVANCE_PAYMENT, 1): DRT.ADVANCE_MONTHLY,
     (ObligationType.ADVANCE_PAYMENT, 2): DRT.ADVANCE_BIMONTHLY,
 }
-_PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 
 class TaxCalendarMaterializationService:
@@ -39,7 +38,7 @@ class TaxCalendarMaterializationService:
         self, obligation_type, period: str, period_months_count: int
     ) -> TaxCalendarEntry:
         obligation_type = self._obligation(obligation_type)
-        year, month = self._parse_period(period)
+        year, month = parse_period(period)
         rule_type = self._periodic_rule_type(obligation_type, period_months_count)
         self._validate_period_alignment(month, period_months_count)
         existing = self._find_periodic(obligation_type, period, period_months_count)
@@ -63,7 +62,7 @@ class TaxCalendarMaterializationService:
         self, obligation_type, period: str, period_months_count: int
     ) -> TaxCalendarEntry | None:
         obligation_type = self._obligation(obligation_type)
-        _year, month = self._parse_period(period)
+        _year, month = parse_period(period)
         self._periodic_rule_type(obligation_type, period_months_count)
         self._validate_period_alignment(month, period_months_count)
         return self._find_periodic(obligation_type, period, period_months_count)
@@ -75,7 +74,7 @@ class TaxCalendarMaterializationService:
         if not periods:
             return {}
         for period, months in periods:
-            _year, month = self._parse_period(period)
+            _year, month = parse_period(period)
             self._periodic_rule_type(obligation_type, months)
             self._validate_period_alignment(month, months)
         rows = self.entry_repo.list_periodic(obligation_type, periods)
@@ -179,12 +178,6 @@ class TaxCalendarMaterializationService:
             raise AppError(
                 "סוג החובה אינו נתמך", ErrorCode.TAX_CALENDAR_INVALID_OBLIGATION_TYPE
             ) from exc
-
-    @staticmethod
-    def _parse_period(period: str) -> tuple[int, int]:
-        if not isinstance(period, str) or not _PERIOD_RE.match(period):
-            raise AppError("תקופת המס אינה תקינה", ErrorCode.TAX_CALENDAR_INVALID_PERIOD)
-        return int(period[:4]), int(period[5:7])
 
     @staticmethod
     def _validate_period_alignment(month: int, months: int) -> None:

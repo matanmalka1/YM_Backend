@@ -2,20 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Any
 
-_MONTH_HE = {
-    1: "ינואר",
-    2: "פברואר",
-    3: "מרץ",
-    4: "אפריל",
-    5: "מאי",
-    6: "יוני",
-    7: "יולי",
-    8: "אוגוסט",
-    9: "ספטמבר",
-    10: "אוקטובר",
-    11: "נובמבר",
-    12: "דצמבר",
-}
+from app.common.period_utils import HEBREW_MONTHS, parse_period
 
 
 def _date_value(value: date | datetime | None) -> str | None:
@@ -37,23 +24,16 @@ def _enum_value(value: Any) -> Any:
 
 
 def _period_label(period: str, months_count: int) -> str:
-    try:
-        year_text, month_text = period.split("-")
-        year = int(year_text)
-        start_month = int(month_text)
-    except (ValueError, TypeError):
-        return period
-
-    if start_month not in _MONTH_HE:
-        return period
-
+    # parse_period is the single gate on the period shape; a row that fails it is
+    # corrupt data, not a label to render as-is.
+    year, start_month = parse_period(period)
     if months_count == 1:
-        return f"{_MONTH_HE[start_month]} {year}"
+        return f"{HEBREW_MONTHS[start_month - 1]} {year}"
 
     end_month = start_month + months_count - 1
-    if end_month not in _MONTH_HE:
-        return period
-    return f"{_MONTH_HE[start_month]}–{_MONTH_HE[end_month]} {year}"
+    if end_month > 12:
+        raise ValueError(f"period {period} with {months_count} months crosses the year boundary")
+    return f"{HEBREW_MONTHS[start_month - 1]}–{HEBREW_MONTHS[end_month - 1]} {year}"
 
 
 def vat_work_item_metadata(item, due_date: date) -> dict[str, Any]:

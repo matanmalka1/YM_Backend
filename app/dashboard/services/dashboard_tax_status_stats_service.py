@@ -10,9 +10,8 @@ from app.clients.repositories.client_vat_stats_repository import (
 )
 from app.common.enums import ObligationType, VatType
 from app.common.period_utils import (
-    bimonthly_advance_payment_period,
-    bimonthly_vat_period,
-    monthly_vat_period,
+    latest_bimonthly_period,
+    latest_monthly_period,
 )
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
@@ -30,8 +29,8 @@ class TaxStatusStatsService:
         self.materializer = TaxCalendarMaterializationService(db)
 
     def build(self, reference_date: date) -> dict:
-        monthly_period, monthly_label = monthly_vat_period(reference_date)
-        bimonthly_period, bimonthly_label = bimonthly_vat_period(reference_date)
+        monthly_period, monthly_label = latest_monthly_period(reference_date)
+        bimonthly_period, bimonthly_label = latest_bimonthly_period(reference_date)
         required_by_type = self.client_repo.count_active_by_vat_types(
             [VatType.MONTHLY, VatType.BIMONTHLY]
         )
@@ -74,8 +73,8 @@ class TaxStatusStatsService:
         }
 
     def _build_advance_stats(self, reference_date: date) -> dict:
-        monthly_period, monthly_label = monthly_vat_period(reference_date)
-        bimonthly_period, bimonthly_label = bimonthly_advance_payment_period(reference_date)
+        monthly_period, monthly_label = latest_monthly_period(reference_date)
+        bimonthly_period, bimonthly_label = latest_bimonthly_period(reference_date)
         completion_by_period = self.advance_repo.completion_for_periods(
             [
                 (monthly_period, 1),

@@ -21,7 +21,6 @@ Compatibility matrix (obligation_type → allowed rule_type):
 
 from __future__ import annotations
 
-import re
 from datetime import date, datetime
 
 from sqlalchemy import (
@@ -35,12 +34,11 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, validates
 
 from app.common.enums import DeadlineRuleType, ObligationType
+from app.common.period_utils import PERIOD_PATTERN, parse_period_year
 from app.database import Base
 from app.tax_calendar.models.tax_calendar_deadline_rule import DeadlineRule
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
-
-_PERIOD_RE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])$")
 
 _RULE_COMPATIBILITY: dict[ObligationType, set[DeadlineRuleType]] = {
     ObligationType.VAT: {DeadlineRuleType.VAT_MONTHLY, DeadlineRuleType.VAT_BIMONTHLY},
@@ -124,7 +122,7 @@ class TaxCalendarEntry(Base):
 
     @validates("period")
     def _validate_period(self, _key, value):
-        if value is not None and not _PERIOD_RE.match(value):
+        if value is not None and not PERIOD_PATTERN.match(value):
             raise ValueError(f"Invalid period format '{value}'. Expected 'YYYY-MM' (month 01-12).")
         return value
 
@@ -169,13 +167,13 @@ def _validate_consistency(entry: TaxCalendarEntry, db_session=None) -> None:
     else:
         if period is None:
             raise ValueError(f"{obligation.value} entries require a period.")
-        if not _PERIOD_RE.match(period):
+        if not PERIOD_PATTERN.match(period):
             raise ValueError(f"Invalid period format '{period}'. Expected 'YYYY-MM' (month 01-12).")
         if months_count is None or months_count not in (1, 2):
             raise ValueError(f"{obligation.value} entries require period_months_count in (1, 2).")
         if entry.tax_year is None:
             raise ValueError("tax_year is required.")
-        if int(period[:4]) != int(entry.tax_year):
+        if parse_period_year(period) != int(entry.tax_year):
             raise ValueError(
                 f"period year ({period[:4]}) does not match tax_year ({entry.tax_year})."
             )
