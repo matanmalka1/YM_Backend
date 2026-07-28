@@ -9,7 +9,6 @@ from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.repositories.annual_report_report_repository import (
     AnnualReportRootRepository,
 )
@@ -17,8 +16,8 @@ from app.binders.models.binder import BinderLocationStatus
 from app.binders.repositories.binder_repository import BinderRepository
 from app.charges.models.charge import ChargeStatus
 from app.charges.repositories.charge_repository import ChargeRepository
+from app.common.enums import ObligationStatus, is_obligation_resolved
 from app.common.source_types import WorkQueueSourceType, source_route
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_query_repository import (
     VatWorkItemQueryRepository,
 )
@@ -84,8 +83,8 @@ def load_source_states(
                 is_deleted=row.deleted_at is not None,
                 is_final=row.status
                 in {
-                    VatWorkItemStatus.FILED,
-                    VatWorkItemStatus.CANCELED,
+                    ObligationStatus.SUBMITTED,
+                    ObligationStatus.CANCELED,
                 },
                 route=source_route(WorkQueueSourceType.VAT_WORK_ITEM, row.id),
             )
@@ -101,12 +100,7 @@ def load_source_states(
                 row.client_record_id,
                 row.status,
                 is_deleted=row.deleted_at is not None,
-                is_final=row.status
-                in {
-                    AnnualReportStatus.SUBMITTED,
-                    AnnualReportStatus.CLOSED,
-                    AnnualReportStatus.CANCELED,
-                },
+                is_final=is_obligation_resolved(row.status),
                 route=source_route(WorkQueueSourceType.ANNUAL_REPORT, row.id),
             )
 

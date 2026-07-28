@@ -8,7 +8,7 @@ from typing import Any
 
 from sqlalchemy import select
 
-from app.annual_reports.annual_report_constants import VALID_TRANSITIONS
+from app.common.obligation_lifecycle import ORDERED_STAGES, stages_between
 from app.annual_reports.annual_report_deadlines import extended_deadline, standard_deadline
 from app.annual_reports.domain.expense_rules import default_recognition_rate
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
@@ -17,17 +17,9 @@ from app.annual_reports.models.annual_report_credit_point_reason import (
     CreditPointReason,
 )
 from app.annual_reports.models.annual_report_detail import AnnualReportDetail
-from app.annual_reports.models.annual_report_enums import (
-    AnnualReportSchedule,
-    AnnualReportStatus,
-    ClientAnnualFilingType,
-    ExtensionReason,
-    PrimaryAnnualReportForm,
-    SubmissionMethod,
-)
-from app.annual_reports.models.annual_report_enums import (
-    FilingDeadlineType as DeadlineType,
-)
+from app.annual_reports.models.annual_report_enums import AnnualReportSchedule, ClientAnnualFilingType, ExtensionReason, PrimaryAnnualReportForm, SubmissionMethod
+from app.common.enums import ObligationStatus
+from app.annual_reports.models.annual_report_enums import FilingDeadlineType as DeadlineType
 from app.annual_reports.models.annual_report_expense_line import (
     AnnualReportExpenseLine,
     ExpenseCategoryType,
@@ -58,19 +50,18 @@ from ..shared.client_refs import (
 )
 
 SEEDABLE_STATUSES = [
-    AnnualReportStatus.NOT_STARTED,
-    AnnualReportStatus.COLLECTING_DOCS,
-    AnnualReportStatus.IN_PREPARATION,
-    AnnualReportStatus.PENDING_CLIENT,
-    AnnualReportStatus.SUBMITTED,
-    AnnualReportStatus.CLOSED,
-    AnnualReportStatus.CANCELED,
+    ObligationStatus.AWAITING_INPUT,
+    ObligationStatus.INPUT_RECEIVED,
+    ObligationStatus.IN_PROGRESS,
+    ObligationStatus.AWAITING_VERIFICATION,
+    ObligationStatus.SUBMITTED,
+    ObligationStatus.CANCELED,
 ]
 
 FINAL_STATUSES = [
-    AnnualReportStatus.SUBMITTED,
-    AnnualReportStatus.CLOSED,
-    AnnualReportStatus.CANCELED,
+    ObligationStatus.SUBMITTED,
+    ObligationStatus.SUBMITTED,
+    ObligationStatus.CANCELED,
 ]
 
 COUNTRIES = ["ארצות הברית", "בריטניה", "גרמניה", "צרפת", "קפריסין", "פורטוגל"]
@@ -210,21 +201,17 @@ def _annex_schedules_for_report(report: AnnualReport, rng: Random) -> list[Annua
     return list(dict.fromkeys(schedules)) or [rng.choice(list(AnnualReportSchedule))]
 
 
-def _status_path_to(target: AnnualReportStatus) -> list[AnnualReportStatus]:
-    if target in (AnnualReportStatus.CANCELED, AnnualReportStatus.NOT_STARTED):
+def _status_path_to(target: ObligationStatus) -> list[ObligationStatus]:
+    """Every stage a report passes through on its way to ``target``.
+
+    This used to be a breadth-first search over a transition table. The shared
+    ladder is linear, so the path is just the stages between the start and the
+    target — cancelling is reachable from anywhere and needs no path.
+    """
+    start = ORDERED_STAGES[0]
+    if target in (ObligationStatus.CANCELED, start):
         return [target]
-    frontier: list[list[AnnualReportStatus]] = [[AnnualReportStatus.NOT_STARTED]]
-    while frontier:
-        path = frontier.pop(0)
-        current = path[-1]
-        for nxt in VALID_TRANSITIONS.get(current, set()):
-            if nxt in path:
-                continue
-            new_path = [*path, nxt]
-            if nxt == target:
-                return new_path
-            frontier.append(new_path)
-    raise RuntimeError(f"Cannot build legal annual-report status path to {target.value}")
+    return [start, *stages_between(start, target)]
 
 
 def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[AnnualReport]:
@@ -290,8 +277,8 @@ def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[Annua
                 rng.choice(list(SubmissionMethod))
                 if status
                 in (
-                    AnnualReportStatus.SUBMITTED,
-                    AnnualReportStatus.CLOSED,
+                    ObligationStatus.SUBMITTED,
+                    ObligationStatus.SUBMITTED,
                 )
                 else None
             )
@@ -315,8 +302,8 @@ def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[Annua
             updated_at = min(datetime.now(UTC), created_at + timedelta(days=rng.randint(0, 60)))
             submitted_at = None
             if status in (
-                AnnualReportStatus.SUBMITTED,
-                AnnualReportStatus.CLOSED,
+                ObligationStatus.SUBMITTED,
+                ObligationStatus.SUBMITTED,
             ):
                 submitted_at = min(
                     datetime.now(UTC), created_at + timedelta(days=rng.randint(1, 180))
@@ -370,8 +357,8 @@ def create_annual_report_details(db, rng: Random, reports) -> None:
             continue
         client_approved_at = None
         if report.status in (
-            AnnualReportStatus.SUBMITTED,
-            AnnualReportStatus.CLOSED,
+            ObligationStatus.SUBMITTED,
+            ObligationStatus.SUBMITTED,
         ):
             upper = report.submitted_at or report.updated_at or datetime.now(UTC)
             candidate = report.created_at + timedelta(days=rng.randint(7, 45))
@@ -388,7 +375,7 @@ def create_annual_report_details(db, rng: Random, reports) -> None:
                 ),
                 amendment_reason=(
                     rng.choice(["תיקון לפי מסמכים מעודכנים", "תיקון בעקבות שומת מס"])
-                    if report.status == AnnualReportStatus.IN_PREPARATION
+                    if report.status == ObligationStatus.IN_PROGRESS
                     else None
                 ),
                 created_at=report.created_at,

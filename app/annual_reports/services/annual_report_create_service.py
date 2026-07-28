@@ -1,5 +1,4 @@
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     ExtensionReason,
     FilingDeadlineType,
@@ -9,6 +8,7 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.guards.client_record_guards import assert_client_record_is_active
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.services.tax_calendar_materialization_service import (
@@ -116,7 +116,7 @@ class AnnualReportCreateService(AnnualReportBaseService):
             form_type=form_type,
             created_by=created_by,
             assigned_to=assigned_to,
-            status=AnnualReportStatus.NOT_STARTED,
+            status=ObligationStatus.AWAITING_INPUT,
             deadline_type=dt,
             filing_deadline=filing_deadline,
             tax_calendar_entry_id=tax_calendar_entry.id,

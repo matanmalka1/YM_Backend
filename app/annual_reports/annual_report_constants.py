@@ -1,6 +1,5 @@
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportSchedule,
-    AnnualReportStatus,
     ClientAnnualFilingType,
     PrimaryAnnualReportForm,
 )
@@ -19,29 +18,6 @@ FORM_MAP: dict[ClientAnnualFilingType, PrimaryAnnualReportForm] = {
     ClientAnnualFilingType.CORPORATION: PrimaryAnnualReportForm.FORM_1214,
     ClientAnnualFilingType.PUBLIC_INSTITUTION: PrimaryAnnualReportForm.FORM_1215,
     ClientAnnualFilingType.EXEMPT_DEALER: PrimaryAnnualReportForm.FORM_1301,
-}
-
-# Valid status transitions (from → set of allowed next statuses)
-VALID_TRANSITIONS: dict[AnnualReportStatus, set[AnnualReportStatus]] = {
-    AnnualReportStatus.NOT_STARTED: {AnnualReportStatus.COLLECTING_DOCS},
-    AnnualReportStatus.COLLECTING_DOCS: {
-        AnnualReportStatus.IN_PREPARATION,
-        AnnualReportStatus.NOT_STARTED,
-    },
-    AnnualReportStatus.IN_PREPARATION: {
-        AnnualReportStatus.PENDING_CLIENT,
-        AnnualReportStatus.COLLECTING_DOCS,
-    },
-    AnnualReportStatus.PENDING_CLIENT: {
-        AnnualReportStatus.IN_PREPARATION,
-        AnnualReportStatus.SUBMITTED,
-    },
-    AnnualReportStatus.SUBMITTED: {
-        AnnualReportStatus.IN_PREPARATION,
-        AnnualReportStatus.CLOSED,
-    },
-    AnnualReportStatus.CLOSED: set(),
-    AnnualReportStatus.CANCELED: set(),
 }
 
 # ── Stage shortcut → status mapping (one-way: promotes to first status in stage) ──
@@ -74,5 +50,4 @@ __all__ = [
     "STAGE_TO_STATUS",
     "STUCK_REPORT_STALE_DAYS",
     "STUCK_REPORT_LIMIT",
-    "VALID_TRANSITIONS",
 ]

@@ -1,9 +1,9 @@
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.common.enums import ObligationStatus
 
 
 def _force_submitted(db, report_id: int):
-    AnnualReportService(db).repo.update(report_id, status=AnnualReportStatus.SUBMITTED)
+    AnnualReportService(db).repo.update(report_id, status=ObligationStatus.SUBMITTED)
 
 
 def test_annual_report_overdue_endpoint(
@@ -61,7 +61,7 @@ def test_annual_report_schedule_complete_and_season_summary(
     report_id = annual_report_service_factory(actor=test_user, client=c1).id
     completed_report_id = annual_report_service_factory(actor=test_user, client=c2).id
     canceled_report_id = annual_report_service_factory(actor=test_user, client=c3).id
-    AnnualReportService(test_db).repo.update(canceled_report_id, status=AnnualReportStatus.CANCELED)
+    AnnualReportService(test_db).repo.update(canceled_report_id, status=ObligationStatus.CANCELED)
 
     add_schedule_resp = client.post(
         f"/api/v1/annual-reports/{report_id}/schedules",

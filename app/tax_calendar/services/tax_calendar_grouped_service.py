@@ -3,9 +3,7 @@ from datetime import date, datetime
 
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import is_advance_payment_resolved
-from app.annual_reports.models.annual_report_enums import is_annual_report_resolved
-from app.common.enums import ObligationType
+from app.common.enums import ObligationType, is_obligation_resolved
 from app.core.pagination import paginate_sequence
 from app.tax_calendar.repositories.tax_calendar_grouped_repository import (
     TaxCalendarGroupedRepository,
@@ -16,17 +14,6 @@ from app.tax_calendar.schemas.tax_calendar_grouped import (
     TaxCalendarGroupsSummary,
 )
 from app.utils.time_utils import israel_today
-from app.vat.models.vat_enums import is_vat_work_item_resolved
-
-# Each domain answers "does this obligation still need work?" for itself. This module
-# only routes to the owning domain's predicate; it does not decide. Three literal
-# status sets used to live here, so adding a status to any domain silently required
-# editing this file to stay correct — and nothing said so.
-_RESOLVED_BY_OBLIGATION = {
-    ObligationType.VAT: is_vat_work_item_resolved,
-    ObligationType.ADVANCE_PAYMENT: is_advance_payment_resolved,
-    ObligationType.ANNUAL_REPORT: is_annual_report_resolved,
-}
 
 
 def _date_value(value, fallback: date) -> date:
@@ -137,14 +124,14 @@ def _build_groups(
             continue
 
         effective_min, effective_max = _effective_due_dates(entry, rows)
-        done_count = _done_count(entry.obligation_type, rows)
+        done_count = _done_count(rows)
         open_count = len(rows) - done_count
         # A row with no known deadline cannot be overdue — there is nothing to be
         # late against. It used to inherit the entry's date and be judged by it.
         overdue_count = sum(
             1
             for row in rows
-            if not _is_done(entry.obligation_type, row)
+            if not is_obligation_resolved(row.status)
             and (due := _row_due_date(entry.obligation_type, row, entry.due_date)) is not None
             and due < today
         )
@@ -267,12 +254,8 @@ def _row_due_date(obligation_type, row, entry_due_date: date) -> date | None:
     return _date_value(getattr(row, "due_date_effective", None), entry_due_date)
 
 
-def _done_count(obligation_type, rows: list) -> int:
-    return sum(1 for row in rows if _is_done(obligation_type, row))
-
-
-def _is_done(obligation_type, row) -> bool:
-    is_resolved = _RESOLVED_BY_OBLIGATION.get(obligation_type)
-    if is_resolved is None:
-        return False
-    return is_resolved(row.status)
+def _done_count(rows: list) -> int:
+    # One predicate for every obligation type. This used to be a routing table over
+    # three per-domain predicates, which was itself an improvement on three literal
+    # status sets inlined here — both are unnecessary now that the lifecycle is shared.
+    return sum(1 for row in rows if is_obligation_resolved(row.status))

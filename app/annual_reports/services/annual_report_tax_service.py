@@ -16,7 +16,6 @@ from app.annual_reports.annual_report_tax_engine import calculate_tax
 from app.annual_reports.integrations.tax_rules_registry import (
     get_default_resident_credit_points,
 )
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_credit_point_repository import (
     AnnualReportCreditPointRepository,
@@ -37,6 +36,7 @@ from app.annual_reports.services.annual_report_financial_summary_service import 
     AnnualReportFinancialSummaryService,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.vat.repositories.vat_work_item_write_repository import (
@@ -44,10 +44,10 @@ from app.vat.repositories.vat_work_item_write_repository import (
 )
 
 _PRE_SUBMISSION_STATUSES = {
-    AnnualReportStatus.NOT_STARTED,
-    AnnualReportStatus.COLLECTING_DOCS,
-    AnnualReportStatus.IN_PREPARATION,
-    AnnualReportStatus.PENDING_CLIENT,
+    ObligationStatus.AWAITING_INPUT,
+    ObligationStatus.INPUT_RECEIVED,
+    ObligationStatus.IN_PROGRESS,
+    ObligationStatus.AWAITING_VERIFICATION,
 }
 
 

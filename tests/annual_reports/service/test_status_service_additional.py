@@ -1,13 +1,13 @@
 import pytest
 from sqlalchemy import select
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.audit.audit_constants import ACTION_STATUS_CHANGED, ENTITY_ANNUAL_REPORT, entity_action
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.repositories.signature_request_repository import (
@@ -60,7 +60,7 @@ def test_pending_client_creates_real_client_scoped_signature_request(test_db, ac
     )
 
     pending = SignatureRequestRepository(test_db).list_pending_by_annual_report(report.id)
-    assert result.status == AnnualReportStatus.PENDING_CLIENT.value
+    assert result.status == ObligationStatus.AWAITING_VERIFICATION.value
     assert len(pending) == 1
     assert pending[0].client_record_id == crm_client.id
     assert pending[0].business_id is None
@@ -81,7 +81,7 @@ def test_pending_client_blocks_when_client_record_missing(test_db, actor_user, m
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
     assert (
         AnnualReportRepository(test_db).get_by_id(report.id).status
-        == AnnualReportStatus.IN_PREPARATION
+        == ObligationStatus.IN_PROGRESS
     )
 
 
@@ -130,7 +130,7 @@ def test_update_deadline_note_only_keeps_existing_type(test_db, actor_user):
 def test_transition_closed_sets_financial_fields(test_db, actor_user):
     _client, report = _create_report(test_db, actor_user.id, id_number="ARSTAT005")
     service = AnnualReportService(test_db)
-    service.repo.update(report.id, status=AnnualReportStatus.SUBMITTED)
+    service.repo.update(report.id, status=ObligationStatus.SUBMITTED)
 
     updated = service.transition_status(
         report.id,
@@ -141,7 +141,7 @@ def test_transition_closed_sets_financial_fields(test_db, actor_user):
         refund_due=22.0,
         tax_due=33.0,
     )
-    assert updated.status == AnnualReportStatus.CLOSED.value
+    assert updated.status == ObligationStatus.SUBMITTED.value
     assert float(updated.assessment_amount) == 111.0
 
 
@@ -165,7 +165,7 @@ def test_status_audit_failure_rolls_back_status_mutation(test_db, actor_user, mo
 
     test_db.expire_all()
     persisted = test_db.scalar(select(AnnualReport).where(AnnualReport.id == report.id))
-    assert persisted.status == AnnualReportStatus.NOT_STARTED
+    assert persisted.status == ObligationStatus.AWAITING_INPUT
     status_audit_count = test_db.scalars(
         select(EntityAuditLog).where(
             EntityAuditLog.entity_type == ENTITY_ANNUAL_REPORT,

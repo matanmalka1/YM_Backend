@@ -1,4 +1,8 @@
-"""Shared enumerations for annual income tax reports."""
+"""Annual-report-specific enumerations.
+
+The lifecycle status is not here: annual reports run the shared
+``ObligationStatus`` (``app/common/enums.py``) like every other tax obligation.
+"""
 
 from enum import Enum as PyEnum
 
@@ -30,38 +34,6 @@ class PrimaryAnnualReportForm(str, PyEnum):
     FORM_1301 = "1301"  # Individual
     FORM_1214 = "1214"  # Company / cooperative
     FORM_1215 = "1215"  # Public institution / nonprofit (when relevant)
-
-
-class AnnualReportStatus(str, PyEnum):
-    NOT_STARTED = "not_started"
-    COLLECTING_DOCS = "collecting_docs"  # מאסף מסמכים
-    IN_PREPARATION = "in_preparation"  # בהכנה
-    PENDING_CLIENT = "pending_client"  # ממתין לאישור לקוח
-    SUBMITTED = "submitted"  # הוגש לרשות המסים
-    CLOSED = "closed"  # סגור
-    CANCELED = "canceled"
-
-
-# The one definition of "this report needs no further work", shared by the Python
-# predicate below and every SQL query asking the same question. It was previously
-# restated three times in SQL under three names — done_statuses, terminal, and
-# DASHBOARD_FINAL_STATUSES.
-RESOLVED_ANNUAL_REPORT_STATUSES: frozenset[AnnualReportStatus] = frozenset(
-    {
-        AnnualReportStatus.SUBMITTED,
-        AnnualReportStatus.CLOSED,
-        AnnualReportStatus.CANCELED,
-    }
-)
-
-
-def is_annual_report_resolved(status: AnnualReportStatus) -> bool:
-    """Whether an annual report needs no further work.
-
-    Includes CANCELED: a cancelled report is not outstanding work, even though it
-    was never filed. The tax calendar used to hardcode this set.
-    """
-    return status in RESOLVED_ANNUAL_REPORT_STATUSES
 
 
 class AnnualReportSchedule(str, PyEnum):
@@ -110,18 +82,8 @@ class ExtensionReason(str, PyEnum):
     WAR_SITUATION = "war_situation"  # מצב ביטחוני
 
 
-ANNUAL_REPORT_FILED_STATUSES: frozenset[AnnualReportStatus] = frozenset(
-    {
-        AnnualReportStatus.SUBMITTED,
-        AnnualReportStatus.CLOSED,
-    }
-)
-
 __all__ = [
-    "ANNUAL_REPORT_FILED_STATUSES",
-    "RESOLVED_ANNUAL_REPORT_STATUSES",
     "AnnualReportSchedule",
-    "AnnualReportStatus",
     "ClientAnnualFilingType",
     "FilingDeadlineType",
     "ExtensionReason",

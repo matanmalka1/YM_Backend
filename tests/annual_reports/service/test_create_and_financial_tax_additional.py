@@ -6,10 +6,7 @@ from app.annual_reports.models.annual_report_credit_point_reason import (
     AnnualReportCreditPoint,
     CreditPointReason,
 )
-from app.annual_reports.models.annual_report_enums import (
-    AnnualReportSchedule,
-    AnnualReportStatus,
-)
+from app.annual_reports.models.annual_report_enums import AnnualReportSchedule
 from app.annual_reports.repositories.annual_report_detail_repository import (
     AnnualReportDetailRepository,
 )
@@ -23,6 +20,7 @@ from app.annual_reports.services.annual_report_financial_summary_service import 
 from app.annual_reports.services.annual_report_readiness_service import AnnualReportReadinessService
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.annual_report_tax_service import AnnualReportTaxService
+from app.common.enums import ObligationStatus
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 
 
@@ -243,7 +241,7 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(
     )
     AnnualReportRepository(test_db).update(
         report.id,
-        status=AnnualReportStatus.SUBMITTED,
+        status=ObligationStatus.SUBMITTED,
         tax_due=Decimal("100.00"),
     )
     test_db.refresh(report)
@@ -253,7 +251,7 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(
     )
 
     test_db.refresh(report)
-    assert report.status == AnnualReportStatus.SUBMITTED
+    assert report.status == ObligationStatus.SUBMITTED
     assert report.tax_due == Decimal("100.00")
     assert report.refund_due is None
 

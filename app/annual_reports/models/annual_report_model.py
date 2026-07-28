@@ -22,13 +22,13 @@ if TYPE_CHECKING:
     from app.annual_reports.models.annual_report_schedule_entry import AnnualReportScheduleEntry
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     ExtensionReason,
     FilingDeadlineType,
     PrimaryAnnualReportForm,
     SubmissionMethod,
 )
+from app.common.enums import ObligationStatus
 from app.database import Base
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
@@ -54,9 +54,9 @@ class AnnualReport(Base):
     form_type: Mapped[PrimaryAnnualReportForm] = mapped_column(
         pg_enum(PrimaryAnnualReportForm), nullable=False
     )
-    status: Mapped[AnnualReportStatus] = mapped_column(
-        pg_enum(AnnualReportStatus),
-        default=AnnualReportStatus.NOT_STARTED,
+    status: Mapped[ObligationStatus] = mapped_column(
+        pg_enum(ObligationStatus),
+        default=ObligationStatus.AWAITING_INPUT,
         nullable=False,
     )
 

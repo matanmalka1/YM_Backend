@@ -5,13 +5,12 @@ from dataclasses import dataclass, field
 
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus as _ARS
 from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
 from app.binders.repositories.binder_repository import BinderRepository
 from app.charges.repositories.charge_repository import ChargeRepository
 from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
-from app.common.enums import EntityType
+from app.common.enums import EntityType, ObligationStatus
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.notifications.models.notification import NotificationStatus, NotificationTrigger
 from app.notifications.notification_constants import (
@@ -31,11 +30,14 @@ _FROZEN_CLOSED_ALLOWED = {
     NotificationTrigger.CLIENT_DOCUMENTS_REQUEST,
 }
 
+# Asking a client for documents only makes sense while the report is still being
+# worked. `not_started` and `collecting_docs` merged into one stage, and
+# `in_preparation` became `in_progress`.
 _ANNUAL_REPORT_DOCUMENTS_REQUEST_ALLOWED_STATUSES = frozenset(
     {
-        _ARS.NOT_STARTED,
-        _ARS.COLLECTING_DOCS,
-        _ARS.IN_PREPARATION,
+        ObligationStatus.AWAITING_INPUT,
+        ObligationStatus.INPUT_RECEIVED,
+        ObligationStatus.IN_PROGRESS,
     }
 )
 
@@ -161,7 +163,7 @@ class NotificationPolicyService:
     def _check_annual_report_client_reminder(
         self, db: Session, annual_report_id: int, client_record_id: int | None = None
     ) -> PolicyResult | None:
-        from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+        from app.common.enums import ObligationStatus
         from app.notifications.repositories.notification_repository import NotificationRepository
 
         report = AnnualReportRepository(db).get_by_id(annual_report_id)
@@ -169,7 +171,7 @@ class NotificationPolicyService:
             return PolicyResult(blocked=True, reason="הדוח השנתי לא נמצא")
         if client_record_id is not None and report.client_record_id != client_record_id:
             return PolicyResult(blocked=True, reason="הדוח השנתי לא שייך ללקוח זה")
-        if report.status != AnnualReportStatus.PENDING_CLIENT:
+        if report.status != ObligationStatus.AWAITING_VERIFICATION:
             return PolicyResult(
                 blocked=True,
                 reason="הדוח אינו במצב ממתין לאישור לקוח",
@@ -213,7 +215,7 @@ class NotificationPolicyService:
         client_record_id: int,
         legal_entity_id: int,
     ) -> PolicyResult | None:
-        from app.vat.models.vat_enums import VatWorkItemStatus
+        from app.common.enums import ObligationStatus
 
         item = VatWorkItemQueryRepository(db).get_by_id(vat_work_item_id)
         if item is None or item.client_record_id != client_record_id:
@@ -223,7 +225,7 @@ class NotificationPolicyService:
         if legal_entity is not None and legal_entity.entity_type == EntityType.OSEK_PATUR:
             return PolicyResult(blocked=True, reason='לקוח עוסק פטור אינו חייב בדיווח מע"מ')
 
-        if item.status in (VatWorkItemStatus.FILED, VatWorkItemStatus.CANCELED):
+        if item.status in (ObligationStatus.SUBMITTED, ObligationStatus.CANCELED):
             return PolicyResult(blocked=True, reason='פריט מע"מ כבר הוגש או בוטל')
 
         if item.due_date_effective is None:

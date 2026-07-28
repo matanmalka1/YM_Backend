@@ -3,12 +3,9 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_enums import (
-    RESOLVED_ANNUAL_REPORT_STATUSES,
-    AnnualReportStatus,
-)
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
 
@@ -49,7 +46,7 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
             AnnualReport.deleted_at.is_(None),
             AnnualReport.filing_deadline.isnot(None),
             AnnualReport.filing_deadline <= cutoff,
-            AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
+            AnnualReport.status.notin_(RESOLVED_OBLIGATION_STATUSES),
         )
         if client_record_id is not None:
             stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
@@ -90,7 +87,7 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
 
     def list_by_status(
         self,
-        status: AnnualReportStatus,
+        status: ObligationStatus,
         tax_year: int | None = None,
         assigned_to: int | None = None,
         page: int = 1,
@@ -110,7 +107,7 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
 
     def count_by_status(
         self,
-        status: AnnualReportStatus,
+        status: ObligationStatus,
         tax_year: int | None = None,
     ) -> int:
         stmt = scope_to_active_clients_stmt(
@@ -242,11 +239,11 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
             select(AnnualReport).where(
                 AnnualReport.client_record_id == client_record_id,
                 AnnualReport.deleted_at.is_(None),
-                AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
+                AnnualReport.status.notin_(RESOLVED_OBLIGATION_STATUSES),
             )
         ).all()
         for row in rows:
-            row.status = AnnualReportStatus.CANCELED
+            row.status = ObligationStatus.CANCELED
             row.updated_at = utcnow()
         if rows:
             self.db.flush()

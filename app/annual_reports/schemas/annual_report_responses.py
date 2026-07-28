@@ -2,13 +2,13 @@ from pydantic import BaseModel
 
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportSchedule,
-    AnnualReportStatus,
     ClientAnnualFilingType,
     ExtensionReason,
     FilingDeadlineType,
     PrimaryAnnualReportForm,
     SubmissionMethod,
 )
+from app.common.enums import ObligationStatus
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 
 
@@ -21,7 +21,7 @@ class AnnualReportResponse(BaseModel):
     tax_year: int
     client_type: ClientAnnualFilingType
     form_type: PrimaryAnnualReportForm
-    status: AnnualReportStatus
+    status: ObligationStatus
     deadline_type: FilingDeadlineType
     filing_deadline: ApiDateTime | None = None
     is_overdue: bool = False
@@ -43,7 +43,7 @@ class AnnualReportResponse(BaseModel):
     updated_at: ApiDateTime
     assigned_to: int | None = None
     created_by: int
-    available_transitions: list[AnnualReportStatus] = []
+    available_transitions: list[ObligationStatus] = []
 
     model_config = {"from_attributes": True}
 
@@ -64,7 +64,7 @@ class AnnualReportListItem(BaseModel):
     tax_year: int
     client_type: ClientAnnualFilingType
     form_type: PrimaryAnnualReportForm
-    status: AnnualReportStatus
+    status: ObligationStatus
     deadline_type: FilingDeadlineType
     filing_deadline: ApiDateTime | None = None
     is_overdue: bool = False

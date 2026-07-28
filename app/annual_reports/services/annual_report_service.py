@@ -24,12 +24,12 @@ from .annual_report_create_service import AnnualReportCreateService
 from .annual_report_query_service import AnnualReportQueryService
 from .annual_report_schedule_service import AnnualReportScheduleService
 from .annual_report_season_service import AnnualReportSeasonService
-from .annual_report_status_service import AnnualReportStatusService
+from .annual_report_status_service import ObligationStatusService
 
 
 class AnnualReportService(
     AnnualReportCreateService,
-    AnnualReportStatusService,
+    ObligationStatusService,
     AnnualReportSeasonService,
     AnnualReportScheduleService,
     AnnualReportQueryService,

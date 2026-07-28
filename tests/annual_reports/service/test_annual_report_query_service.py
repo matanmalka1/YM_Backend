@@ -1,5 +1,5 @@
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.common.enums import ObligationStatus
 
 
 def _create_report(service: AnnualReportService, client_id: int, tax_year: int, created_by: int):
@@ -22,9 +22,9 @@ def test_query_service_list_detail_and_client_reports(test_db, test_user, client
     report_a_2025 = _create_report(service, client_a.id, 2025, test_user.id)
     report_b_2024 = _create_report(service, client_b.id, 2024, test_user.id)
 
-    service.repo.update(report_a_2026.id, status=AnnualReportStatus.PENDING_CLIENT)
-    service.repo.update(report_a_2025.id, status=AnnualReportStatus.SUBMITTED)
-    service.repo.update(report_b_2024.id, status=AnnualReportStatus.IN_PREPARATION)
+    service.repo.update(report_a_2026.id, status=ObligationStatus.AWAITING_VERIFICATION)
+    service.repo.update(report_a_2025.id, status=ObligationStatus.SUBMITTED)
+    service.repo.update(report_b_2024.id, status=ObligationStatus.IN_PROGRESS)
 
     client_reports, total_client_reports = service.get_client_reports(
         client_a.id, page=1, page_size=20

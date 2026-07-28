@@ -1,10 +1,6 @@
 from datetime import datetime
 
-from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
-    FilingDeadlineType,
-    SubmissionMethod,
-)
+from app.annual_reports.models.annual_report_enums import FilingDeadlineType, SubmissionMethod
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportDetailResponse,
@@ -18,11 +14,15 @@ from app.audit.audit_constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.common.enums import ObligationStatus
+from app.common.obligation_lifecycle import (
+    assert_transition_allowed,
+)
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.utils.time_utils import utcnow
 
-from ..annual_report_constants import STAGE_TO_STATUS, VALID_TRANSITIONS
+from ..annual_report_constants import STAGE_TO_STATUS
 from ..annual_report_deadlines import extended_deadline, standard_deadline
 from ..annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
@@ -31,7 +31,6 @@ from ..annual_report_messages import (
     INVALID_ANNUAL_REPORT_STATUS,
     INVALID_DEADLINE_TYPE_ERROR,
     INVALID_STAGE_ERROR,
-    INVALID_STATUS_TRANSITION,
     REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON,
     REPORT_AMEND_ONLY_SUBMITTED_ERROR,
     REPORT_NOT_READY_FOR_SUBMISSION,
@@ -60,7 +59,7 @@ def _deadline_snapshot(report):
     }
 
 
-class AnnualReportStatusService(AnnualReportSignatureHelper):
+class ObligationStatusService(AnnualReportSignatureHelper):
     def _get_or_raise_for_update(self, report_id: int) -> AnnualReport:
         """Fetch annual report with a row-level lock for status transitions."""
         report = self.repo.get_by_id_for_update(report_id)
@@ -98,35 +97,27 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         actor_type: str = "user",
     ) -> AnnualReportResponse:
         report = self._get_or_raise_for_update(report_id)
-        valid_statuses = {e.value for e in AnnualReportStatus}
+        valid_statuses = {e.value for e in ObligationStatus}
         if new_status not in valid_statuses:
             raise AppError(
                 INVALID_ANNUAL_REPORT_STATUS.format(new_status=new_status),
                 ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
             )
-        ns = AnnualReportStatus(new_status)
+        ns = ObligationStatus(new_status)
 
-        if ns not in VALID_TRANSITIONS.get(report.status, set()):
-            allowed = [s.value for s in VALID_TRANSITIONS.get(report.status, set())]
-            raise AppError(
-                INVALID_STATUS_TRANSITION.format(
-                    current_status=report.status.value,
-                    new_status=ns.value,
-                    allowed=allowed,
-                ),
-                ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
-            )
+        # The shared graph owns this rule now, and raises OBLIGATION.* codes.
+        assert_transition_allowed(report.status, ns, reason=note)
 
-        if ns == AnnualReportStatus.SUBMITTED:
+        if ns == ObligationStatus.SUBMITTED:
             self._assert_filing_readiness(report_id)
 
         client_record_for_signature = None
-        if ns == AnnualReportStatus.PENDING_CLIENT:
+        if ns == ObligationStatus.AWAITING_VERIFICATION:
             client_record_for_signature = self._get_signature_client_context(report)
 
         update_fields: dict = {"status": ns}
 
-        if ns == AnnualReportStatus.SUBMITTED:
+        if ns == ObligationStatus.SUBMITTED:
             update_fields["submitted_at"] = submitted_at or utcnow()
             if ita_reference:
                 update_fields["ita_reference"] = ita_reference
@@ -139,8 +130,8 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                         client_type=report.client_type,
                         submission_method=sm,
                     )
-
-        if ns == AnnualReportStatus.CLOSED:
+            # Assessment and tax outcome used to be recorded on a separate `closed`
+            # status that followed `submitted`. The two were one act, so they merged.
             if assessment_amount is not None:
                 update_fields["assessment_amount"] = assessment_amount
             if refund_due is not None:
@@ -167,8 +158,8 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         )
 
         if (
-            old_status == AnnualReportStatus.PENDING_CLIENT
-            and ns != AnnualReportStatus.PENDING_CLIENT
+            old_status == ObligationStatus.AWAITING_VERIFICATION
+            and ns != ObligationStatus.AWAITING_VERIFICATION
         ):
             self._cancel_pending_signature_requests(
                 report_id,
@@ -178,7 +169,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                 actor_type=actor_type,
             )
 
-        if ns == AnnualReportStatus.PENDING_CLIENT:
+        if ns == ObligationStatus.AWAITING_VERIFICATION:
             if changed_by is None:
                 raise AppError(
                     "יצירת בקשת חתימה לדוח שנתי דורשת משתמש מבצע",
@@ -306,7 +297,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         )
 
         report = self._get_or_raise_for_update(report_id)
-        if report.status != AnnualReportStatus.SUBMITTED:
+        if report.status != ObligationStatus.SUBMITTED:
             raise ConflictError(
                 REPORT_AMEND_ONLY_SUBMITTED_ERROR.format(status=report.status.value),
                 ErrorCode.ANNUAL_REPORT_INVALID_STATUS_FOR_AMEND,
@@ -314,7 +305,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
 
         self.transition_status(
             report_id=report_id,
-            new_status=AnnualReportStatus.IN_PREPARATION.value,
+            new_status=ObligationStatus.IN_PROGRESS.value,
             changed_by=actor_id,
             changed_by_name=actor_name,
             note=reason,

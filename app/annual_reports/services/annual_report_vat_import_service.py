@@ -24,7 +24,6 @@ from app.annual_reports.annual_report_messages import (
     VAT_IMPORTED_EXPENSE_DESCRIPTION,
 )
 from app.annual_reports.domain.expense_rules import default_recognition_rate
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
 from app.annual_reports.repositories.annual_report_expense_repository import (
@@ -44,6 +43,7 @@ from app.audit.audit_constants import (
     ENTITY_ANNUAL_REPORT,
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 from app.vat.repositories.vat_invoice_aggregation_repository import (
@@ -52,9 +52,9 @@ from app.vat.repositories.vat_invoice_aggregation_repository import (
 
 # Statuses in which auto-population is permitted
 _ALLOWED_STATUSES = {
-    AnnualReportStatus.NOT_STARTED,
-    AnnualReportStatus.COLLECTING_DOCS,
-    AnnualReportStatus.IN_PREPARATION,
+    ObligationStatus.AWAITING_INPUT,
+    ObligationStatus.AWAITING_INPUT,
+    ObligationStatus.IN_PROGRESS,
 }
 
 # Maps VAT ExpenseCategory values → annual report ExpenseCategoryType

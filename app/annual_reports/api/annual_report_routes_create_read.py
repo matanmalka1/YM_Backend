@@ -4,7 +4,6 @@ from app.annual_reports.api.annual_report_responses import (
     REPORT_AMEND_RESPONSES,
     REPORT_CREATE_RESPONSES,
 )
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.schemas.annual_report_requests import (
     AmendRequest,
     AnnualReportCreateRequest,
@@ -14,6 +13,7 @@ from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportListResponse,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.core.openapi_responses import not_found_response
@@ -63,7 +63,7 @@ def list_annual_reports(
     user: CurrentUser,
     tax_year: int | None = Query(None),
     client_record_id: int | None = Query(None),
-    status: AnnualReportStatus | None = Query(None),
+    status: ObligationStatus | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
     sort_by: str = Query(

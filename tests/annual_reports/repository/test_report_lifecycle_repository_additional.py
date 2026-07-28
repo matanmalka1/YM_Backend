@@ -1,11 +1,11 @@
 from datetime import timedelta
 from itertools import count
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.repositories.annual_report_report_lifecycle_repository import (
     AnnualReportLifecycleRepository,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.common.enums import ObligationStatus
 from app.utils.time_utils import utcnow
 from tests.helpers.identity import seed_client_identity
 
@@ -55,7 +55,7 @@ def test_list_for_dashboard_excludes_final_deleted_and_missing_deadline(test_db,
     service.repo.update(open_report.id, filing_deadline=utcnow() + timedelta(days=5))
     service.repo.update(
         submitted.id,
-        status=AnnualReportStatus.SUBMITTED,
+        status=ObligationStatus.SUBMITTED,
         filing_deadline=utcnow() + timedelta(days=1),
     )
     service.repo.update(no_deadline.id, filing_deadline=None)

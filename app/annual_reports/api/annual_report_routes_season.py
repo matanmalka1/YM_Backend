@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, Query
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportListResponse,
     DefaultTaxYearResponse,
@@ -10,6 +9,7 @@ from app.annual_reports.services.annual_report_season_service import (
     get_active_annual_report_tax_year,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
+from app.common.enums import ObligationStatus
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PositiveIntPath
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
@@ -27,7 +27,7 @@ def list_active_season_reports(
     db: DBSession,
     user: CurrentUser,
     client_record_id: int | None = Query(None),
-    status: AnnualReportStatus | None = Query(None),
+    status: ObligationStatus | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):
@@ -65,7 +65,7 @@ def list_season_reports(
     db: DBSession,
     user: CurrentUser,
     client_record_id: int | None = Query(None),
-    status: AnnualReportStatus | None = Query(None),
+    status: ObligationStatus | None = Query(None),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):

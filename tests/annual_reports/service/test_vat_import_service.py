@@ -20,9 +20,9 @@ from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.clients.client_enums import ClientStatus
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.core.exceptions import AppError, ForbiddenError, NotFoundError
-from app.vat.models.vat_enums import ExpenseCategory, InvoiceType, VatWorkItemStatus
+from app.vat.models.vat_enums import ExpenseCategory, InvoiceType
 from app.vat.models.vat_invoice import VatInvoice
 from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.identity import seed_business, seed_client_identity
@@ -378,7 +378,7 @@ def _seed_vat_work_item(db, client_record_id: int, period: str, user_id: int) ->
         period=period,
         period_type=VatType.MONTHLY,
         created_by=user_id,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
     )
 
 

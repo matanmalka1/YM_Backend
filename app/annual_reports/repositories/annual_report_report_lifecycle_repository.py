@@ -5,12 +5,9 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 
-from app.annual_reports.models.annual_report_enums import (
-    RESOLVED_ANNUAL_REPORT_STATUSES,
-    AnnualReportStatus,
-)
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus
 from app.utils.time_utils import israel_today, utcnow
 
 
@@ -33,10 +30,10 @@ class AnnualReportLifecycleRepository:
     def _overdue_stmt(self, tax_year: int | None = None):
         now = utcnow()
         open_statuses = [
-            AnnualReportStatus.NOT_STARTED,
-            AnnualReportStatus.COLLECTING_DOCS,
-            AnnualReportStatus.IN_PREPARATION,
-            AnnualReportStatus.PENDING_CLIENT,
+            ObligationStatus.AWAITING_INPUT,
+            ObligationStatus.AWAITING_INPUT,
+            ObligationStatus.IN_PROGRESS,
+            ObligationStatus.AWAITING_VERIFICATION,
         ]
         stmt = self._active_client_stmt().where(
             AnnualReport.status.in_(open_statuses),
@@ -73,8 +70,8 @@ class AnnualReportLifecycleRepository:
             .where(
                 AnnualReport.status.in_(
                     [
-                        AnnualReportStatus.PENDING_CLIENT,
-                        AnnualReportStatus.COLLECTING_DOCS,
+                        ObligationStatus.AWAITING_VERIFICATION,
+                        ObligationStatus.AWAITING_INPUT,
                     ]
                 ),
                 AnnualReport.deleted_at.is_(None),
@@ -92,7 +89,7 @@ class AnnualReportLifecycleRepository:
         stmt = (
             self._active_client_stmt()
             .where(
-                AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
+                AnnualReport.status.notin_(RESOLVED_OBLIGATION_STATUSES),
                 AnnualReport.filing_deadline.isnot(None),
                 AnnualReport.filing_deadline >= cutoff,
                 AnnualReport.deleted_at.is_(None),
@@ -106,7 +103,7 @@ class AnnualReportLifecycleRepository:
         stmt = (
             self._active_client_stmt()
             .where(
-                AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
+                AnnualReport.status.notin_(RESOLVED_OBLIGATION_STATUSES),
                 AnnualReport.filing_deadline.isnot(None),
                 AnnualReport.filing_deadline >= israel_today(),
                 AnnualReport.deleted_at.is_(None),
@@ -135,7 +132,7 @@ class AnnualReportLifecycleRepository:
             .group_by(AnnualReport.status)
         )
         rows = self.db.execute(stmt).all()
-        summary = {s.value: 0 for s in AnnualReportStatus}
+        summary = {s.value: 0 for s in ObligationStatus}
         total = 0
         for row in rows:
             summary[row.status.value] += row.cnt

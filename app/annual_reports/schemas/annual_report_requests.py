@@ -4,13 +4,13 @@ from pydantic import BaseModel, model_validator
 
 from app.annual_reports.models.annual_report_enums import (
     AnnualReportSchedule,
-    AnnualReportStatus,
     ClientAnnualFilingType,
     ExtensionReason,
     FilingDeadlineType,
     ReportStage,
     SubmissionMethod,
 )
+from app.common.enums import ObligationStatus
 from app.core.api_types import ApiDateTime, ApiDecimal
 from app.core.schemas.validation import NonEmptyUpdateMixin
 
@@ -35,7 +35,7 @@ class AmendRequest(BaseModel):
 
 
 class StatusTransitionRequest(BaseModel):
-    status: AnnualReportStatus  # enum — לא str חופשי
+    status: ObligationStatus  # enum — לא str חופשי
     note: str | None = None
     ita_reference: str | None = None
     assessment_amount: ApiDecimal | None = None
