@@ -3,7 +3,10 @@
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_enums import (
+    RESOLVED_ANNUAL_REPORT_STATUSES,
+    AnnualReportStatus,
+)
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
@@ -42,16 +45,11 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
     ) -> list[AnnualReport]:
         """Active-client reports with a filing deadline on or before ``cutoff`` that are
         not yet in a terminal (submitted/closed/canceled) status."""
-        done_statuses = [
-            AnnualReportStatus.SUBMITTED.value,
-            AnnualReportStatus.CLOSED.value,
-            AnnualReportStatus.CANCELED.value,
-        ]
         stmt = scope_to_active_clients_stmt(select(AnnualReport), AnnualReport).where(
             AnnualReport.deleted_at.is_(None),
             AnnualReport.filing_deadline.isnot(None),
             AnnualReport.filing_deadline <= cutoff,
-            AnnualReport.status.notin_(done_statuses),
+            AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
         )
         if client_record_id is not None:
             stmt = stmt.where(AnnualReport.client_record_id == client_record_id)
@@ -240,16 +238,11 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
         return self._soft_delete_entity(report_id, deleted_by)
 
     def cancel_open_by_client_record(self, client_record_id: int) -> int:
-        terminal = [
-            AnnualReportStatus.SUBMITTED,
-            AnnualReportStatus.CLOSED,
-            AnnualReportStatus.CANCELED,
-        ]
         rows = self.db.scalars(
             select(AnnualReport).where(
                 AnnualReport.client_record_id == client_record_id,
                 AnnualReport.deleted_at.is_(None),
-                AnnualReport.status.notin_(terminal),
+                AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
             )
         ).all()
         for row in rows:

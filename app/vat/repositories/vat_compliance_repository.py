@@ -7,7 +7,10 @@ from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import (
+    RESOLVED_VAT_WORK_ITEM_STATUSES,
+    VatWorkItemStatus,
+)
 from app.vat.models.vat_work_item import VatWorkItem
 
 
@@ -85,12 +88,7 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem,
             )
             .where(
-                VatWorkItem.status.notin_(
-                    [
-                        VatWorkItemStatus.FILED,
-                        VatWorkItemStatus.CANCELED,
-                    ]
-                ),
+                VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES),
                 VatWorkItem.deleted_at.is_(None),
                 func.substr(VatWorkItem.period, 1, 7) < reference_date.strftime("%Y-%m"),
             )

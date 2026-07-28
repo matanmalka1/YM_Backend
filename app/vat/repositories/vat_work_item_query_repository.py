@@ -10,16 +10,14 @@ from app.clients.repositories.client_active_scope import scope_to_active_clients
 from app.common.enums import VatType
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import (
+    RESOLVED_VAT_WORK_ITEM_STATUSES,
+    VatWorkItemStatus,
+)
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_filters import (
     apply_vat_work_item_filters,
 )
-
-_FILED_STATUSES = {
-    VatWorkItemStatus.FILED,
-    VatWorkItemStatus.CANCELED,
-}
 
 
 class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
@@ -298,7 +296,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             scope_to_active_clients_stmt(select(VatWorkItem), VatWorkItem)
             .where(
                 VatWorkItem.period <= up_to_period,
-                VatWorkItem.status.notin_(list(_FILED_STATUSES)),
+                VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES),
                 VatWorkItem.deleted_at.is_(None),
             )
             .order_by(VatWorkItem.period.asc())

@@ -5,18 +5,13 @@ from decimal import Decimal
 
 from sqlalchemy import func, select
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.annual_reports.models.annual_report_enums import (
+    RESOLVED_ANNUAL_REPORT_STATUSES,
+    AnnualReportStatus,
+)
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.utils.time_utils import israel_today, utcnow
-
-DASHBOARD_FINAL_STATUSES = frozenset(
-    {
-        AnnualReportStatus.SUBMITTED,
-        AnnualReportStatus.CLOSED,
-        AnnualReportStatus.CANCELED,
-    }
-)
 
 
 class AnnualReportLifecycleRepository:
@@ -97,7 +92,7 @@ class AnnualReportLifecycleRepository:
         stmt = (
             self._active_client_stmt()
             .where(
-                AnnualReport.status.notin_(list(DASHBOARD_FINAL_STATUSES)),
+                AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
                 AnnualReport.filing_deadline.isnot(None),
                 AnnualReport.filing_deadline >= cutoff,
                 AnnualReport.deleted_at.is_(None),
@@ -111,7 +106,7 @@ class AnnualReportLifecycleRepository:
         stmt = (
             self._active_client_stmt()
             .where(
-                AnnualReport.status.notin_(list(DASHBOARD_FINAL_STATUSES)),
+                AnnualReport.status.notin_(RESOLVED_ANNUAL_REPORT_STATUSES),
                 AnnualReport.filing_deadline.isnot(None),
                 AnnualReport.filing_deadline >= israel_today(),
                 AnnualReport.deleted_at.is_(None),

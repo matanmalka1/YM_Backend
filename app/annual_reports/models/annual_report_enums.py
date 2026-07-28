@@ -42,7 +42,11 @@ class AnnualReportStatus(str, PyEnum):
     CANCELED = "canceled"
 
 
-_RESOLVED_STATUSES = frozenset(
+# The one definition of "this report needs no further work", shared by the Python
+# predicate below and every SQL query asking the same question. It was previously
+# restated three times in SQL under three names — done_statuses, terminal, and
+# DASHBOARD_FINAL_STATUSES.
+RESOLVED_ANNUAL_REPORT_STATUSES: frozenset[AnnualReportStatus] = frozenset(
     {
         AnnualReportStatus.SUBMITTED,
         AnnualReportStatus.CLOSED,
@@ -57,7 +61,7 @@ def is_annual_report_resolved(status: AnnualReportStatus) -> bool:
     Includes CANCELED: a cancelled report is not outstanding work, even though it
     was never filed. The tax calendar used to hardcode this set.
     """
-    return status in _RESOLVED_STATUSES
+    return status in RESOLVED_ANNUAL_REPORT_STATUSES
 
 
 class AnnualReportSchedule(str, PyEnum):
@@ -115,6 +119,7 @@ ANNUAL_REPORT_FILED_STATUSES: frozenset[AnnualReportStatus] = frozenset(
 
 __all__ = [
     "ANNUAL_REPORT_FILED_STATUSES",
+    "RESOLVED_ANNUAL_REPORT_STATUSES",
     "AnnualReportSchedule",
     "AnnualReportStatus",
     "ClientAnnualFilingType",

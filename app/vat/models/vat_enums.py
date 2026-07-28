@@ -12,7 +12,20 @@ class VatWorkItemStatus(str, PyEnum):
     CANCELED = "canceled"
 
 
-_RESOLVED_STATUSES = frozenset({VatWorkItemStatus.FILED})
+# The one definition of "this VAT period needs no further work", shared by the
+# Python predicate below and every SQL query that asks the same question. A set
+# both forms read is the twin — two parallel implementations would be one more
+# thing to keep in step.
+#
+# CANCELED belongs here. It was previously omitted while the SQL side excluded
+# it, so a cancelled period read open on one screen and closed on another.
+# is_annual_report_resolved has always included its CANCELED.
+RESOLVED_VAT_WORK_ITEM_STATUSES: frozenset[VatWorkItemStatus] = frozenset(
+    {
+        VatWorkItemStatus.FILED,
+        VatWorkItemStatus.CANCELED,
+    }
+)
 
 
 class CounterpartyIdType(str, PyEnum):
@@ -85,10 +98,11 @@ def is_vat_work_item_resolved(status: "VatWorkItemStatus") -> bool:
     The calendar used to hardcode this set; a status added here must not require
     editing another domain to stay correct.
     """
-    return status in _RESOLVED_STATUSES
+    return status in RESOLVED_VAT_WORK_ITEM_STATUSES
 
 
 __all__ = [
+    "RESOLVED_VAT_WORK_ITEM_STATUSES",
     "DocumentType",
     "ExpenseCategory",
     "InvoiceType",

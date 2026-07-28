@@ -9,7 +9,10 @@ from app.clients.repositories.client_active_scope import scope_to_active_clients
 from app.common.enums import VatType
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import israel_today
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.vat.models.vat_enums import (
+    RESOLVED_VAT_WORK_ITEM_STATUSES,
+    VatWorkItemStatus,
+)
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_filters import (
     apply_vat_work_item_filters,
@@ -39,7 +42,6 @@ def list_due_date_groups(
     today = israel_today()
 
     filed = VatWorkItemStatus.FILED
-    canceled = VatWorkItemStatus.CANCELED
 
     # ── Query 1: aggregated counts per due_date_effective ────────────────────
     counts_stmt = apply_vat_work_item_filters(
@@ -53,14 +55,14 @@ def list_due_date_groups(
                 ).label("pending_count"),
                 func.sum(
                     case(
-                        (VatWorkItem.status.notin_([filed, canceled]), 1),
+                        (VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES), 1),
                         else_=0,
                     )
                 ).label("not_filed_count"),
                 func.sum(
                     case(
                         (
-                            VatWorkItem.status.notin_([filed, canceled])
+                            VatWorkItem.status.notin_(RESOLVED_VAT_WORK_ITEM_STATUSES)
                             & (VatWorkItem.due_date_effective < today),
                             1,
                         ),

@@ -68,7 +68,11 @@ class AdvancePaymentStatus(str, PyEnum):
     PARTIAL = "partial"  # Paid partially
 
 
-_RESOLVED_STATUSES = frozenset({AdvancePaymentStatus.PAID})
+# The one definition of "this advance period needs no further work", shared by
+# the Python predicate below and any SQL query asking the same question.
+RESOLVED_ADVANCE_PAYMENT_STATUSES: frozenset[AdvancePaymentStatus] = frozenset(
+    {AdvancePaymentStatus.PAID}
+)
 
 
 def is_advance_payment_resolved(status: AdvancePaymentStatus) -> bool:
@@ -77,7 +81,7 @@ def is_advance_payment_resolved(status: AdvancePaymentStatus) -> bool:
     PARTIAL is not resolved — money is still owed. The tax calendar used to
     hardcode this set.
     """
-    return status in _RESOLVED_STATUSES
+    return status in RESOLVED_ADVANCE_PAYMENT_STATUSES
 
 
 class PaymentMethod(str, PyEnum):
