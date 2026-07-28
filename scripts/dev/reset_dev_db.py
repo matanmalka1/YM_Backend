@@ -25,6 +25,7 @@ from __future__ import annotations
 import argparse
 import os
 import re
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -84,16 +85,41 @@ def _confirm() -> None:
     print()
 
 
+DROP_SCHEMA_SQL = "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+COMPOSE_DB_SERVICE = "db"
+
+
+def _psql_command(db_url: str) -> list[str]:
+    """Prefer a host psql; fall back to the one inside the Compose db service.
+
+    The database only has to exist for the developer running this — it does not
+    have to be installed on their machine. Requiring a host psql made this script
+    unusable on a Docker-only setup, which is the documented way to run the dev DB.
+    """
+    if shutil.which("psql"):
+        return ["psql", db_url, "-c", DROP_SCHEMA_SQL]
+    if not shutil.which("docker"):
+        raise SystemExit(
+            "Neither psql nor docker is on PATH — cannot reach the dev database. "
+            "Install libpq (brew install libpq) or start Docker."
+        )
+    print("       psql not on PATH — using the Compose db service instead")
+    return [
+        "docker",
+        "compose",
+        "exec",
+        "-T",
+        COMPOSE_DB_SERVICE,
+        "psql",
+        db_url,
+        "-c",
+        DROP_SCHEMA_SQL,
+    ]
+
+
 def _drop_schema(db_url: str) -> None:
     print("[1/5] Dropping and recreating public schema...")
-    _run(
-        [
-            "psql",
-            db_url,
-            "-c",
-            "DROP SCHEMA public CASCADE; CREATE SCHEMA public;",
-        ]
-    )
+    _run(_psql_command(db_url))
 
 
 def _delete_migrations() -> None:
