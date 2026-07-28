@@ -945,11 +945,12 @@ class AdvancePaymentService:
 
         result = BulkRefreshTurnoverResult()
         for payment in payments:
-            # A settled payment is skipped here even though the single-payment
-            # command still allows it. Snapshotting recomputes expected_amount and
-            # can drop a PAID row to PARTIAL — a per-row judgement, not something
-            # one click should do to a whole screenful of settled records.
-            if payment.status == ObligationStatus.SUBMITTED:
+            # Money, not lifecycle: the question is whether the amounts are
+            # settled, and a settled row now sits at awaiting_verification rather
+            # than submitted. Snapshotting rewrites expected_amount, which is a
+            # per-row judgement, not something one click should do to a whole
+            # screenful of settled records.
+            if payment.is_paid_in_full:
                 result.skipped_paid += 1
                 continue
             resolution = resolved.get(payment.period)
@@ -1000,7 +1001,7 @@ class AdvancePaymentService:
             },
             **self._actor_kwargs(actor_id, actor_name),
         )
-        # Snapshotting rewrites expected_amount and re-derives status, which can move a
-        # row into or out of PAID — both change the annual report's advances_paid.
+        # Snapshotting rewrites expected_amount, which moves a row into or out of
+        # paid-in-full — and that changes the annual report's advances_paid.
         self._invalidate_annual_report_tax(updated.client_record_id, [updated.period])
         return updated

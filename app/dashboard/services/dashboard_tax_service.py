@@ -30,19 +30,24 @@ class DashboardTaxService:
         # which were two names for the same finished state.
         submitted = self.report_repo.count_by_status(ObligationStatus.SUBMITTED, tax_year=tax_year)
 
-        # IN_PROGRESS statuses
-        in_progress = self.report_repo.count_by_status(
-            ObligationStatus.IN_PROGRESS, tax_year=tax_year
-        ) + self.report_repo.count_by_status(
-            ObligationStatus.AWAITING_VERIFICATION, tax_year=tax_year
+        # Everything being worked: material in hand, in preparation, or awaiting
+        # verification.
+        in_progress = sum(
+            self.report_repo.count_by_status(status, tax_year=tax_year)
+            for status in (
+                ObligationStatus.INPUT_RECEIVED,
+                ObligationStatus.IN_PROGRESS,
+                ObligationStatus.AWAITING_VERIFICATION,
+            )
         )
 
-        # MATERIAL_COLLECTION statuses
-        material_collection = self.report_repo.count_by_status(
+        # The stage that means "the report exists and is waiting for its material".
+        # This used to be derived as total_clients minus the other buckets, which
+        # counted clients with no report at all as "not started" — a different fact,
+        # and one the merge of not_started into collecting_docs made indistinguishable.
+        not_started = self.report_repo.count_by_status(
             ObligationStatus.AWAITING_INPUT, tax_year=tax_year
         )
-
-        not_started = max(0, total_clients - (submitted + in_progress + material_collection))
 
         submission_percentage = (
             round((submitted / total_clients) * 100, 1) if total_clients > 0 else 0.0

@@ -11134,7 +11134,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ObligationStatusReportResponse"
+                  "$ref": "#/components/schemas/AnnualReportStatusReportResponse"
                 }
               }
             }
@@ -17159,7 +17159,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ObligationStatusSummaryResponse"
+                  "$ref": "#/components/schemas/VatWorkItemStatusSummaryResponse"
                 }
               }
             }
@@ -22661,6 +22661,121 @@
           "total"
         ],
         "title": "AnnualReportScheduleListResponse"
+      },
+      "AnnualReportStatusClientResponse": {
+        "properties": {
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "client_name": {
+            "type": "string",
+            "title": "Client Name"
+          },
+          "client_id_number": {
+            "type": "string",
+            "title": "Client Id Number"
+          },
+          "office_client_number": {
+            "type": "integer",
+            "title": "Office Client Number"
+          },
+          "form_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrimaryAnnualReportForm"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "filing_deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filing Deadline"
+          },
+          "days_until_deadline": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Deadline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_record_id",
+          "client_name",
+          "client_id_number",
+          "office_client_number"
+        ],
+        "title": "AnnualReportStatusClientResponse"
+      },
+      "AnnualReportStatusGroupResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ObligationStatus"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "clients": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualReportStatusClientResponse"
+            },
+            "type": "array",
+            "title": "Clients"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "count",
+          "clients"
+        ],
+        "title": "AnnualReportStatusGroupResponse"
+      },
+      "AnnualReportStatusReportResponse": {
+        "properties": {
+          "tax_year": {
+            "type": "integer",
+            "title": "Tax Year"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "statuses": {
+            "items": {
+              "$ref": "#/components/schemas/AnnualReportStatusGroupResponse"
+            },
+            "type": "array",
+            "title": "Statuses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tax_year",
+          "total",
+          "statuses"
+        ],
+        "title": "AnnualReportStatusReportResponse"
       },
       "AnnualReportTaxCalculationResponse": {
         "properties": {
@@ -30298,157 +30413,6 @@
         "title": "ObligationStatus",
         "description": "The lifecycle every tax obligation runs, whatever its type.\n\nVAT, advance payments and annual reports are three views of one thing: a client\nowes an obligation for a period, works it through, and settles it by a deadline.\nThey previously ran this sequence under three different names, with three\ntransition tables, because they were written separately and never compared.\n\nStage order is the declaration order, and it is load-bearing — the transition\ngraph reads it (``app/common/obligation_lifecycle.py``). ``CANCELED`` sits off\nthe ladder: it is reachable from any unlocked stage and has no position on it.\n\nAn obligation that exists is by definition waiting for its inputs, so there is\nno separate \"not started\" stage. What counts as the input differs by type — the\nclient's documents for VAT, the filed VAT return for an advance, the year's\nmaterial for an annual report — but the stage is the same."
       },
-      "ObligationStatusClientResponse": {
-        "properties": {
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "client_name": {
-            "type": "string",
-            "title": "Client Name"
-          },
-          "client_id_number": {
-            "type": "string",
-            "title": "Client Id Number"
-          },
-          "office_client_number": {
-            "type": "integer",
-            "title": "Office Client Number"
-          },
-          "form_type": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PrimaryAnnualReportForm"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "filing_deadline": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "examples": [
-                  "2026-01-02T03:04:05Z"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Filing Deadline"
-          },
-          "days_until_deadline": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Days Until Deadline"
-          }
-        },
-        "type": "object",
-        "required": [
-          "client_record_id",
-          "client_name",
-          "client_id_number",
-          "office_client_number"
-        ],
-        "title": "ObligationStatusClientResponse"
-      },
-      "ObligationStatusGroupResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/ObligationStatus"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          },
-          "clients": {
-            "items": {
-              "$ref": "#/components/schemas/ObligationStatusClientResponse"
-            },
-            "type": "array",
-            "title": "Clients"
-          }
-        },
-        "type": "object",
-        "required": [
-          "status",
-          "count",
-          "clients"
-        ],
-        "title": "ObligationStatusGroupResponse"
-      },
-      "ObligationStatusReportResponse": {
-        "properties": {
-          "tax_year": {
-            "type": "integer",
-            "title": "Tax Year"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "statuses": {
-            "items": {
-              "$ref": "#/components/schemas/ObligationStatusGroupResponse"
-            },
-            "type": "array",
-            "title": "Statuses"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tax_year",
-          "total",
-          "statuses"
-        ],
-        "title": "ObligationStatusReportResponse"
-      },
-      "ObligationStatusSummaryResponse": {
-        "properties": {
-          "pending_materials": {
-            "type": "integer",
-            "title": "Pending Materials",
-            "default": 0
-          },
-          "material_received": {
-            "type": "integer",
-            "title": "Material Received",
-            "default": 0
-          },
-          "data_entry_in_progress": {
-            "type": "integer",
-            "title": "Data Entry In Progress",
-            "default": 0
-          },
-          "ready_for_review": {
-            "type": "integer",
-            "title": "Ready For Review",
-            "default": 0
-          },
-          "filed": {
-            "type": "integer",
-            "title": "Filed",
-            "default": 0
-          },
-          "canceled": {
-            "type": "integer",
-            "title": "Canceled",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "ObligationStatusSummaryResponse"
-      },
       "ObligationType": {
         "type": "string",
         "enum": [
@@ -37712,6 +37676,43 @@
           "breakdown"
         ],
         "title": "VatWorkItemResponse"
+      },
+      "VatWorkItemStatusSummaryResponse": {
+        "properties": {
+          "awaiting_input": {
+            "type": "integer",
+            "title": "Awaiting Input",
+            "default": 0
+          },
+          "input_received": {
+            "type": "integer",
+            "title": "Input Received",
+            "default": 0
+          },
+          "in_progress": {
+            "type": "integer",
+            "title": "In Progress",
+            "default": 0
+          },
+          "awaiting_verification": {
+            "type": "integer",
+            "title": "Awaiting Verification",
+            "default": 0
+          },
+          "submitted": {
+            "type": "integer",
+            "title": "Submitted",
+            "default": 0
+          },
+          "canceled": {
+            "type": "integer",
+            "title": "Canceled",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "VatWorkItemStatusSummaryResponse",
+        "description": "One count per stage of the shared obligation lifecycle.\n\nThe builder keys this by the stored status value, so the field names have to\nbe the stage names — they were still the VAT-only ones, which meant every\ncount came back zero under a field nobody was reading."
       },
       "VatWorkItemUpdateRequest": {
         "properties": {

@@ -19,7 +19,7 @@ def test_annual_report_status_changed_event_includes_form_and_status_hebrew():
     history = SimpleNamespace(
         id=10,
         from_status=ObligationStatus.AWAITING_INPUT,
-        to_status=ObligationStatus.AWAITING_INPUT,
+        to_status=ObligationStatus.INPUT_RECEIVED,
         note="מסמכים התקבלו",
         occurred_at=datetime(2026, 1, 2, 12, 0),
     )
@@ -28,14 +28,14 @@ def test_annual_report_status_changed_event_includes_form_and_status_hebrew():
 
     assert event["event_type"] == "annual_report_status_changed"
     assert event["timestamp"] == datetime(2026, 1, 2, 12, 0)
-    assert event["description"] == "דוח שנתי 1301 (2024): טרם התחיל ← איסוף מסמכים"
+    assert event["description"] == "דוח שנתי 1301 (2024): ממתין לחומר ← החומר התקבל"
     assert event["metadata"] == {
         "history_id": 10,
         "annual_report_id": 3,
         "tax_year": 2024,
         "form_type": "1301",
         "from_status": "awaiting_input",
-        "to_status": "awaiting_input",
+        "to_status": "input_received",
         "note": "מסמכים התקבלו",
     }
     assert "actions" not in event

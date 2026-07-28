@@ -41,10 +41,8 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("PATCH", "/api/v1/binders/{binder_id}/intakes/{intake_id}"): {"400"},
     # annual_reports
     ("POST", "/api/v1/annual-reports"): {"400", "409"},
-    ("POST", "/api/v1/annual-reports/{report_id}/amend"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/status"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/submit"): {"400", "409"},
-    ("POST", "/api/v1/annual-reports/{report_id}/transition"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/deadline"): {"400"},
     ("POST", "/api/v1/annual-reports/{report_id}/auto-populate"): {"400"},
     ("PATCH", "/api/v1/annual-reports/{report_id}/details"): {"400"},

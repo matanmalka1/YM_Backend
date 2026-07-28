@@ -129,10 +129,22 @@ def test_update_deadline_note_only_keeps_existing_type(test_db, actor_user):
     assert updated.custom_deadline_note == "late filing agreed"
 
 
-def test_transition_closed_sets_financial_fields(test_db, actor_user):
+def test_submitting_records_the_financial_outcome(test_db, actor_user, monkeypatch):
+    """`closed` merged into `submitted`, so one act records both.
+
+    The assessment used to be recorded by a second transition that followed
+    submission; there is no second transition now. Readiness is stubbed because
+    this test is about what submitting *records*, not about what gates it — the
+    gate has its own tests.
+    """
     _client, report = _create_report(test_db, actor_user.id, id_number="ARSTAT005")
     service = AnnualReportService(test_db)
-    service.repo.update(report.id, status=ObligationStatus.SUBMITTED)
+    service.repo.update(report.id, status=ObligationStatus.AWAITING_VERIFICATION)
+    monkeypatch.setattr(
+        "app.annual_reports.services.annual_report_status_service."
+        "AnnualReportStatusService._assert_filing_readiness",
+        lambda self, report_id: None,
+    )
 
     updated = service.transition_status(
         report.id,

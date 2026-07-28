@@ -65,7 +65,7 @@ def test_notifications_list_by_status(
     test_db.commit()
 
     resp = client.get(
-        f"/api/v1/notifications?business_id={b1.id}&status=awaiting_input",
+        f"/api/v1/notifications?business_id={b1.id}&status=pending",
         headers=advisor_headers,
     )
     assert resp.status_code == 200

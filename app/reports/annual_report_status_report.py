@@ -9,7 +9,7 @@ from app.common.enums import ObligationStatus
 from app.utils.time_utils import israel_today
 
 
-class ObligationStatusReportService:
+class AnnualReportStatusReportService:
     def __init__(self, db: Session):
         self.repo = AnnualReportRepository(db)
 

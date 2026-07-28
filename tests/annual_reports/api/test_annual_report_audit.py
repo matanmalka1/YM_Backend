@@ -38,7 +38,7 @@ def test_generic_annual_report_audit_returns_status_entries(
     assert item["entity_id"] == report.id
     assert item["action"] == "annual_report.status_changed"
     assert item["old_value"] == {"status": "awaiting_input"}
-    assert item["new_value"] == {"status": "awaiting_input"}
+    assert item["new_value"] == {"status": "input_received"}
     assert item["metadata_json"] == {
         "client_record_id": report.client_record_id,
         "tax_year": report.tax_year,

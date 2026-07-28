@@ -34,7 +34,7 @@ _ANNUAL_REPORT_STATUS_CHANGED = entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATU
 
 
 @dataclass(frozen=True)
-class ObligationStatusAuditEvent:
+class AnnualReportStatusAuditEvent:
     id: int
     from_status: ObligationStatus | None
     to_status: ObligationStatus
@@ -102,7 +102,7 @@ class TimelineRepository:
 
     def list_annual_report_status_events(
         self, client_record_id: int | None
-    ) -> list[tuple[AnnualReport, ObligationStatusAuditEvent]]:
+    ) -> list[tuple[AnnualReport, AnnualReportStatusAuditEvent]]:
         stmt = (
             select(AnnualReport, EntityAuditLog)
             .join(
@@ -122,7 +122,7 @@ class TimelineRepository:
                 _BULK_LIMIT
             )
         ).all()
-        events: list[tuple[AnnualReport, ObligationStatusAuditEvent]] = []
+        events: list[tuple[AnnualReport, AnnualReportStatusAuditEvent]] = []
         for report, audit in rows:
             to_status = _status_from_snapshot(audit.new_value)
             if to_status is None:
@@ -130,7 +130,7 @@ class TimelineRepository:
             events.append(
                 (
                     report,
-                    ObligationStatusAuditEvent(
+                    AnnualReportStatusAuditEvent(
                         id=audit.id,
                         from_status=_status_from_snapshot(audit.old_value),
                         to_status=to_status,

@@ -122,12 +122,19 @@ class VatWorkItemListResponse(PaginatedResponse[VatWorkItemListItem]):
     pass
 
 
-class ObligationStatusSummaryResponse(BaseModel):
-    pending_materials: int = 0
-    material_received: int = 0
-    data_entry_in_progress: int = 0
-    ready_for_review: int = 0
-    filed: int = 0
+class VatWorkItemStatusSummaryResponse(BaseModel):
+    """One count per stage of the shared obligation lifecycle.
+
+    The builder keys this by the stored status value, so the field names have to
+    be the stage names — they were still the VAT-only ones, which meant every
+    count came back zero under a field nobody was reading.
+    """
+
+    awaiting_input: int = 0
+    input_received: int = 0
+    in_progress: int = 0
+    awaiting_verification: int = 0
+    submitted: int = 0
     canceled: int = 0
 
 

@@ -63,7 +63,7 @@ def _vat_item(
     period,
     total_output_net,
     user_id,
-    status=ObligationStatus.AWAITING_VERIFICATION,
+    status=ObligationStatus.SUBMITTED,
 ):
     mat = TaxCalendarMaterializationService(db)
     entry = mat.ensure_periodic_entry("vat", period, 1)
@@ -562,10 +562,11 @@ class TestRefreshTurnoverBulk:
     def test_never_flips_a_settled_payment(
         self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
-        """A settled row must not drop to PARTIAL because someone clicked once.
+        """A settled row must not be rewritten because someone clicked once.
 
-        Recording a payment before its VAT return arrives is normal, so a PAID
-        row with no turnover is a realistic state, not a corner case.
+        Settled is a fact about the amounts, so the row needs a real expectation to
+        be settled against. Paying against an unknown expectation is not settlement
+        — that row is in progress with the turnover still missing.
         """
         business = _business(create_client_with_business, advance_rate=Decimal("10"))
         svc = AdvancePaymentService(test_db)
@@ -573,8 +574,10 @@ class TestRefreshTurnoverBulk:
             client_record_id=business.client_record_id,
             period="2026-11",
             period_months_count=1,
+            turnover_amount=Decimal("1000"),
             paid_amount=Decimal("100"),
         )
+        assert payment.is_paid_in_full
         assert payment.status == ObligationStatus.AWAITING_VERIFICATION
         _vat_item(
             vat_work_item_factory,
@@ -589,7 +592,7 @@ class TestRefreshTurnoverBulk:
 
         assert (result.refreshed, result.skipped_paid) == (0, 1)
         assert payment.status == ObligationStatus.AWAITING_VERIFICATION
-        assert payment.turnover_amount is None
+        assert payment.turnover_amount == Decimal("1000.00")
 
     def test_single_command_still_refreshes_a_settled_payment(
         self, test_db, test_user, create_client_with_business, vat_work_item_factory

@@ -145,9 +145,15 @@ def test_generate_annual_schedule_bimonthly_due_dates_rollover_year(
     assert nov.due_date == date(2027, 1, 17)
 
 
-def test_generate_annual_schedule_skips_periods_before_reference_date(
+def test_generate_annual_schedule_generates_the_whole_year_regardless_of_today(
     test_db, create_client_with_business
 ):
+    """The calendar does not decide what is owed — the obligation plan does.
+
+    This used to skip any period whose due date had passed, which was a *calendar*
+    guard standing in for a *liability* guard. A client is liable for its past-due
+    periods; those are debts, and reconciliation never removes them.
+    """
     business = _business(create_client_with_business)
 
     created, skipped = generate_annual_schedule(
@@ -158,9 +164,27 @@ def test_generate_annual_schedule_skips_periods_before_reference_date(
         reference_date=date(2026, 4, 1),
     )
 
-    assert skipped == 2  # Jan (due Feb 15), Feb (due Mar 15)
-    assert len(created) == 10
-    assert all(p.due_date >= date(2026, 4, 1) for p in created)
+    assert skipped == 0
+    assert len(created) == 12
+
+
+def test_generate_annual_schedule_respects_the_liability_range(
+    test_db, create_client_with_business
+):
+    """What actually narrows the year: when the client became liable."""
+    business = _business(create_client_with_business)
+    business.legal_entity.advance_liable_from = date(2026, 4, 1)
+    test_db.commit()
+
+    created, _skipped = generate_annual_schedule(
+        business.client_record_id,
+        2026,
+        test_db,
+        period_months_count=1,
+        reference_date=date(2026, 4, 1),
+    )
+
+    assert [p.period for p in created] == [f"2026-{m:02d}" for m in range(4, 13)]
 
 
 def test_generate_annual_schedule_uses_advance_payment_frequency_independent_of_vat(

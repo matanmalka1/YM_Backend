@@ -123,7 +123,7 @@ def test_tax_submission_widget_counts(client, test_db, advisor_headers, test_use
     assert data["reports_submitted"] == 1
     assert data["reports_in_progress"] == 1  # IN_PREPARATION
     # total − submitted − in_progress − material_collection
-    assert data["reports_not_started"] == data["total_clients"] - 3
+    assert data["reports_not_started"] == 2  # two reports awaiting material
     assert data["submission_percentage"] == round((1 / data["total_clients"]) * 100, 1)
 
     assert Decimal(str(data["total_refund_due"])) == Decimal("120.00")

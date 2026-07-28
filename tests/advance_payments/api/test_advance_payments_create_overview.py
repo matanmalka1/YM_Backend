@@ -115,7 +115,7 @@ def test_overview_filters_by_status_and_month(
     assert data["total"] == 1
     item = data["items"][0]
     assert item["period"] == "2026-02"
-    assert item["status"] == "paid"
+    assert item["status"] == "awaiting_verification"
 
 
 def test_overview_filters_by_due_date_and_client_search(

@@ -16,12 +16,12 @@ from app.vat.api.vat_serializers import (
 )
 from app.vat.integrations.tax_rules_financials import get_vat_deduction_rules_metadata
 from app.vat.schemas.vat_report import (
-    ObligationStatusSummaryResponse,
     VatDeductionMetadataResponse,
     VatPeriodOptionsResponse,
     VatWorkItemListResponse,
     VatWorkItemLookupResponse,
     VatWorkItemResponse,
+    VatWorkItemStatusSummaryResponse,
 )
 from app.vat.services.vat_report_service import VatReportService
 
@@ -81,7 +81,7 @@ def get_period_options(
 
 @router.get(
     "/work-items/status-summary",
-    response_model=ObligationStatusSummaryResponse,
+    response_model=VatWorkItemStatusSummaryResponse,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
 )
 def get_status_summary(

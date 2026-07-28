@@ -55,7 +55,7 @@ class AdvancePaymentCollectionsReportResponse(BaseModel):
     items: list[AdvancePaymentReportItemResponse]
 
 
-class ObligationStatusClientResponse(BaseModel):
+class AnnualReportStatusClientResponse(BaseModel):
     client_record_id: int
     client_name: str
     client_id_number: str
@@ -65,16 +65,16 @@ class ObligationStatusClientResponse(BaseModel):
     days_until_deadline: int | None = None
 
 
-class ObligationStatusGroupResponse(BaseModel):
+class AnnualReportStatusGroupResponse(BaseModel):
     status: ObligationStatus
     count: int
-    clients: list[ObligationStatusClientResponse]
+    clients: list[AnnualReportStatusClientResponse]
 
 
-class ObligationStatusReportResponse(BaseModel):
+class AnnualReportStatusReportResponse(BaseModel):
     tax_year: int
     total: int
-    statuses: list[ObligationStatusGroupResponse]
+    statuses: list[AnnualReportStatusGroupResponse]
 
 
 class AgingReportItemResponse(BaseModel):

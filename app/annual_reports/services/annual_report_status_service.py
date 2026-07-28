@@ -55,7 +55,7 @@ def _deadline_snapshot(report):
     }
 
 
-class ObligationStatusService(AnnualReportSignatureHelper):
+class AnnualReportStatusService(AnnualReportSignatureHelper):
     def _get_or_raise_for_update(self, report_id: int) -> AnnualReport:
         """Fetch annual report with a row-level lock for status transitions."""
         report = self.repo.get_by_id_for_update(report_id)
