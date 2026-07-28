@@ -104,7 +104,9 @@ class TestCreateWorkItem:
             intake.create_work_item(
                 repo, test_db, client_record_id=c.id, period="2026-02", created_by=actor_user.id
             )
-        assert exc_info.value.code == "VAT.INVALID_PERIOD_FOR_FREQUENCY"
+        # The alignment rule has one implementation, in the tax calendar — VAT no
+        # longer answers it with a domain-local code.
+        assert exc_info.value.code == "TAX_CALENDAR.INVALID_PERIOD_ALIGNMENT"
 
 
 class TestMarkMaterialsComplete:

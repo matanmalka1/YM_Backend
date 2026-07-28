@@ -15,11 +15,7 @@ def _resolve_vat_rate() -> Decimal:
 
 
 ADVANCE_PAYMENT_VAT_RATE: Decimal = _resolve_vat_rate()
-MONTHLY_PERIOD_MONTHS_COUNT = 1
 BIMONTHLY_PERIOD_MONTHS_COUNT = 2
-SUPPORTED_PERIOD_MONTH_COUNTS = frozenset(
-    {MONTHLY_PERIOD_MONTHS_COUNT, BIMONTHLY_PERIOD_MONTHS_COUNT}
-)
 BIMONTHLY_START_MONTHS = (1, 3, 5, 7, 9, 11)
 
 # A bulk turnover refresh is meant to cover what one advisor sees on one client's

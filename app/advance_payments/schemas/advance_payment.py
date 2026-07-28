@@ -7,10 +7,8 @@ from typing import Literal
 from pydantic import BaseModel, Field, computed_field, field_validator, model_validator
 
 from app.advance_payments.advance_payment_constants import (
-    BIMONTHLY_START_MONTHS,
     MAX_BULK_MARK_PAID_PAYMENTS,
     MAX_BULK_REFRESH_PAYMENTS,
-    SUPPORTED_PERIOD_MONTH_COUNTS,
     VAT_TURNOVER_MISMATCH_TOLERANCE,
 )
 from app.advance_payments.models.advance_payment import (
@@ -21,7 +19,6 @@ from app.advance_payments.models.advance_payment import (
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverResolution,
 )
-from app.common.period_utils import parse_period_month
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.utils.time_utils import israel_today
@@ -140,19 +137,9 @@ class AdvancePaymentCreateRequest(BaseModel):
     annual_report_id: int | None = None
     notes: str | None = Field(None, max_length=500)
 
-    @model_validator(mode="after")
-    def validate_period_for_frequency(self) -> AdvancePaymentCreateRequest:
-        if self.period_months_count is None:
-            return self
-        if self.period_months_count not in SUPPORTED_PERIOD_MONTH_COUNTS:
-            raise ValueError("period_months_count לא נתמך")
-        if self.period_months_count != 2:
-            return self
-
-        month = parse_period_month(self.period)
-        if month not in BIMONTHLY_START_MONTHS:
-            raise ValueError("מקדמה דו-חודשית חייבת להתחיל בחודש אי-זוגי")
-        return self
+    # Bi-monthly alignment is not re-validated here: the single gate is
+    # TaxCalendarMaterializationService, which answers for every caller — not only
+    # requests that arrive through this schema.
 
     model_config = {
         "json_schema_extra": {

@@ -30,11 +30,6 @@ VAT_INVOICE_NOT_FOUND_IN_WORK_ITEM = "החשבונית {invoice_id} לא נמצ�
 VAT_READY_FOR_REVIEW_INVALID_STATUS = "לא ניתן לסמן מוכן לבדיקה מסטטוס {status}"
 VAT_CORRECTION_NOTE_REQUIRED = "נדרש טקסט תיקון כאשר מחזירים את הפריט לתיקון"
 VAT_CLIENT_EXEMPT = 'לקוח זה פטור ממע"מ ולא ניתן לפתוח עבורו דוח'
-VAT_INVALID_BIMONTHLY_PERIOD = (
-    "לקוח זה מדווח דו-חודשי — התקופה {period} אינה תקפה (חודשים זוגיים אסורים)"
-)
-VAT_CLIENT_CLOSED_CREATE_ITEM = 'לקוח זה סגור — לא ניתן לפתוח דוח מע"מ'
-VAT_CLIENT_FROZEN_CREATE_ITEM = 'לקוח זה מוקפא — לא ניתן לפתוח דוח מע"מ'
 VAT_WORK_ITEM_CONFLICT = 'פריט עבודה למע"מ כבר קיים עבור לקוח {client_record_id} לתקופה {period}'
 VAT_PENDING_MATERIALS_NOTE_REQUIRED = (
     "pending_materials_note: נדרש תיאור החומרים כאשר הפריט מסומן כמצב המתנה"

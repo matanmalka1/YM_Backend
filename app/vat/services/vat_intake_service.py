@@ -19,7 +19,6 @@ from app.vat.services.vat_client_context_service import VatClientContextService
 from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_messages import (
     VAT_CLIENT_EXEMPT,
-    VAT_INVALID_BIMONTHLY_PERIOD,
     VAT_ITEM_NOT_FOUND,
     VAT_MATERIALS_COMPLETE_INVALID_STATUS,
     VAT_PENDING_MATERIALS_NOTE_REQUIRED,
@@ -30,19 +29,17 @@ from app.vat.vat_type_resolver import resolve_effective_vat_type
 _VAT_PERIOD_MONTHS_COUNT = {VatType.MONTHLY: 1, VatType.BIMONTHLY: 2}
 
 
-def _validate_period_for_vat_type(period: str, vat_type: VatType) -> None:
+def _assert_client_reports_vat(vat_type: VatType) -> None:
+    """VAT-only eligibility: an exempt client has no VAT period to open.
+
+    Bi-monthly period alignment is deliberately not checked here — the single gate
+    is TaxCalendarMaterializationService, which every caller reaches.
+    """
     if vat_type == VatType.EXEMPT:
         raise AppError(
             VAT_CLIENT_EXEMPT,
             ErrorCode.VAT_CLIENT_EXEMPT,
         )
-    if vat_type == VatType.BIMONTHLY:
-        month = int(period.split("-")[1])
-        if month % 2 == 0:
-            raise AppError(
-                VAT_INVALID_BIMONTHLY_PERIOD.format(period=period),
-                ErrorCode.VAT_INVALID_PERIOD_FOR_FREQUENCY,
-            )
 
 
 def create_work_item(
@@ -62,7 +59,7 @@ def create_work_item(
     # check here used to re-raise with VAT-local codes and was unreachable.
     _, legal_entity = VatClientContextService(db).get_active_client_and_entity(client_record_id)
     effective_vat_type = resolve_effective_vat_type(legal_entity)
-    _validate_period_for_vat_type(period, effective_vat_type)
+    _assert_client_reports_vat(effective_vat_type)
 
     # WARNING: This check only filters for non-deleted items (deleted_at IS NULL).
     # If we ever allow soft-deleting FILED items, this guard must be updated to
