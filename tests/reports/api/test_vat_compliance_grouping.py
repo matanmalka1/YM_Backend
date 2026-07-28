@@ -1,7 +1,6 @@
 from datetime import UTC, date, datetime
 
-from app.common.enums import VatType
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import ObligationStatus, VatType
 from tests.helpers.tax_calendar_links import create_linked_vat_work_item
 
 
@@ -22,7 +21,7 @@ def test_vat_compliance_groups_same_client_by_period_type(
         client_record_id=crm_client.id,
         created_by=test_user.id,
         period="2026-01",
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
     item1.filed_at = datetime(2026, 2, 10, 9, 0, 0)
     item1.updated_at = now
@@ -32,7 +31,7 @@ def test_vat_compliance_groups_same_client_by_period_type(
         client_record_id=crm_client.id,
         created_by=test_user.id,
         period="2026-03",
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
     )
     item2.updated_at = now
     test_db.commit()

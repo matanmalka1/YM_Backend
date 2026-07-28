@@ -82,7 +82,7 @@ def test_openapi_uses_string_contract_for_decimal_and_datetime_fields():
     invoice_created_at = schema["VatInvoiceResponse"]["properties"]["created_at"]
     attention_id = schema["AttentionBoardItem"]["properties"]["id"]
     attention_amount = schema["AttentionBoardItem"]["properties"]["amount"]
-    annual_status_deadline = schema["AnnualReportStatusClientResponse"]["properties"][
+    annual_status_deadline = schema["ObligationStatusClientResponse"]["properties"][
         "filing_deadline"
     ]
     annual_card_deadline = schema["AnnualReportCard"]["properties"]["filing_deadline"]

@@ -73,7 +73,7 @@ def test_recent_activity_uses_metadata_client_context_for_vat_rows(test_db, test
             actor_type="user",
             actor_display_name=test_user.full_name,
             action=ACTION_VAT_WORK_ITEM_CREATED,
-            new_value={"status": "material_received", "period": f"2026-0{idx + 1}"},
+            new_value={"status": "input_received", "period": f"2026-0{idx + 1}"},
             metadata_json={
                 "client_record_id": client.id,
                 "period": f"2026-0{idx + 1}",

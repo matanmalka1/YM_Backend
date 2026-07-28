@@ -3,7 +3,6 @@ from datetime import datetime
 from app.annual_reports.models.annual_report_enums import FilingDeadlineType, SubmissionMethod
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.schemas.annual_report_responses import (
-    AnnualReportDetailResponse,
     AnnualReportResponse,
 )
 from app.annual_reports.services.annual_report_readiness_service import (
@@ -19,10 +18,9 @@ from app.common.obligation_lifecycle import (
     assert_transition_allowed,
 )
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import AppError, ConflictError, NotFoundError
+from app.core.exceptions import AppError, NotFoundError
 from app.utils.time_utils import utcnow
 
-from ..annual_report_constants import STAGE_TO_STATUS
 from ..annual_report_deadlines import extended_deadline, standard_deadline
 from ..annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
@@ -30,9 +28,7 @@ from ..annual_report_messages import (
     DEADLINE_UPDATED_NOTE,
     INVALID_ANNUAL_REPORT_STATUS,
     INVALID_DEADLINE_TYPE_ERROR,
-    INVALID_STAGE_ERROR,
     REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON,
-    REPORT_AMEND_ONLY_SUBMITTED_ERROR,
     REPORT_NOT_READY_FOR_SUBMISSION,
     STATUS_CHANGE_CANCEL_SIGNATURE_REASON,
 )
@@ -268,48 +264,4 @@ class ObligationStatusService(AnnualReportSignatureHelper):
         )
         return updated
 
-    def transition_stage(
-        self,
-        report_id: int,
-        to_stage: str,
-        changed_by: int,
-        changed_by_name: str,
-    ) -> AnnualReportResponse:
-        target_status = STAGE_TO_STATUS.get(to_stage)
-        if not target_status:
-            raise AppError(
-                INVALID_STAGE_ERROR.format(stage=to_stage),
-                ErrorCode.ANNUAL_REPORT_INVALID_STAGE,
-            )
-        return self.transition_status(
-            report_id=report_id,
-            new_status=target_status,
-            changed_by=changed_by,
-            changed_by_name=changed_by_name,
-        )
 
-    def amend_report(
-        self, report_id: int, reason: str, actor_id: int, actor_name: str
-    ) -> AnnualReportDetailResponse:
-        """Reopen a submitted report for amendment and record the amendment reason."""
-        from app.annual_reports.repositories.annual_report_detail_repository import (
-            AnnualReportDetailRepository,
-        )
-
-        report = self._get_or_raise_for_update(report_id)
-        if report.status != ObligationStatus.SUBMITTED:
-            raise ConflictError(
-                REPORT_AMEND_ONLY_SUBMITTED_ERROR.format(status=report.status.value),
-                ErrorCode.ANNUAL_REPORT_INVALID_STATUS_FOR_AMEND,
-            )
-
-        self.transition_status(
-            report_id=report_id,
-            new_status=ObligationStatus.IN_PROGRESS.value,
-            changed_by=actor_id,
-            changed_by_name=actor_name,
-            note=reason,
-        )
-        AnnualReportDetailRepository(self.db).update_meta(report_id, amendment_reason=reason)
-
-        return self.get_detail_report(report_id)

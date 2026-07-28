@@ -3,18 +3,16 @@ from decimal import Decimal
 
 from sqlalchemy import text
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     AdvancePaymentAggregationRepository,
 )
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_client_summary_repository import (
     VatClientSummaryRepository,
 )
@@ -45,7 +43,7 @@ def test_list_by_client_record_year_filters_and_orders(test_db, create_client_wi
         due_date=date(2025, 3, 15),
         expected_amount=Decimal("200.00"),
     )
-    repo.update_payment(february, status=AdvancePaymentStatus.PAID)
+    repo.update_payment(february, status=ObligationStatus.SUBMITTED)
 
     items, total = repo.list_by_client_record_year(
         client_record_id=business.client_record_id, year=2025, status=None
@@ -56,7 +54,7 @@ def test_list_by_client_record_year_filters_and_orders(test_db, create_client_wi
     pending_items, pending_total = repo.list_by_client_record_year(
         client_record_id=business.client_record_id,
         year=2025,
-        status=[AdvancePaymentStatus.PENDING],
+        status=[ObligationStatus.AWAITING_INPUT],
     )
     assert pending_total == 1
     assert pending_items[0].id == january.id
@@ -80,7 +78,7 @@ def test_get_annual_output_vat_returns_sum_or_none(
         created_by=user.id,
         period="2025-01",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
         total_output_vat=Decimal("150.50"),
         total_input_vat=Decimal("0"),
         net_vat=Decimal("150.50"),
@@ -93,7 +91,7 @@ def test_get_annual_output_vat_returns_sum_or_none(
         created_by=user.id,
         period="2025-02",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
         total_output_vat=Decimal("149.50"),
         total_input_vat=Decimal("0"),
         net_vat=Decimal("149.50"),
@@ -106,7 +104,7 @@ def test_get_annual_output_vat_returns_sum_or_none(
         created_by=user.id,
         period="2024-12",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
         total_output_vat=Decimal("999.00"),
         total_input_vat=Decimal("0"),
         net_vat=Decimal("999.00"),
@@ -147,7 +145,7 @@ def test_list_overview_payments_filters_by_month_and_status(test_db, create_clie
         period_months_count=1,
         due_date=date(2025, 2, 12),
     )
-    repo.update_payment(payment_b, status=AdvancePaymentStatus.PAID)
+    repo.update_payment(payment_b, status=ObligationStatus.SUBMITTED)
 
     create_linked_advance_payment(
         test_db,
@@ -161,7 +159,7 @@ def test_list_overview_payments_filters_by_month_and_status(test_db, create_clie
     rows = aggregation_repo.list_overview_payments(
         year=2025,
         month=1,
-        statuses=[AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PAID],
+        statuses=[ObligationStatus.AWAITING_INPUT, ObligationStatus.SUBMITTED],
     )
 
     assert len(rows) == 2
@@ -189,7 +187,7 @@ def test_list_by_client_record_year_handles_partial_status(test_db, create_clien
     )
 
     test_db.execute(
-        text("UPDATE advance_payments SET status = 'partial' WHERE id = :payment_id"),
+        text("UPDATE advance_payments SET status = 'in_progress' WHERE id = :payment_id"),
         {"payment_id": payment.id},
     )
     test_db.commit()
@@ -198,4 +196,4 @@ def test_list_by_client_record_year_handles_partial_status(test_db, create_clien
         client_record_id=business.client_record_id, year=2026, status=None
     )
     assert total == 1
-    assert items[0].status == AdvancePaymentStatus.PARTIAL
+    assert items[0].status == ObligationStatus.IN_PROGRESS

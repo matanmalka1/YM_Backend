@@ -15,8 +15,6 @@ def _resolve_vat_rate() -> Decimal:
 
 
 ADVANCE_PAYMENT_VAT_RATE: Decimal = _resolve_vat_rate()
-BIMONTHLY_PERIOD_MONTHS_COUNT = 2
-BIMONTHLY_START_MONTHS = (1, 3, 5, 7, 9, 11)
 
 # A bulk turnover refresh is meant to cover what one advisor sees on one client's
 # screen — a year is 12 periods. The cap keeps a mistyped request from writing to
@@ -38,9 +36,3 @@ BULK_GENERATE_CLIENT_CHUNK_SIZE = 25
 # flagged as a mismatch. 1 ILS absorbs rounding; anything above it is a real
 # disagreement the advisor should look at.
 VAT_TURNOVER_MISMATCH_TOLERANCE = Decimal("1.00")
-
-
-def get_period_start_months(period_months_count: int) -> list[int]:
-    if period_months_count == BIMONTHLY_PERIOD_MONTHS_COUNT:
-        return list(BIMONTHLY_START_MONTHS)
-    return list(range(1, 13))

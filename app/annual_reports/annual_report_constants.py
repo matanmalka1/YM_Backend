@@ -20,17 +20,6 @@ FORM_MAP: dict[ClientAnnualFilingType, PrimaryAnnualReportForm] = {
     ClientAnnualFilingType.EXEMPT_DEALER: PrimaryAnnualReportForm.FORM_1301,
 }
 
-# ── Stage shortcut → status mapping (one-way: promotes to first status in stage) ──
-# Note: this map intentionally moves to a single target status per stage.
-# Demoting within a stage requires direct status transition.
-STAGE_TO_STATUS: dict[str, str] = {
-    "material_collection": "collecting_docs",
-    "in_progress": "in_preparation",
-    "final_review": "in_preparation",
-    "client_signature": "pending_client",
-    "transmitted": "submitted",
-}
-
 # ── Stuck-report defaults ──────────────────────────────────────────────────────
 STUCK_REPORT_STALE_DAYS = 7
 STUCK_REPORT_LIMIT = 3
@@ -47,7 +36,6 @@ __all__ = [
     "FORM_MAP",
     "ANNUAL_DEADLINE_REMINDER_DAYS_BEFORE",
     "SCHEDULE_FLAGS",
-    "STAGE_TO_STATUS",
     "STUCK_REPORT_STALE_DAYS",
     "STUCK_REPORT_LIMIT",
 ]

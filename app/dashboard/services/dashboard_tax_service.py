@@ -28,14 +28,14 @@ class DashboardTaxService:
 
         # Submitted is now one status; this used to add `submitted` and `closed`,
         # which were two names for the same finished state.
-        submitted = self.report_repo.count_by_status(
-            ObligationStatus.SUBMITTED, tax_year=tax_year
-        )
+        submitted = self.report_repo.count_by_status(ObligationStatus.SUBMITTED, tax_year=tax_year)
 
         # IN_PROGRESS statuses
         in_progress = self.report_repo.count_by_status(
             ObligationStatus.IN_PROGRESS, tax_year=tax_year
-        ) + self.report_repo.count_by_status(ObligationStatus.AWAITING_VERIFICATION, tax_year=tax_year)
+        ) + self.report_repo.count_by_status(
+            ObligationStatus.AWAITING_VERIFICATION, tax_year=tax_year
+        )
 
         # MATERIAL_COLLECTION statuses
         material_collection = self.report_repo.count_by_status(

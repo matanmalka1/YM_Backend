@@ -7,7 +7,6 @@ from app.annual_reports.models.annual_report_enums import (
     ClientAnnualFilingType,
     ExtensionReason,
     FilingDeadlineType,
-    ReportStage,
     SubmissionMethod,
 )
 from app.common.enums import ObligationStatus
@@ -30,8 +29,6 @@ class AnnualReportCreateRequest(BaseModel):
     has_depreciation: bool = False
 
 
-class AmendRequest(BaseModel):
-    reason: str
 
 
 class StatusTransitionRequest(BaseModel):
@@ -64,8 +61,6 @@ class SubmitRequest(BaseModel):
     note: str | None = None
 
 
-class StageTransitionRequest(BaseModel):
-    to_stage: ReportStage  # enum
 
 
 class ScheduleAddRequest(BaseModel):

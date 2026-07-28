@@ -3,15 +3,11 @@ from itertools import count
 
 from sqlalchemy import select
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     FilingDeadlineType,
     PrimaryAnnualReportForm,
@@ -22,6 +18,7 @@ from app.common.enums import (
     AdvancePaymentFrequency,
     DeadlineRuleType,
     EntityType,
+    ObligationStatus,
     ObligationType,
     VatType,
 )
@@ -30,7 +27,6 @@ from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from tests.helpers.identity import seed_business, seed_client_identity
@@ -170,7 +166,7 @@ def add_vat_item(db, entry, user_id: int, *, due_date=date(2026, 2, 20)):
         created_by=user_id,
         period="2026-01",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
         tax_calendar_entry_id=entry.id,
         due_date_original=entry.due_date,
         due_date_effective=due_date,
@@ -186,7 +182,7 @@ def add_advance_payment(
     entry,
     *,
     due_date=date(2026, 2, 21),
-    status=AdvancePaymentStatus.PENDING,
+    status=ObligationStatus.AWAITING_INPUT,
 ):
     client_record = advance_client(db)
     payment = AdvancePayment(
@@ -212,7 +208,7 @@ def add_annual_report(db, entry):
         tax_year=2026,
         client_type=ClientAnnualFilingType.SELF_EMPLOYED,
         form_type=PrimaryAnnualReportForm.FORM_1301,
-        status=AnnualReportStatus.NOT_STARTED,
+        status=ObligationStatus.AWAITING_INPUT,
         deadline_type=FilingDeadlineType.STANDARD,
         filing_deadline=datetime(2027, 7, 31, 10, 0),
         tax_calendar_entry_id=entry.id,
@@ -239,7 +235,7 @@ def create_linked_vat_work_item(db, *, repo=None, period_type=VatType.MONTHLY, *
     months = 2 if period_type_value == VatType.BIMONTHLY.value else 1
     entry = create_tax_calendar_entry_for_period(db, ObligationType.VAT, kwargs["period"], months)
     repo = repo or VatWorkItemRepository(db)
-    kwargs.setdefault("status", VatWorkItemStatus.MATERIAL_RECEIVED)
+    kwargs.setdefault("status", ObligationStatus.INPUT_RECEIVED)
     kwargs.update(
         period_type=period_type,
         tax_calendar_entry_id=entry.id,

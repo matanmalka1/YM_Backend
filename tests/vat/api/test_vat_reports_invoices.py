@@ -26,7 +26,7 @@ class TestInvoices:
         r = client.get(f"/api/v1/vat/work-items/{item_id}", headers=advisor_headers)
         data = r.json()
         assert float(data["total_output_vat"]) == 180.0
-        assert data["status"] == "data_entry_in_progress"
+        assert data["status"] == "in_progress"
 
     def test_get_work_item_includes_server_computed_breakdown(
         self, client, advisor_headers, vat_client

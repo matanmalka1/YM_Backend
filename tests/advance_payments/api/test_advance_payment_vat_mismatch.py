@@ -5,11 +5,10 @@ from itertools import count
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.businesses.models.business import Business
-from app.common.enums import AdvancePaymentFrequency, VatType
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus, VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 _seq = count(1)
 
@@ -38,7 +37,7 @@ def _payment(db, business, period, turnover=None, period_months_count=1):
 
 
 def _vat_item(
-    db, vat_work_item_factory, client_id, period, net, user_id, status=VatWorkItemStatus.FILED
+    db, vat_work_item_factory, client_id, period, net, user_id, status=ObligationStatus.SUBMITTED
 ):
     entry = TaxCalendarMaterializationService(db).ensure_periodic_entry("vat", period, 1)
     amt = Decimal(str(net))
@@ -243,7 +242,7 @@ def test_unfiled_vat_return_still_counts_as_a_mismatch(
         "2026-06",
         90000,
         test_user.id,
-        status=VatWorkItemStatus.READY_FOR_REVIEW,
+        status=ObligationStatus.AWAITING_VERIFICATION,
     )
 
     body = _overview(client, advisor_headers, business, extra="&vat_mismatch=true")

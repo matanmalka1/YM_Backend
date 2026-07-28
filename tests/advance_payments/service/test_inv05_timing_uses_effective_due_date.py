@@ -3,8 +3,8 @@
 from datetime import UTC, date, datetime
 from decimal import Decimal
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.schemas.advance_payment import AdvancePaymentRow
+from app.common.enums import ObligationStatus
 
 
 def _row(**kwargs) -> AdvancePaymentRow:
@@ -16,7 +16,7 @@ def _row(**kwargs) -> AdvancePaymentRow:
         due_date=date(2020, 2, 15),
         expected_amount=Decimal("100"),
         paid_amount=Decimal("0"),
-        status=AdvancePaymentStatus.PENDING,
+        status=ObligationStatus.AWAITING_INPUT,
         calculated_amount=Decimal("100"),
         created_at=datetime(2026, 1, 1, tzinfo=UTC),
     )
@@ -43,7 +43,7 @@ class TestTimingStatus:
         row = _row(
             due_date=date(2020, 2, 15),
             due_date_effective=date(2020, 2, 15),
-            status=AdvancePaymentStatus.PAID,
+            status=ObligationStatus.SUBMITTED,
             paid_amount=Decimal("100"),
         )
         assert row.timing_status == "on_time"
@@ -55,7 +55,7 @@ class TestPaidLate:
         row = _row(
             due_date=date(2099, 2, 15),
             due_date_effective=date(2026, 2, 15),
-            status=AdvancePaymentStatus.PAID,
+            status=ObligationStatus.SUBMITTED,
             paid_amount=Decimal("100"),
             paid_at=datetime(2026, 3, 1, tzinfo=UTC),
         )
@@ -66,7 +66,7 @@ class TestPaidLate:
         row = _row(
             due_date=date(2020, 2, 15),
             due_date_effective=date(2026, 3, 1),
-            status=AdvancePaymentStatus.PAID,
+            status=ObligationStatus.SUBMITTED,
             paid_amount=Decimal("100"),
             paid_at=datetime(2026, 2, 1, tzinfo=UTC),
         )
@@ -77,7 +77,7 @@ class TestPaidLate:
         row = _row(
             due_date=date(2026, 2, 15),
             due_date_effective=date(2026, 3, 15),
-            status=AdvancePaymentStatus.PAID,
+            status=ObligationStatus.SUBMITTED,
             paid_amount=Decimal("100"),
             paid_at=datetime(2026, 3, 1, tzinfo=UTC),
         )

@@ -7,7 +7,7 @@ import pytest
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import select
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus, TurnoverSource
+from app.advance_payments.models.advance_payment import TurnoverSource
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
 )
@@ -20,14 +20,13 @@ from app.audit.audit_constants import (
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.businesses.models.business import Business
-from app.common.enums import AdvancePaymentFrequency, VatType
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus, VatType
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import ConflictError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 _seq = count(1)
 
@@ -64,7 +63,7 @@ def _vat_item(
     period,
     total_output_net,
     user_id,
-    status=VatWorkItemStatus.FILED,
+    status=ObligationStatus.AWAITING_VERIFICATION,
 ):
     mat = TaxCalendarMaterializationService(db)
     entry = mat.ensure_periodic_entry("vat", period, 1)
@@ -260,7 +259,7 @@ class TestCreateSnapshots:
         )
 
         assert payment.expected_amount == Decimal("1000.00")
-        assert payment.status == AdvancePaymentStatus.PARTIAL
+        assert payment.status == ObligationStatus.IN_PROGRESS
 
 
 class TestUpdateRecompute:
@@ -281,7 +280,13 @@ class TestUpdateRecompute:
         assert updated.calculated_amount == Decimal("2000.00")
         assert updated.expected_amount == Decimal("2000.00")
 
-    def test_patch_turnover_rederives_status(self, test_db, create_client_with_business):
+    def test_patch_turnover_never_rewinds_the_stage(self, test_db, create_client_with_business):
+        """Raising the expected amount does not un-settle a period.
+
+        Status used to be re-derived from the amounts on every write, so raising
+        the turnover could drag a settled row backwards. Money advances the
+        lifecycle now; it never rewinds it.
+        """
         business = _business(create_client_with_business, advance_rate=Decimal("2.5"))
         svc = AdvancePaymentService(test_db)
         payment = svc.create_payment_for_client(
@@ -301,7 +306,10 @@ class TestUpdateRecompute:
             turnover_amount=Decimal("80000"),
         )
         assert updated.expected_amount == Decimal("2000.00")
-        assert updated.status == AdvancePaymentStatus.PARTIAL
+        # 1000 of 1000 reached awaiting_verification; doubling the expectation
+        # leaves an outstanding balance but does not move the stage back.
+        assert updated.status == ObligationStatus.AWAITING_VERIFICATION
+        assert updated.outstanding_amount == Decimal("1000.00")
 
     def test_patch_withheld_recomputes_expected(self, test_db, create_client_with_business):
         business = _business(create_client_with_business, advance_rate=Decimal("2.5"))
@@ -322,7 +330,12 @@ class TestUpdateRecompute:
         assert updated.calculated_amount == Decimal("1000.00")
         assert updated.expected_amount == Decimal("600.00")
 
-    def test_patch_expected_amount_rederives_status(self, test_db, create_client_with_business):
+    def test_paying_in_full_stops_short_of_submitted(self, test_db, create_client_with_business):
+        """Money reaches awaiting_verification, never submitted.
+
+        Only a person locks an obligation. Paying in full says the money arrived,
+        not that anyone confirmed the period was reported.
+        """
         business = _business(create_client_with_business, advance_rate=Decimal("2.5"))
         svc = AdvancePaymentService(test_db)
         payment = svc.create_payment_for_client(
@@ -332,7 +345,7 @@ class TestUpdateRecompute:
             turnover_amount=Decimal("40000"),
             paid_amount=Decimal("1000"),
         )
-        assert payment.status == AdvancePaymentStatus.PAID
+        assert payment.status == ObligationStatus.AWAITING_VERIFICATION
 
         updated = svc.update_payment_for_client(
             business.client_record_id,
@@ -340,7 +353,8 @@ class TestUpdateRecompute:
             expected_amount=Decimal("2000"),
         )
 
-        assert updated.status == AdvancePaymentStatus.PARTIAL
+        assert updated.status == ObligationStatus.AWAITING_VERIFICATION
+        assert updated.outstanding_amount == Decimal("1000.00")
 
 
 class TestResolveTurnover:
@@ -385,7 +399,7 @@ class TestResolveTurnover:
             "2026-02",
             Decimal("30000"),
             test_user.id,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_VERIFICATION,
         )
 
         resolution = self._resolve(test_db, business, "2026-02")
@@ -467,7 +481,7 @@ class TestResolveTurnover:
             "2026-10",
             Decimal("40000"),
             test_user.id,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_VERIFICATION,
         )
 
         resolution = self._resolve(test_db, business, "2026-09", months_count=2)
@@ -532,7 +546,7 @@ class TestRefreshTurnoverBulk:
             "2026-02",
             Decimal("50000"),
             test_user.id,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_VERIFICATION,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -561,7 +575,7 @@ class TestRefreshTurnoverBulk:
             period_months_count=1,
             paid_amount=Decimal("100"),
         )
-        assert payment.status == AdvancePaymentStatus.PAID
+        assert payment.status == ObligationStatus.AWAITING_VERIFICATION
         _vat_item(
             vat_work_item_factory,
             test_db,
@@ -574,7 +588,7 @@ class TestRefreshTurnoverBulk:
         result = svc.refresh_turnover_bulk(business.client_record_id, [payment.id])
 
         assert (result.refreshed, result.skipped_paid) == (0, 1)
-        assert payment.status == AdvancePaymentStatus.PAID
+        assert payment.status == ObligationStatus.AWAITING_VERIFICATION
         assert payment.turnover_amount is None
 
     def test_single_command_still_refreshes_a_settled_payment(
@@ -601,7 +615,7 @@ class TestRefreshTurnoverBulk:
         updated = svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
 
         assert updated.turnover_amount == Decimal("60000")
-        assert updated.status == AdvancePaymentStatus.PARTIAL
+        assert updated.status == ObligationStatus.IN_PROGRESS
 
     def test_never_snapshots_pending_even_in_bulk(
         self, test_db, test_user, create_client_with_business, vat_work_item_factory
@@ -616,7 +630,7 @@ class TestRefreshTurnoverBulk:
             "2026-04",
             Decimal("50000"),
             test_user.id,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_VERIFICATION,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -774,7 +788,7 @@ class TestRefreshTurnoverFromVat:
             "2026-07",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -785,7 +799,7 @@ class TestRefreshTurnoverFromVat:
         assert updated.turnover_snapshot_at is not None
         assert updated.calculated_amount == Decimal("6000.00")
         assert updated.expected_amount == Decimal("6000.00")
-        assert updated.status == AdvancePaymentStatus.PENDING
+        assert updated.status == ObligationStatus.AWAITING_INPUT
 
     def test_pending_vat_requires_confirmation(
         self, test_db, test_user, create_client_with_business, vat_work_item_factory
@@ -799,7 +813,7 @@ class TestRefreshTurnoverFromVat:
             "2026-08",
             Decimal("30000"),
             test_user.id,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_VERIFICATION,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -826,7 +840,7 @@ class TestRefreshTurnoverFromVat:
             "2026-03",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         _vat_item(
             vat_work_item_factory,
@@ -835,7 +849,7 @@ class TestRefreshTurnoverFromVat:
             "2026-04",
             Decimal("40000"),
             test_user.id,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_VERIFICATION,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -870,7 +884,7 @@ class TestRefreshTurnoverFromVat:
             "2026-07",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         _vat_item(
             vat_work_item_factory,
@@ -879,7 +893,7 @@ class TestRefreshTurnoverFromVat:
             "2026-08",
             Decimal("40000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -900,7 +914,7 @@ class TestRefreshTurnoverFromVat:
             "2026-09",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         svc = AdvancePaymentService(test_db)
 
@@ -926,7 +940,7 @@ class TestRefreshTurnoverFromVat:
             "2026-11",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
 
         updated = svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
@@ -946,7 +960,7 @@ class TestRefreshTurnoverFromVat:
             "2026-12",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         svc = AdvancePaymentService(test_db)
         svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
@@ -972,7 +986,7 @@ class TestRefreshTurnoverFromVat:
             "2026-05",
             Decimal("60000"),
             test_user.id,
-            VatWorkItemStatus.FILED,
+            ObligationStatus.SUBMITTED,
         )
         svc = AdvancePaymentService(test_db)
         svc.refresh_turnover_from_vat(business.client_record_id, payment.id, actor_id=test_user.id)

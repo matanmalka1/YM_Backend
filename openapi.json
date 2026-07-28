@@ -2886,7 +2886,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/AnnualReportStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -3217,110 +3217,6 @@
         }
       }
     },
-    "/api/v1/annual-reports/{report_id}/amend": {
-      "post": {
-        "tags": [
-          "annual-reports"
-        ],
-        "summary": "Amend Annual Report",
-        "description": "Reopen a SUBMITTED report for amendment and record the reason (ADVISOR only).",
-        "operationId": "amend_annual_report_api_v1_annual_reports__report_id__amend_post",
-        "parameters": [
-          {
-            "name": "report_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "title": "Report Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/AmendRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AnnualReportDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/api/v1/annual-reports/{report_id}/schedules": {
       "post": {
         "tags": [
@@ -3563,109 +3459,6 @@
           },
           "404": {
             "description": "Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication required",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "Forbidden",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/annual-reports/{report_id}/transition": {
-      "post": {
-        "tags": [
-          "annual-reports"
-        ],
-        "summary": "Transition Stage",
-        "operationId": "transition_stage_api_v1_annual_reports__report_id__transition_post",
-        "parameters": [
-          {
-            "name": "report_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "minimum": 1,
-              "title": "Report Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/StageTransitionRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/AnnualReportDetailResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Resource not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorEnvelope"
-                }
-              }
-            }
-          },
-          "409": {
-            "description": "Conflict",
             "content": {
               "application/json": {
                 "schema": {
@@ -4136,7 +3929,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/AnnualReportStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -4337,7 +4130,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/AnnualReportStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -11341,7 +11134,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/AnnualReportStatusReportResponse"
+                  "$ref": "#/components/schemas/ObligationStatusReportResponse"
                 }
               }
             }
@@ -13367,7 +13160,7 @@
             "schema": {
               "type": "array",
               "items": {
-                "$ref": "#/components/schemas/AdvancePaymentStatus"
+                "$ref": "#/components/schemas/ObligationStatus"
               },
               "default": [],
               "title": "Status"
@@ -14315,7 +14108,7 @@
                 {
                   "type": "array",
                   "items": {
-                    "$ref": "#/components/schemas/AdvancePaymentStatus"
+                    "$ref": "#/components/schemas/ObligationStatus"
                   }
                 },
                 {
@@ -15642,7 +15435,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/VatWorkItemStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -16839,7 +16632,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/VatWorkItemStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -16988,7 +16781,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/VatWorkItemStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -17366,7 +17159,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/VatWorkItemStatusSummaryResponse"
+                  "$ref": "#/components/schemas/ObligationStatusSummaryResponse"
                 }
               }
             }
@@ -17484,7 +17277,7 @@
             "schema": {
               "anyOf": [
                 {
-                  "$ref": "#/components/schemas/VatWorkItemStatus"
+                  "$ref": "#/components/schemas/ObligationStatus"
                 },
                 {
                   "type": "null"
@@ -20580,7 +20373,7 @@
             ]
           },
           "status": {
-            "$ref": "#/components/schemas/AdvancePaymentStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "payment_method": {
             "anyOf": [
@@ -20875,7 +20668,7 @@
             ]
           },
           "status": {
-            "$ref": "#/components/schemas/AdvancePaymentStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "paid_at": {
             "anyOf": [
@@ -21117,16 +20910,6 @@
           "paid_late"
         ],
         "title": "AdvancePaymentRow"
-      },
-      "AdvancePaymentStatus": {
-        "type": "string",
-        "enum": [
-          "pending",
-          "paid",
-          "partial"
-        ],
-        "title": "AdvancePaymentStatus",
-        "description": "Lifecycle status of an advance payment."
       },
       "AdvancePaymentUpdateRequest": {
         "properties": {
@@ -21511,19 +21294,6 @@
           "total_90_plus"
         ],
         "title": "AgingReportSummaryResponse"
-      },
-      "AmendRequest": {
-        "properties": {
-          "reason": {
-            "type": "string",
-            "title": "Reason"
-          }
-        },
-        "type": "object",
-        "required": [
-          "reason"
-        ],
-        "title": "AmendRequest"
       },
       "AnnexDataAddRequest": {
         "properties": {
@@ -21950,7 +21720,7 @@
             "$ref": "#/components/schemas/PrimaryAnnualReportForm"
           },
           "status": {
-            "$ref": "#/components/schemas/AnnualReportStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "deadline_type": {
             "$ref": "#/components/schemas/FilingDeadlineType"
@@ -22152,7 +21922,7 @@
           },
           "available_transitions": {
             "items": {
-              "$ref": "#/components/schemas/AnnualReportStatus"
+              "$ref": "#/components/schemas/ObligationStatus"
             },
             "type": "array",
             "title": "Available Transitions",
@@ -22420,7 +22190,7 @@
             "$ref": "#/components/schemas/PrimaryAnnualReportForm"
           },
           "status": {
-            "$ref": "#/components/schemas/AnnualReportStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "deadline_type": {
             "$ref": "#/components/schemas/FilingDeadlineType"
@@ -22615,7 +22385,7 @@
             "$ref": "#/components/schemas/PrimaryAnnualReportForm"
           },
           "status": {
-            "$ref": "#/components/schemas/AnnualReportStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "deadline_type": {
             "$ref": "#/components/schemas/FilingDeadlineType"
@@ -22817,7 +22587,7 @@
           },
           "available_transitions": {
             "items": {
-              "$ref": "#/components/schemas/AnnualReportStatus"
+              "$ref": "#/components/schemas/ObligationStatus"
             },
             "type": "array",
             "title": "Available Transitions",
@@ -22891,134 +22661,6 @@
           "total"
         ],
         "title": "AnnualReportScheduleListResponse"
-      },
-      "AnnualReportStatus": {
-        "type": "string",
-        "enum": [
-          "not_started",
-          "collecting_docs",
-          "in_preparation",
-          "pending_client",
-          "submitted",
-          "closed",
-          "canceled"
-        ],
-        "title": "AnnualReportStatus"
-      },
-      "AnnualReportStatusClientResponse": {
-        "properties": {
-          "client_record_id": {
-            "type": "integer",
-            "title": "Client Record Id"
-          },
-          "client_name": {
-            "type": "string",
-            "title": "Client Name"
-          },
-          "client_id_number": {
-            "type": "string",
-            "title": "Client Id Number"
-          },
-          "office_client_number": {
-            "type": "integer",
-            "title": "Office Client Number"
-          },
-          "form_type": {
-            "anyOf": [
-              {
-                "$ref": "#/components/schemas/PrimaryAnnualReportForm"
-              },
-              {
-                "type": "null"
-              }
-            ]
-          },
-          "filing_deadline": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "examples": [
-                  "2026-01-02T03:04:05Z"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Filing Deadline"
-          },
-          "days_until_deadline": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Days Until Deadline"
-          }
-        },
-        "type": "object",
-        "required": [
-          "client_record_id",
-          "client_name",
-          "client_id_number",
-          "office_client_number"
-        ],
-        "title": "AnnualReportStatusClientResponse"
-      },
-      "AnnualReportStatusGroupResponse": {
-        "properties": {
-          "status": {
-            "$ref": "#/components/schemas/AnnualReportStatus"
-          },
-          "count": {
-            "type": "integer",
-            "title": "Count"
-          },
-          "clients": {
-            "items": {
-              "$ref": "#/components/schemas/AnnualReportStatusClientResponse"
-            },
-            "type": "array",
-            "title": "Clients"
-          }
-        },
-        "type": "object",
-        "required": [
-          "status",
-          "count",
-          "clients"
-        ],
-        "title": "AnnualReportStatusGroupResponse"
-      },
-      "AnnualReportStatusReportResponse": {
-        "properties": {
-          "tax_year": {
-            "type": "integer",
-            "title": "Tax Year"
-          },
-          "total": {
-            "type": "integer",
-            "title": "Total"
-          },
-          "statuses": {
-            "items": {
-              "$ref": "#/components/schemas/AnnualReportStatusGroupResponse"
-            },
-            "type": "array",
-            "title": "Statuses"
-          }
-        },
-        "type": "object",
-        "required": [
-          "tax_year",
-          "total",
-          "statuses"
-        ],
-        "title": "AnnualReportStatusReportResponse"
       },
       "AnnualReportTaxCalculationResponse": {
         "properties": {
@@ -30643,6 +30285,170 @@
         ],
         "title": "NotificationTriggerOption"
       },
+      "ObligationStatus": {
+        "type": "string",
+        "enum": [
+          "awaiting_input",
+          "input_received",
+          "in_progress",
+          "awaiting_verification",
+          "submitted",
+          "canceled"
+        ],
+        "title": "ObligationStatus",
+        "description": "The lifecycle every tax obligation runs, whatever its type.\n\nVAT, advance payments and annual reports are three views of one thing: a client\nowes an obligation for a period, works it through, and settles it by a deadline.\nThey previously ran this sequence under three different names, with three\ntransition tables, because they were written separately and never compared.\n\nStage order is the declaration order, and it is load-bearing — the transition\ngraph reads it (``app/common/obligation_lifecycle.py``). ``CANCELED`` sits off\nthe ladder: it is reachable from any unlocked stage and has no position on it.\n\nAn obligation that exists is by definition waiting for its inputs, so there is\nno separate \"not started\" stage. What counts as the input differs by type — the\nclient's documents for VAT, the filed VAT return for an advance, the year's\nmaterial for an annual report — but the stage is the same."
+      },
+      "ObligationStatusClientResponse": {
+        "properties": {
+          "client_record_id": {
+            "type": "integer",
+            "title": "Client Record Id"
+          },
+          "client_name": {
+            "type": "string",
+            "title": "Client Name"
+          },
+          "client_id_number": {
+            "type": "string",
+            "title": "Client Id Number"
+          },
+          "office_client_number": {
+            "type": "integer",
+            "title": "Office Client Number"
+          },
+          "form_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrimaryAnnualReportForm"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "filing_deadline": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Filing Deadline"
+          },
+          "days_until_deadline": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Days Until Deadline"
+          }
+        },
+        "type": "object",
+        "required": [
+          "client_record_id",
+          "client_name",
+          "client_id_number",
+          "office_client_number"
+        ],
+        "title": "ObligationStatusClientResponse"
+      },
+      "ObligationStatusGroupResponse": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ObligationStatus"
+          },
+          "count": {
+            "type": "integer",
+            "title": "Count"
+          },
+          "clients": {
+            "items": {
+              "$ref": "#/components/schemas/ObligationStatusClientResponse"
+            },
+            "type": "array",
+            "title": "Clients"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status",
+          "count",
+          "clients"
+        ],
+        "title": "ObligationStatusGroupResponse"
+      },
+      "ObligationStatusReportResponse": {
+        "properties": {
+          "tax_year": {
+            "type": "integer",
+            "title": "Tax Year"
+          },
+          "total": {
+            "type": "integer",
+            "title": "Total"
+          },
+          "statuses": {
+            "items": {
+              "$ref": "#/components/schemas/ObligationStatusGroupResponse"
+            },
+            "type": "array",
+            "title": "Statuses"
+          }
+        },
+        "type": "object",
+        "required": [
+          "tax_year",
+          "total",
+          "statuses"
+        ],
+        "title": "ObligationStatusReportResponse"
+      },
+      "ObligationStatusSummaryResponse": {
+        "properties": {
+          "pending_materials": {
+            "type": "integer",
+            "title": "Pending Materials",
+            "default": 0
+          },
+          "material_received": {
+            "type": "integer",
+            "title": "Material Received",
+            "default": 0
+          },
+          "data_entry_in_progress": {
+            "type": "integer",
+            "title": "Data Entry In Progress",
+            "default": 0
+          },
+          "ready_for_review": {
+            "type": "integer",
+            "title": "Ready For Review",
+            "default": 0
+          },
+          "filed": {
+            "type": "integer",
+            "title": "Filed",
+            "default": 0
+          },
+          "canceled": {
+            "type": "integer",
+            "title": "Canceled",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "title": "ObligationStatusSummaryResponse"
+      },
       "ObligationType": {
         "type": "string",
         "enum": [
@@ -31612,19 +31418,6 @@
         "title": "ReportDetailResponse",
         "description": "AnnualReportDetail — ניכויים, אישור לקוח, הערות."
       },
-      "ReportStage": {
-        "type": "string",
-        "enum": [
-          "material_collection",
-          "in_progress",
-          "final_review",
-          "client_signature",
-          "transmitted",
-          "post_submission"
-        ],
-        "title": "ReportStage",
-        "description": "Higher-level workflow stages used by dashboards."
-      },
       "ResetPasswordRequest": {
         "properties": {
           "token": {
@@ -32042,29 +31835,25 @@
             "type": "integer",
             "title": "Total"
           },
-          "not_started": {
+          "awaiting_input": {
             "type": "integer",
-            "title": "Not Started"
+            "title": "Awaiting Input"
           },
-          "collecting_docs": {
+          "input_received": {
             "type": "integer",
-            "title": "Collecting Docs"
+            "title": "Input Received"
           },
-          "in_preparation": {
+          "in_progress": {
             "type": "integer",
-            "title": "In Preparation"
+            "title": "In Progress"
           },
-          "pending_client": {
+          "awaiting_verification": {
             "type": "integer",
-            "title": "Pending Client"
+            "title": "Awaiting Verification"
           },
           "submitted": {
             "type": "integer",
             "title": "Submitted"
-          },
-          "closed": {
-            "type": "integer",
-            "title": "Closed"
           },
           "canceled": {
             "type": "integer",
@@ -32089,12 +31878,11 @@
           "tax_year",
           "filing_season_year",
           "total",
-          "not_started",
-          "collecting_docs",
-          "in_preparation",
-          "pending_client",
+          "awaiting_input",
+          "input_received",
+          "in_progress",
+          "awaiting_verification",
           "submitted",
-          "closed",
           "completion_rate",
           "overdue_count"
         ],
@@ -33441,18 +33229,6 @@
         "title": "SortOrder",
         "description": "Shared sort-direction enum for list endpoints."
       },
-      "StageTransitionRequest": {
-        "properties": {
-          "to_stage": {
-            "$ref": "#/components/schemas/ReportStage"
-          }
-        },
-        "type": "object",
-        "required": [
-          "to_stage"
-        ],
-        "title": "StageTransitionRequest"
-      },
       "StaleCadenceSummary": {
         "properties": {
           "removed": {
@@ -33478,7 +33254,7 @@
       "StatusTransitionRequest": {
         "properties": {
           "status": {
-            "$ref": "#/components/schemas/AnnualReportStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "note": {
             "anyOf": [
@@ -36975,7 +36751,7 @@
             "title": "Period Type"
           },
           "status": {
-            "$ref": "#/components/schemas/VatWorkItemStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "total_output_vat": {
             "type": "string",
@@ -37414,7 +37190,7 @@
             "$ref": "#/components/schemas/VatType"
           },
           "status": {
-            "$ref": "#/components/schemas/VatWorkItemStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "net_vat": {
             "type": "string",
@@ -37572,7 +37348,7 @@
             "title": "Id"
           },
           "status": {
-            "$ref": "#/components/schemas/VatWorkItemStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "period": {
             "type": "string",
@@ -37649,7 +37425,7 @@
             "$ref": "#/components/schemas/VatType"
           },
           "status": {
-            "$ref": "#/components/schemas/VatWorkItemStatus"
+            "$ref": "#/components/schemas/ObligationStatus"
           },
           "pending_materials_note": {
             "anyOf": [
@@ -37936,54 +37712,6 @@
           "breakdown"
         ],
         "title": "VatWorkItemResponse"
-      },
-      "VatWorkItemStatus": {
-        "type": "string",
-        "enum": [
-          "pending_materials",
-          "material_received",
-          "data_entry_in_progress",
-          "ready_for_review",
-          "filed",
-          "canceled"
-        ],
-        "title": "VatWorkItemStatus"
-      },
-      "VatWorkItemStatusSummaryResponse": {
-        "properties": {
-          "pending_materials": {
-            "type": "integer",
-            "title": "Pending Materials",
-            "default": 0
-          },
-          "material_received": {
-            "type": "integer",
-            "title": "Material Received",
-            "default": 0
-          },
-          "data_entry_in_progress": {
-            "type": "integer",
-            "title": "Data Entry In Progress",
-            "default": 0
-          },
-          "ready_for_review": {
-            "type": "integer",
-            "title": "Ready For Review",
-            "default": 0
-          },
-          "filed": {
-            "type": "integer",
-            "title": "Filed",
-            "default": 0
-          },
-          "canceled": {
-            "type": "integer",
-            "title": "Canceled",
-            "default": 0
-          }
-        },
-        "type": "object",
-        "title": "VatWorkItemStatusSummaryResponse"
       },
       "VatWorkItemUpdateRequest": {
         "properties": {

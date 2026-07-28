@@ -65,7 +65,7 @@ def test_f007_filing_with_assignee_succeeds(client, advisor_headers, vat_client,
     )
 
     assert resp.status_code == 200
-    assert resp.json()["status"] == "filed"
+    assert resp.json()["status"] == "submitted"
 
 
 # ── F-008: business_activity_id ownership check on invoice update ─────────────

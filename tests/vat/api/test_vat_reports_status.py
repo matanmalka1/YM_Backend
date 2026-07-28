@@ -17,7 +17,7 @@ class TestStatusTransitions:
             headers=advisor_headers,
         )
         assert response.status_code == 200
-        assert response.json()["status"] == "ready_for_review"
+        assert response.json()["status"] == "awaiting_verification"
 
     def test_send_back_requires_advisor(self, client, secretary_headers, vat_client):
         response = client.post(
@@ -41,4 +41,4 @@ class TestStatusTransitions:
             json={"correction_note": "Missing receipt"},
         )
         assert response.status_code == 200
-        assert response.json()["status"] == "data_entry_in_progress"
+        assert response.json()["status"] == "in_progress"

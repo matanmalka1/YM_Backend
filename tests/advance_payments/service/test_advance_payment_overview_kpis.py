@@ -1,7 +1,7 @@
 from datetime import date
 from decimal import Decimal
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus, TurnoverSource
+from app.advance_payments.models.advance_payment import TurnoverSource
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -12,11 +12,10 @@ from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService as AdvancePaymentService,
 )
 from app.businesses.models.business import Business
-from app.common.enums import VatType
+from app.common.enums import ObligationStatus, VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -44,7 +43,7 @@ def _filed_vat_item(
         client_record_id=client_record_id,
         period=period,
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
         total_output_vat=amount,
         total_output_net=amount,
         total_input_vat=Decimal("0"),
@@ -79,13 +78,13 @@ def test_list_overview_returns_rows_sorted_and_total(test_db, create_client_with
         due_date=date(2026, 3, 15),
         expected_amount=Decimal("200"),
     )
-    repo.update_payment(paid, status=AdvancePaymentStatus.PAID, paid_amount=Decimal("200"))
+    repo.update_payment(paid, status=ObligationStatus.SUBMITTED, paid_amount=Decimal("200"))
 
     service = AdvancePaymentService(test_db)
     rows, total = service.list_overview(
         year=2026,
         month=None,
-        statuses=[AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PAID],
+        statuses=[ObligationStatus.AWAITING_INPUT, ObligationStatus.SUBMITTED],
         page=1,
         page_size=10,
     )
@@ -107,7 +106,7 @@ def test_get_overview_kpis_collection_rate_rounds(test_db, create_client_with_bu
         due_date=date(2026, 2, 15),
         expected_amount=Decimal("100"),
     )
-    repo.update_payment(partial, paid_amount=Decimal("50"), status=AdvancePaymentStatus.PARTIAL)
+    repo.update_payment(partial, paid_amount=Decimal("50"), status=ObligationStatus.IN_PROGRESS)
 
     paid = create_linked_advance_payment(
         test_db,
@@ -118,11 +117,11 @@ def test_get_overview_kpis_collection_rate_rounds(test_db, create_client_with_bu
         due_date=date(2026, 3, 15),
         expected_amount=Decimal("200"),
     )
-    repo.update_payment(paid, paid_amount=Decimal("200"), status=AdvancePaymentStatus.PAID)
+    repo.update_payment(paid, paid_amount=Decimal("200"), status=ObligationStatus.SUBMITTED)
 
     service = AdvancePaymentService(test_db)
     kpis = service.get_overview_kpis(
-        year=2026, statuses=[AdvancePaymentStatus.PARTIAL, AdvancePaymentStatus.PAID]
+        year=2026, statuses=[ObligationStatus.IN_PROGRESS, ObligationStatus.SUBMITTED]
     )
 
     assert kpis["total_expected"] == 300.0

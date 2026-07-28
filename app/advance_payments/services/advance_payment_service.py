@@ -7,7 +7,6 @@ from sqlalchemy.orm import Session
 
 from app.advance_payments.advance_payment_constants import (
     BULK_GENERATE_CLIENT_CHUNK_SIZE,
-    get_period_start_months,
 )
 from app.advance_payments.models.advance_payment import AdvancePayment, TurnoverSource
 from app.advance_payments.repositories.advance_payment_generation_repository import (
@@ -32,6 +31,7 @@ from app.clients.guards.client_record_guards import assert_client_record_is_acti
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationStatus, ObligationType
 from app.common.obligation_lifecycle import is_terminal, stage_index
+from app.common.obligation_plan import advance_payment_obligation_plan
 from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
@@ -755,16 +755,29 @@ class AdvancePaymentService:
         tax_calendar = TaxCalendarMaterializationService(self.db)
         created: list[AdvancePayment] = []
         skipped = 0
-        for month in get_period_start_months(period_months_count):
-            period = f"{year}-{month:02d}"
-            entry = tax_calendar.ensure_periodic_entry(
+        # The obligation plan decides which periods are owed — the same answer
+        # onboarding uses. This loop used to build its own month list and then trim
+        # it with `entry.due_date < reference_date`, which is a *calendar* guard
+        # standing in for a *liability* guard: it created periods the client was
+        # not yet liable for and skipped genuinely owed past-due ones. Two
+        # generation paths with two different rules is the divergence this
+        # refactor exists to remove.
+        record = self._get_record_or_raise(client_record_id)
+        legal_entity = LegalEntityRepository(self.db).get_by_id(record.legal_entity_id)
+        plans = advance_payment_obligation_plan(
+            frequency=legal_entity.advance_payment_frequency,
+            year=year,
+            entity_type=getattr(legal_entity, "entity_type", None),
+            liable_from=getattr(legal_entity, "advance_liable_from", None),
+            liable_to=getattr(legal_entity, "advance_liable_to", None),
+        )
+        for plan in plans:
+            period = plan.period
+            tax_calendar.ensure_periodic_entry(
                 ObligationType.ADVANCE_PAYMENT,
                 period,
                 period_months_count,
             )
-            if entry.due_date < reference_date:
-                skipped += 1
-                continue
             if self.repo.exists_for_period(client_record_id, period):
                 skipped += 1
                 continue

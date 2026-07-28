@@ -1,10 +1,10 @@
 from datetime import date
 from decimal import Decimal
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
+from app.common.enums import ObligationStatus
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -19,7 +19,7 @@ def _seed_payments(db, client_record_id: int):
         due_date=date(2026, 2, 15),
         expected_amount=Decimal("100"),
     )
-    repo.update_payment(jan, paid_amount=Decimal("80"), status=AdvancePaymentStatus.PAID)
+    repo.update_payment(jan, paid_amount=Decimal("80"), status=ObligationStatus.SUBMITTED)
 
     mar = create_linked_advance_payment(
         db,
@@ -30,7 +30,7 @@ def _seed_payments(db, client_record_id: int):
         due_date=date(2020, 4, 15),  # past due date → timing_status=overdue
         expected_amount=Decimal("50"),
     )
-    repo.update_payment(mar, paid_amount=Decimal("0"), status=AdvancePaymentStatus.PENDING)
+    repo.update_payment(mar, paid_amount=Decimal("0"), status=ObligationStatus.AWAITING_INPUT)
 
 
 def test_kpi_endpoint_returns_collection_rate(

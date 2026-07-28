@@ -27,25 +27,6 @@ def test_annual_report_overdue_endpoint(
     assert new_client.id not in overdue_ids
 
 
-def test_annual_report_amend_endpoint(
-    client, test_db, advisor_headers, test_user, client_factory, annual_report_service_factory
-):
-    crm_client = client_factory()
-    report_id = annual_report_service_factory(actor=test_user, client=crm_client).id
-    _force_submitted(test_db, report_id)
-
-    amend_resp = client.post(
-        f"/api/v1/annual-reports/{report_id}/amend",
-        headers=advisor_headers,
-        json={"reason": "Correction requested"},
-    )
-
-    assert amend_resp.status_code == 200
-    body = amend_resp.json()
-    assert body["status"] == "in_preparation"
-    assert body["amendment_reason"] == "Correction requested"
-
-
 def test_annual_report_schedule_complete_and_season_summary(
     client,
     test_db,

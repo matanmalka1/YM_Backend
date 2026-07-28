@@ -8,12 +8,12 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy.orm import Session
 
 from app.common.enums import (
+    ObligationStatus,
     ObligationType,
     SubmissionMethod,
     VatType,
 )
 from app.users.models.user import User
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.factory_utils import (
     TEST_DUE_DATE,
@@ -52,7 +52,7 @@ class VatWorkItemFactory:
         assigned_to: int | None = None,
         period: str | None = None,
         period_type: VatType = VatType.MONTHLY,
-        status: VatWorkItemStatus = VatWorkItemStatus.MATERIAL_RECEIVED,
+        status: ObligationStatus = ObligationStatus.INPUT_RECEIVED,
         pending_materials_note: str | None = None,
         total_output_vat: Decimal | int | str = Decimal("0.00"),
         total_input_vat: Decimal | int | str = Decimal("0.00"),

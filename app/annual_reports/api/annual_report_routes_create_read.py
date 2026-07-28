@@ -1,11 +1,9 @@
 from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.annual_reports.api.annual_report_responses import (
-    REPORT_AMEND_RESPONSES,
     REPORT_CREATE_RESPONSES,
 )
 from app.annual_reports.schemas.annual_report_requests import (
-    AmendRequest,
     AnnualReportCreateRequest,
 )
 from app.annual_reports.schemas.annual_report_responses import (
@@ -131,20 +129,3 @@ def delete_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     if not deleted:
         raise NotFoundError("הדוח לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
-
-
-@router.post(
-    "/{report_id}/amend",
-    response_model=AnnualReportDetailResponse,
-    dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=REPORT_AMEND_RESPONSES,
-)
-def amend_annual_report(report_id: PathId, body: AmendRequest, db: DBSession, user: CurrentUser):
-    """Reopen a SUBMITTED report for amendment and record the reason (ADVISOR only)."""
-    service = AnnualReportService(db)
-    return service.amend_report(
-        report_id,
-        reason=body.reason,
-        actor_id=user.id,
-        actor_name=user.full_name,
-    )

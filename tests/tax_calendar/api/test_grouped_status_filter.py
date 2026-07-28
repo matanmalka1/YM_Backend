@@ -2,8 +2,7 @@
 
 from datetime import date
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
-from app.common.enums import AdvancePaymentFrequency
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus
 from tests.helpers.tax_calendar_links import (
     PATH,
     advance_entry,
@@ -42,7 +41,7 @@ def test_status_open_returns_only_groups_with_open_items(
 ):
     entry = _make_past_entry(test_db)
     c = _advance_client(client_factory)
-    _add_payment(advance_payment_factory, entry, c, AdvancePaymentStatus.PENDING)
+    _add_payment(advance_payment_factory, entry, c, ObligationStatus.AWAITING_INPUT)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=open", headers=headers(auth_token))
@@ -57,7 +56,7 @@ def test_status_open_excludes_fully_done_groups(
 ):
     entry = _make_past_entry(test_db)
     c = _advance_client(client_factory)
-    _add_payment(advance_payment_factory, entry, c, AdvancePaymentStatus.PAID)
+    _add_payment(advance_payment_factory, entry, c, ObligationStatus.SUBMITTED)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=open", headers=headers(auth_token))
@@ -71,7 +70,7 @@ def test_status_overdue_returns_groups_with_overdue_items(
 ):
     entry = _make_past_entry(test_db)
     c = _advance_client(client_factory)
-    _add_payment(advance_payment_factory, entry, c, AdvancePaymentStatus.PENDING)
+    _add_payment(advance_payment_factory, entry, c, ObligationStatus.AWAITING_INPUT)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=overdue", headers=headers(auth_token))
@@ -88,8 +87,8 @@ def test_status_done_requires_all_items_closed(
     entry = _make_past_entry(test_db)
     c1 = _advance_client(client_factory)
     c2 = _advance_client(client_factory)
-    _add_payment(advance_payment_factory, entry, c1, AdvancePaymentStatus.PAID)
-    _add_payment(advance_payment_factory, entry, c2, AdvancePaymentStatus.PENDING)
+    _add_payment(advance_payment_factory, entry, c1, ObligationStatus.SUBMITTED)
+    _add_payment(advance_payment_factory, entry, c2, ObligationStatus.AWAITING_INPUT)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=done", headers=headers(auth_token))
@@ -104,8 +103,8 @@ def test_status_done_returns_group_when_all_paid(
     entry = _make_past_entry(test_db)
     c1 = _advance_client(client_factory)
     c2 = _advance_client(client_factory)
-    _add_payment(advance_payment_factory, entry, c1, AdvancePaymentStatus.PAID)
-    _add_payment(advance_payment_factory, entry, c2, AdvancePaymentStatus.PAID)
+    _add_payment(advance_payment_factory, entry, c1, ObligationStatus.SUBMITTED)
+    _add_payment(advance_payment_factory, entry, c2, ObligationStatus.SUBMITTED)
     test_db.commit()
 
     resp = client.get(f"{PATH}?status=done", headers=headers(auth_token))

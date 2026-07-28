@@ -2,7 +2,6 @@ from datetime import UTC, date, datetime
 from decimal import Decimal
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     PrimaryAnnualReportForm,
 )
@@ -19,7 +18,7 @@ from app.audit.repositories.audit_entity_audit_log_repository import (
     EntityAuditLogRepository,
 )
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.common.enums import ObligationType
+from app.common.enums import ObligationStatus, ObligationType
 from app.notifications.models.notification import NotificationChannel, NotificationTrigger
 from app.reminders.models.reminder import (
     ReminderActionType,
@@ -92,7 +91,7 @@ def test_timeline_includes_annual_report_audit_changes(
         tax_calendar_entry_id=entry.id,
         client_type=ClientAnnualFilingType.INDIVIDUAL,
         form_type=PrimaryAnnualReportForm.FORM_1301,
-        status=AnnualReportStatus.COLLECTING_DOCS,
+        status=ObligationStatus.AWAITING_INPUT,
     )
     test_db.add(report)
     test_db.flush()
@@ -199,7 +198,7 @@ def test_timeline_annual_report_status_events_use_entity_audit_source(
         tax_calendar_entry_id=entry.id,
         client_type=ClientAnnualFilingType.INDIVIDUAL,
         form_type=PrimaryAnnualReportForm.FORM_1301,
-        status=AnnualReportStatus.COLLECTING_DOCS,
+        status=ObligationStatus.AWAITING_INPUT,
         updated_at=datetime(2026, 5, 1, 8, 0, tzinfo=UTC),
     )
     test_db.add(report)
@@ -209,8 +208,8 @@ def test_timeline_annual_report_status_events_use_entity_audit_source(
         entity_id=report.id,
         performed_by=test_user.id,
         action=entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED),
-        old_value={"status": AnnualReportStatus.NOT_STARTED.value},
-        new_value={"status": AnnualReportStatus.COLLECTING_DOCS.value},
+        old_value={"status": ObligationStatus.AWAITING_INPUT.value},
+        new_value={"status": ObligationStatus.AWAITING_INPUT.value},
         note="Started collection",
         actor_display_name=test_user.full_name,
         metadata_json={"client_record_id": business.client_id, "tax_year": 2025},
@@ -228,8 +227,8 @@ def test_timeline_annual_report_status_events_use_entity_audit_source(
         "annual_report_id": report.id,
         "tax_year": 2025,
         "form_type": "1301",
-        "from_status": "not_started",
-        "to_status": "collecting_docs",
+        "from_status": "awaiting_input",
+        "to_status": "awaiting_input",
         "note": "Started collection",
     }
 

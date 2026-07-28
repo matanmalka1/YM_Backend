@@ -5,7 +5,6 @@ from types import SimpleNamespace
 import pytest
 
 import app.signature_requests.signature_request_validations as validations
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
 from app.annual_reports.repositories.annual_report_detail_repository import (
     AnnualReportDetailRepository,
@@ -27,6 +26,7 @@ from app.audit.audit_constants import (
 )
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.businesses.models.business import Business
+from app.common.enums import ObligationStatus
 from app.core.exceptions import AppError, NotFoundError
 from app.signature_requests.models.signature_request import (
     SignatureRequestStatus,
@@ -151,7 +151,7 @@ def test_signed_annual_report_approval_is_preserved_and_retried(
         deadline_type="standard",
     )
     report_entity = AnnualReportRepository(test_db).get_by_id(report.id)
-    report_entity.status = AnnualReportStatus.PENDING_CLIENT
+    report_entity.status = ObligationStatus.AWAITING_VERIFICATION
     test_db.flush()
 
     service = SignatureRequestService(test_db)
@@ -186,7 +186,7 @@ def test_signed_annual_report_approval_is_preserved_and_retried(
 
     assert signed_request.status == SignatureRequestStatus.SIGNED
     assert signed_request.signing_token is None
-    assert report_entity.status == AnnualReportStatus.PENDING_CLIENT
+    assert report_entity.status == ObligationStatus.AWAITING_VERIFICATION
     detail = AnnualReportDetailRepository(test_db).get_by_report_id(report.id)
     assert detail is not None
     assert detail.client_approved_at == signed_request.signed_at
@@ -207,7 +207,7 @@ def test_signed_annual_report_approval_is_preserved_and_retried(
     assert first_retry.submitted == 1
     assert first_retry.failed == 0
     assert second_retry.processed == 0
-    assert report_entity.status == AnnualReportStatus.SUBMITTED
+    assert report_entity.status == ObligationStatus.SUBMITTED
     assert sibling.status == SignatureRequestStatus.CANCELED
 
     report_audit_rows = EntityAuditLogRepository(test_db).list_by_entity(
@@ -218,7 +218,7 @@ def test_signed_annual_report_approval_is_preserved_and_retried(
         for row in report_audit_rows
         if row.action == entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED)
         and isinstance(row.new_value, dict)
-        and row.new_value.get("status") == AnnualReportStatus.SUBMITTED.value
+        and row.new_value.get("status") == ObligationStatus.SUBMITTED.value
     ]
     assert len(submitted_actions) == 1
 

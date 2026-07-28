@@ -16,14 +16,14 @@ def test_materials_complete_transitions_pending_to_material_received(
     )
     assert create_resp.status_code == 201
     item_id = create_resp.json()["id"]
-    assert create_resp.json()["status"] == "pending_materials"
+    assert create_resp.json()["status"] == "awaiting_input"
 
     complete_resp = client.post(
         f"/api/v1/vat/work-items/{item_id}/materials-complete",
         headers=advisor_headers,
     )
     assert complete_resp.status_code == 200
-    assert complete_resp.json()["status"] == "material_received"
+    assert complete_resp.json()["status"] == "input_received"
 
 
 def test_materials_complete_rejects_invalid_status(client, advisor_headers, vat_client):

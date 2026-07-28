@@ -8,7 +8,6 @@ from sqlalchemy.orm import Session
 
 from app.annual_reports.annual_report_constants import FORM_MAP
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     ExtensionReason,
     FilingDeadlineType,
@@ -20,6 +19,7 @@ from app.annual_reports.models.annual_report_enums import (
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.common.enums import (
+    ObligationStatus,
     ObligationType,
 )
 from app.users.models.user import User
@@ -115,7 +115,7 @@ class AnnualReportRowFactory:
         tax_year: int = TEST_TAX_YEAR,
         client_type: ClientAnnualFilingType = ClientAnnualFilingType.CORPORATION,
         form_type: PrimaryAnnualReportForm | None = None,
-        status: AnnualReportStatus = AnnualReportStatus.NOT_STARTED,
+        status: ObligationStatus = ObligationStatus.AWAITING_INPUT,
         deadline_type: FilingDeadlineType = FilingDeadlineType.STANDARD,
         filing_deadline: datetime | None = None,
         custom_deadline_note: str | None = None,

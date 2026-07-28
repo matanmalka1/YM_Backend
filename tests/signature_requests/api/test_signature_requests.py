@@ -3,7 +3,6 @@ from decimal import Decimal
 
 from sqlalchemy import select
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.repositories.annual_report_detail_repository import (
@@ -27,6 +26,7 @@ from app.audit.audit_constants import (
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.businesses.models.business import Business
+from app.common.enums import ObligationStatus
 from app.signature_requests.models.signature_request import SignatureRequestStatus
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
@@ -272,7 +272,7 @@ def test_signature_annual_report_auto_submit_system_audit_and_no_signature_dupli
     report_entity = test_db.execute(
         select(AnnualReport).where(AnnualReport.id == report.id)
     ).scalar_one()
-    report_entity.status = AnnualReportStatus.PENDING_CLIENT
+    report_entity.status = ObligationStatus.AWAITING_VERIFICATION
     report_entity.tax_due = Decimal("100.00")
     AnnualReportIncomeRepository(test_db).create_for_report(
         report.id,
@@ -310,7 +310,7 @@ def test_signature_annual_report_auto_submit_system_audit_and_no_signature_dupli
 
     approve_resp = client.post(f"/sign/{payload['signing_token']}/approve")
     assert approve_resp.status_code == 200
-    assert report_entity.status == AnnualReportStatus.SUBMITTED
+    assert report_entity.status == ObligationStatus.SUBMITTED
     detail = AnnualReportDetailRepository(test_db).get_by_report_id(report.id)
     assert detail is not None
     assert detail.client_approved_at is not None

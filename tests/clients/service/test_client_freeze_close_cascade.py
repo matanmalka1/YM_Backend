@@ -12,7 +12,6 @@ from datetime import date
 from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     PrimaryAnnualReportForm,
 )
@@ -21,8 +20,7 @@ from app.binders.models.binder import Binder, BinderCapacityStatus, BinderLocati
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.clients.services.client_update_service import ClientUpdateService
-from app.common.enums import EntityType, IdNumberType, VatType
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import EntityType, IdNumberType, ObligationStatus, VatType
 from app.vat.models.vat_work_item import VatWorkItem
 from tests.helpers.tax_calendar_links import (
     create_linked_vat_work_item,
@@ -45,7 +43,7 @@ def _setup_client_with_cascade_data(db, actor_user, client_factory, binder_facto
         client_record_id=client_id,
         period="2026-01",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
         created_by=actor_user.id,
     )
     create_linked_vat_work_item(
@@ -53,7 +51,7 @@ def _setup_client_with_cascade_data(db, actor_user, client_factory, binder_facto
         client_record_id=client_id,
         period="2026-02",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.MATERIAL_RECEIVED,
+        status=ObligationStatus.INPUT_RECEIVED,
         created_by=actor_user.id,
     )
 
@@ -64,7 +62,7 @@ def _setup_client_with_cascade_data(db, actor_user, client_factory, binder_facto
             tax_year=2026,
             client_type=ClientAnnualFilingType.SELF_EMPLOYED,
             form_type=PrimaryAnnualReportForm.FORM_1301,
-            status=AnnualReportStatus.NOT_STARTED,
+            status=ObligationStatus.AWAITING_INPUT,
             tax_calendar_entry_id=annual_entry.id,
             created_by=actor_user.id,
         )
@@ -100,13 +98,13 @@ def test_freeze_cascade_cancels_vat_items_annual_reports_and_closes_binders(
         test_db.scalars(select(VatWorkItem).where(VatWorkItem.client_record_id == client_id))
     )
     assert len(vat_items) == 2
-    assert all(item.status == VatWorkItemStatus.CANCELED for item in vat_items)
+    assert all(item.status == ObligationStatus.CANCELED for item in vat_items)
 
     annual_reports = list(
         test_db.scalars(select(AnnualReport).where(AnnualReport.client_record_id == client_id))
     )
     assert len(annual_reports) == 1
-    assert all(r.status == AnnualReportStatus.CANCELED for r in annual_reports)
+    assert all(r.status == ObligationStatus.CANCELED for r in annual_reports)
 
     binders = list(test_db.scalars(select(Binder).where(Binder.client_record_id == client_id)))
     assert len(binders) == 1
@@ -130,7 +128,7 @@ def test_close_cascade_mirrors_freeze_cascade(test_db, client_factory, binder_fa
     vat_items = list(
         test_db.scalars(select(VatWorkItem).where(VatWorkItem.client_record_id == client_id))
     )
-    assert all(item.status == VatWorkItemStatus.CANCELED for item in vat_items)
+    assert all(item.status == ObligationStatus.CANCELED for item in vat_items)
 
     binders = list(test_db.scalars(select(Binder).where(Binder.client_record_id == client_id)))
     assert all(b.capacity_status == BinderCapacityStatus.FULL for b in binders)
@@ -149,7 +147,7 @@ def test_freeze_does_not_cancel_filed_vat_items(test_db, client_factory, actor_u
         test_db,
         client_record_id=seeded.id,
         period="2026-03",
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
         created_by=actor_user.id,
     )
 
@@ -158,7 +156,7 @@ def test_freeze_does_not_cancel_filed_vat_items(test_db, client_factory, actor_u
     )
     test_db.refresh(filed_item)
 
-    assert filed_item.status == VatWorkItemStatus.FILED
+    assert filed_item.status == ObligationStatus.SUBMITTED
 
 
 def test_binder_already_full_stays_full_after_cascade(

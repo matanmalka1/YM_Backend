@@ -4,10 +4,15 @@ STATUS_CHANGED = entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED)
 
 
 def _transition_to_collecting_docs(client, advisor_headers, report_id: int) -> None:
+    """Advance one stage off awaiting_input.
+
+    This used to move not_started -> collecting_docs. Those merged into one stage,
+    so the first real move is now to input_received.
+    """
     resp = client.post(
         f"/api/v1/annual-reports/{report_id}/status",
         headers=advisor_headers,
-        json={"status": "collecting_docs", "note": "Started collection"},
+        json={"status": "input_received", "note": "Started collection"},
     )
     assert resp.status_code == 200
 
@@ -32,8 +37,8 @@ def test_generic_annual_report_audit_returns_status_entries(
     assert item["entity_type"] == "annual_report"
     assert item["entity_id"] == report.id
     assert item["action"] == "annual_report.status_changed"
-    assert item["old_value"] == {"status": "not_started"}
-    assert item["new_value"] == {"status": "collecting_docs"}
+    assert item["old_value"] == {"status": "awaiting_input"}
+    assert item["new_value"] == {"status": "awaiting_input"}
     assert item["metadata_json"] == {
         "client_record_id": report.client_record_id,
         "tax_year": report.tax_year,

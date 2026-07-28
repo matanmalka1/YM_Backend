@@ -62,19 +62,6 @@ class FilingDeadlineType(str, PyEnum):
     CUSTOM = "custom"  # ITA granted specific extension
 
 
-class ReportStage(str, PyEnum):
-    """
-    Higher-level workflow stages used by dashboards.
-    """
-
-    MATERIAL_COLLECTION = "material_collection"
-    IN_PROGRESS = "in_progress"
-    FINAL_REVIEW = "final_review"
-    CLIENT_SIGNATURE = "client_signature"
-    TRANSMITTED = "transmitted"
-    POST_SUBMISSION = "post_submission"
-
-
 class ExtensionReason(str, PyEnum):
     MILITARY_SERVICE = "military_service"  # מילואים
     HEALTH_REASON = "health_reason"  # סיבה רפואית
@@ -88,6 +75,5 @@ __all__ = [
     "FilingDeadlineType",
     "ExtensionReason",
     "PrimaryAnnualReportForm",
-    "ReportStage",
     "SubmissionMethod",
 ]

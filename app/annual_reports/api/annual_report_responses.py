@@ -12,12 +12,6 @@ REPORT_CREATE_RESPONSES = error_responses(
     conflict_response(description="כבר קיים דוח לשנת המס ולישות אלה"),
 )
 
-REPORT_AMEND_RESPONSES = error_responses(
-    bad_request_response(description="נתוני התיקון אינם תקינים"),
-    not_found_response(description="הדוח המבוקש לא נמצא"),
-    conflict_response(description="לא ניתן לפתוח את הדוח לתיקון במצב הנוכחי"),
-)
-
 # status / submit / transition: invalid input, missing report, or illegal move.
 REPORT_TRANSITION_RESPONSES = error_responses(
     bad_request_response(description="המעבר המבוקש אינו חוקי"),

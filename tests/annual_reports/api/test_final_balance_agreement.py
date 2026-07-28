@@ -14,7 +14,6 @@ from decimal import Decimal
 
 import pytest
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -22,6 +21,7 @@ from app.annual_reports.annual_report_ni_engine import (
     calculate_national_insurance as _calculate_ni,
 )
 from app.annual_reports.annual_report_tax_engine import calculate_tax as _calculate_tax
+from app.common.enums import ObligationStatus
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -51,7 +51,7 @@ def _pay(test_db, report, period: str, due_day: date, amount: str):
         paid_amount=Decimal(amount),
         annual_report_id=report.id,
     )
-    repo.update_payment(payment, status=AdvancePaymentStatus.PAID, paid_amount=Decimal(amount))
+    repo.update_payment(payment, status=ObligationStatus.SUBMITTED, paid_amount=Decimal(amount))
     return payment
 
 

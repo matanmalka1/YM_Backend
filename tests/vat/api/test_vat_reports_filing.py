@@ -13,7 +13,7 @@ class TestFiling:
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["status"] == "filed"
+        assert data["status"] == "submitted"
         assert data["submission_method"] == "online"
         assert data["is_overridden"] is False
 

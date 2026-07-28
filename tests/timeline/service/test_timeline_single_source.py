@@ -16,7 +16,6 @@ Two layers of proof:
 from datetime import date
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     FilingDeadlineType,
     PrimaryAnnualReportForm,
@@ -35,6 +34,7 @@ from app.audit.audit_constants import (
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.binders.repositories.binder_repository import BinderRepository
 from app.binders.services.binder_lifecycle_service import BinderLifecycleService
+from app.common.enums import ObligationStatus
 from app.timeline.services.timeline_service import TimelineService
 from app.timeline.timeline_event_sources import (
     AUDIT_AGGREGATOR_ENTITY_TYPES,
@@ -117,7 +117,7 @@ def _annual_report(db, client_id: int) -> AnnualReport:
         tax_year=2026,
         client_type=ClientAnnualFilingType.INDIVIDUAL,
         form_type=PrimaryAnnualReportForm.FORM_1301,
-        status=AnnualReportStatus.IN_PREPARATION,
+        status=ObligationStatus.IN_PROGRESS,
         deadline_type=FilingDeadlineType.STANDARD,
         tax_calendar_entry_id=entry.id,
     )
@@ -141,7 +141,7 @@ def test_full_client_timeline_has_no_duplicate_events(test_db, test_user):
         report.id,
         test_user.id,
         entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED),
-        old_value={"status": "in_preparation"},
+        old_value={"status": "in_progress"},
         new_value={"status": "submitted"},
         metadata_json=_ar_meta,
     )

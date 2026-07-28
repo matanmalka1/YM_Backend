@@ -10,7 +10,6 @@ from decimal import Decimal
 import pytest
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     PrimaryAnnualReportForm,
 )
@@ -18,13 +17,12 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import BinderCapacityStatus, BinderLocationStatus
 from app.businesses.services.business_status_card_service import StatusCardService
 from app.charges.models.charge import ChargeStatus, ChargeType
-from app.common.enums import EntityType, IdNumberType
+from app.common.enums import EntityType, IdNumberType, ObligationStatus
 from app.core.exceptions import NotFoundError
 from app.documents.permanent_documents.models.permanent_document import (
     DocumentScope,
     PermanentDocumentType,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from tests.helpers.tax_calendar_links import (
     create_linked_vat_work_item,
     create_tax_calendar_entry_for_annual,
@@ -74,9 +72,9 @@ def test_empty_client_returns_zero_counts(test_db, client_factory):
 def test_vat_card_counts_only_requested_year(test_db, client_factory, actor_user):
     client_id = _client(client_factory, "SC-VAT-001")
     for period, net_vat, status in [
-        ("2026-01", Decimal("100.00"), VatWorkItemStatus.FILED),
-        ("2026-02", Decimal("200.00"), VatWorkItemStatus.PENDING_MATERIALS),
-        ("2025-12", Decimal("999.00"), VatWorkItemStatus.FILED),  # different year — excluded
+        ("2026-01", Decimal("100.00"), ObligationStatus.SUBMITTED),
+        ("2026-02", Decimal("200.00"), ObligationStatus.AWAITING_INPUT),
+        ("2025-12", Decimal("999.00"), ObligationStatus.SUBMITTED),  # different year — excluded
     ]:
         item = create_linked_vat_work_item(
             test_db,
@@ -103,7 +101,7 @@ def test_vat_card_latest_period_is_lexicographic_max(test_db, client_factory, ac
             test_db,
             client_record_id=client_id,
             period=period,
-            status=VatWorkItemStatus.PENDING_MATERIALS,
+            status=ObligationStatus.AWAITING_INPUT,
             created_by=actor_user.id,
         )
     test_db.flush()
@@ -138,7 +136,7 @@ def test_annual_report_card_reflects_stored_report(test_db, client_factory, acto
         actor_user,
         client_id,
         2026,
-        status=AnnualReportStatus.IN_PREPARATION,
+        status=ObligationStatus.IN_PROGRESS,
         filing_deadline=datetime(2027, 4, 30),
         refund_due=Decimal("1500.00"),
         tax_due=None,
@@ -146,7 +144,7 @@ def test_annual_report_card_reflects_stored_report(test_db, client_factory, acto
 
     card = StatusCardService(test_db).get_status_card(client_id, year=2026)
 
-    assert card.annual_report.status == AnnualReportStatus.IN_PREPARATION.value
+    assert card.annual_report.status == ObligationStatus.IN_PROGRESS.value
     assert card.annual_report.form_type == PrimaryAnnualReportForm.FORM_1301.value
     assert card.annual_report.filing_deadline == datetime(2027, 4, 30, tzinfo=UTC)
     assert card.annual_report.model_dump(mode="json")["filing_deadline"].endswith("Z")
@@ -156,7 +154,7 @@ def test_annual_report_card_reflects_stored_report(test_db, client_factory, acto
 
 def test_annual_report_card_empty_when_no_report_for_year(test_db, client_factory, actor_user):
     client_id = _client(client_factory, "SC-AR-002")
-    _annual_report(test_db, actor_user, client_id, 2025, status=AnnualReportStatus.SUBMITTED)
+    _annual_report(test_db, actor_user, client_id, 2025, status=ObligationStatus.SUBMITTED)
 
     card = StatusCardService(test_db).get_status_card(client_id, year=2026)
     assert card.annual_report.status is None

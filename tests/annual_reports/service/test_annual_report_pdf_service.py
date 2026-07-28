@@ -18,7 +18,7 @@ def test_build_pdf_runs_when_reportlab_available_or_raises():
     report = SimpleNamespace(
         tax_year=2026,
         client_type="corporation",
-        status=SimpleNamespace(value="not_started"),
+        status=SimpleNamespace(value="awaiting_input"),
         ita_reference="123",
         refund_due=0,
         tax_due=120,

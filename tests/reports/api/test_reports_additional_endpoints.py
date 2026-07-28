@@ -1,16 +1,13 @@
 from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     FilingDeadlineType,
     PrimaryAnnualReportForm,
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.common.enums import VatType
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import ObligationStatus, VatType
 from tests.helpers.tax_calendar_links import (
     create_tax_calendar_entry_for_annual,
     create_tax_calendar_entry_for_period,
@@ -38,7 +35,7 @@ def test_reports_vat_compliance_endpoint(
         created_by=test_user.id,
         period="2026-01",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
         filed_at=datetime(2026, 3, 1, 9, 0, 0),
         updated_at=now,
         tax_calendar_entry_id=jan_entry.id,
@@ -50,7 +47,7 @@ def test_reports_vat_compliance_endpoint(
         created_by=test_user.id,
         period="2026-02",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
         updated_at=now - timedelta(days=40),
         tax_calendar_entry_id=feb_entry.id,
         due_date_original=feb_entry.due_date,
@@ -61,7 +58,7 @@ def test_reports_vat_compliance_endpoint(
         created_by=test_user.id,
         period="2025-12",
         period_type=VatType.MONTHLY,
-        status=VatWorkItemStatus.PENDING_MATERIALS,
+        status=ObligationStatus.AWAITING_INPUT,
         updated_at=now - timedelta(days=45),
         tax_calendar_entry_id=dec_entry.id,
         due_date_original=dec_entry.due_date,
@@ -98,7 +95,7 @@ def test_reports_advance_payments_endpoint_month_filter(
         period_months_count=1,
         expected_amount=Decimal("1000.00"),
         paid_amount=Decimal("500.00"),
-        status=AdvancePaymentStatus.PENDING,
+        status=ObligationStatus.AWAITING_INPUT,
         due_date=date(2026, 1, 15),
         tax_calendar_entry_id=jan_entry.id,
     )
@@ -108,7 +105,7 @@ def test_reports_advance_payments_endpoint_month_filter(
         period_months_count=1,
         expected_amount=Decimal("700.00"),
         paid_amount=Decimal("700.00"),
-        status=AdvancePaymentStatus.PAID,
+        status=ObligationStatus.SUBMITTED,
         due_date=date(2026, 2, 15),
         tax_calendar_entry_id=feb_entry.id,
     )
@@ -146,7 +143,7 @@ def test_reports_annual_reports_endpoint(
         tax_year=2026,
         client_type=ClientAnnualFilingType.CORPORATION,
         form_type=PrimaryAnnualReportForm.FORM_1214,
-        status=AnnualReportStatus.SUBMITTED,
+        status=ObligationStatus.SUBMITTED,
         deadline_type=FilingDeadlineType.STANDARD,
         filing_deadline=datetime(2027, 4, 30, 0, 0, 0),
         tax_calendar_entry_id=entry.id,

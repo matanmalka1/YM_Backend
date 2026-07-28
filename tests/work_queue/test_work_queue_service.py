@@ -1,8 +1,8 @@
 from datetime import date, timedelta
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import ObligationStatus
 from app.reminders.models.reminder import ReminderActionType, ReminderStatus
 from app.tasks.models.task import Task, TaskPriority, TaskStatus
 from app.utils.time_utils import utcnow
@@ -85,7 +85,7 @@ def test_work_queue_advance_payment_includes_source_payload(test_db, create_clie
         expected_amount=1000,
         paid_amount=250,
     )
-    payment.status = AdvancePaymentStatus.PARTIAL
+    payment.status = ObligationStatus.IN_PROGRESS
     test_db.commit()
 
     items = WorkQueueService(test_db).list_items(client_record_id=biz.client_id)
@@ -99,7 +99,7 @@ def test_work_queue_advance_payment_includes_source_payload(test_db, create_clie
         "period_months_count": 1,
         "frequency": "monthly",
         "due_date": due_date.isoformat(),
-        "status": "partial",
+        "status": "in_progress",
         "expected_amount": "1000.00",
         "paid_amount": "250.00",
         "remaining_amount": "750.00",
@@ -377,7 +377,7 @@ def test_business_id_filter_hides_client_level_sources(test_db, create_client_wi
         expected_amount=500,
         paid_amount=0,
     )
-    payment.status = AdvancePaymentStatus.PENDING
+    payment.status = ObligationStatus.AWAITING_INPUT
     test_db.commit()
 
     items = WorkQueueService(test_db).list_items(business_id=biz.id)

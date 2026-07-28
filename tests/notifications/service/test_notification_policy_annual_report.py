@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
+from app.common.enums import ObligationStatus
 from app.notifications.models.notification import NotificationStatus, NotificationTrigger
 from app.notifications.services.notification_policy_service import (
     ANNUAL_REMINDER_COOLDOWN_DAYS,
@@ -19,7 +19,7 @@ def _make_client(client_record_id: int = 10):
     return SimpleNamespace(id=client_record_id, status=ClientStatus.ACTIVE)
 
 
-def _make_report(status: AnnualReportStatus, report_id: int = 1):
+def _make_report(status: ObligationStatus, report_id: int = 1):
     return SimpleNamespace(id=report_id, status=status, tax_year=2025, client_record_id=10)
 
 
@@ -132,7 +132,7 @@ class _FakeDB:
 
 
 def test_annual_report_client_reminder_blocked_when_wrong_status():
-    report = _make_report(AnnualReportStatus.NOT_STARTED)
+    report = _make_report(ObligationStatus.AWAITING_INPUT)
     with _FakeDB(report) as db:
         policy = NotificationPolicyService()
         result = policy.can_send(
@@ -146,7 +146,7 @@ def test_annual_report_client_reminder_blocked_when_wrong_status():
 
 
 def test_annual_report_client_reminder_allowed_when_pending_client():
-    report = _make_report(AnnualReportStatus.PENDING_CLIENT)
+    report = _make_report(ObligationStatus.AWAITING_VERIFICATION)
     with _FakeDB(report, last_notification=None) as db:
         policy = NotificationPolicyService()
         result = policy.can_send(
@@ -159,7 +159,7 @@ def test_annual_report_client_reminder_allowed_when_pending_client():
 
 
 def test_annual_report_client_reminder_cooldown_blocks_resend_within_2_days():
-    report = _make_report(AnnualReportStatus.PENDING_CLIENT)
+    report = _make_report(ObligationStatus.AWAITING_VERIFICATION)
     last = _make_last_notification(days_ago=0, status=NotificationStatus.SENT)
     with _FakeDB(report, last_notification=last) as db:
         policy = NotificationPolicyService()
@@ -174,7 +174,7 @@ def test_annual_report_client_reminder_cooldown_blocks_resend_within_2_days():
 
 
 def test_annual_report_client_reminder_cooldown_allows_after_2_days():
-    report = _make_report(AnnualReportStatus.PENDING_CLIENT)
+    report = _make_report(ObligationStatus.AWAITING_VERIFICATION)
     last = _make_last_notification(days_ago=ANNUAL_REMINDER_COOLDOWN_DAYS + 1)
     with _FakeDB(report, last_notification=last) as db:
         policy = NotificationPolicyService()
@@ -189,7 +189,7 @@ def test_annual_report_client_reminder_cooldown_allows_after_2_days():
 
 def test_annual_report_client_reminder_skipped_notifications_dont_trigger_cooldown():
     """A SKIPPED last notification should not count for cooldown."""
-    report = _make_report(AnnualReportStatus.PENDING_CLIENT)
+    report = _make_report(ObligationStatus.AWAITING_VERIFICATION)
     last = _make_last_notification(days_ago=0, status=NotificationStatus.SKIPPED)
     with _FakeDB(report, last_notification=last) as db:
         policy = NotificationPolicyService()
@@ -215,7 +215,7 @@ def test_annual_report_client_reminder_blocked_when_no_db():
 
 def test_annual_report_client_reminder_blocked_when_wrong_client():
     """Report belongs to different client — ownership check blocks."""
-    report = _make_report(AnnualReportStatus.PENDING_CLIENT, report_id=1)
+    report = _make_report(ObligationStatus.AWAITING_VERIFICATION, report_id=1)
     # client_record_id=10 in report, but caller is client 99
     with _FakeDB(report, last_notification=None) as db:
         policy = NotificationPolicyService()
@@ -234,9 +234,9 @@ def test_annual_report_client_reminder_blocked_when_wrong_client():
 @pytest.mark.parametrize(
     "status",
     [
-        AnnualReportStatus.NOT_STARTED,
-        AnnualReportStatus.COLLECTING_DOCS,
-        AnnualReportStatus.IN_PREPARATION,
+        ObligationStatus.AWAITING_INPUT,
+        ObligationStatus.AWAITING_INPUT,
+        ObligationStatus.IN_PROGRESS,
     ],
 )
 def test_annual_report_documents_request_allowed_for_valid_statuses(status):
@@ -255,10 +255,10 @@ def test_annual_report_documents_request_allowed_for_valid_statuses(status):
 @pytest.mark.parametrize(
     "status",
     [
-        AnnualReportStatus.PENDING_CLIENT,
-        AnnualReportStatus.SUBMITTED,
-        AnnualReportStatus.CLOSED,
-        AnnualReportStatus.CANCELED,
+        ObligationStatus.AWAITING_VERIFICATION,
+        ObligationStatus.SUBMITTED,
+        ObligationStatus.SUBMITTED,
+        ObligationStatus.CANCELED,
     ],
 )
 def test_annual_report_documents_request_blocked_for_invalid_statuses(status):

@@ -1,9 +1,9 @@
 from datetime import date, timedelta
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import ObligationStatus
 from app.tasks.models.task import TaskStatus
 from app.utils.time_utils import utcnow
 from app.work_queue.items.common import source_route
@@ -27,7 +27,7 @@ def test_work_queue_api_returns_clean_advance_payment_contract(
         expected_amount=1000,
         paid_amount=250,
     )
-    payment.status = AdvancePaymentStatus.PARTIAL
+    payment.status = ObligationStatus.IN_PROGRESS
     test_db.commit()
 
     response = client.get(

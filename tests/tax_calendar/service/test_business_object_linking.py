@@ -7,7 +7,7 @@ from app.advance_payments.services.advance_payment_generation_service import (
     generate_annual_schedule,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
-from app.common.enums import DeadlineRuleType, ObligationType, VatType
+from app.common.enums import DeadlineRuleType, ObligationStatus, ObligationType, VatType
 from app.core.exceptions import AppError, ConflictError
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
 from app.tax_calendar.services.tax_calendar_bootstrap_service import bootstrap_tax_calendar
@@ -18,7 +18,6 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
 from app.tax_calendar.tax_calendar_link_diagnostics import (
     find_active_null_tax_calendar_links,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 from app.vat.repositories.vat_work_item_repository import VatWorkItemRepository
 from app.vat.services.vat_intake_service import create_work_item
@@ -89,7 +88,7 @@ def test_vat_work_item_monthly_links_matching_tax_calendar_entry(test_db, actor_
     assert item.tax_calendar_entry_id == entry.id
     assert item.due_date_original == entry.due_date
     assert item.due_date_effective == entry.due_date
-    assert item.status == VatWorkItemStatus.MATERIAL_RECEIVED
+    assert item.status == ObligationStatus.INPUT_RECEIVED
 
 
 def test_vat_work_item_bimonthly_links_matching_tax_calendar_entry(test_db, actor_user):
@@ -114,7 +113,7 @@ def test_vat_work_item_bimonthly_links_matching_tax_calendar_entry(test_db, acto
     assert item.tax_calendar_entry_id == entry.id
     assert item.due_date_original == entry.due_date
     assert item.due_date_effective == entry.due_date
-    assert item.status == VatWorkItemStatus.MATERIAL_RECEIVED
+    assert item.status == ObligationStatus.INPUT_RECEIVED
 
 
 def test_materializer_rejects_even_month_bimonthly_calendar_entry(test_db):
@@ -154,7 +153,7 @@ def test_vat_work_item_creates_missing_tax_calendar_entry(test_db, actor_user):
     assert entry.period_months_count == 1
     assert item.due_date_original == entry.due_date
     assert item.due_date_effective == entry.due_date
-    assert item.status == VatWorkItemStatus.MATERIAL_RECEIVED
+    assert item.status == ObligationStatus.INPUT_RECEIVED
 
 
 def test_vat_work_item_due_date_original_is_immutable_after_set(test_db, actor_user):
@@ -265,7 +264,7 @@ def test_annual_report_creation_links_matching_tax_calendar_entry(test_db, actor
     )
 
     assert report.tax_calendar_entry_id == entry.id
-    assert report.status.value == "not_started"
+    assert report.status.value == "awaiting_input"
     assert report.filing_deadline.date() == date(2027, 7, 31)
 
 

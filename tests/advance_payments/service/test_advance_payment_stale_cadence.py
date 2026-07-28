@@ -4,9 +4,9 @@ from decimal import Decimal
 
 import pytest
 
-from app.advance_payments.models.advance_payment import AdvancePayment, AdvancePaymentStatus
+from app.advance_payments.models.advance_payment import AdvancePayment
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.common.enums import AdvancePaymentFrequency
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.utils.time_utils import israel_today
 
@@ -118,7 +118,7 @@ def test_settled_rows_survive_the_cleanup_and_keep_their_period(test_db, client_
     assert len(rows) == 12
     january = next(row for row in rows if row.period == f"{FUTURE_YEAR}-01")
     assert january.period_months_count == 2
-    assert january.status == AdvancePaymentStatus.PAID
+    assert january.status == ObligationStatus.AWAITING_VERIFICATION
 
 
 def test_count_stale_cadence_splits_removable_from_settled(test_db, client_factory):

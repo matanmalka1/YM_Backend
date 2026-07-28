@@ -5,11 +5,10 @@ from itertools import count
 
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
 from app.businesses.models.business import Business
-from app.common.enums import AdvancePaymentFrequency, VatType
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus, VatType
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 _seq = count(1)
 
@@ -37,7 +36,7 @@ def _payment(db, business, period):
 
 
 def _vat_item(
-    db, vat_work_item_factory, client_id, period, net, user_id, status=VatWorkItemStatus.FILED
+    db, vat_work_item_factory, client_id, period, net, user_id, status=ObligationStatus.SUBMITTED
 ):
     mat = TaxCalendarMaterializationService(db)
     entry = mat.ensure_periodic_entry("vat", period, 1)
@@ -110,7 +109,7 @@ def test_refresh_turnover_409_when_vat_not_filed(
         "2026-09",
         50000,
         test_user.id,
-        VatWorkItemStatus.READY_FOR_REVIEW,
+        ObligationStatus.AWAITING_VERIFICATION,
     )
 
     resp = client.post(_url(business, payment), json={}, headers=advisor_headers)
@@ -147,7 +146,7 @@ def test_bulk_refresh_reports_each_skip_reason(
         "2026-02",
         50000,
         test_user.id,
-        VatWorkItemStatus.READY_FOR_REVIEW,
+        ObligationStatus.AWAITING_VERIFICATION,
     )
 
     resp = client.post(

@@ -92,7 +92,7 @@ def test_update_advance_payment_success(
 
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "paid"
+    assert data["status"] == "awaiting_verification"
     assert Decimal(str(data["paid_amount"])) == Decimal("500.00")
     assert data["updated_at"] is not None
 

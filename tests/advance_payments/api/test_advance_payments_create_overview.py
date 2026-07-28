@@ -2,11 +2,10 @@ from datetime import date
 from decimal import Decimal
 from itertools import count
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
-from app.common.enums import AdvancePaymentFrequency
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 _client_seq = count(1)
@@ -104,10 +103,10 @@ def test_overview_filters_by_status_and_month(
         period_months_count=1,
         due_date=date(2026, 3, 15),
     )
-    repo.update_payment(feb, status=AdvancePaymentStatus.PAID, paid_amount=Decimal("1200"))
+    repo.update_payment(feb, status=ObligationStatus.AWAITING_VERIFICATION, paid_amount=Decimal("1200"))
 
     resp = client.get(
-        "/api/v1/advance-payments/overview?year=2026&month=2&status=paid&page=1&page_size=10",
+        "/api/v1/advance-payments/overview?year=2026&month=2&status=awaiting_verification&page=1&page_size=10",
         headers=advisor_headers,
     )
 

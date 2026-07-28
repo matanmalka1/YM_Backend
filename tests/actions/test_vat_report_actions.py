@@ -1,12 +1,12 @@
 from types import SimpleNamespace
 
 from app.actions.services.vat_report_actions import get_vat_work_item_actions
+from app.common.enums import ObligationStatus
 from app.users.models.user import UserRole
-from app.vat.models.vat_enums import VatWorkItemStatus
 
 
 def test_ready_for_review_advisor_actions():
-    item = SimpleNamespace(id=30, status=VatWorkItemStatus.READY_FOR_REVIEW)
+    item = SimpleNamespace(id=30, status=ObligationStatus.AWAITING_VERIFICATION)
 
     actions = get_vat_work_item_actions(item, user_role=UserRole.ADVISOR)
 
@@ -18,7 +18,7 @@ def test_ready_for_review_advisor_actions():
 
 
 def test_ready_for_review_secretary_actions():
-    item = SimpleNamespace(id=31, status=VatWorkItemStatus.READY_FOR_REVIEW)
+    item = SimpleNamespace(id=31, status=ObligationStatus.AWAITING_VERIFICATION)
 
     actions = get_vat_work_item_actions(item, user_role=UserRole.SECRETARY)
 

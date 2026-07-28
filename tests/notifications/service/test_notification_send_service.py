@@ -3,10 +3,10 @@
 import pytest
 from sqlalchemy import func, select
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.audit.audit_constants import ACTION_NOTIFICATION_SENT, ENTITY_NOTIFICATION
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.common.enums import ObligationStatus
 from app.core.exceptions import AppError
 from app.notifications.models.notification import Notification, NotificationTrigger
 from app.notifications.repositories.notification_repository import NotificationRepository
@@ -208,7 +208,7 @@ class TestAnnualReportSendIntegration:
             created_by=test_user.id,
             created_by_name=test_user.full_name,
         )
-        svc.repo.update(report.id, status=AnnualReportStatus.PENDING_CLIENT)
+        svc.repo.update(report.id, status=ObligationStatus.AWAITING_VERIFICATION)
 
         result = self._send(test_db, client.id, report.id, test_user.id)
 
@@ -236,7 +236,7 @@ class TestAnnualReportSendIntegration:
             created_by=test_user.id,
             created_by_name=test_user.full_name,
         )
-        svc.repo.update(report.id, status=AnnualReportStatus.PENDING_CLIENT)
+        svc.repo.update(report.id, status=ObligationStatus.AWAITING_VERIFICATION)
 
         r1 = self._send(
             test_db,

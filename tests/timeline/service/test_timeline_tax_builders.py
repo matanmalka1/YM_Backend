@@ -1,10 +1,8 @@
 from datetime import datetime
 from types import SimpleNamespace
 
-from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
-    PrimaryAnnualReportForm,
-)
+from app.annual_reports.models.annual_report_enums import PrimaryAnnualReportForm
+from app.common.enums import ObligationStatus
 from app.timeline.timeline_tax_builders import (
     annual_report_status_changed_event,
 )
@@ -15,13 +13,13 @@ def test_annual_report_status_changed_event_includes_form_and_status_hebrew():
         id=3,
         form_type=PrimaryAnnualReportForm.FORM_1301,
         tax_year=2024,
-        status=AnnualReportStatus.COLLECTING_DOCS,
+        status=ObligationStatus.AWAITING_INPUT,
         updated_at=datetime(2026, 1, 1, 12, 0),
     )
     history = SimpleNamespace(
         id=10,
-        from_status=AnnualReportStatus.NOT_STARTED,
-        to_status=AnnualReportStatus.COLLECTING_DOCS,
+        from_status=ObligationStatus.AWAITING_INPUT,
+        to_status=ObligationStatus.AWAITING_INPUT,
         note="מסמכים התקבלו",
         occurred_at=datetime(2026, 1, 2, 12, 0),
     )
@@ -36,8 +34,8 @@ def test_annual_report_status_changed_event_includes_form_and_status_hebrew():
         "annual_report_id": 3,
         "tax_year": 2024,
         "form_type": "1301",
-        "from_status": "not_started",
-        "to_status": "collecting_docs",
+        "from_status": "awaiting_input",
+        "to_status": "awaiting_input",
         "note": "מסמכים התקבלו",
     }
     assert "actions" not in event

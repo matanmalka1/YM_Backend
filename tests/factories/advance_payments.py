@@ -9,11 +9,11 @@ from sqlalchemy.orm import Session
 
 from app.advance_payments.models.advance_payment import (
     AdvancePayment,
-    AdvancePaymentStatus,
     PaymentMethod,
     TurnoverSource,
 )
 from app.common.enums import (
+    ObligationStatus,
     ObligationType,
 )
 from tests.helpers.factory_utils import (
@@ -62,7 +62,7 @@ class AdvancePaymentFactory:
         withheld_amount: Decimal | int | str | None = None,
         turnover_source: TurnoverSource | None = None,
         turnover_snapshot_at: datetime | None = None,
-        status: AdvancePaymentStatus = AdvancePaymentStatus.PENDING,
+        status: ObligationStatus = ObligationStatus.AWAITING_INPUT,
         paid_at: datetime | None = None,
         payment_method: PaymentMethod | None = None,
         payment_reference: str | None = None,

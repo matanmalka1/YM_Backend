@@ -89,7 +89,7 @@ def test_list_work_items_supports_status_and_client_name_filters(
     )
 
     list_resp = client.get(
-        f"/api/v1/vat/work-items?status=filed&client_name={vat_client.full_name}",
+        f"/api/v1/vat/work-items?status=submitted&client_name={vat_client.full_name}",
         headers=advisor_headers,
     )
     assert list_resp.status_code == 200
@@ -97,7 +97,7 @@ def test_list_work_items_supports_status_and_client_name_filters(
     assert body["total"] == 1
     assert len(body["items"]) == 1
     assert body["items"][0]["id"] == filed_item_id
-    assert body["items"][0]["status"] == "filed"
+    assert body["items"][0]["status"] == "submitted"
     assert body["items"][0]["client_name"] == vat_client.full_name
     assert body["items"][0]["id"] != pending_item_id
 
@@ -177,11 +177,11 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
 
     assert response.status_code == 200
     assert response.json() == {
-        "pending_materials": 2,
-        "material_received": 1,
-        "data_entry_in_progress": 1,
-        "ready_for_review": 1,
-        "filed": 1,
+        "awaiting_input": 2,
+        "input_received": 1,
+        "in_progress": 1,
+        "awaiting_verification": 1,
+        "submitted": 1,
         "canceled": 0,
     }
 
@@ -192,11 +192,11 @@ def test_status_summary_returns_all_statuses_and_counts_by_filter(
 
     assert exact_response.status_code == 200
     assert exact_response.json() == {
-        "pending_materials": 1,
-        "material_received": 1,
-        "data_entry_in_progress": 1,
-        "ready_for_review": 1,
-        "filed": 1,
+        "awaiting_input": 1,
+        "input_received": 1,
+        "in_progress": 1,
+        "awaiting_verification": 1,
+        "submitted": 1,
         "canceled": 0,
     }
 

@@ -1,13 +1,13 @@
 from unittest.mock import MagicMock
 
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import ObligationStatus
 
 
 def make_item(
     id: int = 1,
     business_id: int = 10,
     period: str = "2026-01",
-    status: VatWorkItemStatus = VatWorkItemStatus.MATERIAL_RECEIVED,
+    status: ObligationStatus = ObligationStatus.INPUT_RECEIVED,
     net_vat: float = 0,
 ):
     item = MagicMock()

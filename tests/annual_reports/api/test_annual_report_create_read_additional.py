@@ -8,7 +8,7 @@ def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_r
     body = get_ok.json()
     assert body["client_record_id"] is not None
     assert body["client_name"] == "AR CreateRead Additional"
-    assert body["available_transitions"] == ["collecting_docs"]
+    assert body["available_transitions"] == ["awaiting_input"]
 
     del_ok = client.delete(f"/api/v1/annual-reports/{report_id}", headers=advisor_headers)
     assert del_ok.status_code == 204

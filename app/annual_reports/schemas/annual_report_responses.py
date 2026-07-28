@@ -144,12 +144,14 @@ class SeasonSummaryResponse(BaseModel):
     tax_year: int
     filing_season_year: int
     total: int
-    not_started: int
-    collecting_docs: int
-    in_preparation: int
-    pending_client: int
+    # One field per stage of the shared obligation lifecycle. These used to be the
+    # annual-report-only status names; four of them silently returned 0 once the
+    # statuses merged, because the query keys by the stored value.
+    awaiting_input: int
+    input_received: int
+    in_progress: int
+    awaiting_verification: int
     submitted: int
-    closed: int
     canceled: int = 0
     completion_rate: ApiDecimal
     overdue_count: int

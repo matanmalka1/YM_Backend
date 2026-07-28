@@ -11,7 +11,6 @@ from datetime import date, timedelta
 from decimal import Decimal
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     PrimaryAnnualReportForm,
 )
@@ -19,7 +18,7 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.charges.charge_constants import UNPAID_CHARGE_TASK_THRESHOLD_DAYS
 from app.charges.models.charge import ChargeStatus, ChargeType
 from app.clients.client_enums import ClientStatus
-from app.common.enums import IdNumberType, VatType
+from app.common.enums import IdNumberType, ObligationStatus, VatType
 from app.utils.time_utils import utcnow
 from app.work_queue.schemas.work_queue import WorkQueueSourceType
 from app.work_queue.services.work_queue_service import WorkQueueService
@@ -87,7 +86,7 @@ def test_annual_report_builder_excludes_soft_deleted_client(test_db, actor_user)
         tax_year=2026,
         client_type=ClientAnnualFilingType.SELF_EMPLOYED,
         form_type=PrimaryAnnualReportForm.FORM_1301,
-        status=AnnualReportStatus.NOT_STARTED,
+        status=ObligationStatus.AWAITING_INPUT,
         tax_calendar_entry_id=entry.id,
         filing_deadline=date.today(),
         created_by=actor_user.id,

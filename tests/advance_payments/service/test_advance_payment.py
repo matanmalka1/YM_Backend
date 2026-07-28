@@ -6,9 +6,8 @@ from app.advance_payments.advance_payment_calculator import (
     calculate_expected_amount,
     derive_annual_income_from_vat,
 )
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.common.enums import AdvancePaymentFrequency, VatType
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus, VatType
 from app.core.exceptions import AppError, ConflictError
 
 
@@ -66,7 +65,7 @@ def test_list_payments_filters_by_status(test_db, create_client_with_business):
     service.update_payment_for_client(
         business.client_record_id,
         second.id,
-        status=AdvancePaymentStatus.PAID,
+        status=ObligationStatus.AWAITING_VERIFICATION,
         paid_amount=Decimal("200"),
     )
 
@@ -77,7 +76,7 @@ def test_list_payments_filters_by_status(test_db, create_client_with_business):
     paid_items, paid_total = service.list_payments_for_client(
         business.client_record_id,
         year=2026,
-        status=[AdvancePaymentStatus.PAID],
+        status=[ObligationStatus.AWAITING_VERIFICATION],
     )
     assert paid_total == 1
     assert paid_items[0].id == second.id

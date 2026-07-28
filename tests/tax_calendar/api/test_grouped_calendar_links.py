@@ -1,9 +1,7 @@
 from datetime import date
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment
+from app.common.enums import ObligationStatus
 from tests.helpers.tax_calendar_links import (
     PATH,
     add_advance_payment,
@@ -63,8 +61,8 @@ def test_overdue_count_excludes_done_rows(client, auth_token, test_db):
     open_client = advance_client(test_db)
     done_client = advance_client(test_db)
     for client_record, status in (
-        (open_client, AdvancePaymentStatus.PENDING),
-        (done_client, AdvancePaymentStatus.PAID),
+        (open_client, ObligationStatus.AWAITING_INPUT),
+        (done_client, ObligationStatus.SUBMITTED),
     ):
         test_db.add(
             AdvancePayment(

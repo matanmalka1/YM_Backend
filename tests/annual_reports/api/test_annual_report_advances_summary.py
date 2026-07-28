@@ -1,7 +1,6 @@
 from datetime import date
 from decimal import Decimal
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -9,6 +8,7 @@ from app.annual_reports.annual_report_ni_engine import (
     calculate_national_insurance as _calculate_ni,
 )
 from app.annual_reports.annual_report_tax_engine import calculate_tax as _calculate_tax
+from app.common.enums import ObligationStatus
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -44,7 +44,7 @@ def test_advances_summary_reports_refund_when_advances_exceed_tax(
         paid_amount=Decimal("100.00"),
         annual_report_id=report.id,
     )
-    repo.update_payment(payment, status=AdvancePaymentStatus.PAID, paid_amount=Decimal("100.00"))
+    repo.update_payment(payment, status=ObligationStatus.SUBMITTED, paid_amount=Decimal("100.00"))
 
     resp = client.get(
         f"/api/v1/annual-reports/{report.id}/advances-summary",

@@ -111,14 +111,14 @@ def test_submitted_report_tax_is_not_invalidated(
     test_db, client_factory, annual_report_service_factory
 ):
     """Invalidation is scoped to open pre-submission reports; a filed one stays put."""
-    from app.annual_reports.models.annual_report_enums import AnnualReportStatus
     from app.annual_reports.repositories.annual_report_report_repository import (
         AnnualReportRootRepository,
     )
+    from app.common.enums import ObligationStatus
 
     record = _client(client_factory)
     report = _report_with_saved_tax(test_db, annual_report_service_factory, record)
-    AnnualReportRootRepository(test_db).update(report.id, status=AnnualReportStatus.SUBMITTED)
+    AnnualReportRootRepository(test_db).update(report.id, status=ObligationStatus.SUBMITTED)
     test_db.commit()
     payment = _payment(test_db, record, f"{TAX_YEAR}-03")
 

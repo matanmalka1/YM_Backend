@@ -2,12 +2,12 @@ from datetime import date
 from decimal import Decimal
 
 from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
     ClientAnnualFilingType,
     FilingDeadlineType,
     PrimaryAnnualReportForm,
 )
 from app.annual_reports.models.annual_report_model import AnnualReport
+from app.common.enums import ObligationStatus
 from tests.helpers.identity import seed_business, seed_client_identity
 from tests.helpers.tax_calendar_links import create_tax_calendar_entry_for_annual
 
@@ -61,7 +61,7 @@ def _seed_businesses_and_reports(db, creator_id: int, tax_year: int):
             tax_year=tax_year,
             client_type=ClientAnnualFilingType.CORPORATION,
             form_type=PrimaryAnnualReportForm.FORM_1214,
-            status=AnnualReportStatus.SUBMITTED,
+            status=ObligationStatus.SUBMITTED,
             deadline_type=FilingDeadlineType.STANDARD,
             refund_due=Decimal("100.00"),
             tax_due=Decimal("50.00"),
@@ -73,7 +73,7 @@ def _seed_businesses_and_reports(db, creator_id: int, tax_year: int):
             tax_year=tax_year,
             client_type=ClientAnnualFilingType.INDIVIDUAL,
             form_type=PrimaryAnnualReportForm.FORM_1301,
-            status=AnnualReportStatus.IN_PREPARATION,
+            status=ObligationStatus.IN_PROGRESS,
             deadline_type=FilingDeadlineType.STANDARD,
             refund_due=Decimal("20.00"),
             tax_due=Decimal("75.00"),
@@ -85,7 +85,7 @@ def _seed_businesses_and_reports(db, creator_id: int, tax_year: int):
             tax_year=tax_year,
             client_type=ClientAnnualFilingType.SELF_EMPLOYED,
             form_type=PrimaryAnnualReportForm.FORM_1301,
-            status=AnnualReportStatus.COLLECTING_DOCS,
+            status=ObligationStatus.AWAITING_INPUT,
             deadline_type=FilingDeadlineType.STANDARD,
             refund_due=Decimal("0.00"),
             tax_due=Decimal("0.00"),
@@ -97,7 +97,7 @@ def _seed_businesses_and_reports(db, creator_id: int, tax_year: int):
             tax_year=tax_year,
             client_type=ClientAnnualFilingType.INDIVIDUAL,
             form_type=PrimaryAnnualReportForm.FORM_1301,
-            status=AnnualReportStatus.NOT_STARTED,
+            status=ObligationStatus.AWAITING_INPUT,
             deadline_type=FilingDeadlineType.STANDARD,
             tax_calendar_entry_id=entry.id,
         ),

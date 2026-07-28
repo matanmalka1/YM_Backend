@@ -4,9 +4,8 @@ from datetime import date
 from decimal import Decimal
 from uuid import uuid4
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
-from app.common.enums import AdvancePaymentFrequency
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus
 
 URL = "/api/v1/advance-payments/bulk-mark-paid"
 
@@ -60,7 +59,7 @@ def test_bulk_mark_paid_tops_up_pending_and_partial(
     test_db.expire_all()
     for payment_id in (pending.id, partial.id):
         row = test_db.get(type(pending), payment_id)
-        assert row.status == AdvancePaymentStatus.PAID
+        assert row.status == ObligationStatus.AWAITING_VERIFICATION
         assert row.paid_amount == row.expected_amount
         assert row.payment_reference == f"BATCH-04-{payment_id}"
         assert row.paid_at is not None
@@ -104,7 +103,7 @@ def test_bulk_mark_paid_keeps_existing_method_and_reference_when_omitted(
     assert resp.status_code == 200
     test_db.expire_all()
     row = test_db.get(type(payment), payment.id)
-    assert row.status == AdvancePaymentStatus.PAID
+    assert row.status == ObligationStatus.AWAITING_VERIFICATION
     assert row.payment_method is None
     assert row.payment_reference is None
 

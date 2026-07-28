@@ -31,8 +31,10 @@ def _create_report(db, actor_id: int, *, full_name="AR Status Additional", id_nu
 
 
 def _move_to_in_preparation(service, report_id, actor_id: int):
-    service.transition_status(report_id, "collecting_docs", actor_id, "A")
-    service.transition_status(report_id, "in_preparation", actor_id, "A")
+    # One stage at a time. not_started and collecting_docs merged into
+    # awaiting_input, so the ladder from the start is input_received then in_progress.
+    service.transition_status(report_id, "input_received", actor_id, "A")
+    service.transition_status(report_id, "in_progress", actor_id, "A")
 
 
 def test_transition_rejects_unknown_status(test_db, actor_user):
@@ -56,7 +58,7 @@ def test_pending_client_creates_real_client_scoped_signature_request(test_db, ac
     _move_to_in_preparation(service, report.id, actor_user.id)
 
     result = service.transition_status(
-        report.id, "pending_client", actor_user.id, actor_user.full_name
+        report.id, "awaiting_verification", actor_user.id, actor_user.full_name
     )
 
     pending = SignatureRequestRepository(test_db).list_pending_by_annual_report(report.id)
@@ -76,7 +78,7 @@ def test_pending_client_blocks_when_client_record_missing(test_db, actor_user, m
     monkeypatch.setattr(ClientRecordRepository, "get_by_id", lambda self, _id: None)
 
     with pytest.raises(NotFoundError) as exc:
-        service.transition_status(report.id, "pending_client", actor_user.id, actor_user.full_name)
+        service.transition_status(report.id, "awaiting_verification", actor_user.id, actor_user.full_name)
 
     assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
     assert (
@@ -134,7 +136,7 @@ def test_transition_closed_sets_financial_fields(test_db, actor_user):
 
     updated = service.transition_status(
         report.id,
-        "closed",
+        "submitted",
         actor_user.id,
         actor_user.full_name,
         assessment_amount=111.0,
@@ -157,7 +159,7 @@ def test_status_audit_failure_rolls_back_status_mutation(test_db, actor_user, mo
         with test_db.begin_nested():
             AnnualReportService(test_db).transition_status(
                 report.id,
-                "collecting_docs",
+                "awaiting_input",
                 actor_user.id,
                 actor_user.full_name,
                 note="must roll back",

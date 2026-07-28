@@ -4,7 +4,7 @@ import datetime as dt
 from decimal import Decimal
 
 from app.charges.models.charge import Charge, ChargeStatus, ChargeType
-from app.common.enums import EntityType, IdNumberType, VatType
+from app.common.enums import EntityType, IdNumberType, ObligationStatus, VatType
 from app.notifications.models.notification import (
     NotificationChannel,
     NotificationStatus,
@@ -17,7 +17,6 @@ from app.signature_requests.models.signature_request import (
     SignatureRequestType,
 )
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
 
@@ -37,7 +36,7 @@ def _vat_item(
     client_record_id: int,
     user_id: int,
     *,
-    status: VatWorkItemStatus = VatWorkItemStatus.PENDING_MATERIALS,
+    status: ObligationStatus = ObligationStatus.AWAITING_INPUT,
     due_date_effective: dt.date | None = None,
 ) -> VatWorkItem:
     return vat_work_item_factory(
@@ -117,7 +116,7 @@ def test_vat_already_filed_blocked(test_db, test_user, client_factory, vat_work_
         vat_work_item_factory,
         client.id,
         test_user.id,
-        status=VatWorkItemStatus.FILED,
+        status=ObligationStatus.SUBMITTED,
     )
 
     result = _policy(test_db, client, NotificationTrigger.VAT_DOCUMENTS_REMINDER, item.id)
