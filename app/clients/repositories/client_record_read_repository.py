@@ -34,6 +34,12 @@ class ClientRecordData(TypedDict):
     advance_rate: Decimal | None
     advance_rate_updated_at: date | None
     annual_revenue: Decimal | None
+    vat_liable_from: date | None
+    vat_liable_to: date | None
+    advance_liable_from: date | None
+    advance_liable_to: date | None
+    annual_liable_from: date | None
+    annual_liable_to: date | None
     phone: str | None
     email: str | None
     address_street: str | None
@@ -81,6 +87,12 @@ def _full_record_dict(cr: ClientRecord, le: LegalEntity, person: Person | None) 
         "advance_rate": le.advance_rate,
         "advance_rate_updated_at": le.advance_rate_updated_at,
         "annual_revenue": le.annual_revenue,
+        "vat_liable_from": le.vat_liable_from,
+        "vat_liable_to": le.vat_liable_to,
+        "advance_liable_from": le.advance_liable_from,
+        "advance_liable_to": le.advance_liable_to,
+        "annual_liable_from": le.annual_liable_from,
+        "annual_liable_to": le.annual_liable_to,
         "phone": person.phone if person else None,
         "email": person.email if person else None,
         "address_street": person.address_street if person else None,

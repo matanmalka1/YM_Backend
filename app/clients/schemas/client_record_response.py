@@ -35,6 +35,12 @@ class ClientRecordResponse(BaseModel):
     advance_rate: ApiDecimal | None = None
     advance_rate_updated_at: date | None = None
     annual_revenue: ApiDecimal | None = None
+    vat_liable_from: date | None = None
+    vat_liable_to: date | None = None
+    advance_liable_from: date | None = None
+    advance_liable_to: date | None = None
+    annual_liable_from: date | None = None
+    annual_liable_to: date | None = None
     # ── Contact (Person via PersonLegalEntityLink OWNER) ──────────────────────
     phone: str | None = None
     email: str | None = None

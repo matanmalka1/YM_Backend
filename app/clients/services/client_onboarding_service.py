@@ -72,16 +72,11 @@ class ClientOnboardingOrchestrator:
         )
         today = reference_date or israel_today()
         le = LegalEntityRepository(self.db).get_by_id(record.legal_entity_id) if record else None
-        vat_type = getattr(le, "vat_reporting_frequency", None) if le else None
-        ap_frequency = getattr(le, "advance_payment_frequency", None) if le else None
-        ap_entity_type = getattr(le, "entity_type", None) if le else None
 
         result.vat_work_items_created = self._sync_vat_work_items(
-            client_record_id, actor_id, vat_type, today
+            client_record_id, actor_id, le, today
         )
-        result.advance_payments_created = self._sync_advance_payments(
-            client_record_id, ap_frequency, ap_entity_type, today
-        )
+        result.advance_payments_created = self._sync_advance_payments(client_record_id, le, today)
         return result
 
     def _ensure_initial_binder(self, record, actor_id: int | None) -> None:
@@ -93,7 +88,7 @@ class ClientOnboardingOrchestrator:
         self,
         client_record_id: int,
         actor_id: int | None,
-        vat_type,
+        legal_entity,
         reference_date: date,
     ) -> int:
         from app.actions.services.obligation_orchestrator import _years_to_generate
@@ -101,15 +96,25 @@ class ClientOnboardingOrchestrator:
         years = _years_to_generate(reference_date)
         created = 0
         for year in years:
-            plans = vat_obligation_plan(vat_type, year)
+            # The plan is the only thing that decides whether a period is owed.
+            # There used to be a `if entry.due_date < reference_date: continue`
+            # guard here — a *calendar* guard standing in for a *liability* guard,
+            # and wrong in both directions: it created a period the client was not
+            # yet liable for whenever the due date had not passed, and skipped a
+            # genuinely owed past-due period for a client onboarded late. A late
+            # client owes its late periods; reconciliation treats them as debts.
+            plans = vat_obligation_plan(
+                getattr(legal_entity, "vat_reporting_frequency", None),
+                year,
+                liable_from=getattr(legal_entity, "vat_liable_from", None),
+                liable_to=getattr(legal_entity, "vat_liable_to", None),
+            )
             for plan in plans:
-                entry = self.tax_calendar.ensure_periodic_entry(
+                self.tax_calendar.ensure_periodic_entry(
                     ObligationType.VAT,
                     plan.period,
                     plan.period_months_count,
                 )
-                if entry.due_date < reference_date:
-                    continue
                 item = self.vat_repo.get_by_client_record_period(client_record_id, plan.period)
                 if item is None and actor_id is not None:
                     try:
@@ -130,10 +135,10 @@ class ClientOnboardingOrchestrator:
     def _sync_advance_payments(
         self,
         client_record_id: int,
-        frequency,
-        entity_type,
+        legal_entity,
         reference_date: date,
     ) -> int:
+        frequency = getattr(legal_entity, "advance_payment_frequency", None)
         if frequency is None:
             return 0
         from app.actions.services.obligation_orchestrator import _years_to_generate
@@ -141,10 +146,13 @@ class ClientOnboardingOrchestrator:
         years = _years_to_generate(reference_date)
         created = 0
         for year in years:
+            # See _sync_vat_work_items: the liability range replaced a due-date guard.
             plans = advance_payment_obligation_plan(
                 frequency=frequency,
                 year=year,
-                entity_type=entity_type,
+                entity_type=getattr(legal_entity, "entity_type", None),
+                liable_from=getattr(legal_entity, "advance_liable_from", None),
+                liable_to=getattr(legal_entity, "advance_liable_to", None),
             )
             for plan in plans:
                 entry = self.tax_calendar.ensure_periodic_entry(
@@ -152,8 +160,6 @@ class ClientOnboardingOrchestrator:
                     plan.period,
                     plan.period_months_count,
                 )
-                if entry.due_date < reference_date:
-                    continue
                 payment = self.advance_repo.get_by_period(client_record_id, plan.period)
                 if payment is None:
                     try:

@@ -1,3 +1,5 @@
+from datetime import date
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -21,6 +23,12 @@ class LegalEntityRepository(BaseRepository[LegalEntity]):
         advance_payment_frequency: AdvancePaymentFrequency | None = None,
         vat_exempt_ceiling=None,
         advance_rate=None,
+        vat_liable_from: date | None = None,
+        vat_liable_to: date | None = None,
+        advance_liable_from: date | None = None,
+        advance_liable_to: date | None = None,
+        annual_liable_from: date | None = None,
+        annual_liable_to: date | None = None,
     ) -> LegalEntity:
         entity = LegalEntity(
             id_number=id_number,
@@ -31,6 +39,12 @@ class LegalEntityRepository(BaseRepository[LegalEntity]):
             advance_payment_frequency=advance_payment_frequency,
             vat_exempt_ceiling=vat_exempt_ceiling,
             advance_rate=advance_rate,
+            vat_liable_from=vat_liable_from,
+            vat_liable_to=vat_liable_to,
+            advance_liable_from=advance_liable_from,
+            advance_liable_to=advance_liable_to,
+            annual_liable_from=annual_liable_from,
+            annual_liable_to=annual_liable_to,
         )
         self.db.add(entity)
         self.db.flush()

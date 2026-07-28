@@ -43,13 +43,29 @@ CLIENT_IMPORT_DEFAULT_VAT_REPORTING_FREQUENCY = VatType.BIMONTHLY
 CLIENT_IMPORT_DEFAULT_ADVANCE_PAYMENT_FREQUENCY = AdvancePaymentFrequency.BIMONTHLY
 
 CLIENT_OBLIGATION_NEXT_YEAR_START_MONTH = 10
+# Per-obligation-type liability ranges. Not one client-wide date: an entity can
+# register for VAT in June, receive an ITA advance rate in September, and still owe
+# a full-year annual report for the same year.
+CLIENT_LIABILITY_RANGE_FIELDS: dict[str, tuple[str, str]] = {
+    "vat": ("vat_liable_from", "vat_liable_to"),
+    "advance": ("advance_liable_from", "advance_liable_to"),
+    "annual": ("annual_liable_from", "annual_liable_to"),
+}
+
+# A change to any of these changes what the client owes, so it must drive
+# obligation generation and (from W4 onward) reconciliation.
 CLIENT_OBLIGATION_TRIGGER_FIELDS = frozenset(
     {
         "entity_type",
         "vat_reporting_frequency",
         "advance_payment_frequency",
+        *(field for pair in CLIENT_LIABILITY_RANGE_FIELDS.values() for field in pair),
     }
 )
+
+LIABILITY_RANGE_INVERTED_ERROR = "תאריך תחילת החבות חייב להקדים את תאריך סיומה"
+VAT_LIABILITY_RANGE_WITHOUT_REPORTING_ERROR = 'לא ניתן להזין טווח חבות מע"מ ללקוח שאינו מדווח מע"מ'
+ADVANCE_LIABILITY_RANGE_WITHOUT_FREQUENCY_ERROR = "לא ניתן להזין טווח חבות מקדמות ללא תדירות מקדמות"
 SUPPORTED_CREATE_ENTITY_TYPES = frozenset(
     {
         EntityType.OSEK_PATUR,

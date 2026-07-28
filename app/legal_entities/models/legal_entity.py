@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import TYPE_CHECKING
 
 from sqlalchemy import (
+    CheckConstraint,
     Index,
     Numeric,
     String,
@@ -44,6 +45,24 @@ class LegalEntity(Base):
     advance_rate_updated_at: Mapped[date | None] = mapped_column(nullable=True)
     annual_revenue: Mapped[Decimal | None] = mapped_column(Numeric(15, 0), nullable=True)
 
+    # ── Liability ranges ──────────────────────────────────────────────────────
+    # When this entity was, and stopped being, liable for each obligation type.
+    # NULL is unbounded on that side, so a fully unconfigured client keeps today's
+    # behaviour: liable for every period the frequency implies.
+    #
+    # Per type, not one client-wide date: an entity can register for VAT in June,
+    # receive an ITA advance rate in September, and still owe a *full-year* annual
+    # report for the same year. A single date cannot express that.
+    #
+    # These feed the obligation plan (`app/common/obligation_plan.py`), which is
+    # the only thing that decides whether a period is owed.
+    vat_liable_from: Mapped[date | None] = mapped_column(nullable=True)
+    vat_liable_to: Mapped[date | None] = mapped_column(nullable=True)
+    advance_liable_from: Mapped[date | None] = mapped_column(nullable=True)
+    advance_liable_to: Mapped[date | None] = mapped_column(nullable=True)
+    annual_liable_from: Mapped[date | None] = mapped_column(nullable=True)
+    annual_liable_to: Mapped[date | None] = mapped_column(nullable=True)
+
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
     updated_at: Mapped[datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
 
@@ -57,6 +76,24 @@ class LegalEntity(Base):
     __table_args__ = (
         UniqueConstraint("id_number_type", "id_number", name="uq_legal_entity_registration_id"),
         Index("ix_legal_entities_official_name", "official_name"),
+        # The request schemas reject an inverted range with a readable message, but
+        # they are not the only writer — seed builders and internal services reach
+        # the repository directly. An orderable range is a data invariant, so it is
+        # guaranteed here. Same shape as ck_deadline_rule_effective_range.
+        CheckConstraint(
+            "vat_liable_to IS NULL OR vat_liable_from IS NULL OR vat_liable_to >= vat_liable_from",
+            name="ck_legal_entity_vat_liability_range",
+        ),
+        CheckConstraint(
+            "advance_liable_to IS NULL OR advance_liable_from IS NULL "
+            "OR advance_liable_to >= advance_liable_from",
+            name="ck_legal_entity_advance_liability_range",
+        ),
+        CheckConstraint(
+            "annual_liable_to IS NULL OR annual_liable_from IS NULL "
+            "OR annual_liable_to >= annual_liable_from",
+            name="ck_legal_entity_annual_liability_range",
+        ),
     )
 
     def __repr__(self) -> str:

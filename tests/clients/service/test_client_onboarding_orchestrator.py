@@ -45,8 +45,12 @@ def test_onboarding_creates_vat_work_items_and_advance_payments(test_db, actor_u
         )
     )
 
-    assert len(vat_items) == 9
-    assert len(payments) == 9
+    # The whole year, not the 9 periods a due-date guard used to leave. Nothing
+    # narrows a plan now except the frequency and the client's liability range,
+    # and this client has no range configured. The four past-due periods are real
+    # debts a late-onboarded client owes, not leftovers.
+    assert len(vat_items) == 12
+    assert len(payments) == 12
     assert reports
     assert all(item.tax_calendar_entry_id is not None for item in vat_items)
     assert all(payment.tax_calendar_entry_id is not None for payment in payments)
@@ -83,13 +87,13 @@ def test_onboarding_retry_does_not_duplicate_vat_work_items(test_db, actor_user)
     count = test_db.scalar(
         select(func.count(VatWorkItem.id)).where(VatWorkItem.client_record_id == client_record.id)
     )
-    assert count == 9
+    assert count == 12
     payment_count = test_db.scalar(
         select(func.count(AdvancePayment.id)).where(
             AdvancePayment.client_record_id == client_record.id
         )
     )
-    assert payment_count == 9
+    assert payment_count == 12
 
 
 def test_onboarding_does_not_create_empty_setup_placeholders(test_db, actor_user):
@@ -148,6 +152,6 @@ def test_vat_bimonthly_advance_monthly_creates_12_advance_payments(test_db, acto
             select(AdvancePayment).where(AdvancePayment.client_record_id == client_record.id)
         )
     )
-    # reference_date=2025-12-31 → years [2025, 2026]; 2025 yields 1 (2025-12), 2026 yields 12
-    assert len(payments) == 13, f"Expected 13 advance payments (monthly), got {len(payments)}"
+    # reference_date=2025-12-31 → years [2025, 2026], 12 monthly periods each.
+    assert len(payments) == 24, f"Expected 24 advance payments (monthly), got {len(payments)}"
     assert all(p.period_months_count == 1 for p in payments)

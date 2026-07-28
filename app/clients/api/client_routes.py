@@ -52,19 +52,24 @@ router = APIRouter(
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
     responses=CLIENT_PREVIEW_RESPONSES,
 )
-def preview_creation_impact(
-    request: ClientImpactPreviewRequest,
-    db: DBSession,
-):
-    """מחזיר תצוגה מקדימה של הישויות שייווצרו אוטומטית עם פתיחת הלקוח."""
+def preview_creation_impact(request: ClientImpactPreviewRequest):
+    """מחזיר תצוגה מקדימה של הישויות שייווצרו אוטומטית עם פתיחת הלקוח.
+
+    Pure computation over the obligation plan — no DB session, because a preview
+    must not write. It previously materialized tax-calendar entries as a side
+    effect of the due-date filter it used, which the liability range replaced.
+    """
     return compute_creation_impact(
-        db,
         entity_type=request.client.entity_type,
         vat_reporting_frequency=preview_vat_reporting_frequency(
             request.client.entity_type,
             request.client.vat_reporting_frequency,
         ),
         advance_payment_frequency=request.client.advance_payment_frequency,
+        vat_liable_from=request.client.vat_liable_from,
+        vat_liable_to=request.client.vat_liable_to,
+        advance_liable_from=request.client.advance_liable_from,
+        advance_liable_to=request.client.advance_liable_to,
     )
 
 

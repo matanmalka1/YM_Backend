@@ -26,6 +26,12 @@ _LEGAL_ENTITY_FIELDS = frozenset(
         "advance_rate",
         "advance_rate_updated_at",
         "annual_revenue",
+        "vat_liable_from",
+        "vat_liable_to",
+        "advance_liable_from",
+        "advance_liable_to",
+        "annual_liable_from",
+        "annual_liable_to",
     }
 )
 _RECORD_FIELDS = frozenset({"status", "accountant_id"})

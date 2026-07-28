@@ -1,14 +1,19 @@
+from datetime import date
+
 from app.clients.client_constants import (
+    ADVANCE_LIABILITY_RANGE_WITHOUT_FREQUENCY_ERROR,
     ADVANCE_PAYMENT_FREQUENCY_REQUIRED_ERROR,
     COMPANY_EXEMPT_VAT_ERROR,
     CONFLICTING_ID_NUMBER_TYPE_ERROR,
     EDIT_VAT_EXEMPT_CEILING_ERROR,
+    LIABILITY_RANGE_INVERTED_ERROR,
     NON_PATUR_VAT_EXEMPT_CEILING_ERROR,
     PATUR_MANUAL_VAT_FREQUENCY_ERROR,
     SUPPORTED_CREATE_ENTITY_TYPES,
     SYSTEM_VAT_EXEMPT_CEILING_ERROR,
     UNSUPPORTED_EMPLOYEE_CREATE_ERROR,
     VAT_FREQUENCY_REQUIRED_ERROR,
+    VAT_LIABILITY_RANGE_WITHOUT_REPORTING_ERROR,
 )
 from app.clients.client_create_policy import derive_id_number_type
 from app.common.enums import AdvancePaymentFrequency, EntityType, IdNumberType, VatType
@@ -72,6 +77,47 @@ def validate_create_entity_rules(
         raise ValueError(ADVANCE_PAYMENT_FREQUENCY_REQUIRED_ERROR)
 
     validate_identifier_for_entity(entity_type, id_number)
+
+
+def validate_liability_ranges(
+    *,
+    vat_liable_from: date | None,
+    vat_liable_to: date | None,
+    advance_liable_from: date | None,
+    advance_liable_to: date | None,
+    annual_liable_from: date | None,
+    annual_liable_to: date | None,
+    vat_reporting_frequency: VatType | None = None,
+    vat_reporting_frequency_known: bool = False,
+    advance_payment_frequency: AdvancePaymentFrequency | None = None,
+    advance_payment_frequency_known: bool = False,
+) -> None:
+    """A liability range must be orderable, and must belong to a type the client has.
+
+    ``*_known`` says whether the caller can see the effective frequency. On update
+    a frequency the request did not send is unknown here, so the "range without a
+    configured type" check is skipped rather than guessed — the alternative is
+    rejecting a valid edit because the request happened not to resend the field.
+    """
+    for start, end in (
+        (vat_liable_from, vat_liable_to),
+        (advance_liable_from, advance_liable_to),
+        (annual_liable_from, annual_liable_to),
+    ):
+        if start is not None and end is not None and start > end:
+            raise ValueError(LIABILITY_RANGE_INVERTED_ERROR)
+
+    has_vat_range = vat_liable_from is not None or vat_liable_to is not None
+    if (
+        has_vat_range
+        and vat_reporting_frequency_known
+        and vat_reporting_frequency in (None, VatType.EXEMPT)
+    ):
+        raise ValueError(VAT_LIABILITY_RANGE_WITHOUT_REPORTING_ERROR)
+
+    has_advance_range = advance_liable_from is not None or advance_liable_to is not None
+    if has_advance_range and advance_payment_frequency_known and advance_payment_frequency is None:
+        raise ValueError(ADVANCE_LIABILITY_RANGE_WITHOUT_FREQUENCY_ERROR)
 
 
 def validate_update_entity_rules(
