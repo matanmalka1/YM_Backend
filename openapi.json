@@ -34398,6 +34398,22 @@
             "examples": [
               "123.45"
             ]
+          },
+          "advances_paid": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Advances Paid",
+            "examples": [
+              "123.45"
+            ]
+          },
+          "final_balance": {
+            "type": "string",
+            "format": "decimal",
+            "title": "Final Balance",
+            "examples": [
+              "123.45"
+            ]
           }
         },
         "type": "object",
@@ -34414,7 +34430,9 @@
           "national_insurance",
           "brackets",
           "total_liability",
-          "total_credit_points"
+          "total_credit_points",
+          "advances_paid",
+          "final_balance"
         ],
         "title": "TaxCalculationResponse"
       },
