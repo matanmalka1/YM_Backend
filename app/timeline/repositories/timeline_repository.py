@@ -4,7 +4,6 @@ from datetime import datetime
 from sqlalchemy import and_, select
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.audit.audit_constants import (
     ACTION_SIGNATURE_REQUEST_CANCELED,
@@ -19,6 +18,7 @@ from app.audit.audit_constants import (
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.clients.models.client_record import ClientRecord
+from app.common.enums import ObligationStatus
 from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.signature_requests.models.signature_request import SignatureRequest
 
@@ -34,21 +34,21 @@ _ANNUAL_REPORT_STATUS_CHANGED = entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATU
 
 
 @dataclass(frozen=True)
-class AnnualReportStatusAuditEvent:
+class ObligationStatusAuditEvent:
     id: int
-    from_status: AnnualReportStatus | None
-    to_status: AnnualReportStatus
+    from_status: ObligationStatus | None
+    to_status: ObligationStatus
     note: str | None
     occurred_at: datetime
 
 
-def _status_from_snapshot(snapshot: object) -> AnnualReportStatus | None:
+def _status_from_snapshot(snapshot: object) -> ObligationStatus | None:
     if not isinstance(snapshot, dict):
         return None
     status = snapshot.get("status")
     if status is None:
         return None
-    return AnnualReportStatus(status)
+    return ObligationStatus(status)
 
 
 class TimelineRepository:
@@ -102,7 +102,7 @@ class TimelineRepository:
 
     def list_annual_report_status_events(
         self, client_record_id: int | None
-    ) -> list[tuple[AnnualReport, AnnualReportStatusAuditEvent]]:
+    ) -> list[tuple[AnnualReport, ObligationStatusAuditEvent]]:
         stmt = (
             select(AnnualReport, EntityAuditLog)
             .join(
@@ -122,7 +122,7 @@ class TimelineRepository:
                 _BULK_LIMIT
             )
         ).all()
-        events: list[tuple[AnnualReport, AnnualReportStatusAuditEvent]] = []
+        events: list[tuple[AnnualReport, ObligationStatusAuditEvent]] = []
         for report, audit in rows:
             to_status = _status_from_snapshot(audit.new_value)
             if to_status is None:
@@ -130,7 +130,7 @@ class TimelineRepository:
             events.append(
                 (
                     report,
-                    AnnualReportStatusAuditEvent(
+                    ObligationStatusAuditEvent(
                         id=audit.id,
                         from_status=_status_from_snapshot(audit.old_value),
                         to_status=to_status,

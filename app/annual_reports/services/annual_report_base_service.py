@@ -80,9 +80,7 @@ class AnnualReportBaseService:
                 obj.client_name = legal_entity.official_name
                 obj.client_id_number = legal_entity.id_number
             allowed = allowed_transitions(r.status)
-            obj.available_transitions = [
-                status for status in ObligationStatus if status in allowed
-            ]
+            obj.available_transitions = [status for status in ObligationStatus if status in allowed]
             self._apply_deadline_state(r, obj)
             result.append(obj)
         return result

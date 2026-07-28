@@ -7,6 +7,7 @@ from typing import NamedTuple
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_identity_repository import ClientIdentityRepository
+from app.common.obligation_lifecycle import OBLIGATION_STATUS_LABELS_BY_VALUE
 from app.common.source_types import normalize_source_domain as normalize_source_domain
 from app.common.source_types import source_route as source_route
 from app.work_queue.schemas.work_queue import (
@@ -30,28 +31,10 @@ SOURCE_TYPE_LABELS = {
 }
 
 STATUS_LABELS = {
-    WorkQueueSourceType.VAT_WORK_ITEM: {
-        "pending_materials": "ממתין לחומרים",
-        "material_received": "חומרים התקבלו",
-        "data_entry_in_progress": "בהקלדה",
-        "ready_for_review": "מוכן לבדיקה",
-        "filed": "הוגש",
-        "canceled": "בוטל",
-    },
-    WorkQueueSourceType.ANNUAL_REPORT: {
-        "not_started": "טרם התחיל",
-        "collecting_docs": "איסוף מסמכים",
-        "in_preparation": "בהכנה",
-        "pending_client": "ממתין ללקוח",
-        "submitted": "הוגש",
-        "closed": "סגור",
-        "canceled": "בוטל",
-    },
-    WorkQueueSourceType.ADVANCE_PAYMENT: {
-        "pending": "ממתינה",
-        "partial": "שולמה חלקית",
-        "paid": "שולמה",
-    },
+    # The three tax obligations share one lifecycle, so they share its vocabulary.
+    WorkQueueSourceType.VAT_WORK_ITEM: OBLIGATION_STATUS_LABELS_BY_VALUE,
+    WorkQueueSourceType.ANNUAL_REPORT: OBLIGATION_STATUS_LABELS_BY_VALUE,
+    WorkQueueSourceType.ADVANCE_PAYMENT: OBLIGATION_STATUS_LABELS_BY_VALUE,
     WorkQueueSourceType.CHARGE: {
         "draft": "טיוטה",
         "issued": "הונפק",

@@ -9,14 +9,19 @@ from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import BusinessStatus
-from app.common.enums import ObligationType, VatType
+from app.common.enums import ObligationStatus, ObligationType, VatType
 from app.common.period_utils import parse_period_year
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import UserRole
-from app.vat.models.vat_enums import CounterpartyIdType, DocumentType, ExpenseCategory, InvoiceType, VatRateType
-from app.common.enums import ObligationStatus
+from app.vat.models.vat_enums import (
+    CounterpartyIdType,
+    DocumentType,
+    ExpenseCategory,
+    InvoiceType,
+    VatRateType,
+)
 from app.vat.models.vat_invoice import VatInvoice
 from app.vat.models.vat_work_item import VatWorkItem
 
@@ -200,7 +205,9 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 created_at = datetime.now(UTC)
 
             if business.status == BusinessStatus.CLOSED:
-                status = rng.choice([ObligationStatus.SUBMITTED, ObligationStatus.AWAITING_VERIFICATION])
+                status = rng.choice(
+                    [ObligationStatus.SUBMITTED, ObligationStatus.AWAITING_VERIFICATION]
+                )
             elif business.status == BusinessStatus.FROZEN:
                 status = rng.choice(
                     [

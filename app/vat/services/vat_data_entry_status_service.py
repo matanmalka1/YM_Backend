@@ -40,7 +40,9 @@ def mark_ready_for_review(
             ErrorCode.VAT_INVALID_TRANSITION,
         )
 
-    updated = work_item_repo.update_status(item_id, ObligationStatus.AWAITING_VERIFICATION, item=item)
+    updated = work_item_repo.update_status(
+        item_id, ObligationStatus.AWAITING_VERIFICATION, item=item
+    )
 
     EntityAuditWriter(work_item_repo.db).record_status_change(
         ENTITY_VAT_WORK_ITEM,
@@ -79,11 +81,11 @@ def send_back_for_correction(
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
 
-    assert_transition_allowed(item, ObligationStatus.IN_PROGRESS)
+    # A backward move, so the shared graph requires the reason — which this flow
+    # has always collected. It just never reached the transition check before.
+    assert_transition_allowed(item, ObligationStatus.IN_PROGRESS, reason=correction_note)
 
-    updated = work_item_repo.update_status(
-        item_id, ObligationStatus.IN_PROGRESS, item=item
-    )
+    updated = work_item_repo.update_status(item_id, ObligationStatus.IN_PROGRESS, item=item)
 
     EntityAuditWriter(work_item_repo.db).record_status_change(
         ENTITY_VAT_WORK_ITEM,

@@ -7,16 +7,14 @@ from random import Random
 from sqlalchemy import select
 
 from app.advance_payments.models.advance_payment import AdvancePayment, PaymentMethod
-from app.common.enums import ObligationStatus
 from app.clients.models.client_record import ClientRecord
-from app.common.enums import EntityType, ObligationType
+from app.common.enums import EntityType, ObligationStatus, ObligationType
 from app.common.obligation_plan import advance_payment_obligation_plan
 from app.common.period_utils import parse_period_year
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.common.enums import ObligationStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
 from ..shared.client_refs import get_seed_client_record, get_seed_client_record_id
@@ -43,11 +41,25 @@ def _lookup_vat_turnover(db, client_record_id: int, period: str) -> Decimal | No
 _HISTORICAL_YEARS = 3
 
 
-def _resolve_status(period: str, current_year: int) -> ObligationStatus:
-    period_year = parse_period_year(period)
-    if period_year < current_year:
+def _resolve_status(period: str, current_year: int, rng: Random) -> ObligationStatus:
+    """A closed prior year, and a spread across the working stages for this one.
+
+    The seed is the only data in the system, so every stage needs rows or the
+    screens that render it cannot be checked. `awaiting_verification` in particular
+    is new — nothing produced it before.
+    """
+    if parse_period_year(period) < current_year:
         return ObligationStatus.SUBMITTED
-    return ObligationStatus.AWAITING_INPUT
+    return rng.choices(
+        [
+            ObligationStatus.AWAITING_INPUT,
+            ObligationStatus.INPUT_RECEIVED,
+            ObligationStatus.IN_PROGRESS,
+            ObligationStatus.AWAITING_VERIFICATION,
+        ],
+        weights=[45, 20, 25, 10],
+        k=1,
+    )[0]
 
 
 def _apply_payment_fields(
@@ -78,13 +90,15 @@ def _apply_payment_fields(
     payment.expected_amount = calculated_amount
 
     payment.status = status
-    if status == ObligationStatus.SUBMITTED:
+    if status in (ObligationStatus.SUBMITTED, ObligationStatus.AWAITING_VERIFICATION):
         payment.paid_amount = payment.expected_amount
         payment.payment_method = rng.choice(list(PaymentMethod))
         period_dt = datetime.strptime(f"{period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
         paid_at = period_dt + timedelta(days=rng.randint(14, 45))
         payment.paid_at = min(paid_at, datetime.now(UTC))
     elif status == ObligationStatus.IN_PROGRESS:
+        # A part-paid period: in progress with an outstanding balance, which is
+        # what `partial` described before it stopped being a status.
         expected = payment.expected_amount
         payment.paid_amount = (expected * Decimal(str(round(rng.uniform(0.2, 0.8), 2)))).quantize(
             Decimal("0.01")
@@ -152,7 +166,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
                         AdvancePayment.deleted_at.is_(None),
                     )
                 ).first()
-                status = _resolve_status(plan.period, current_year)
+                status = _resolve_status(plan.period, current_year, rng)
 
                 if existing:
                     _apply_payment_fields(
@@ -198,7 +212,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
     for p in stragglers:
         cr = straggler_cr_map.get(p.client_record_id)
         le = legal_entity_map.get(cr.legal_entity_id) if cr else None
-        status = _resolve_status(p.period, current_year)
+        status = _resolve_status(p.period, current_year, rng)
         _apply_payment_fields(rng, p, status, p.period, le, db, p.client_record_id)
 
     db.flush()

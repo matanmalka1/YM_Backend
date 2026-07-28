@@ -1,3 +1,5 @@
+from app.common.obligation_lifecycle import OBLIGATION_STATUS_LABELS_BY_VALUE
+
 DOCUMENT_TYPE_HE = {
     "id_copy": "צילום ת.ז.",
     "power_of_attorney": "ייפוי כוח",
@@ -22,15 +24,8 @@ SIGNATURE_REQUEST_TYPE_HE = {
     "custom": "חתימה",
 }
 
-ANNUAL_REPORT_STATUS_HE = {
-    "not_started": "טרם התחיל",
-    "collecting_docs": "איסוף מסמכים",
-    "in_preparation": "בהכנה",
-    "pending_client": "ממתין לאישור לקוח",
-    "submitted": "הוגש",
-    "closed": "סגור",
-    "canceled": "בוטל",
-}
+# Annual reports run the shared obligation lifecycle, so they use its labels.
+ANNUAL_REPORT_STATUS_HE = OBLIGATION_STATUS_LABELS_BY_VALUE
 
 CHARGE_TYPE_HE = {
     "monthly_retainer": "ריטיינר חודשי",

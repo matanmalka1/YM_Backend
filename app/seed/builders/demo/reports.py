@@ -8,7 +8,6 @@ from typing import Any
 
 from sqlalchemy import select
 
-from app.common.obligation_lifecycle import ORDERED_STAGES, stages_between
 from app.annual_reports.annual_report_deadlines import extended_deadline, standard_deadline
 from app.annual_reports.domain.expense_rules import default_recognition_rate
 from app.annual_reports.models.annual_report_annex_data import AnnualReportAnnexData
@@ -17,8 +16,13 @@ from app.annual_reports.models.annual_report_credit_point_reason import (
     CreditPointReason,
 )
 from app.annual_reports.models.annual_report_detail import AnnualReportDetail
-from app.annual_reports.models.annual_report_enums import AnnualReportSchedule, ClientAnnualFilingType, ExtensionReason, PrimaryAnnualReportForm, SubmissionMethod
-from app.common.enums import ObligationStatus
+from app.annual_reports.models.annual_report_enums import (
+    AnnualReportSchedule,
+    ClientAnnualFilingType,
+    ExtensionReason,
+    PrimaryAnnualReportForm,
+    SubmissionMethod,
+)
 from app.annual_reports.models.annual_report_enums import FilingDeadlineType as DeadlineType
 from app.annual_reports.models.annual_report_expense_line import (
     AnnualReportExpenseLine,
@@ -36,7 +40,8 @@ from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
 from app.audit.services.audit_entity_audit_writer_service import (
     EntityAuditWriter,
 )
-from app.common.enums import EntityType
+from app.common.enums import EntityType, ObligationStatus
+from app.common.obligation_lifecycle import ORDERED_STAGES, stages_between
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )

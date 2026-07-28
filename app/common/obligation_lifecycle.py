@@ -40,6 +40,22 @@ _STAGE_INDEX: dict[ObligationStatus, int] = {
     status: index for index, status in enumerate(ORDERED_STAGES)
 }
 
+#: The obligation vocabulary, in one place. VAT, annual reports and the work
+#: queue each carried their own Hebrew map of the same stages under their own
+#: names — three translations of one lifecycle.
+OBLIGATION_STATUS_LABELS: dict[ObligationStatus, str] = {
+    ObligationStatus.AWAITING_INPUT: "ממתין לחומר",
+    ObligationStatus.INPUT_RECEIVED: "החומר התקבל",
+    ObligationStatus.IN_PROGRESS: "בעבודה",
+    ObligationStatus.AWAITING_VERIFICATION: "ממתין לאימות",
+    ObligationStatus.SUBMITTED: "הוגש",
+    ObligationStatus.CANCELED: "בוטל",
+}
+
+OBLIGATION_STATUS_LABELS_BY_VALUE: dict[str, str] = {
+    status.value: label for status, label in OBLIGATION_STATUS_LABELS.items()
+}
+
 INVALID_TRANSITION_MESSAGE = "לא ניתן לעבור מסטטוס {current} לסטטוס {target}"
 LOCKED_MESSAGE = "הרשומה הוגשה ואינה ניתנת לשינוי — יש ליצור תיקון"
 CANCELED_MESSAGE = "הרשומה בוטלה ואינה ניתנת לשינוי"
@@ -157,6 +173,8 @@ def stages_between(
 
 
 __all__ = [
+    "OBLIGATION_STATUS_LABELS",
+    "OBLIGATION_STATUS_LABELS_BY_VALUE",
     "ORDERED_STAGES",
     "allowed_transitions",
     "assert_transition_allowed",

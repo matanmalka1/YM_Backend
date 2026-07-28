@@ -1,5 +1,7 @@
 """Centralised Hebrew display labels for annual report domain."""
 
+from app.common.obligation_lifecycle import OBLIGATION_STATUS_LABELS_BY_VALUE
+
 SCHEDULE_LABELS: dict[str, str] = {
     "schedule_a": "נספח א — הכנסה מעסק או משלח יד",
     "schedule_b": "נספח ב — הכנסות מרכוש / שכירות / ריבית / דיבידנד / עסקאות אקראיות",
@@ -55,15 +57,8 @@ CLIENT_TYPE_LABELS: dict[str, str] = {
     "exempt_dealer": "עוסק פטור / זעיר החייב בדוח מלא (1301; 0135 אינו דוח ראשי בדומיין זה)",
 }
 
-STATUS_LABELS: dict[str, str] = {
-    "not_started": "טרם החל",
-    "collecting_docs": "איסוף מסמכים",
-    "in_preparation": "בהכנה",
-    "pending_client": "ממתין ללקוח",
-    "submitted": "הוגש",
-    "closed": "סגור",
-    "canceled": "בוטל",
-}
+# The shared lifecycle owns this vocabulary now.
+STATUS_LABELS: dict[str, str] = OBLIGATION_STATUS_LABELS_BY_VALUE
 
 __all__ = [
     "SCHEDULE_LABELS",
