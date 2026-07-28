@@ -5,7 +5,6 @@ from dataclasses import dataclass
 
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_repository import (
     AdvancePaymentRepository,
 )
@@ -115,7 +114,7 @@ def load_source_states(
                 row.client_record_id,
                 row.status,
                 is_deleted=row.deleted_at is not None,
-                is_final=row.status == AdvancePaymentStatus.PAID,
+                is_final=row.status == ObligationStatus.SUBMITTED,
                 route=source_route(WorkQueueSourceType.ADVANCE_PAYMENT, row.id),
             )
 

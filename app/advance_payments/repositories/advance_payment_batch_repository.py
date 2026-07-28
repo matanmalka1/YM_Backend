@@ -3,10 +3,7 @@ from datetime import date
 from sqlalchemy import Integer, case, cast, func, select
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment, paid_in_full_expr
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     advance_payment_start_month_expr,
     advance_payment_year_range_filter,
@@ -37,8 +34,8 @@ class AdvancePaymentBatchRepository(BaseRepository):
         )
         start_month = advance_payment_start_month_expr()
         period_year = cast(func.substr(AdvancePayment.period, 1, 4), Integer)
-        not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
-        pending_expr = AdvancePayment.status == AdvancePaymentStatus.PENDING
+        not_paid_expr = ~paid_in_full_expr()
+        pending_expr = AdvancePayment.paid_amount == 0
         effective_due_date_expr = func.coalesce(
             AdvancePayment.due_date_effective,
             AdvancePayment.due_date,
@@ -91,7 +88,7 @@ class AdvancePaymentBatchRepository(BaseRepository):
                         func.sum(
                             case(
                                 (
-                                    AdvancePayment.status == AdvancePaymentStatus.PAID,
+                                    paid_in_full_expr(),
                                     1,
                                 ),
                                 else_=0,

@@ -12,7 +12,7 @@ from app.advance_payments.advance_payment_constants import (
     VAT_TURNOVER_MISMATCH_TOLERANCE,
 )
 from app.advance_payments.models.advance_payment import (
-    AdvancePaymentStatus,
+    ObligationStatus,
     PaymentMethod,
     TurnoverSource,
 )
@@ -76,7 +76,7 @@ class AdvancePaymentRow(BaseModel):
     due_date_effective: date | None = None
     expected_amount: ApiDecimal
     paid_amount: ApiDecimal
-    status: AdvancePaymentStatus
+    status: ObligationStatus
     paid_at: ApiDateTime | None = None
     payment_method: PaymentMethod | None = None
     payment_reference: str | None = None
@@ -104,14 +104,14 @@ class AdvancePaymentRow(BaseModel):
     @property
     def timing_status(self) -> Literal["overdue", "on_time"]:
         effective = self.due_date_effective or self.due_date
-        if self.status != AdvancePaymentStatus.PAID and israel_today() > effective:
+        if self.status != ObligationStatus.SUBMITTED and israel_today() > effective:
             return "overdue"
         return "on_time"
 
     @computed_field
     @property
     def paid_late(self) -> bool:
-        if self.paid_at is None or self.status != AdvancePaymentStatus.PAID:
+        if self.paid_at is None or self.status != ObligationStatus.SUBMITTED:
             return False
         paid_date = self.paid_at.date() if isinstance(self.paid_at, datetime) else self.paid_at
         effective = self.due_date_effective or self.due_date
@@ -197,7 +197,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     due_date_effective: date | None = None
     expected_amount: ApiDecimal
     paid_amount: ApiDecimal
-    status: AdvancePaymentStatus
+    status: ObligationStatus
     payment_method: PaymentMethod | None = None
     payment_reference: str | None = None
     turnover_amount: ApiDecimal | None = None
@@ -220,7 +220,7 @@ class AdvancePaymentOverviewRow(BaseModel):
     @property
     def timing_status(self) -> Literal["overdue", "on_time"]:
         effective = self.due_date_effective or self.due_date
-        if self.status != AdvancePaymentStatus.PAID and israel_today() > effective:
+        if self.status != ObligationStatus.SUBMITTED and israel_today() > effective:
             return "overdue"
         return "on_time"
 

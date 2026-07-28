@@ -7,15 +7,13 @@ from typing import Literal
 from sqlalchemy import Integer, String, asc, case, cast, desc, func, select
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment, paid_in_full_expr
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     vat_turnover_mismatch_expr,
 )
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.enums import ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
 from app.core.api_types import SortOrder
 from app.legal_entities.models.legal_entity import LegalEntity
@@ -47,7 +45,7 @@ def advance_payment_matches_month_expr(month: int):
 def _overview_filters(
     year: int,
     month: int | None,
-    statuses: list[AdvancePaymentStatus],
+    statuses: list[ObligationStatus],
     due_date: date | None,
     period_months_count: int | None,
     *,
@@ -82,16 +80,13 @@ def _overview_filters(
         effective_due_date_expr = func.coalesce(
             AdvancePayment.due_date_effective, AdvancePayment.due_date
         )
-        not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
+        not_paid_expr = ~paid_in_full_expr()
         today = israel_today()
         if timing_status == "overdue":
             filters.append(not_paid_expr)
             filters.append(effective_due_date_expr < today)
         else:
-            filters.append(
-                (AdvancePayment.status == AdvancePaymentStatus.PAID)
-                | (effective_due_date_expr >= today)
-            )
+            filters.append((paid_in_full_expr()) | (effective_due_date_expr >= today))
     if vat_mismatch is not None:
         mismatch_expr = vat_turnover_mismatch_expr()
         filters.append(mismatch_expr if vat_mismatch else ~mismatch_expr)
@@ -116,7 +111,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         self,
         year: int,
         month: int | None,
-        statuses: list[AdvancePaymentStatus],
+        statuses: list[ObligationStatus],
     ) -> list[AdvancePayment]:
         stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
             advance_payment_year_range_filter(year),
@@ -132,7 +127,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         self,
         year: int,
         month: int | None,
-        statuses: list[AdvancePaymentStatus],
+        statuses: list[ObligationStatus],
         page: int,
         page_size: int,
         client_record_id: int | None = None,
@@ -197,7 +192,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         return (
             AdvancePayment.client_record_id == client_record_id,
             advance_payment_year_range_filter(year),
-            AdvancePayment.status == AdvancePaymentStatus.PAID,
+            paid_in_full_expr(),
             AdvancePayment.deleted_at.is_(None),
         )
 
@@ -220,7 +215,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
     def get_collections_aggregates(self, year: int, month=None) -> list:
         """Per-client aggregates for the collections report."""
         today_expr = func.current_date()
-        not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
+        not_paid_expr = ~paid_in_full_expr()
         effective_due_date_expr = func.coalesce(
             AdvancePayment.due_date_effective,
             AdvancePayment.due_date,
@@ -255,8 +250,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
 
     def get_annual_kpis_for_client(self, client_record_id: int, year: int) -> dict:
         today_expr = func.current_date()
-        paid_expr = AdvancePayment.status == AdvancePaymentStatus.PAID
-        not_paid_expr = AdvancePayment.status != AdvancePaymentStatus.PAID
+        paid_expr = paid_in_full_expr()
+        not_paid_expr = ~paid_in_full_expr()
         effective_due_date_expr = func.coalesce(
             AdvancePayment.due_date_effective,
             AdvancePayment.due_date,
@@ -298,7 +293,7 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         self,
         year: int,
         month: int | None,
-        statuses: list[AdvancePaymentStatus],
+        statuses: list[ObligationStatus],
         due_date: date | None = None,
         period_months_count: int | None = None,
         client_record_id: int | None = None,

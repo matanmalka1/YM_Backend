@@ -9,11 +9,7 @@ from app.advance_payments.advance_payment_constants import (
     BULK_GENERATE_CLIENT_CHUNK_SIZE,
     get_period_start_months,
 )
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-    TurnoverSource,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment, TurnoverSource
 from app.advance_payments.repositories.advance_payment_generation_repository import (
     AdvancePaymentGenerationRepository,
 )
@@ -34,7 +30,8 @@ from app.audit.audit_constants import (
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
-from app.common.enums import AdvancePaymentFrequency, ObligationType
+from app.common.enums import AdvancePaymentFrequency, ObligationStatus, ObligationType
+from app.common.obligation_lifecycle import is_terminal, stage_index
 from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
@@ -204,14 +201,40 @@ class AdvancePaymentService:
         return calculated, expected
 
     @staticmethod
-    def _derive_status(paid_amount, expected_amount) -> AdvancePaymentStatus:
+    def _status_after_payment(
+        current: ObligationStatus, paid_amount, expected_amount
+    ) -> ObligationStatus:
+        """Where a money event leaves the lifecycle.
+
+        Status used to be *derived* from the amounts on every write, which had two
+        consequences. Recomputing the expected amount could silently drag a settled
+        period backwards — a turnover refresh could turn a paid advance into a
+        part-paid one. And money alone could mark a period finished, with nobody
+        confirming it had been reported.
+
+        Money now advances the obligation and never locks or rewinds it:
+
+        - a recorded payment moves it to `in_progress`
+        - paid in full moves it to `awaiting_verification`
+        - only a person moves it to `submitted`
+        - a terminal record is untouched, and the stage never goes down
+
+        Reaching `in_progress` from `awaiting_input` crosses two stages. That is two
+        real transitions performed by one event, not a skipped stage — see
+        ``stages_between``.
+        """
+        if is_terminal(current):
+            return current
         paid = Decimal(str(paid_amount or 0))
+        if paid <= 0:
+            return current
         expected = Decimal(str(expected_amount or 0))
-        if paid == 0:
-            return AdvancePaymentStatus.PENDING
-        if paid >= expected:
-            return AdvancePaymentStatus.PAID
-        return AdvancePaymentStatus.PARTIAL
+        target = (
+            ObligationStatus.AWAITING_VERIFICATION
+            if expected > 0 and paid >= expected
+            else ObligationStatus.IN_PROGRESS
+        )
+        return target if stage_index(target) > stage_index(current) else current
 
     def _invalidate_annual_report_tax(self, client_record_id: int, periods) -> None:
         """Clear the persisted tax of any open annual report these periods feed.
@@ -246,7 +269,7 @@ class AdvancePaymentService:
         self,
         client_record_id: int,
         year: int | None = None,
-        status: list[AdvancePaymentStatus] | None = None,
+        status: list[ObligationStatus] | None = None,
         page: int = 1,
         page_size: int = 20,
     ) -> tuple[list[AdvancePayment], int]:
@@ -343,7 +366,9 @@ class AdvancePaymentService:
             calculated_amount=calculated_amount,
             override_amount=override_amount,
             withheld_amount=withheld_amount,
-            status=self._derive_status(paid_amount, resolved_expected),
+            status=self._status_after_payment(
+                ObligationStatus.AWAITING_INPUT, paid_amount, resolved_expected
+            ),
         )
         payment = mat.link_advance_payment(payment)
         self._audit.record_action(
@@ -414,7 +439,7 @@ class AdvancePaymentService:
         if status_inputs & filtered.keys():
             paid = filtered.get("paid_amount", payment.paid_amount)
             expected = filtered.get("expected_amount", payment.expected_amount)
-            filtered["status"] = self._derive_status(paid, expected)
+            filtered["status"] = self._status_after_payment(payment.status, paid, expected)
 
         old_snapshot = self._audit_snapshot(payment)
         updated = self.repo.update_payment(payment, **filtered)
@@ -463,7 +488,9 @@ class AdvancePaymentService:
             if payment is None:
                 skipped.append((payment_id, "not_found"))
                 continue
-            if payment.status == AdvancePaymentStatus.PAID:
+            # Money, not lifecycle: this asks whether there is anything left to
+            # top up, which a closed-but-underpaid period would answer wrongly.
+            if payment.is_paid_in_full:
                 skipped.append((payment_id, "already_paid"))
                 continue
             if payment.expected_amount <= 0:
@@ -473,7 +500,11 @@ class AdvancePaymentService:
             fields: dict = {
                 "paid_amount": payment.expected_amount,
                 "paid_at": paid_at,
-                "status": AdvancePaymentStatus.PAID,
+                # Recording money in bulk moves the period to awaiting verification,
+                # not to submitted. Someone still has to confirm it was reported.
+                "status": self._status_after_payment(
+                    payment.status, payment.expected_amount, payment.expected_amount
+                ),
             }
             if payment_method is not None:
                 fields["payment_method"] = payment_method
@@ -530,7 +561,7 @@ class AdvancePaymentService:
         skipped = 0
 
         for payment in rows:
-            if payment.status != AdvancePaymentStatus.PENDING:
+            if payment.status != ObligationStatus.AWAITING_INPUT:
                 skipped += 1
                 continue
             calculated_amount, new_expected = self._compute_amounts(
@@ -546,7 +577,9 @@ class AdvancePaymentService:
                 advance_rate=advance_rate,
                 calculated_amount=calculated_amount,
                 expected_amount=new_expected,
-                status=self._derive_status(payment.paid_amount, new_expected),
+                status=self._status_after_payment(
+                    payment.status, payment.paid_amount, new_expected
+                ),
             )
             self._audit.record_action(
                 ENTITY_ADVANCE_PAYMENT,
@@ -664,7 +697,7 @@ class AdvancePaymentService:
         for row in self._future_stale_cadence_rows(
             client_record_id, year, period_months_count, reference_date
         ):
-            if row.status == AdvancePaymentStatus.PENDING:
+            if row.status == ObligationStatus.AWAITING_INPUT:
                 outcome.pending += 1
             else:
                 outcome.settled += 1
@@ -703,7 +736,7 @@ class AdvancePaymentService:
             for row in self._future_stale_cadence_rows(
                 client_record_id, year, period_months_count, reference_date
             )
-            if row.status == AdvancePaymentStatus.PENDING
+            if row.status == ObligationStatus.AWAITING_INPUT
         ]
         if removable and not cleanup_stale_cadence:
             # Generate nothing rather than part of the year. Only the periods the
@@ -903,7 +936,7 @@ class AdvancePaymentService:
             # command still allows it. Snapshotting recomputes expected_amount and
             # can drop a PAID row to PARTIAL — a per-row judgement, not something
             # one click should do to a whole screenful of settled records.
-            if payment.status == AdvancePaymentStatus.PAID:
+            if payment.status == ObligationStatus.SUBMITTED:
                 result.skipped_paid += 1
                 continue
             resolution = resolved.get(payment.period)
@@ -939,7 +972,7 @@ class AdvancePaymentService:
             turnover_snapshot_at=utcnow(),
             calculated_amount=calculated_amount,
             expected_amount=new_expected,
-            status=self._derive_status(payment.paid_amount, new_expected),
+            status=self._status_after_payment(payment.status, payment.paid_amount, new_expected),
         )
         self._audit.record_action(
             ENTITY_ADVANCE_PAYMENT,

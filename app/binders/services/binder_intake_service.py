@@ -21,10 +21,10 @@ from app.businesses.models.business import BusinessStatus
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.users.repositories.user_repository import UserRepository
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -230,11 +230,11 @@ class BinderIntakeService:
                 continue
             seen.add(vat_id)
             item = vat_repo.get_by_id_for_update(vat_id)
-            if not item or item.status != VatWorkItemStatus.PENDING_MATERIALS:
+            if not item or item.status != ObligationStatus.AWAITING_INPUT:
                 continue
             vat_repo.update_status(
                 vat_id,
-                VatWorkItemStatus.MATERIAL_RECEIVED,
+                ObligationStatus.INPUT_RECEIVED,
                 item=item,
                 pending_materials_note=None,
             )
@@ -242,8 +242,8 @@ class BinderIntakeService:
                 ENTITY_VAT_WORK_ITEM,
                 vat_id,
                 performed_by,
-                VatWorkItemStatus.PENDING_MATERIALS.value,
-                VatWorkItemStatus.MATERIAL_RECEIVED.value,
+                ObligationStatus.AWAITING_INPUT.value,
+                ObligationStatus.INPUT_RECEIVED.value,
                 actor_display_name=actor_display_name,
                 metadata_json=work_item_metadata(item),
             )

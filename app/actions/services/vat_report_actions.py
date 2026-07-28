@@ -1,9 +1,9 @@
 from __future__ import annotations
 
+from app.common.enums import ObligationStatus
 from app.core.action_builders import mutation_action
 from app.core.action_schemas import ActionDescriptor
 from app.users.models.user import UserRole
-from app.vat.models.vat_enums import VatWorkItemStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
 
@@ -20,7 +20,7 @@ def get_vat_work_item_actions(
     status = item.status
     actions: list[ActionDescriptor] = []
 
-    if status == VatWorkItemStatus.PENDING_MATERIALS:
+    if status == ObligationStatus.AWAITING_INPUT:
         actions.append(
             mutation_action(
                 key="materials_complete",
@@ -29,9 +29,9 @@ def get_vat_work_item_actions(
         )
 
     if status in {
-        VatWorkItemStatus.MATERIAL_RECEIVED,
-        VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
-        VatWorkItemStatus.READY_FOR_REVIEW,
+        ObligationStatus.INPUT_RECEIVED,
+        ObligationStatus.IN_PROGRESS,
+        ObligationStatus.AWAITING_VERIFICATION,
     }:
         actions.append(
             mutation_action(
@@ -40,7 +40,7 @@ def get_vat_work_item_actions(
             )
         )
 
-    if status == VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS:
+    if status == ObligationStatus.IN_PROGRESS:
         actions.append(
             mutation_action(
                 key="ready_for_review",
@@ -48,7 +48,7 @@ def get_vat_work_item_actions(
             )
         )
 
-    if _is_advisor(user_role) and status == VatWorkItemStatus.READY_FOR_REVIEW:
+    if _is_advisor(user_role) and status == ObligationStatus.AWAITING_VERIFICATION:
         actions.extend(
             [
                 mutation_action(

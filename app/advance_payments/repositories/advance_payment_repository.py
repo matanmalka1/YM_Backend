@@ -5,14 +5,12 @@ from decimal import Decimal
 
 from sqlalchemy import exists, func, select
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     advance_payment_year_range_filter,
 )
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.enums import ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
 
 
@@ -41,7 +39,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         calculated_amount=None,
         override_amount=None,
         withheld_amount=None,
-        status: AdvancePaymentStatus = AdvancePaymentStatus.PENDING,
+        status: ObligationStatus = ObligationStatus.AWAITING_INPUT,
     ) -> AdvancePayment:
         payment = AdvancePayment(
             client_record_id=client_record_id,
@@ -96,7 +94,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         self,
         client_record_id: int,
         year: int,
-        status: list[AdvancePaymentStatus] | None = None,
+        status: list[ObligationStatus] | None = None,
         page: int = 1,
         page_size: int = 50,
     ) -> tuple[list[AdvancePayment], int]:
@@ -122,7 +120,9 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         """
         stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
             AdvancePayment.deleted_at.is_(None),
-            AdvancePayment.status.in_([AdvancePaymentStatus.PENDING, AdvancePaymentStatus.PARTIAL]),
+            AdvancePayment.status.in_(
+                [ObligationStatus.AWAITING_INPUT, ObligationStatus.IN_PROGRESS]
+            ),
             (AdvancePayment.due_date_effective <= cutoff)
             | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
         )

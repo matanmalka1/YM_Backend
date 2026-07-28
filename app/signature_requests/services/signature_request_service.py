@@ -108,17 +108,17 @@ class SignatureRequestService:
         retried by the reconciliation job.
         """
         try:
-            from app.annual_reports.models.annual_report_enums import AnnualReportStatus
             from app.annual_reports.repositories.annual_report_detail_repository import (
                 AnnualReportDetailRepository,
             )
             from app.annual_reports.services.annual_report_service import (
                 AnnualReportService,
             )
+            from app.common.enums import ObligationStatus
 
             svc = AnnualReportService(self.db)
             report = svc.repo.get_by_id_for_update(annual_report_id)
-            if report is None or report.status != AnnualReportStatus.PENDING_CLIENT:
+            if report is None or report.status != ObligationStatus.AWAITING_VERIFICATION:
                 return False
 
             detail_repo = AnnualReportDetailRepository(self.db)
@@ -129,7 +129,7 @@ class SignatureRequestService:
             with self.db.begin_nested():
                 svc.transition_status(
                     report_id=annual_report_id,
-                    new_status=AnnualReportStatus.SUBMITTED.value,
+                    new_status=ObligationStatus.SUBMITTED.value,
                     changed_by=None,
                     changed_by_name=SIGNATURE_REQUEST_SYSTEM_ACTOR,
                     note=AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE,

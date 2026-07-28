@@ -8,10 +8,7 @@ from typing import Literal
 
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     AdvancePaymentAggregationRepository,
 )
@@ -24,6 +21,7 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
 )
 from app.advance_payments.schemas.advance_payment import MonthBatchSummary, VatTurnoverMismatch
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.enums import ObligationStatus
 from app.core.api_types import SortOrder
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
@@ -61,7 +59,7 @@ class AdvancePaymentAnalyticsService:
         self,
         year: int,
         month: int | None = None,
-        statuses: list[AdvancePaymentStatus] | None = None,
+        statuses: list[ObligationStatus] | None = None,
         page: int = 1,
         page_size: int = 50,
         client_record_id: int | None = None,
@@ -74,7 +72,7 @@ class AdvancePaymentAnalyticsService:
         vat_mismatch: bool | None = None,
     ) -> tuple[list[AdvancePaymentOverviewEnrichedRow], int]:
         if statuses is None:
-            statuses = list(AdvancePaymentStatus)
+            statuses = list(ObligationStatus)
 
         rows, total = self.repo.list_overview_payment_rows(
             year=year,
@@ -150,7 +148,7 @@ class AdvancePaymentAnalyticsService:
         self,
         year: int,
         month: int | None = None,
-        statuses: list[AdvancePaymentStatus] | None = None,
+        statuses: list[ObligationStatus] | None = None,
         due_date: date | None = None,
         period_months_count: int | None = None,
         client_record_id: int | None = None,
@@ -159,7 +157,7 @@ class AdvancePaymentAnalyticsService:
         vat_mismatch: bool | None = None,
     ) -> dict:
         if statuses is None:
-            statuses = list(AdvancePaymentStatus)
+            statuses = list(ObligationStatus)
         data = self.repo.get_overview_kpis(
             year,
             month,

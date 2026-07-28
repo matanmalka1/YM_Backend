@@ -2,10 +2,8 @@ from datetime import date
 
 from pydantic import BaseModel
 
-from app.annual_reports.models.annual_report_enums import (
-    AnnualReportStatus,
-    PrimaryAnnualReportForm,
-)
+from app.annual_reports.models.annual_report_enums import PrimaryAnnualReportForm
+from app.common.enums import ObligationStatus
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse
 
 
@@ -57,7 +55,7 @@ class AdvancePaymentCollectionsReportResponse(BaseModel):
     items: list[AdvancePaymentReportItemResponse]
 
 
-class AnnualReportStatusClientResponse(BaseModel):
+class ObligationStatusClientResponse(BaseModel):
     client_record_id: int
     client_name: str
     client_id_number: str
@@ -67,16 +65,16 @@ class AnnualReportStatusClientResponse(BaseModel):
     days_until_deadline: int | None = None
 
 
-class AnnualReportStatusGroupResponse(BaseModel):
-    status: AnnualReportStatus
+class ObligationStatusGroupResponse(BaseModel):
+    status: ObligationStatus
     count: int
-    clients: list[AnnualReportStatusClientResponse]
+    clients: list[ObligationStatusClientResponse]
 
 
-class AnnualReportStatusReportResponse(BaseModel):
+class ObligationStatusReportResponse(BaseModel):
     tax_year: int
     total: int
-    statuses: list[AnnualReportStatusGroupResponse]
+    statuses: list[ObligationStatusGroupResponse]
 
 
 class AgingReportItemResponse(BaseModel):

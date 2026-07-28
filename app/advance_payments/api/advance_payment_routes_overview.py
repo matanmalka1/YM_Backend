@@ -7,7 +7,6 @@ from app.advance_payments.api.advance_payment_responses import (
     ADVANCE_PAYMENT_BULK_GENERATE_RESPONSES,
     ADVANCE_PAYMENT_BULK_MARK_PAID_RESPONSES,
 )
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_generation_repository import (
     AdvancePaymentGenerationRepository,
 )
@@ -31,6 +30,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentOverviewEnrichedRow,
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
+from app.common.enums import ObligationStatus
 from app.core.api_types import SortOrder
 from app.core.pagination import MAX_PAGE_SIZE
 from app.infrastructure.idempotency import IdempotencyGuard, require_idempotency_key
@@ -84,7 +84,7 @@ def list_advance_payments_overview(
     period_months_count: int | None = Query(None, ge=1, le=2),
     client_record_id: int | None = Query(None),
     client_search: str | None = Query(None),
-    status: list[AdvancePaymentStatus] | None = Query(None),
+    status: list[ObligationStatus] | None = Query(None),
     timing_status: Literal["overdue", "on_time"] | None = Query(None),
     vat_mismatch: bool | None = Query(
         None,

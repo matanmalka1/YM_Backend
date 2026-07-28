@@ -1,10 +1,7 @@
 from sqlalchemy import case, func, select, tuple_
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment, paid_in_full_expr
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.repositories.base_repository import BaseRepository
 
@@ -15,7 +12,7 @@ class AdvancePaymentDashboardRepository(BaseRepository):
 
     def completion_for_period(self, period: str, period_months_count: int) -> tuple[int, int]:
         paid_expr = case(
-            (AdvancePayment.status == AdvancePaymentStatus.PAID, 1),
+            (paid_in_full_expr(), 1),
             else_=0,
         )
         stmt = scope_to_active_clients_stmt(
@@ -38,7 +35,7 @@ class AdvancePaymentDashboardRepository(BaseRepository):
         if not periods:
             return {}
         paid_expr = case(
-            (AdvancePayment.status == AdvancePaymentStatus.PAID, 1),
+            (paid_in_full_expr(), 1),
             else_=0,
         )
         stmt = scope_to_active_clients_stmt(

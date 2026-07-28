@@ -4,9 +4,9 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.enums import ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
@@ -311,7 +311,7 @@ class SignatureRequestCrudMixin:
                 SignatureRequest.status == SignatureRequestStatus.SIGNED,
                 SignatureRequest.signed_at.isnot(None),
                 SignatureRequest.deleted_at.is_(None),
-                AnnualReport.status == AnnualReportStatus.PENDING_CLIENT,
+                AnnualReport.status == ObligationStatus.AWAITING_VERIFICATION,
                 AnnualReport.deleted_at.is_(None),
             )
             .order_by(

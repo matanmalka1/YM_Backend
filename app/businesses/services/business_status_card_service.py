@@ -29,7 +29,7 @@ from app.documents.permanent_documents.repositories.permanent_document_repositor
 from app.tasks.models.task import TaskStatus
 from app.tasks.repositories.task_repository import TaskRepository
 from app.utils.time_utils import utcnow
-from app.vat.models.vat_work_item import VatWorkItemStatus
+from app.vat.models.vat_work_item import ObligationStatus
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
@@ -78,7 +78,7 @@ class StatusCardService:
             if r.period and r.period.startswith(prefix)
         ]
         net_total = sum((r.net_vat or Decimal(0)) for r in rows)
-        filed = sum(1 for r in rows if r.status == VatWorkItemStatus.FILED)
+        filed = sum(1 for r in rows if r.status == ObligationStatus.SUBMITTED)
         latest = max((r.period for r in rows), default=None)
         return VatSummaryCard(
             net_vat_total=net_total,

@@ -8,7 +8,6 @@ from app.advance_payments.api.advance_payment_responses import (
     ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES,
     ADVANCE_PAYMENT_UPDATE_RESPONSES,
 )
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
     TurnoverResolution,
@@ -32,6 +31,7 @@ from app.advance_payments.services.advance_payment_analytics_service import (
     AdvancePaymentAnalyticsService,
 )
 from app.advance_payments.services.advance_payment_service import AdvancePaymentService
+from app.common.enums import ObligationStatus
 from app.core.openapi_responses import not_found_response
 from app.core.pagination import MAX_PAGE_SIZE
 from app.core.path_params import PathId
@@ -75,7 +75,7 @@ def list_advance_payments(
     db: DBSession,
     user: CurrentUser,
     year: int | None = Query(None),
-    status_filter: list[AdvancePaymentStatus] = Query(default=[], alias="status"),
+    status_filter: list[ObligationStatus] = Query(default=[], alias="status"),
     page: int = Query(1, ge=1),
     page_size: int = Query(20, ge=1, le=MAX_PAGE_SIZE),
 ):

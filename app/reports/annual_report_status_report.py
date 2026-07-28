@@ -2,14 +2,14 @@
 
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_enums import AnnualReportStatus
 from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
+from app.common.enums import ObligationStatus
 from app.utils.time_utils import israel_today
 
 
-class AnnualReportStatusReportService:
+class ObligationStatusReportService:
     def __init__(self, db: Session):
         self.repo = AnnualReportRepository(db)
 
@@ -17,7 +17,7 @@ class AnnualReportStatusReportService:
         rows = self.repo.list_by_tax_year_with_client(tax_year)
 
         today = israel_today()
-        grouped: dict[str, list] = {s.value: [] for s in AnnualReportStatus}
+        grouped: dict[str, list] = {s.value: [] for s in ObligationStatus}
 
         for report, client_record_id, client_name, client_id_number, office_client_number in rows:
             filing_deadline_date = None

@@ -54,34 +54,28 @@ from sqlalchemy import (
 )
 from sqlalchemy.orm import Mapped, mapped_column
 
+from app.common.enums import ObligationStatus
 from app.common.soft_delete import SoftDeletableMixin
 from app.database import Base
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
 
-class AdvancePaymentStatus(str, PyEnum):
-    """Lifecycle status of an advance payment."""
+def paid_in_full_expr():
+    """SQL twin of :meth:`AdvancePayment.is_paid_in_full` — money, not lifecycle.
 
-    PENDING = "pending"  # Not yet paid
-    PAID = "paid"  # Paid in full
-    PARTIAL = "partial"  # Paid partially
+    These were the same question while the status was derived from the amounts:
+    ``status == PAID`` *meant* ``paid_amount >= expected_amount``. They stop being
+    the same question once the status is a real lifecycle. An advisor may close a
+    period that was underpaid — the difference is a debt, not an open period — and
+    a period paid in full is not closed until someone confirms it was reported.
 
-
-# The one definition of "this advance period needs no further work", shared by
-# the Python predicate below and any SQL query asking the same question.
-RESOLVED_ADVANCE_PAYMENT_STATUSES: frozenset[AdvancePaymentStatus] = frozenset(
-    {AdvancePaymentStatus.PAID}
-)
-
-
-def is_advance_payment_resolved(status: AdvancePaymentStatus) -> bool:
-    """Whether an advance period needs no further work.
-
-    PARTIAL is not resolved — money is still owed. The tax calendar used to
-    hardcode this set.
+    Collection and reporting KPIs ask this one. The work queue, the tax calendar
+    and anything asking "is this obligation done" ask the lifecycle one.
     """
-    return status in RESOLVED_ADVANCE_PAYMENT_STATUSES
+    return (AdvancePayment.expected_amount > 0) & (
+        AdvancePayment.paid_amount >= AdvancePayment.expected_amount
+    )
 
 
 class PaymentMethod(str, PyEnum):
@@ -157,9 +151,9 @@ class AdvancePayment(SoftDeletableMixin, Base):
     turnover_snapshot_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # ── Status & payment ──────────────────────────────────────────────────────
-    status: Mapped[AdvancePaymentStatus] = mapped_column(
-        pg_enum(AdvancePaymentStatus),
-        default=AdvancePaymentStatus.PENDING,
+    status: Mapped[ObligationStatus] = mapped_column(
+        pg_enum(ObligationStatus),
+        default=ObligationStatus.AWAITING_INPUT,
         nullable=False,
     )
     paid_at: Mapped[datetime | None] = mapped_column(nullable=True)
@@ -208,6 +202,18 @@ class AdvancePayment(SoftDeletableMixin, Base):
             postgresql_where=text("deleted_at IS NULL"),
         ),
     )
+
+    @property
+    def is_paid_in_full(self) -> bool:
+        """Money, not lifecycle. See :func:`paid_in_full_expr`."""
+        return self.expected_amount > 0 and self.paid_amount >= self.expected_amount
+
+    @property
+    def outstanding_amount(self) -> Decimal:
+        """What is still owed. A part-paid advance is in progress with a balance,
+        which is what `partial` was really describing — a fact about the amount,
+        not a stage of the lifecycle."""
+        return max(Decimal("0.00"), self.expected_amount - self.paid_amount)
 
     def __repr__(self):
         return (

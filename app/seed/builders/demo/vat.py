@@ -15,14 +15,8 @@ from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
 from app.users.models.user import UserRole
-from app.vat.models.vat_enums import (
-    CounterpartyIdType,
-    DocumentType,
-    ExpenseCategory,
-    InvoiceType,
-    VatRateType,
-    VatWorkItemStatus,
-)
+from app.vat.models.vat_enums import CounterpartyIdType, DocumentType, ExpenseCategory, InvoiceType, VatRateType
+from app.common.enums import ObligationStatus
 from app.vat.models.vat_invoice import VatInvoice
 from app.vat.models.vat_work_item import VatWorkItem
 
@@ -96,19 +90,19 @@ def _vat_due_date(db, period: str, vat_type: VatType) -> date:
     return entry.due_date
 
 
-def _status_for_period(rng: Random, period: str, reference_date: date) -> VatWorkItemStatus:
+def _status_for_period(rng: Random, period: str, reference_date: date) -> ObligationStatus:
     period_year = parse_period_year(period)
     if period_year <= reference_date.year - 2:
-        return VatWorkItemStatus.FILED
+        return ObligationStatus.SUBMITTED
 
     period_start = datetime.strptime(f"{period}-01", "%Y-%m-%d").date()
     age_days = (reference_date - period_start).days
     if age_days > 90:
         return rng.choices(
             [
-                VatWorkItemStatus.FILED,
-                VatWorkItemStatus.READY_FOR_REVIEW,
-                VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
+                ObligationStatus.SUBMITTED,
+                ObligationStatus.AWAITING_VERIFICATION,
+                ObligationStatus.IN_PROGRESS,
             ],
             weights=[75, 15, 10],
             k=1,
@@ -116,19 +110,19 @@ def _status_for_period(rng: Random, period: str, reference_date: date) -> VatWor
     if age_days > 30:
         return rng.choice(
             [
-                VatWorkItemStatus.PENDING_MATERIALS,
-                VatWorkItemStatus.MATERIAL_RECEIVED,
-                VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
-                VatWorkItemStatus.READY_FOR_REVIEW,
-                VatWorkItemStatus.FILED,
+                ObligationStatus.AWAITING_INPUT,
+                ObligationStatus.INPUT_RECEIVED,
+                ObligationStatus.IN_PROGRESS,
+                ObligationStatus.AWAITING_VERIFICATION,
+                ObligationStatus.SUBMITTED,
             ]
         )
     return rng.choices(
         [
-            VatWorkItemStatus.PENDING_MATERIALS,
-            VatWorkItemStatus.MATERIAL_RECEIVED,
-            VatWorkItemStatus.DATA_ENTRY_IN_PROGRESS,
-            VatWorkItemStatus.READY_FOR_REVIEW,
+            ObligationStatus.AWAITING_INPUT,
+            ObligationStatus.INPUT_RECEIVED,
+            ObligationStatus.IN_PROGRESS,
+            ObligationStatus.AWAITING_VERIFICATION,
         ],
         weights=[45, 25, 20, 10],
         k=1,
@@ -136,7 +130,7 @@ def _status_for_period(rng: Random, period: str, reference_date: date) -> VatWor
 
 
 def _promote_to_filed(rng: Random, item: VatWorkItem, cfg) -> None:
-    item.status = VatWorkItemStatus.FILED
+    item.status = ObligationStatus.SUBMITTED
     item.submission_method = rng.choice(list(SubmissionMethod))
     period_dt = datetime.strptime(f"{item.period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
     filed_at = period_dt + timedelta(days=rng.randint(15, 45))
@@ -191,7 +185,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 period_year = parse_period_year(period)
                 if (
                     period_year < cfg.reference_date.year
-                    and existing_item.status != VatWorkItemStatus.FILED
+                    and existing_item.status != ObligationStatus.SUBMITTED
                 ):
                     _promote_to_filed(rng, existing_item, cfg)
                     work_items.append(existing_item)
@@ -206,13 +200,13 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 created_at = datetime.now(UTC)
 
             if business.status == BusinessStatus.CLOSED:
-                status = rng.choice([VatWorkItemStatus.FILED, VatWorkItemStatus.READY_FOR_REVIEW])
+                status = rng.choice([ObligationStatus.SUBMITTED, ObligationStatus.AWAITING_VERIFICATION])
             elif business.status == BusinessStatus.FROZEN:
                 status = rng.choice(
                     [
-                        VatWorkItemStatus.PENDING_MATERIALS,
-                        VatWorkItemStatus.MATERIAL_RECEIVED,
-                        VatWorkItemStatus.READY_FOR_REVIEW,
+                        ObligationStatus.AWAITING_INPUT,
+                        ObligationStatus.INPUT_RECEIVED,
+                        ObligationStatus.AWAITING_VERIFICATION,
                     ]
                 )
             else:
@@ -220,11 +214,11 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
 
             period_year = parse_period_year(period)
             _FINAL_VAT = (
-                VatWorkItemStatus.FILED,
-                VatWorkItemStatus.CANCELED,
+                ObligationStatus.SUBMITTED,
+                ObligationStatus.CANCELED,
             )
             if period_year < cfg.reference_date.year and status not in _FINAL_VAT:
-                status = VatWorkItemStatus.FILED
+                status = ObligationStatus.SUBMITTED
 
             created_by = rng.choice(advisors) if advisors else fallback_user_id
             period_months_count = _VAT_PERIOD_MONTHS_COUNT.get(period_type)
@@ -241,7 +235,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 created_at=created_at,
                 updated_at=created_at,
                 pending_materials_note="ממתינים לחשבוניות מהלקוח"
-                if status == VatWorkItemStatus.PENDING_MATERIALS and rng.random() < 0.5
+                if status == ObligationStatus.AWAITING_INPUT and rng.random() < 0.5
                 else None,
                 tax_calendar_entry_id=tax_calendar_entry.id,
                 due_date_original=tax_calendar_entry.due_date,
@@ -249,7 +243,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
             )
             if cr is not None:
                 attach_seed_client_context(work_item, cr)
-            if status == VatWorkItemStatus.FILED:
+            if status == ObligationStatus.SUBMITTED:
                 work_item.submission_method = rng.choice(list(SubmissionMethod))
                 filed_at_candidate = max(
                     created_at, datetime.now(UTC) - timedelta(days=rng.randint(1, 90))
@@ -271,7 +265,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
     # Add amendments to some filed items
     filed_by_client: dict[int, list[VatWorkItem]] = defaultdict(list)
     for work_item in work_items:
-        if work_item.status == VatWorkItemStatus.FILED:
+        if work_item.status == ObligationStatus.SUBMITTED:
             filed_by_client[get_seed_client_record_id(work_item)].append(work_item)
 
     for filed_items in filed_by_client.values():
@@ -291,7 +285,7 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
     stragglers = db.scalars(
         select(VatWorkItem).where(
             VatWorkItem.period < f"{cfg.reference_date.year}-01",
-            VatWorkItem.status != VatWorkItemStatus.FILED,
+            VatWorkItem.status != ObligationStatus.SUBMITTED,
             VatWorkItem.deleted_at.is_(None),
         )
     ).all()
@@ -432,7 +426,7 @@ def create_vat_invoices(db, rng: Random, cfg, work_items, users) -> list[VatInvo
                 work_item.total_output_net += Decimal(invoice.net_amount)
             else:
                 work_item.total_input_net += Decimal(invoice.net_amount)
-        if work_item.status == VatWorkItemStatus.FILED:
+        if work_item.status == ObligationStatus.SUBMITTED:
             work_item.final_vat_amount = work_item.net_vat
             work_item.is_overridden = rng.random() < 0.1
             if work_item.is_overridden:

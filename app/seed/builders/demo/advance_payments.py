@@ -6,11 +6,8 @@ from random import Random
 
 from sqlalchemy import select
 
-from app.advance_payments.models.advance_payment import (
-    AdvancePayment,
-    AdvancePaymentStatus,
-    PaymentMethod,
-)
+from app.advance_payments.models.advance_payment import AdvancePayment, PaymentMethod
+from app.common.enums import ObligationStatus
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType, ObligationType
 from app.common.obligation_plan import advance_payment_obligation_plan
@@ -19,13 +16,13 @@ from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
-from app.vat.models.vat_enums import VatWorkItemStatus
+from app.common.enums import ObligationStatus
 from app.vat.models.vat_work_item import VatWorkItem
 
 from ..shared.client_refs import get_seed_client_record, get_seed_client_record_id
 
-_VAT_FINAL_STATUSES = (VatWorkItemStatus.FILED,)
-_VAT_PENDING_STATUSES = (VatWorkItemStatus.READY_FOR_REVIEW,)
+_VAT_FINAL_STATUSES = (ObligationStatus.SUBMITTED,)
+_VAT_PENDING_STATUSES = (ObligationStatus.AWAITING_VERIFICATION,)
 
 
 def _lookup_vat_turnover(db, client_record_id: int, period: str) -> Decimal | None:
@@ -46,17 +43,17 @@ def _lookup_vat_turnover(db, client_record_id: int, period: str) -> Decimal | No
 _HISTORICAL_YEARS = 3
 
 
-def _resolve_status(period: str, current_year: int) -> AdvancePaymentStatus:
+def _resolve_status(period: str, current_year: int) -> ObligationStatus:
     period_year = parse_period_year(period)
     if period_year < current_year:
-        return AdvancePaymentStatus.PAID
-    return AdvancePaymentStatus.PENDING
+        return ObligationStatus.SUBMITTED
+    return ObligationStatus.AWAITING_INPUT
 
 
 def _apply_payment_fields(
     rng: Random,
     payment: AdvancePayment,
-    status: AdvancePaymentStatus,
+    status: ObligationStatus,
     period: str,
     le: LegalEntity | None = None,
     db=None,
@@ -81,13 +78,13 @@ def _apply_payment_fields(
     payment.expected_amount = calculated_amount
 
     payment.status = status
-    if status == AdvancePaymentStatus.PAID:
+    if status == ObligationStatus.SUBMITTED:
         payment.paid_amount = payment.expected_amount
         payment.payment_method = rng.choice(list(PaymentMethod))
         period_dt = datetime.strptime(f"{period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
         paid_at = period_dt + timedelta(days=rng.randint(14, 45))
         payment.paid_at = min(paid_at, datetime.now(UTC))
-    elif status == AdvancePaymentStatus.PARTIAL:
+    elif status == ObligationStatus.IN_PROGRESS:
         expected = payment.expected_amount
         payment.paid_amount = (expected * Decimal(str(round(rng.uniform(0.2, 0.8), 2)))).quantize(
             Decimal("0.01")
@@ -173,7 +170,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
                     due_date_effective=entry.due_date,
                     expected_amount=Decimal("0.00"),
                     paid_amount=Decimal("0.00"),
-                    status=AdvancePaymentStatus.PENDING,
+                    status=ObligationStatus.AWAITING_INPUT,
                     tax_calendar_entry_id=entry.id,
                 )
                 _apply_payment_fields(rng, payment, status, plan.period, le, db, client_record_id)
@@ -187,7 +184,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
     stragglers = db.scalars(
         select(AdvancePayment).where(
             AdvancePayment.period < f"{current_year}-01",
-            AdvancePayment.status == AdvancePaymentStatus.PENDING,
+            AdvancePayment.status == ObligationStatus.AWAITING_INPUT,
             AdvancePayment.deleted_at.is_(None),
         )
     ).all()

@@ -9,12 +9,12 @@ from app.core.openapi_responses import binary_response_doc
 from app.core.pagination import DEFAULT_PAGE_SIZE, MAX_PAGE_SIZE
 from app.reports.advance_payment_report import AdvancePaymentReportService
 from app.reports.annual_report_status_report import (
-    AnnualReportStatusReportService,
+    ObligationStatusReportService,
 )
 from app.reports.report_schemas import (
     AdvancePaymentCollectionsReportResponse,
     AgingReportResponse,
-    AnnualReportStatusReportResponse,
+    ObligationStatusReportResponse,
     VatComplianceReportResponse,
 )
 from app.reports.services.report_reports_export_service import ReportsExportService
@@ -73,12 +73,12 @@ def export_advance_payment_report(
     )
 
 
-@router.get("/annual-reports", response_model=AnnualReportStatusReportResponse)
+@router.get("/annual-reports", response_model=ObligationStatusReportResponse)
 def get_annual_report_status_report(
     db: DBSession,
     tax_year: int = Query(...),
 ):
-    service = AnnualReportStatusReportService(db)
+    service = ObligationStatusReportService(db)
     return service.get_report(tax_year)
 
 
