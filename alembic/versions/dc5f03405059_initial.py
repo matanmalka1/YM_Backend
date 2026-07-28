@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 661009cf93fb
+Revision ID: dc5f03405059
 Revises: 
-Create Date: 2026-07-28 10:38:10.480837
+Create Date: 2026-07-28 12:08:27.417262
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '661009cf93fb'
+revision: str = 'dc5f03405059'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -305,7 +305,7 @@ def upgrade() -> None:
     sa.Column('tax_year', sa.Integer(), nullable=False),
     sa.Column('client_type', sa.Enum('individual', 'self_employed', 'corporation', 'public_institution', 'partnership', 'control_holder', 'exempt_dealer', name='clientannualfilingtype'), nullable=False),
     sa.Column('form_type', sa.Enum('1301', '1214', '1215', name='primaryannualreportform'), nullable=False),
-    sa.Column('status', sa.Enum('not_started', 'collecting_docs', 'in_preparation', 'pending_client', 'submitted', 'closed', 'canceled', name='annualreportstatus'), nullable=False),
+    sa.Column('status', sa.Enum('awaiting_input', 'input_received', 'in_progress', 'awaiting_verification', 'submitted', 'canceled', name='obligationstatus'), nullable=False),
     sa.Column('deadline_type', sa.Enum('standard', 'extended', 'custom', name='filingdeadlinetype'), nullable=False),
     sa.Column('filing_deadline', sa.DateTime(), nullable=True),
     sa.Column('custom_deadline_note', sa.String(), nullable=True),
@@ -448,7 +448,7 @@ def upgrade() -> None:
     sa.Column('assigned_to', sa.Integer(), nullable=True),
     sa.Column('period', sa.String(length=7), nullable=False),
     sa.Column('period_type', sa.Enum('monthly', 'bimonthly', 'exempt', name='vattype'), nullable=False),
-    sa.Column('status', sa.Enum('pending_materials', 'material_received', 'data_entry_in_progress', 'ready_for_review', 'filed', 'canceled', name='vatworkitemstatus'), nullable=False),
+    sa.Column('status', sa.Enum('awaiting_input', 'input_received', 'in_progress', 'awaiting_verification', 'submitted', 'canceled', name='obligationstatus'), nullable=False),
     sa.Column('pending_materials_note', sa.Text(), nullable=True),
     sa.Column('total_output_vat', sa.Numeric(precision=12, scale=2), nullable=False),
     sa.Column('total_input_vat', sa.Numeric(precision=12, scale=2), nullable=False),
@@ -507,7 +507,7 @@ def upgrade() -> None:
     sa.Column('withheld_amount', sa.Numeric(precision=12, scale=2), nullable=True),
     sa.Column('turnover_source', sa.Enum('manual', 'vat_filed', 'vat_pending', name='turnoversource'), nullable=True),
     sa.Column('turnover_snapshot_at', sa.DateTime(), nullable=True),
-    sa.Column('status', sa.Enum('pending', 'paid', 'partial', name='advancepaymentstatus'), nullable=False),
+    sa.Column('status', sa.Enum('awaiting_input', 'input_received', 'in_progress', 'awaiting_verification', 'submitted', 'canceled', name='obligationstatus'), nullable=False),
     sa.Column('paid_at', sa.DateTime(), nullable=True),
     sa.Column('payment_method', sa.Enum('bank_transfer', 'credit_card', 'check', 'direct_debit', 'cash', 'other', name='paymentmethod'), nullable=True),
     sa.Column('payment_reference', sa.String(length=100), nullable=True),
@@ -1107,9 +1107,7 @@ def downgrade() -> None:
     # downgrade -> upgrade roundtrip would fail without this.
     op.execute("DROP SEQUENCE IF EXISTS client_office_number_seq")
     op.execute("DROP TYPE IF EXISTS advance_payment_frequency")
-    op.execute("DROP TYPE IF EXISTS advancepaymentstatus")
     op.execute("DROP TYPE IF EXISTS annualreportschedule")
-    op.execute("DROP TYPE IF EXISTS annualreportstatus")
     op.execute("DROP TYPE IF EXISTS auditaction")
     op.execute("DROP TYPE IF EXISTS auditstatus")
     op.execute("DROP TYPE IF EXISTS binder_capacity_status")
@@ -1140,6 +1138,7 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS notificationchannel")
     op.execute("DROP TYPE IF EXISTS notificationstatus")
     op.execute("DROP TYPE IF EXISTS notificationtrigger")
+    op.execute("DROP TYPE IF EXISTS obligationstatus")
     op.execute("DROP TYPE IF EXISTS obligationtype")
     op.execute("DROP TYPE IF EXISTS paymentmethod")
     op.execute("DROP TYPE IF EXISTS personlegalentityrole")
@@ -1156,4 +1155,3 @@ def downgrade() -> None:
     op.execute("DROP TYPE IF EXISTS vatdocumenttype")
     op.execute("DROP TYPE IF EXISTS vatratetype")
     op.execute("DROP TYPE IF EXISTS vattype")
-    op.execute("DROP TYPE IF EXISTS vatworkitemstatus")

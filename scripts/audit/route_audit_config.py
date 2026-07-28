@@ -180,7 +180,7 @@ ENUM_SYNC_MAP: dict[str, str] = {
     "EntityType": "features/clients/constants.ts:ENTITY_TYPES",
     "IdNumberType": "features/clients/constants.ts:CLIENT_ID_NUMBER_TYPES",
     "VatType": "features/clients/constants.ts:VAT_TYPES",
-    "VatWorkItemStatus": "features/vatReports/constants/vatConstants.ts:VAT_WORK_ITEM_STATUS_VALUES",
+    "ObligationStatus": "constants/obligationStatus.constants.ts:OBLIGATION_STATUS_VALUES",
     "VatRateType": "features/vatReports/constants/vatConstants.ts:VAT_RATE_TYPES",
     # DocumentType exists in two Python modules with different values.
     # Use module-qualified keys: "module.ClassName"
