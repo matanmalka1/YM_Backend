@@ -1,8 +1,3 @@
-from decimal import Decimal
-
-from app.advance_payments.repositories.advance_payment_aggregation_repository import (
-    AdvancePaymentAggregationRepository,
-)
 from app.annual_reports.integrations.tax_rules_registry import (
     get_default_resident_credit_points,
 )
@@ -133,13 +128,6 @@ class AnnualReportQueryService(AnnualReportBaseService):
             response.amendment_reason = detail.amendment_reason
 
         tax = AnnualReportTaxService(self.db).get_tax_calculation_for_report(orm_report)
-        advances_paid = Decimal(
-            str(
-                AdvancePaymentAggregationRepository(self.db).sum_paid_by_client_year(
-                    orm_report.client_record_id, orm_report.tax_year
-                )
-            )
-        )
         response.tax_calculation = AnnualReportTaxCalculationResponse(
             total_income=financial_summary.total_income,
             total_expenses=financial_summary.gross_expenses,
@@ -147,7 +135,7 @@ class AnnualReportQueryService(AnnualReportBaseService):
             taxable_income=financial_summary.taxable_income,
             profit=tax.net_profit,
             tax_after_credits=tax.tax_after_credits,
-            final_balance=tax.tax_after_credits - advances_paid,
+            final_balance=tax.final_balance,
             credit_points_value=tax.credit_points_value,
             donation_credit=tax.donation_credit,
             credit_points=credit_breakdown["credit_points"],

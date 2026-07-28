@@ -1,12 +1,9 @@
 """Advances summary — links advance payments to an annual report."""
 
-from decimal import Decimal
-
 from sqlalchemy.orm import Session
 
-from app.advance_payments.models.advance_payment import AdvancePaymentStatus
-from app.advance_payments.repositories.advance_payment_repository import (
-    AdvancePaymentRepository,
+from app.advance_payments.repositories.advance_payment_aggregation_repository import (
+    AdvancePaymentAggregationRepository,
 )
 from app.annual_reports.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from app.annual_reports.models.annual_report_model import AnnualReport
@@ -25,7 +22,7 @@ class AnnualReportAdvancesSummaryService:
     def __init__(self, db: Session):
         self.db = db
         self.report_repo = AnnualReportRepository(db)
-        self.advance_repo = AdvancePaymentRepository(db)
+        self.aggregation_repo = AdvancePaymentAggregationRepository(db)
 
     def get_advances_summary(self, report_id: int) -> AdvancesSummary:
         report = self.report_repo.get_by_id(report_id)
@@ -37,18 +34,16 @@ class AnnualReportAdvancesSummaryService:
         return self.get_advances_summary_for_report(report)
 
     def get_advances_summary_for_report(self, report: AnnualReport) -> AdvancesSummary:
-        payments, count = self.advance_repo.list_by_client_record_year(
-            report.client_record_id,
-            report.tax_year,
-            status=[AdvancePaymentStatus.PAID],
-            page=1,
-            page_size=10000,
-        )
-
-        total = sum((p.paid_amount or Decimal("0")) for p in payments)
-
+        # The total and the balance come from the tax service, which reads the SQL
+        # aggregate. This used to sum a page-capped read of up to 10000 rows in
+        # Python, which silently undercounted past the cap and could disagree with
+        # the same figure on the report detail response.
         tax_result = AnnualReportTaxService(self.db).get_tax_calculation_for_report(report)
-        balance = tax_result.tax_after_credits - total
+        total = tax_result.advances_paid
+        balance = tax_result.final_balance
+        count = self.aggregation_repo.count_paid_by_client_year(
+            report.client_record_id, report.tax_year
+        )
 
         if balance > 0:
             balance_type = "due"

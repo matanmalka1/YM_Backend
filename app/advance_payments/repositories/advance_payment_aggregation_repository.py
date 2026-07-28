@@ -192,16 +192,30 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         ]
         return rows, int(total or 0)
 
+    def _paid_by_client_year_filters(self, client_record_id: int, year: int):
+        """The one definition of "a paid advance belonging to this client's year"."""
+        return (
+            AdvancePayment.client_record_id == client_record_id,
+            advance_payment_year_range_filter(year),
+            AdvancePayment.status == AdvancePaymentStatus.PAID,
+            AdvancePayment.deleted_at.is_(None),
+        )
+
     def sum_paid_by_client_year(self, client_record_id: int, year: int) -> float:
         result = self.db.scalar(
             select(func.coalesce(func.sum(AdvancePayment.paid_amount), 0)).where(
-                AdvancePayment.client_record_id == client_record_id,
-                advance_payment_year_range_filter(year),
-                AdvancePayment.status == AdvancePaymentStatus.PAID,
-                AdvancePayment.deleted_at.is_(None),
+                *self._paid_by_client_year_filters(client_record_id, year)
             )
         )
         return float(result)
+
+    def count_paid_by_client_year(self, client_record_id: int, year: int) -> int:
+        result = self.db.scalar(
+            select(func.count(AdvancePayment.id)).where(
+                *self._paid_by_client_year_filters(client_record_id, year)
+            )
+        )
+        return int(result or 0)
 
     def get_collections_aggregates(self, year: int, month=None) -> list:
         """Per-client aggregates for the collections report."""

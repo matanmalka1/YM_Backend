@@ -127,6 +127,11 @@ class AnnualReportTaxService:
         total_liability = round(
             tax.tax_after_credits + ni.total + (vat_balance or 0) - advances_paid, 2
         )
+        # final_balance has one definition, published here. Both consumers — the
+        # report detail response and the advances summary — read it rather than
+        # restating the subtraction against a data source of their own.
+        advances_paid_amount = _decimal(advances_paid)
+        final_balance = _decimal(tax.tax_after_credits) - advances_paid_amount
         return TaxCalculationResponse(
             taxable_income=_decimal(tax.taxable_income),
             pension_deduction=_decimal(tax.pension_deduction),
@@ -154,6 +159,8 @@ class AnnualReportTaxService:
             ],
             total_liability=_decimal(total_liability),
             total_credit_points=_decimal(tax.total_credit_points),
+            advances_paid=advances_paid_amount,
+            final_balance=final_balance,
         )
 
     def save_tax_calculation(

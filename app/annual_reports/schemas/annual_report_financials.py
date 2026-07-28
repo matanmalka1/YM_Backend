@@ -157,6 +157,10 @@ class TaxCalculationResponse(BaseModel):
     brackets: list[BracketBreakdownItem]
     total_liability: ApiDecimal
     total_credit_points: ApiDecimal
+    # Advances already paid for this tax year, and what remains after them. Both
+    # come from the SQL aggregate over PAID rows; nothing recomputes either.
+    advances_paid: ApiDecimal
+    final_balance: ApiDecimal
 
 
 # ── Advances summary ──────────────────────────────────────────────────────────
