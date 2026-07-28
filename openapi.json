@@ -5995,7 +5995,7 @@
           "clients"
         ],
         "summary": "Preview creation impact",
-        "description": "מחזיר תצוגה מקדימה של הישויות שייווצרו אוטומטית עם פתיחת הלקוח.",
+        "description": "מחזיר תצוגה מקדימה של הישויות שייווצרו אוטומטית עם פתיחת הלקוח.\n\nPure computation over the obligation plan — no DB session, because a preview\nmust not write. It previously materialized tax-calendar entries as a side\neffect of the due-date filter it used, which the liability range replaced.",
         "operationId": "preview_creation_impact_api_v1_clients_preview_impact_post",
         "requestBody": {
           "content": {
@@ -26475,6 +26475,78 @@
               }
             ],
             "title": "Accountant Id"
+          },
+          "vat_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable From"
+          },
+          "vat_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable To"
+          },
+          "advance_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable From"
+          },
+          "advance_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable To"
+          },
+          "annual_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Liable From"
+          },
+          "annual_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Liable To"
           }
         },
         "type": "object",
@@ -26572,6 +26644,54 @@
               }
             ],
             "title": "Advance Rate"
+          },
+          "vat_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable From"
+          },
+          "vat_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable To"
+          },
+          "advance_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable From"
+          },
+          "advance_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable To"
           }
         },
         "type": "object",
@@ -26957,6 +27077,78 @@
               }
             ],
             "title": "Annual Revenue"
+          },
+          "vat_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable From"
+          },
+          "vat_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable To"
+          },
+          "advance_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable From"
+          },
+          "advance_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable To"
+          },
+          "annual_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Liable From"
+          },
+          "annual_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Liable To"
           },
           "phone": {
             "anyOf": [
@@ -27491,6 +27683,78 @@
               }
             ],
             "title": "Accountant Id"
+          },
+          "vat_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable From"
+          },
+          "vat_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Vat Liable To"
+          },
+          "advance_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable From"
+          },
+          "advance_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Advance Liable To"
+          },
+          "annual_liable_from": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Liable From"
+          },
+          "annual_liable_to": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Annual Liable To"
           }
         },
         "additionalProperties": false,

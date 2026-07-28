@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 657db666d1cc
+Revision ID: 661009cf93fb
 Revises: 
-Create Date: 2026-07-26 12:23:38.495286
+Create Date: 2026-07-28 10:38:10.480837
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '657db666d1cc'
+revision: str = '661009cf93fb'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -52,8 +52,17 @@ def upgrade() -> None:
     sa.Column('advance_rate', sa.Numeric(precision=5, scale=2), nullable=True),
     sa.Column('advance_rate_updated_at', sa.Date(), nullable=True),
     sa.Column('annual_revenue', sa.Numeric(precision=15, scale=0), nullable=True),
+    sa.Column('vat_liable_from', sa.Date(), nullable=True),
+    sa.Column('vat_liable_to', sa.Date(), nullable=True),
+    sa.Column('advance_liable_from', sa.Date(), nullable=True),
+    sa.Column('advance_liable_to', sa.Date(), nullable=True),
+    sa.Column('annual_liable_from', sa.Date(), nullable=True),
+    sa.Column('annual_liable_to', sa.Date(), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
     sa.Column('updated_at', sa.DateTime(), nullable=True),
+    sa.CheckConstraint('advance_liable_to IS NULL OR advance_liable_from IS NULL OR advance_liable_to >= advance_liable_from', name='ck_legal_entity_advance_liability_range'),
+    sa.CheckConstraint('annual_liable_to IS NULL OR annual_liable_from IS NULL OR annual_liable_to >= annual_liable_from', name='ck_legal_entity_annual_liability_range'),
+    sa.CheckConstraint('vat_liable_to IS NULL OR vat_liable_from IS NULL OR vat_liable_to >= vat_liable_from', name='ck_legal_entity_vat_liability_range'),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('id_number_type', 'id_number', name='uq_legal_entity_registration_id')
     )
