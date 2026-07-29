@@ -17,46 +17,11 @@ from app.vat.schemas.vat_report import VatClosingReadinessResponse
 from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_data_entry_common import assert_transition_allowed
 from app.vat.vat_messages import (
-    AMENDED_ITEM_NOT_FILED,
-    AMENDED_ITEM_NOT_FOUND,
-    AMENDED_ITEM_WRONG_CLIENT,
-    AMENDMENT_CYCLE_DETECTED,
     FINAL_VAT_AMOUNT_REQUIRED,
     OVERRIDE_JUSTIFICATION_REQUIRED,
-    VAT_AMENDMENT_ID_REQUIRED,
     VAT_ASSIGNEE_REQUIRED,
     VAT_ITEM_NOT_FOUND,
 )
-
-
-def _validate_amendment(
-    work_item_repo: VatWorkItemRepository,
-    item,
-    amends_item_id: int,
-) -> None:
-    amended_item = work_item_repo.get_by_id(amends_item_id)
-    if amended_item is None:
-        raise AppError(
-            AMENDED_ITEM_NOT_FOUND, code=ErrorCode.VAT_AMENDED_ITEM_NOT_FOUND, status_code=404
-        )
-    if amended_item.client_record_id != item.client_record_id:
-        raise AppError(
-            AMENDED_ITEM_WRONG_CLIENT, code=ErrorCode.VAT_AMENDED_ITEM_WRONG_CLIENT, status_code=400
-        )
-    if amended_item.status != ObligationStatus.SUBMITTED:
-        raise AppError(
-            AMENDED_ITEM_NOT_FILED, code=ErrorCode.VAT_AMENDED_ITEM_NOT_FILED, status_code=400
-        )
-
-    current_item = amended_item
-    while current_item is not None:
-        if current_item.id == item.id:
-            raise AppError(
-                AMENDMENT_CYCLE_DETECTED, code=ErrorCode.VAT_AMENDMENT_CYCLE, status_code=400
-            )
-        if current_item.amends_item_id is None:
-            break
-        current_item = work_item_repo.get_by_id(current_item.amends_item_id)
 
 
 def get_closing_readiness(
@@ -96,8 +61,6 @@ def file_vat_return(
     override_amount: float | None = None,
     override_justification: str | None = None,
     submission_reference: str | None = None,
-    is_amendment: bool = False,
-    amends_item_id: int | None = None,
     actor_display_name: str | None = None,
 ):
     item = work_item_repo.get_by_id_for_update(item_id)
@@ -108,14 +71,6 @@ def file_vat_return(
 
     if item.assigned_to is None:
         raise AppError(VAT_ASSIGNEE_REQUIRED, code=ErrorCode.VAT_ASSIGNEE_REQUIRED, status_code=400)
-
-    if is_amendment and amends_item_id is None:
-        raise AppError(
-            VAT_AMENDMENT_ID_REQUIRED, code=ErrorCode.VAT_AMENDMENT_ID_REQUIRED, status_code=400
-        )
-
-    if amends_item_id is not None:
-        _validate_amendment(work_item_repo, item, amends_item_id)
 
     is_overridden = override_amount is not None
 
@@ -153,8 +108,6 @@ def file_vat_return(
         is_overridden=is_overridden,
         override_justification=override_justification if is_overridden else None,
         submission_reference=submission_reference,
-        is_amendment=is_amendment,
-        amends_item_id=amends_item_id,
         item=item,
     )
 

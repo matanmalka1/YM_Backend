@@ -19,8 +19,16 @@ def deadline_fields_from_snapshot(item, submission_method: SubmissionMethod | No
     overrides in tax_rules_config). Do NOT add online-extension days here — that would
     double-count an extension already baked into the snapshot.
     """
+    if item.due_date_effective is None:
+        return {
+            "submission_deadline": None,
+            "statutory_deadline": None,
+            "extended_deadline": None,
+            "days_until_deadline": None,
+            "is_overdue": None,
+        }
     statutory_deadline = item.due_date_original or item.due_date_effective
-    effective_deadline = item.due_date_effective or statutory_deadline
+    effective_deadline = item.due_date_effective
     submission_deadline = effective_deadline
     extended_deadline = effective_deadline
     today = datetime.now(UTC).date()
@@ -36,8 +44,6 @@ def deadline_fields_from_snapshot(item, submission_method: SubmissionMethod | No
 
 def get_vat_deadline_fields(item, submission_method: SubmissionMethod | None = None) -> dict:
     """Return deadline fields from the stored TaxCalendarEntry snapshot."""
-    if getattr(item, "due_date_effective", None) is None:
-        raise ValueError(f"VatWorkItem {getattr(item, 'id', None)} is missing due_date_effective")
     return deadline_fields_from_snapshot(item, submission_method)
 
 

@@ -171,71 +171,45 @@ def test_update_invoice_raises_vat_net_not_positive_code():
     assert exc_info.value.code == "VAT.NET_NOT_POSITIVE"
 
 
-def test_f009_amendment_errors_use_namespaced_codes(client, advisor_headers, vat_client, test_user):
-    """F-009: amendment not-found error must return VAT.AMENDED_ITEM_NOT_FOUND."""
+# ── Amendment: an act on a closed record, not a flag at filing time ──────────
+#
+# The filing-time flag these tests used to exercise was deleted in W4: it was set
+# on a row that already existed, and a second row for the period could never be
+# created, so VAT's amendment was unreachable rather than merely unused (§4.1.6).
+# What is worth guarding now is that the new act refuses the two states it must.
+
+
+def test_amending_an_open_period_is_rejected(client, advisor_headers, vat_client, test_user):
+    """Only a closed record can be corrected — an open one is simply edited."""
     item_id = setup_ready_item(
         client, advisor_headers, vat_client, "2025-12", assigned_to=test_user.id
     )
 
-    resp = client.post(
-        f"/api/v1/vat/work-items/{item_id}/file",
-        headers=advisor_headers,
-        json={
-            "submission_method": "online",
-            "is_amendment": True,
-            "amends_item_id": 999999,
-        },
-    )
+    resp = client.post(f"/api/v1/vat/work-items/{item_id}/amend", headers=advisor_headers)
 
-    assert resp.status_code == 404
-    assert resp.json()["error"]["code"] == "VAT.AMENDED_ITEM_NOT_FOUND"
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "OBLIGATION.NOT_CLOSED"
 
 
-# ── F-010: is_amendment=True requires amends_item_id ─────────────────────────
-
-
-def test_f010_amendment_flag_without_id_is_rejected(client, advisor_headers, vat_client, test_user):
-    """F-010: is_amendment=True without amends_item_id must be rejected."""
+def test_a_period_can_be_amended_only_once(client, advisor_headers, vat_client, test_user):
+    """A chain is a line, not a tree: two tips would put every aggregate back
+    where D-12 found it."""
     item_id = setup_ready_item(
         client, advisor_headers, vat_client, "2026-01", assigned_to=test_user.id
     )
-
-    resp = client.post(
-        f"/api/v1/vat/work-items/{item_id}/file",
-        headers=advisor_headers,
-        json={"submission_method": "online", "is_amendment": True},
+    assert (
+        client.post(
+            f"/api/v1/vat/work-items/{item_id}/file",
+            headers=advisor_headers,
+            json={"submission_method": "online"},
+        ).status_code
+        == 200
     )
 
-    assert resp.status_code == 400
-    assert resp.json()["error"]["code"] == "VAT.AMENDMENT_ID_REQUIRED"
+    first = client.post(f"/api/v1/vat/work-items/{item_id}/amend", headers=advisor_headers)
+    assert first.status_code == 201
+    assert first.json()["amends_id"] == item_id
 
-
-def test_f010_amendment_flag_with_id_runs_validation(
-    client, advisor_headers, vat_client, test_user
-):
-    """F-010: is_amendment=True with a valid filed amends_item_id must succeed."""
-    original_id = setup_ready_item(
-        client, advisor_headers, vat_client, "2026-02", assigned_to=test_user.id
-    )
-    original_file_resp = client.post(
-        f"/api/v1/vat/work-items/{original_id}/file",
-        headers=advisor_headers,
-        json={"submission_method": "online"},
-    )
-    assert original_file_resp.status_code == 200
-
-    amendment_id = setup_ready_item(
-        client, advisor_headers, vat_client, "2026-03", assigned_to=test_user.id
-    )
-    resp = client.post(
-        f"/api/v1/vat/work-items/{amendment_id}/file",
-        headers=advisor_headers,
-        json={
-            "submission_method": "online",
-            "is_amendment": True,
-            "amends_item_id": original_id,
-        },
-    )
-
-    assert resp.status_code == 200
-    assert resp.json()["is_amendment"] is True
+    second = client.post(f"/api/v1/vat/work-items/{item_id}/amend", headers=advisor_headers)
+    assert second.status_code == 409
+    assert second.json()["error"]["code"] == "OBLIGATION.ALREADY_AMENDED"

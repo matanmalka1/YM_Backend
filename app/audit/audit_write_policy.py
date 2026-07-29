@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from typing import Any, NoReturn
 
 from app.audit.audit_constants import (
+    ACTION_ADVANCE_PAYMENT_AMENDED,
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
     ACTION_ADVANCE_PAYMENT_STATUS_CHANGED,
@@ -34,6 +35,7 @@ from app.audit.audit_constants import (
     ACTION_ANNEX_LINE_ADDED,
     ACTION_ANNEX_LINE_DELETED,
     ACTION_ANNEX_LINE_UPDATED,
+    ACTION_ANNUAL_REPORT_AMENDED,
     ACTION_ANNUAL_REPORT_DEADLINE_UPDATED,
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
     ACTION_AUTHORITY_CONTACT_CREATED,
@@ -102,6 +104,7 @@ from app.audit.audit_constants import (
     ACTION_VAT_INVOICE_CREATED,
     ACTION_VAT_INVOICE_DELETED,
     ACTION_VAT_INVOICE_UPDATED,
+    ACTION_VAT_WORK_ITEM_AMENDED,
     ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
     ACTION_VAT_WORK_ITEM_CREATED,
     ACTION_VAT_WORK_ITEM_DELETED,
@@ -526,6 +529,12 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
         metadata_allowed=_ADVANCE_PAYMENT_META,
     ),
+    # Recorded on the amendment, not the original: the act creates a record.
+    ACTION_ADVANCE_PAYMENT_AMENDED: ActionPolicy(
+        value_fields=frozenset({"amends_id", "period"}),
+        metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META,
+    ),
     ACTION_ADVANCE_PAYMENT_DELETED: ActionPolicy(
         value_fields=_ADVANCE_PAYMENT_FIELDS,
         metadata_required=frozenset({"client_record_id", "period", "tax_year", "reason"}),
@@ -613,6 +622,12 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "tax_year"}),
         metadata_allowed=_AR_META,
     ),
+    # Recorded on the amendment, not the original: the act creates a record.
+    ACTION_ANNUAL_REPORT_AMENDED: ActionPolicy(
+        value_fields=frozenset({"amends_id", "tax_year"}),
+        metadata_required=frozenset({"client_record_id", "tax_year"}),
+        metadata_allowed=_AR_META,
+    ),
     ACTION_INCOME_ADDED: ActionPolicy(
         value_fields=_INCOME_FIELDS,
         metadata_required=frozenset({"client_record_id", "tax_year", "section", "line_id"}),
@@ -684,6 +699,12 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
     ),
     ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN: ActionPolicy(
         value_fields=frozenset({"final_vat_amount"}),
+        metadata_required=frozenset({"client_record_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    # Recorded on the amendment, not the original: the act creates a record.
+    ACTION_VAT_WORK_ITEM_AMENDED: ActionPolicy(
+        value_fields=frozenset({"amends_id", "period"}),
         metadata_required=frozenset({"client_record_id"}),
         metadata_allowed=_VAT_WORK_ITEM_META,
     ),

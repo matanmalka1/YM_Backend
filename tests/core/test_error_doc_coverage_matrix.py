@@ -22,6 +22,8 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("PATCH", "/api/v1/vat/work-items/{item_id}"): {"400"},
     ("DELETE", "/api/v1/vat/work-items/{item_id}"): {"400"},
     ("POST", "/api/v1/vat/work-items/{item_id}/file"): {"400", "409"},
+    # Amendment (D-10): 400 the original is not closed, 409 it already has one.
+    ("POST", "/api/v1/vat/work-items/{item_id}/amend"): {"400", "409"},
     ("POST", "/api/v1/vat/work-items/{item_id}/invoices"): {"400", "409"},
     ("PATCH", "/api/v1/vat/work-items/{item_id}/invoices/{invoice_id}"): {"400", "409"},
     ("DELETE", "/api/v1/vat/work-items/{item_id}/invoices/{invoice_id}"): {"400"},
@@ -44,6 +46,7 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("PATCH", "/api/v1/annual-reports/{report_id}"): {"400"},
     ("DELETE", "/api/v1/annual-reports/{report_id}"): {"400"},
     ("POST", "/api/v1/annual-reports/{report_id}/status"): {"400", "409"},
+    ("POST", "/api/v1/annual-reports/{report_id}/amend"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/submit"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/deadline"): {"400"},
     ("POST", "/api/v1/annual-reports/{report_id}/auto-populate"): {"400"},
@@ -69,6 +72,10 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
         "POST",
         "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/status",
     ): {"400"},
+    (
+        "POST",
+        "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/amend",
+    ): {"400", "409"},
     (
         "POST",
         "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/refresh-turnover",

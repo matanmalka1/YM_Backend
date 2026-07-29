@@ -3,7 +3,7 @@ from __future__ import annotations
 from decimal import ROUND_HALF_UP, Decimal
 
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
@@ -31,6 +31,7 @@ class SeedIntegrityValidator:
         self._check_active_clients_have_binders()
         self._check_no_vat_items_for_exempt_clients()
         self._check_no_duplicate_annual_reports()
+        self._check_amendment_chains_are_stamped()
         self._check_no_null_tax_calendar_links()
         self._check_vat_advance_period_sync()
         self._check_advance_payment_amounts()
@@ -84,9 +85,19 @@ class SeedIntegrityValidator:
                 )
 
     def _check_no_duplicate_annual_reports(self) -> None:
+        """One *original* report per client and year (§4.1.13).
+
+        Amendments are excluded, not counted: a correction is a second row for
+        the same year by design (D-10). Without the exclusion this check would
+        report every corrected year as a duplicate — a true statement about the
+        row count and a false one about the data.
+        """
         dupes = self.db.execute(
             select(AnnualReport.client_record_id, AnnualReport.tax_year, func.count())
-            .where(AnnualReport.deleted_at.is_(None))
+            .where(
+                AnnualReport.deleted_at.is_(None),
+                AnnualReport.amends_id.is_(None),
+            )
             .group_by(AnnualReport.client_record_id, AnnualReport.tax_year)
             .having(func.count() > 1)
         ).all()
@@ -94,6 +105,35 @@ class SeedIntegrityValidator:
             self._errors.append(
                 f"Client {client_id} has {count} annual reports for year {tax_year}"
             )
+
+    def _check_amendment_chains_are_stamped(self) -> None:
+        """Every amended row carries its ``superseded_at`` stamp (D-12).
+
+        The link and the stamp are written together by ``link_amendment``, but
+        they are two columns and nothing at the database level ties them. A row
+        that someone amended without stamping stays visible to every list and
+        sum alongside its own correction — the exact double-count the chain-tip
+        predicate exists to prevent, and silent, because both rows are valid on
+        their own.
+        """
+        for model in (VatWorkItem, AnnualReport, AdvancePayment):
+            amended = self.db.execute(
+                select(func.count())
+                .select_from(model)
+                .join(
+                    aliased_amendment := aliased(model),
+                    aliased_amendment.amends_id == model.id,
+                )
+                .where(
+                    model.deleted_at.is_(None),
+                    aliased_amendment.deleted_at.is_(None),
+                    model.superseded_at.is_(None),
+                )
+            ).scalar()
+            if amended:
+                self._errors.append(
+                    f"{model.__tablename__} has {amended} amended row(s) with no superseded_at"
+                )
 
     def _check_no_null_tax_calendar_links(self) -> None:
         diagnostics = find_active_null_tax_calendar_links(self.db)

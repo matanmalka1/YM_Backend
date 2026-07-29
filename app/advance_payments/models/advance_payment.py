@@ -33,9 +33,13 @@ Design notes:
     - Currency is always ILS by project convention, so no currency column is
       stored.
     - Soft deletion is enabled because this is a client-owned entity.
-    - Uniqueness of (client_record_id, period) is enforced via a partial index
-      (WHERE deleted_at IS NULL) — not a hard UniqueConstraint — so that a
-      soft-deleted record never blocks recreation of the same period.
+    - Uniqueness of (client_record_id, period) is enforced via a partial index —
+      not a hard UniqueConstraint — over rows that are not deleted, not an
+      amendment, and not cancelled (§4.1.13). Each exclusion frees the period's
+      slot for a different reason: a soft-deleted record never blocks recreation
+      (D-22), a correction is a second row for the same period by design (D-10),
+      and a returning client must be able to have the period created fresh
+      (D-23).
 """
 
 from __future__ import annotations
@@ -52,9 +56,10 @@ from sqlalchemy import (
     String,
     text,
 )
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import AmendableMixin
 from app.common.soft_delete import SoftDeletableMixin
 from app.database import Base
 from app.utils.enum_utils import pg_enum
@@ -97,7 +102,7 @@ class TurnoverSource(str, PyEnum):
     VAT_PENDING = "vat_pending"  # Snapshotted from a VAT return not yet filed
 
 
-class AdvancePayment(SoftDeletableMixin, Base):
+class AdvancePayment(AmendableMixin, SoftDeletableMixin, Base):
     """SQLAlchemy model for a client's advance tax payment record."""
 
     __tablename__ = "advance_payments"
@@ -115,9 +120,11 @@ class AdvancePayment(SoftDeletableMixin, Base):
     period_months_count: Mapped[int] = mapped_column(
         nullable=False, default=1
     )  # 1=monthly, 2=bi-monthly
-    due_date: Mapped[date] = mapped_column(
-        nullable=False
-    )  # Usually the 15th of the month after the period
+    # Usually the 15th of the month after the period. Nullable because an
+    # amendment carries no deadline of its own (D-14) — a correction is not a
+    # new obligation, and a date here would put every correction on the overdue
+    # list for a deadline that belonged to the record it corrects.
+    due_date: Mapped[date | None] = mapped_column(nullable=True)
     due_date_original: Mapped[date | None] = mapped_column(nullable=True)
     due_date_effective: Mapped[date | None] = mapped_column(nullable=True)
     due_date_override_reason: Mapped[str | None] = mapped_column(String(500), nullable=True)
@@ -189,11 +196,30 @@ class AdvancePayment(SoftDeletableMixin, Base):
     created_at: Mapped[datetime] = mapped_column(default=utcnow, nullable=False)
     updated_at: Mapped[datetime | None] = mapped_column(nullable=True, onupdate=utcnow)
 
+    # ── Relationships ─────────────────────────────────────────────────────────
+    original: Mapped[AdvancePayment | None] = relationship(
+        "AdvancePayment",
+        foreign_keys="[AdvancePayment.amends_id]",
+        remote_side="AdvancePayment.id",
+        uselist=False,
+    )
+
     __table_args__ = (
+        # §4.1.13: at most one row per client+period that is not deleted, not an
+        # amendment, and not cancelled (D-22 / D-10 / D-23).
         Index(
             "uq_advance_payment_client_record_period_active",
             "client_record_id",
             "period",
+            unique=True,
+            postgresql_where=text(
+                "deleted_at IS NULL AND amends_id IS NULL AND status <> 'canceled'"
+            ),
+        ),
+        # A chain never forks: a record has at most one amendment.
+        Index(
+            "uq_advance_payment_amends",
+            "amends_id",
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
         ),
@@ -201,7 +227,7 @@ class AdvancePayment(SoftDeletableMixin, Base):
         Index(
             "idx_advance_payment_period_active",
             "period",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text("deleted_at IS NULL AND superseded_at IS NULL"),
         ),
         Index("idx_advance_payment_status", "status"),
         Index("idx_advance_payment_due_date", "due_date"),

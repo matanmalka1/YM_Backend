@@ -11,6 +11,7 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
 )
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import link_amendment, select_obligations
 from app.common.repositories.base_repository import BaseRepository
 
 
@@ -68,14 +69,34 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         self.db.flush()
         return payment
 
+    def create_amendment(self, original: AdvancePayment, *, fields: dict) -> AdvancePayment:
+        """Persist a correction of ``original``, linked to it.
+
+        ``fields`` arrives already decided by the service — what an amendment
+        inherits and what it must not (D-14, D-21) is a domain question. An
+        advance has no child rows to carry: its figures are its own columns, so
+        the copy is the row and the link, and nothing else.
+        """
+        amendment = AdvancePayment(**fields)
+        link_amendment(amendment, original)
+        self.db.add(amendment)
+        self.db.flush()
+        return amendment
+
     def get_by_id_for_client_record(
         self, payment_id: int, client_record_id: int
     ) -> AdvancePayment | None:
+        """One payment, scoped to its client — identity, not a list.
+
+        Superseded rows stay reachable. D-12 is a rule about lists, counts and
+        sums; a record asked for *by id* is a record someone deliberately opened,
+        and a corrected period whose original could not be opened would make the
+        chain history unreadable — the thing amendments exist to preserve.
+        """
         return self.db.scalars(
-            select(AdvancePayment).where(
+            select_obligations(AdvancePayment, include_superseded=True).where(
                 AdvancePayment.id == payment_id,
                 AdvancePayment.client_record_id == client_record_id,
-                AdvancePayment.deleted_at.is_(None),
             )
         ).first()
 
@@ -85,9 +106,8 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             return []
         return list(
             self.db.scalars(
-                select(AdvancePayment).where(
+                select_obligations(AdvancePayment).where(
                     AdvancePayment.id.in_(payment_ids),
-                    AdvancePayment.deleted_at.is_(None),
                 )
             ).all()
         )
@@ -103,12 +123,17 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         base_where = [
             AdvancePayment.client_record_id == client_record_id,
             advance_payment_year_range_filter(year),
-            AdvancePayment.deleted_at.is_(None),
         ]
         if status:
             base_where.append(AdvancePayment.status.in_(status))
-        total = self.db.scalar(select(func.count(AdvancePayment.id)).where(*base_where))
-        stmt = select(AdvancePayment).where(*base_where).order_by(AdvancePayment.period.asc())
+        total = self.db.scalar(
+            select_obligations(AdvancePayment, func.count(AdvancePayment.id)).where(*base_where)
+        )
+        stmt = (
+            select_obligations(AdvancePayment)
+            .where(*base_where)
+            .order_by(AdvancePayment.period.asc())
+        )
         stmt = self.apply_pagination(stmt, page, page_size)
         items = list(self.db.scalars(stmt).all())
         return items, total
@@ -116,17 +141,22 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
     def list_due_for_work_queue(
         self, cutoff: date, client_record_id: int | None = None
     ) -> list[AdvancePayment]:
-        """Active-client pending/partial advance payments due on or before ``cutoff``.
+        """Active-client periods that still need work: due by ``cutoff``, or undated.
 
         Uses ``due_date_effective`` when set, otherwise the snapshot ``due_date``.
+        A row with neither is an amendment (D-14) — it is still live work someone
+        must finish, and a deadline filter that dropped it would hide a real
+        obligation from the one list whose purpose is to surface unfinished work.
         """
-        stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
-            AdvancePayment.deleted_at.is_(None),
+        stmt = scope_to_active_clients_stmt(
+            select_obligations(AdvancePayment), AdvancePayment
+        ).where(
             AdvancePayment.status.in_(
                 [ObligationStatus.AWAITING_INPUT, ObligationStatus.IN_PROGRESS]
             ),
             (AdvancePayment.due_date_effective <= cutoff)
-            | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff)),
+            | (AdvancePayment.due_date_effective.is_(None) & (AdvancePayment.due_date <= cutoff))
+            | (AdvancePayment.due_date_effective.is_(None) & AdvancePayment.due_date.is_(None)),
         )
         if client_record_id is not None:
             stmt = stmt.where(AdvancePayment.client_record_id == client_record_id)
@@ -141,11 +171,10 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         """
         return list(
             self.db.scalars(
-                select(AdvancePayment)
+                select_obligations(AdvancePayment)
                 .where(
                     AdvancePayment.client_record_id == client_record_id,
                     AdvancePayment.period >= from_period,
-                    AdvancePayment.deleted_at.is_(None),
                 )
                 .order_by(AdvancePayment.period.asc())
             ).all()
@@ -163,12 +192,11 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         """
         return list(
             self.db.scalars(
-                select(AdvancePayment)
+                select_obligations(AdvancePayment)
                 .where(
                     AdvancePayment.client_record_id == client_record_id,
                     advance_payment_year_range_filter(year),
                     AdvancePayment.period_months_count != period_months_count,
-                    AdvancePayment.deleted_at.is_(None),
                 )
                 .order_by(AdvancePayment.period.asc())
             ).all()
@@ -178,10 +206,9 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         return self.db.scalar(
             select(
                 exists(
-                    select(AdvancePayment.id).where(
+                    select_obligations(AdvancePayment, AdvancePayment.id).where(
                         AdvancePayment.client_record_id == client_record_id,
                         AdvancePayment.period == period,
-                        AdvancePayment.deleted_at.is_(None),
                     )
                 )
             )
@@ -189,10 +216,9 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
 
     def get_by_period(self, client_record_id: int, period: str) -> AdvancePayment | None:
         return self.db.scalars(
-            select(AdvancePayment).where(
+            select_obligations(AdvancePayment).where(
                 AdvancePayment.client_record_id == client_record_id,
                 AdvancePayment.period == period,
-                AdvancePayment.deleted_at.is_(None),
             )
         ).first()
 

@@ -86,6 +86,14 @@ class AdvancePaymentRow(BaseModel):
     closed_at: ApiDateTime | None = None
     closed_by: int | None = None
     closed_late: bool | None = None
+    # The period's answer, not this row's (D-34). An amendment has no due date,
+    # so its own `closed_late` is NULL — but the period it corrects may have been
+    # filed late, and that fact must survive the correction.
+    chain_closed_late: bool | None = None
+    # Amendment chain (D-10/D-12). `amends_id` set => this record corrects
+    # another; `superseded_at` set => a later record corrects this one.
+    amends_id: int | None = None
+    superseded_at: ApiDateTime | None = None
     annual_report_id: int | None = None
     notes: str | None = None
     turnover_amount: ApiDecimal | None = None

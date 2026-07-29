@@ -7,10 +7,15 @@ EntityAuditLog via ``EntityAuditWriter`` in the service layer (see
 
 from datetime import date
 
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.common.enums import ObligationStatus, SubmissionMethod
+from app.common.obligation_chain import (
+    copy_child,
+    link_amendment,
+    record_closing_lateness,
+    select_obligations,
+)
 from app.common.obligation_closing import compute_closed_late
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
@@ -199,11 +204,35 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         self.db.flush()
         return item
 
+    def create_amendment(self, original: VatWorkItem, *, fields: dict) -> VatWorkItem:
+        """Persist a correction of ``original``: the row, its link, and its invoices.
+
+        ``fields`` arrives already decided by the service — what an amendment
+        inherits and what it must not (D-14, D-21) is a domain question, not a
+        persistence one. What belongs here is that the whole act is one unit:
+        the new row, the two-sided chain link, and a copy of every invoice, in a
+        single flush. A half-copied amendment is worse than none — it presents as
+        a corrected period whose figures are missing.
+        """
+        amendment = VatWorkItem(**fields)
+        link_amendment(amendment, original)
+        self.add(amendment)
+        for invoice in original.invoices:
+            self.db.add(
+                copy_child(
+                    invoice,
+                    parent_fk="work_item_id",
+                    parent_id=amendment.id,
+                    overrides={"created_by": amendment.created_by},
+                )
+            )
+        self.db.flush()
+        return amendment
+
     def cancel_open_by_client_record(self, client_record_id: int) -> int:
         rows = self.db.scalars(
-            select(VatWorkItem).where(
+            select_obligations(VatWorkItem).where(
                 VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.deleted_at.is_(None),
                 VatWorkItem.status.notin_([ObligationStatus.SUBMITTED]),
             )
         ).all()
@@ -245,8 +274,6 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         is_overridden: bool = False,
         override_justification: str | None = None,
         submission_reference: str | None = None,
-        is_amendment: bool = False,
-        amends_item_id: int | None = None,
         item: VatWorkItem | None = None,
     ) -> VatWorkItem | None:
         """File the work item. Pass a pre-fetched (optionally locked) ``item`` to
@@ -259,12 +286,10 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         item.submission_method = submission_method
         item.closed_at = utcnow()
         item.closed_by = closed_by
-        item.closed_late = compute_closed_late(item.closed_at, item.due_date_effective)
+        record_closing_lateness(item, compute_closed_late(item.closed_at, item.due_date_effective))
         item.is_overridden = is_overridden
         item.override_justification = override_justification
         item.submission_reference = submission_reference
-        item.is_amendment = is_amendment
-        item.amends_item_id = amends_item_id
         item.updated_at = utcnow()
         self.db.flush()
         return item

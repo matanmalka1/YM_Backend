@@ -8,12 +8,13 @@ from sqlalchemy import func, select
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus
+from app.common.obligation_chain import select_obligations
 from app.utils.time_utils import israel_today, utcnow
 
 
 class AnnualReportLifecycleRepository:
     def _active_client_stmt(self):
-        return scope_to_active_clients_stmt(select(AnnualReport), AnnualReport)
+        return scope_to_active_clients_stmt(select_obligations(AnnualReport), AnnualReport)
 
     def list_overdue(
         self, tax_year: int | None = None, page: int = 1, page_size: int = 20
@@ -41,14 +42,14 @@ class AnnualReportLifecycleRepository:
 
     def sum_financials_by_year(self, tax_year: int) -> dict:
         stmt = scope_to_active_clients_stmt(
-            select(
+            select_obligations(
+                AnnualReport,
                 func.coalesce(func.sum(AnnualReport.refund_due), 0).label("total_refund_due"),
                 func.coalesce(func.sum(AnnualReport.tax_due), 0).label("total_tax_due"),
             ),
             AnnualReport,
         ).where(
             AnnualReport.tax_year == tax_year,
-            AnnualReport.deleted_at.is_(None),
         )
         row = self.db.execute(stmt).one()
         return {
@@ -109,19 +110,20 @@ class AnnualReportLifecycleRepository:
 
     def get_latest_tax_year(self) -> int | None:
         stmt = scope_to_active_clients_stmt(
-            select(func.max(AnnualReport.tax_year)), AnnualReport
-        ).where(AnnualReport.deleted_at.is_(None))
+            select_obligations(AnnualReport, func.max(AnnualReport.tax_year)), AnnualReport
+        )
         return self.db.scalar(stmt)
 
     def get_season_summary(self, tax_year: int) -> dict:
         stmt = (
             scope_to_active_clients_stmt(
-                select(AnnualReport.status, func.count(AnnualReport.id).label("cnt")),
+                select_obligations(
+                    AnnualReport, AnnualReport.status, func.count(AnnualReport.id).label("cnt")
+                ),
                 AnnualReport,
             )
             .where(
                 AnnualReport.tax_year == tax_year,
-                AnnualReport.deleted_at.is_(None),
             )
             .group_by(AnnualReport.status)
         )

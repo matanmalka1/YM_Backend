@@ -9,17 +9,19 @@ from app.vat.repositories.vat_compliance_repository import (
     VatComplianceRepository,
 )
 from app.work_queue.items.common import UPCOMING_WINDOW_DAYS, WorkQueueContext
-from app.work_queue.schemas.work_queue import WorkQueueItem, WorkQueueSourceType
+from app.work_queue.schemas.work_queue import (
+    WorkQueueItem,
+    WorkQueueSourceType,
+    WorkQueueUrgency,
+)
 from app.work_queue.work_queue_metadata import (
     annual_report_metadata,
     vat_work_item_metadata,
 )
 
 
-def _vat_due_date(item) -> date:
+def _vat_due_date(item) -> date | None:
     due_date_effective = item.due_date_effective
-    if due_date_effective is None:
-        raise ValueError(f"VatWorkItem {item.id} is missing due_date_effective")
     return due_date_effective.date() if hasattr(due_date_effective, "date") else due_date_effective
 
 
@@ -46,6 +48,7 @@ def vat_work_item_items(ctx: WorkQueueContext, client_record_id: int | None) -> 
                 f'מע"מ לא הוגש: {metadata["period_label"]}',
                 due_date,
                 vat_item.client_record_id,
+                item_urgency=WorkQueueUrgency.IMPORTANT if due_date is None else None,
                 status_label=vat_item.status.value
                 if hasattr(vat_item.status, "value")
                 else str(vat_item.status),

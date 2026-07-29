@@ -161,6 +161,9 @@ def test_bulk_refresh_reports_each_skip_reason(
         "skipped_no_vat": 1,
         "skipped_not_filed": 1,
         "skipped_paid": 0,
+        # W3 gave the bulk sweep a fourth skip reason: a closed row is locked, so
+        # it is skipped rather than failing the whole mixed sweep.
+        "skipped_closed": 0,
     }
 
 

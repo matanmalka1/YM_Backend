@@ -19,6 +19,7 @@ from app.audit.audit_constants import (
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import select_obligations
 from app.documents.permanent_documents.models.permanent_document import PermanentDocument
 from app.signature_requests.models.signature_request import SignatureRequest
 
@@ -103,8 +104,11 @@ class TimelineRepository:
     def list_annual_report_status_events(
         self, client_record_id: int | None
     ) -> list[tuple[AnnualReport, AnnualReportStatusAuditEvent]]:
+        # Every link in a chain, not just the tip: a timeline that dropped
+        # superseded reports would lose the original's own closing — the fact the
+        # amendment exists to correct.
         stmt = (
-            select(AnnualReport, EntityAuditLog)
+            select_obligations(AnnualReport, AnnualReport, EntityAuditLog, include_superseded=True)
             .join(
                 EntityAuditLog,
                 and_(
@@ -142,12 +146,16 @@ class TimelineRepository:
         return events
 
     def list_annual_report_ids(self, client_record_id: int) -> list[int]:
-        """All (non-deleted) annual-report ids for a client — for audit lookup."""
+        """All (non-deleted) annual-report ids for a client — for audit lookup.
+
+        Includes superseded rows: the audit history of a corrected report is part
+        of the client's history, and hiding it would make the correction look
+        like it came from nowhere.
+        """
         return list(
             self.db.scalars(
-                select(AnnualReport.id).where(
-                    AnnualReport.client_record_id == client_record_id,
-                    AnnualReport.deleted_at.is_(None),
+                select_obligations(AnnualReport, AnnualReport.id, include_superseded=True).where(
+                    AnnualReport.client_record_id == client_record_id
                 )
             ).all()
         )

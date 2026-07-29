@@ -60,6 +60,14 @@ ADVANCE_PAYMENT_TRANSITION_RESPONSES = error_responses(
 )
 
 # Delete is refused on a closed period (D-13/D-22) — that refusal is the 400.
+# Creating an amendment: the original must exist, be closed, and not already
+# have one (§4.1.6).
+ADVANCE_PAYMENT_AMEND_RESPONSES = error_responses(
+    bad_request_response(description="ניתן לתקן רק מקדמה שנסגרה"),
+    not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+    conflict_response(description="למקדמה זו כבר קיים תיקון"),
+)
+
 ADVANCE_PAYMENT_DELETE_RESPONSES = error_responses(
     bad_request_response(description="לא ניתן למחוק מקדמה סגורה"),
     not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),

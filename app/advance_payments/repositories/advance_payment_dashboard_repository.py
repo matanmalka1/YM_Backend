@@ -1,8 +1,9 @@
-from sqlalchemy import case, func, select, tuple_
+from sqlalchemy import case, func, tuple_
 from sqlalchemy.orm import Session
 
 from app.advance_payments.models.advance_payment import AdvancePayment, paid_in_full_expr
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
+from app.common.obligation_chain import select_obligations
 from app.common.repositories.base_repository import BaseRepository
 
 
@@ -16,7 +17,8 @@ class AdvancePaymentDashboardRepository(BaseRepository):
             else_=0,
         )
         stmt = scope_to_active_clients_stmt(
-            select(
+            select_obligations(
+                AdvancePayment,
                 func.coalesce(func.sum(paid_expr), 0),
                 func.count(AdvancePayment.id),
             ),
@@ -24,7 +26,6 @@ class AdvancePaymentDashboardRepository(BaseRepository):
         ).where(
             AdvancePayment.period == period,
             AdvancePayment.period_months_count == period_months_count,
-            AdvancePayment.deleted_at.is_(None),
         )
         completed, total = self.db.execute(stmt).one()
         return int(completed or 0), int(total or 0)
@@ -39,7 +40,8 @@ class AdvancePaymentDashboardRepository(BaseRepository):
             else_=0,
         )
         stmt = scope_to_active_clients_stmt(
-            select(
+            select_obligations(
+                AdvancePayment,
                 AdvancePayment.period,
                 AdvancePayment.period_months_count,
                 func.coalesce(func.sum(paid_expr), 0),
@@ -47,7 +49,6 @@ class AdvancePaymentDashboardRepository(BaseRepository):
             ),
             AdvancePayment,
         ).where(
-            AdvancePayment.deleted_at.is_(None),
             tuple_(AdvancePayment.period, AdvancePayment.period_months_count).in_(periods),
         )
         stmt = stmt.group_by(AdvancePayment.period, AdvancePayment.period_months_count)

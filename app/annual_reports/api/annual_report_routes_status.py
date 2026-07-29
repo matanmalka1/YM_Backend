@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
 from app.annual_reports.api.annual_report_responses import (
+    REPORT_AMEND_RESPONSES,
     REPORT_TRANSITION_RESPONSES,
     REPORT_UPDATE_RESPONSES,
 )
@@ -16,6 +17,7 @@ from app.annual_reports.schemas.annual_report_responses import (
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
+from app.core.openapi_responses import not_found_response
 from app.core.path_params import PathId
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
@@ -120,3 +122,44 @@ def update_deadline(
         custom_deadline_note_provided="custom_deadline_note" in patch,
     )
     return report
+
+
+@router.post(
+    "/{report_id}/amend",
+    response_model=AnnualReportResponse,
+    status_code=201,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=REPORT_AMEND_RESPONSES,
+)
+def create_amendment(
+    report_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """
+    Open a correction of a closed annual report as a new record (D-10, D-21).
+
+    Advisor only. The original stays closed and keeps its figures; the new record
+    copies the whole material — detail, lines, credit points, schedules and their
+    annexes — and opens at "in progress". Returns the amendment, not the original.
+    """
+    service = AnnualReportService(db)
+    return service.create_amendment(
+        report_id=report_id,
+        actor_id=user.id,
+        actor_display_name=user.full_name,
+    )
+
+
+@router.get(
+    "/{report_id}/chain",
+    response_model=list[AnnualReportResponse],
+    responses=not_found_response(description="הדוח השנתי לא נמצא"),
+)
+def list_amendment_chain(report_id: PathId, db: DBSession, user: CurrentUser):
+    """Every report for this tax year, oldest first — the correction history.
+
+    The one read that deliberately includes superseded records; every other list
+    shows the chain as a single row (D-12).
+    """
+    return AnnualReportService(db).list_chain(report_id=report_id)

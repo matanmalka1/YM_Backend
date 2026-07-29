@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus, VatType
+from app.common.obligation_chain import select_obligations
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.vat.models.vat_work_item import VatWorkItem
@@ -24,9 +25,9 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def _query(self, status: ObligationStatus | None = None):
         stmt = scope_to_active_clients_stmt(
-            select(VatWorkItem),
+            select_obligations(VatWorkItem),
             VatWorkItem,
-        ).where(VatWorkItem.deleted_at.is_(None))
+        )
         return stmt.where(VatWorkItem.status == status) if status is not None else stmt
 
     def _filtered_query(
@@ -53,20 +54,16 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def get_by_client_record_period(self, client_record_id: int, period: str) -> VatWorkItem | None:
         return self.db.scalars(
-            select(VatWorkItem).where(
+            select_obligations(VatWorkItem).where(
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.period == period,
-                VatWorkItem.deleted_at.is_(None),
             )
         ).first()
 
     def list_by_client_record(self, client_record_id: int, limit: int = 200) -> list[VatWorkItem]:
         return self.db.scalars(
-            select(VatWorkItem)
-            .where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.deleted_at.is_(None),
-            )
+            select_obligations(VatWorkItem)
+            .where(VatWorkItem.client_record_id == client_record_id)
             .order_by(VatWorkItem.period.desc())
             .limit(limit)
         ).all()
@@ -84,14 +81,12 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
     ) -> list:
         """Filter set shared by the client work-item list and count queries.
 
-        ``client_record_id`` path scope and the not-deleted constraint always
-        apply; optional operational filters narrow the result further (they never
-        widen access).
+        ``client_record_id`` path scope always applies; optional operational
+        filters narrow the result further (they never widen access). The
+        soft-delete and chain-tip scopes come from ``select_obligations``, which
+        both callers build on.
         """
-        filters = [
-            VatWorkItem.client_record_id == client_record_id,
-            VatWorkItem.deleted_at.is_(None),
-        ]
+        filters = [VatWorkItem.client_record_id == client_record_id]
         if year is not None:
             filters.append(VatWorkItem.period.startswith(f"{year}-"))
         if period:
@@ -129,7 +124,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             due_before=due_before,
         )
         stmt = (
-            select(VatWorkItem)
+            select_obligations(VatWorkItem)
             .where(*filters)
             .order_by(VatWorkItem.period.desc(), VatWorkItem.id.desc())
         )
@@ -155,7 +150,9 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             due_after=due_after,
             due_before=due_before,
         )
-        return self.db.scalar(select(func.count(VatWorkItem.id)).where(*filters))
+        return self.db.scalar(
+            select_obligations(VatWorkItem, func.count(VatWorkItem.id)).where(*filters)
+        )
 
     def list_by_business_activity(
         self, business_activity_id: int, limit: int = 200
@@ -163,12 +160,9 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         from app.vat.models.vat_invoice import VatInvoice
 
         return self.db.scalars(
-            select(VatWorkItem)
+            select_obligations(VatWorkItem)
             .join(VatInvoice, VatInvoice.work_item_id == VatWorkItem.id)
-            .where(
-                VatInvoice.business_activity_id == business_activity_id,
-                VatWorkItem.deleted_at.is_(None),
-            )
+            .where(VatInvoice.business_activity_id == business_activity_id)
             .distinct()
             .order_by(VatWorkItem.period.desc())
             .limit(limit)
@@ -209,7 +203,7 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         client_name: str | None = None,
     ) -> dict[ObligationStatus, int]:
         stmt = scope_to_active_clients_stmt(
-            select(VatWorkItem.status, func.count(VatWorkItem.id)),
+            select_obligations(VatWorkItem, VatWorkItem.status, func.count(VatWorkItem.id)),
             VatWorkItem,
         ).where(VatWorkItem.deleted_at.is_(None))
         if year is not None:
@@ -253,12 +247,11 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def count_by_period_not_filed(self, period: str) -> int:
         return self.db.scalar(
-            select(func.count(VatWorkItem.id))
+            select_obligations(VatWorkItem, func.count(VatWorkItem.id))
             .join(ClientRecord, ClientRecord.id == VatWorkItem.client_record_id)
             .where(
                 VatWorkItem.period == period,
                 VatWorkItem.status != ObligationStatus.SUBMITTED,
-                VatWorkItem.deleted_at.is_(None),
                 ClientRecord.deleted_at.is_(None),
             )
         )
@@ -267,21 +260,19 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
         self, client_record_id: int, tax_year: int
     ) -> float | None:
         row = self.db.execute(
-            select(func.sum(VatWorkItem.net_vat).label("total_vat")).where(
+            select_obligations(VatWorkItem, func.sum(VatWorkItem.net_vat).label("total_vat")).where(
                 VatWorkItem.client_record_id == client_record_id,
                 func.substr(VatWorkItem.period, 1, 4) == str(tax_year),
-                VatWorkItem.deleted_at.is_(None),
             )
         ).one_or_none()
         return float(row[0]) if row and row[0] is not None else None
 
     def list_not_filed_for_period(self, period: str, limit: int = 3) -> list[VatWorkItem]:
         return self.db.scalars(
-            scope_to_active_clients_stmt(select(VatWorkItem), VatWorkItem)
+            scope_to_active_clients_stmt(select_obligations(VatWorkItem), VatWorkItem)
             .where(
                 VatWorkItem.period == period,
                 VatWorkItem.status != ObligationStatus.SUBMITTED,
-                VatWorkItem.deleted_at.is_(None),
             )
             .order_by(VatWorkItem.created_at.asc())
             .limit(limit)
@@ -289,11 +280,10 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
 
     def list_open_up_to_period(self, up_to_period: str, limit: int = 50) -> list[VatWorkItem]:
         return self.db.scalars(
-            scope_to_active_clients_stmt(select(VatWorkItem), VatWorkItem)
+            scope_to_active_clients_stmt(select_obligations(VatWorkItem), VatWorkItem)
             .where(
                 VatWorkItem.period <= up_to_period,
                 VatWorkItem.status.notin_(RESOLVED_OBLIGATION_STATUSES),
-                VatWorkItem.deleted_at.is_(None),
             )
             .order_by(VatWorkItem.period.asc())
             .limit(limit)

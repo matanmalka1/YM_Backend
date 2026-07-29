@@ -212,6 +212,10 @@ def test_closed_late_prefers_effective_due_date(
     _c, business = create_client_with_business(full_name="Adv Eff", id_number="ADV-TR-019")
     payment = _make_payment(test_db, business, due_date=PAST_DUE, **_closable_kwargs(test_user.id))
     payment.due_date_effective = FUTURE_DUE
+    # Moving the effective date off the original requires a reason — the model
+    # event enforces it, and a test that constructs the state without one is
+    # asserting against a row the application would never let exist.
+    payment.due_date_override_reason = "אישור דחייה מרשות המסים"
     test_db.flush()
 
     resp = client.post(

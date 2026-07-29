@@ -6,6 +6,12 @@ from app.advance_payments.models.advance_payment import AdvancePayment
 
 
 def _default_due_date_snapshots(target: AdvancePayment) -> None:
+    # An amendment has no deadline (D-14). Without this guard the backfill below
+    # would manufacture one from ``due_date`` and put every correction back on
+    # the overdue list — the exclusion in ``obligation_chain`` cannot prevent it,
+    # because this runs after the copy, at insert time.
+    if target.amends_id is not None:
+        return
     if target.due_date_original is None and target.due_date is not None:
         target.due_date_original = target.due_date
     if target.due_date_effective is None:

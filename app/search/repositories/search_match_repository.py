@@ -280,7 +280,9 @@ def _vat_branch(term: ParsedSearchTerm) -> Select | None:
         SearchMatchType.VAT_WORK_ITEM,
         VatWorkItem,
         predicate=VatWorkItem.period == term.period,
-        active=[VatWorkItem.deleted_at.is_(None)],
+        # Chain tip only: an amended period would otherwise be two hits, and the
+        # per-type total counts it twice.
+        active=[VatWorkItem.deleted_at.is_(None), VatWorkItem.chain_tip_clause()],
         key=VatWorkItem.period,
         status=VatWorkItem.status,
         detail=None,
@@ -300,7 +302,7 @@ def _annual_report_branch(term: ParsedSearchTerm) -> Select | None:
         SearchMatchType.ANNUAL_REPORT,
         AnnualReport,
         predicate=predicate,
-        active=[AnnualReport.deleted_at.is_(None)],
+        active=[AnnualReport.deleted_at.is_(None), AnnualReport.chain_tip_clause()],
         key=AnnualReport.tax_year,
         status=AnnualReport.status,
         detail=AnnualReport.ita_reference,
@@ -315,7 +317,7 @@ def _advance_payment_branch(term: ParsedSearchTerm) -> Select | None:
         SearchMatchType.ADVANCE_PAYMENT,
         AdvancePayment,
         predicate=AdvancePayment.period == term.period,
-        active=[AdvancePayment.deleted_at.is_(None)],
+        active=[AdvancePayment.deleted_at.is_(None), AdvancePayment.chain_tip_clause()],
         key=AdvancePayment.period,
         status=AdvancePayment.status,
         detail=AdvancePayment.notes,

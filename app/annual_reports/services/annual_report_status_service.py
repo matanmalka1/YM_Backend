@@ -127,10 +127,12 @@ class AnnualReportStatusService(AnnualReportBaseService):
             # Lateness is judged against the deadline as recalculated by this very
             # submission (the method may move it), not the one the report carried in.
             effective_deadline = update_fields.get("filing_deadline", report.filing_deadline)
-            update_fields["closed_late"] = compute_closed_late(
+            closed_late = compute_closed_late(
                 close_time,
                 effective_deadline.date() if effective_deadline else None,
             )
+            update_fields["closed_late"] = closed_late
+            update_fields["chain_closed_late"] = closed_late
             # Assessment and tax outcome used to be recorded on a separate `closed`
             # status that followed `submitted`. The two were one act, so they merged.
             if assessment_amount is not None:
@@ -245,5 +247,3 @@ class AnnualReportStatusService(AnnualReportBaseService):
             },
         )
         return updated
-
-

@@ -29,6 +29,7 @@ from app.annual_reports.models.annual_report_enums import (
     SubmissionMethod,
 )
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import AmendableMixin
 from app.database import Base
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
@@ -36,7 +37,7 @@ from app.utils.time_utils import utcnow
 # ─── AnnualReport ─────────────────────────────────────────────────────────────
 
 
-class AnnualReport(Base):
+class AnnualReport(AmendableMixin, Base):
     __tablename__ = "annual_reports"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -125,12 +126,29 @@ class AnnualReport(Base):
         "AnnualReportCreditPoint",
         cascade="all, delete-orphan",
     )
+    original: Mapped[AnnualReport | None] = relationship(
+        "AnnualReport",
+        foreign_keys="[AnnualReport.amends_id]",
+        remote_side="AnnualReport.id",
+        uselist=False,
+    )
 
     __table_args__ = (
+        # §4.1.13: at most one row per client+year that is not deleted, not an
+        # amendment, and not cancelled (D-22 / D-10 / D-23).
         Index(
             "idx_annual_report_client_record_year",
             "client_record_id",
             "tax_year",
+            unique=True,
+            postgresql_where=text(
+                "deleted_at IS NULL AND amends_id IS NULL AND status <> 'canceled'"
+            ),
+        ),
+        # A chain never forks: a record has at most one amendment.
+        Index(
+            "uq_annual_report_amends",
+            "amends_id",
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
         ),
@@ -139,7 +157,7 @@ class AnnualReport(Base):
             "idx_annual_report_tax_year_status_active",
             "tax_year",
             "status",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text("deleted_at IS NULL AND superseded_at IS NULL"),
         ),
         Index(
             "idx_annual_report_calendar_entry_active",

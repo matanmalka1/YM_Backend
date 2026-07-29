@@ -6,6 +6,7 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import ObligationType
+from app.common.obligation_chain import select_obligations
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.models.tax_calendar_entry import TaxCalendarEntry
@@ -79,16 +80,20 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         client_record_id: int | None = None,
         client_search: str | None = None,
     ) -> list[VatWorkItem]:
+        # The chain-tip scope belongs to the obligation side of this join, never
+        # to the calendar entry: an amendment keeps the original's
+        # ``tax_calendar_entry_id`` because the regulatory period is shared, so
+        # one entry legitimately has two rows pointing at it and only the tip is
+        # the period's current state.
         if obligation_type is not None and obligation_type != ObligationType.VAT:
             return []
         stmt = (
-            select(VatWorkItem)
+            select_obligations(VatWorkItem)
             .join(
                 TaxCalendarEntry,
                 TaxCalendarEntry.id == VatWorkItem.tax_calendar_entry_id,
             )
             .where(TaxCalendarEntry.obligation_type == ObligationType.VAT)
-            .where(VatWorkItem.deleted_at.is_(None))
         )
         stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
         stmt = scope_to_active_clients_stmt(stmt, VatWorkItem, join_legal_entity=True)
@@ -109,13 +114,12 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         if obligation_type is not None and obligation_type != ObligationType.ADVANCE_PAYMENT:
             return []
         stmt = (
-            select(AdvancePayment)
+            select_obligations(AdvancePayment)
             .join(
                 TaxCalendarEntry,
                 TaxCalendarEntry.id == AdvancePayment.tax_calendar_entry_id,
             )
             .where(TaxCalendarEntry.obligation_type == ObligationType.ADVANCE_PAYMENT)
-            .where(AdvancePayment.deleted_at.is_(None))
         )
         stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
         stmt = scope_to_active_clients_stmt(stmt, AdvancePayment, join_legal_entity=True)
@@ -136,13 +140,12 @@ class TaxCalendarGroupedRepository(BaseRepository[TaxCalendarEntry]):
         if obligation_type is not None and obligation_type != ObligationType.ANNUAL_REPORT:
             return []
         stmt = (
-            select(AnnualReport)
+            select_obligations(AnnualReport)
             .join(
                 TaxCalendarEntry,
                 TaxCalendarEntry.id == AnnualReport.tax_calendar_entry_id,
             )
             .where(TaxCalendarEntry.obligation_type == ObligationType.ANNUAL_REPORT)
-            .where(AnnualReport.deleted_at.is_(None))
         )
         stmt = self._apply_calendar_filters(stmt, tax_year_after, tax_year_before)
         stmt = scope_to_active_clients_stmt(stmt, AnnualReport, join_legal_entity=True)

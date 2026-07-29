@@ -20,6 +20,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
 
 from ..annual_report_financial_line_helpers import assert_report_unlocked
 from ..annual_report_messages import ANNUAL_REPORT_NOT_FOUND
+from . import annual_report_amendment_service as amendment
 from .annual_report_annex_service import AnnualReportAnnexService
 from .annual_report_create_service import AnnualReportCreateService
 from .annual_report_query_service import AnnualReportQueryService
@@ -49,6 +50,12 @@ class AnnualReportService(
         self.client_repo = ClientRecordRepository(db)
         self.vat_repo = VatWorkItemRepository(db)
         self.advance_repo = AdvancePaymentRepository(db)
+
+    def create_amendment(self, **kwargs):
+        return amendment.create_amendment(self.repo, **kwargs)
+
+    def list_chain(self, **kwargs):
+        return amendment.list_chain(self.repo, **kwargs)
 
     def assert_report_exists(self, report_id: int) -> None:
         """Raise NotFoundError if the report does not exist."""

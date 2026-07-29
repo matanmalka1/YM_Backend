@@ -20,6 +20,14 @@ VAT_WORK_ITEM_TRANSITION_RESPONSES = error_responses(
     conflict_response(description="מעבר הסטטוס אינו חוקי במצב הנוכחי"),
 )
 
+# Creating an amendment: the original must exist, be closed, and not already
+# have one (§4.1.6).
+VAT_WORK_ITEM_AMEND_RESPONSES = error_responses(
+    bad_request_response(description="ניתן לתקן רק פריט שהוגש"),
+    not_found_response(description='פריט עבודה למע"מ לא נמצא'),
+    conflict_response(description="לפריט זה כבר קיים תיקון"),
+)
+
 VAT_WORK_ITEM_MUTATION_RESPONSES = error_responses(
     bad_request_response(description='לא ניתן לעדכן או למחוק פריט עבודה למע"מ במצב הנוכחי'),
     not_found_response(description='פריט עבודה למע"מ לא נמצא'),

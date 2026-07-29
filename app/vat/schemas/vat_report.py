@@ -68,9 +68,15 @@ class VatWorkItemResponse(BaseModel):
     closed_by: int | None = None
     closed_by_name: str | None = None
     closed_late: bool | None = None  # NULL = no due date at close (D-32), never False
+    # The period's answer, not this row's (D-34). An amendment has no due date,
+    # so its own `closed_late` is NULL — but the period it corrects may have been
+    # filed late, and that fact must survive the correction.
+    chain_closed_late: bool | None = None
     submission_reference: str | None = None
-    is_amendment: bool = False
-    amends_item_id: int | None = None
+    # Amendment chain (D-10/D-12). `amends_id` set => this record corrects another;
+    # `superseded_at` set => a later record corrects this one, so it is not the tip.
+    amends_id: int | None = None
+    superseded_at: ApiDateTime | None = None
     created_by: int
     assigned_to: int | None = None
     assigned_to_name: str | None = None
@@ -225,8 +231,6 @@ class FileVatReturnRequest(BaseModel):
     override_amount: ApiDecimal | None = None
     override_justification: str | None = None
     submission_reference: str | None = None
-    is_amendment: bool = False
-    amends_item_id: int | None = None
 
 
 class VatClosingReadinessResponse(ClosingReadiness):

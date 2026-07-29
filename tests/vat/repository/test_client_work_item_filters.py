@@ -64,7 +64,9 @@ def test_work_items_filter_by_status(test_db, user_factory, client_factory):
     repo = VatWorkItemRepository(test_db)
     user = user_factory()
     cr = _client_record(client_factory)
-    ready = _item(test_db, repo, cr, user.id, "2026-01", status=ObligationStatus.AWAITING_VERIFICATION)
+    ready = _item(
+        test_db, repo, cr, user.id, "2026-01", status=ObligationStatus.AWAITING_VERIFICATION
+    )
     _item(test_db, repo, cr, user.id, "2026-02", status=ObligationStatus.INPUT_RECEIVED)
 
     items = repo.list_by_client_record_paginated(cr, status=ObligationStatus.AWAITING_VERIFICATION)
@@ -134,7 +136,9 @@ def test_work_items_filters_combined_with_and(test_db, user_factory, client_fact
     repo = VatWorkItemRepository(test_db)
     user = user_factory()
     cr = _client_record(client_factory)
-    match = _item(test_db, repo, cr, user.id, "2026-04", status=ObligationStatus.AWAITING_VERIFICATION)
+    match = _item(
+        test_db, repo, cr, user.id, "2026-04", status=ObligationStatus.AWAITING_VERIFICATION
+    )
     # Right year, wrong status.
     _item(test_db, repo, cr, user.id, "2026-05", status=ObligationStatus.INPUT_RECEIVED)
     # Wrong year, right status.
@@ -143,7 +147,9 @@ def test_work_items_filters_combined_with_and(test_db, user_factory, client_fact
     items = repo.list_by_client_record_paginated(
         cr, year=2026, status=ObligationStatus.AWAITING_VERIFICATION
     )
-    total = repo.count_by_client_record(cr, year=2026, status=ObligationStatus.AWAITING_VERIFICATION)
+    total = repo.count_by_client_record(
+        cr, year=2026, status=ObligationStatus.AWAITING_VERIFICATION
+    )
 
     assert total == 1
     assert [i.id for i in items] == [match.id]

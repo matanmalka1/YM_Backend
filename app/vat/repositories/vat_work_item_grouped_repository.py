@@ -2,11 +2,12 @@
 
 from datetime import date
 
-from sqlalchemy import case, func, select
+from sqlalchemy import case, func
 from sqlalchemy.orm import Session
 
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus, VatType
+from app.common.obligation_chain import select_obligations
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import israel_today
 from app.vat.models.vat_work_item import VatWorkItem
@@ -16,9 +17,7 @@ from app.vat.repositories.vat_work_item_filters import (
 
 
 def _active_base():
-    return scope_to_active_clients_stmt(select(VatWorkItem), VatWorkItem).where(
-        VatWorkItem.deleted_at.is_(None)
-    )
+    return scope_to_active_clients_stmt(select_obligations(VatWorkItem), VatWorkItem)
 
 
 def list_due_date_groups(
@@ -42,7 +41,8 @@ def list_due_date_groups(
     # ── Query 1: aggregated counts per due_date_effective ────────────────────
     counts_stmt = apply_vat_work_item_filters(
         scope_to_active_clients_stmt(
-            select(
+            select_obligations(
+                VatWorkItem,
                 VatWorkItem.due_date_effective,
                 func.count(VatWorkItem.id).label("total_count"),
                 func.sum(case((VatWorkItem.status == filed, 1), else_=0)).label("filed_count"),
@@ -67,7 +67,7 @@ def list_due_date_groups(
                 ).label("overdue_count"),
             ),
             VatWorkItem,
-        ).where(VatWorkItem.deleted_at.is_(None)),
+        ),
         period_type=period_type,
         client_record_ids=client_record_ids,
     )
@@ -86,13 +86,14 @@ def list_due_date_groups(
     # ── Query 2: distinct (due_date_effective, period, period_type) pairs ────
     periods_stmt = apply_vat_work_item_filters(
         scope_to_active_clients_stmt(
-            select(
+            select_obligations(
+                VatWorkItem,
                 VatWorkItem.due_date_effective,
                 VatWorkItem.period,
                 VatWorkItem.period_type,
             ).distinct(),
             VatWorkItem,
-        ).where(VatWorkItem.deleted_at.is_(None)),
+        ),
         period_type=period_type,
         client_record_ids=client_record_ids,
     )
@@ -151,8 +152,8 @@ def list_by_due_date_paginated(
     status: ObligationStatus | None = None,
 ) -> tuple[list[VatWorkItem], int]:
     count_stmt = apply_vat_work_item_filters(
-        scope_to_active_clients_stmt(select(func.count(VatWorkItem.id)), VatWorkItem).where(
-            VatWorkItem.deleted_at.is_(None)
+        scope_to_active_clients_stmt(
+            select_obligations(VatWorkItem, func.count(VatWorkItem.id)), VatWorkItem
         ),
         client_record_ids=client_record_ids,
     )

@@ -25,6 +25,7 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
 from app.advance_payments.schemas.advance_payment import (
     AdvancePaymentClosingReadinessResponse,
 )
+from app.advance_payments.services import advance_payment_amendment_service as amendment
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
@@ -339,6 +340,12 @@ class AdvancePaymentService:
             client_record_id, year, status=status, page=page, page_size=page_size
         )
 
+    def create_amendment(self, **kwargs) -> AdvancePayment:
+        return amendment.create_amendment(self, **kwargs)
+
+    def list_chain(self, **kwargs) -> list[AdvancePayment]:
+        return amendment.list_chain(self, **kwargs)
+
     def get_payment_for_client(self, client_record_id: int, payment_id: int) -> AdvancePayment:
         self._get_record_or_raise(client_record_id)
         payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
@@ -423,9 +430,11 @@ class AdvancePaymentService:
             close_time = utcnow()
             fields["closed_at"] = close_time
             fields["closed_by"] = actor_id
-            fields["closed_late"] = compute_closed_late(
+            closed_late = compute_closed_late(
                 close_time, payment.due_date_effective or payment.due_date
             )
+            fields["closed_late"] = closed_late
+            fields["chain_closed_late"] = closed_late
 
         old_status = payment.status
         updated = self.repo.update_payment(payment, **fields)

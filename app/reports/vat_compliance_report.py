@@ -33,6 +33,8 @@ class VatComplianceReportService:
         late_map: dict[tuple[int, str], int] = {}
         for fi in filed_items:
             deadline = fi.due_date_effective
+            if deadline is None:
+                continue
             filed_date = fi.closed_at.date() if hasattr(fi.closed_at, "date") else fi.closed_at
             is_late = filed_date > deadline
             bucket = late_map if is_late else on_time_map

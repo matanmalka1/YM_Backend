@@ -88,7 +88,7 @@ def test_global_work_item_lists_hide_deleted_clients_and_restore_visibility(
     assert repo.count_all() == 1
 
 
-def test_mark_filed_persists_amendment_and_reference_fields(
+def test_mark_filed_persists_closing_and_reference_fields(
     test_db, user_factory, create_client_with_business
 ):
     repo = VatWorkItemRepository(test_db)
@@ -102,14 +102,6 @@ def test_mark_filed_persists_amendment_and_reference_fields(
         period_type=VatType.MONTHLY,
         created_by=user.id,
     )
-    amended_item = create_linked_vat_work_item(
-        test_db,
-        repo=repo,
-        client_record_id=client_record_id,
-        period="2026-10",
-        period_type=VatType.MONTHLY,
-        created_by=user.id,
-    )
 
     filed = repo.mark_filed(
         item_id=item.id,
@@ -119,16 +111,16 @@ def test_mark_filed_persists_amendment_and_reference_fields(
         is_overridden=True,
         override_justification="manual override",
         submission_reference="REF-321",
-        is_amendment=True,
-        amends_item_id=amended_item.id,
     )
 
     assert filed is not None
     assert filed.status == ObligationStatus.SUBMITTED
     assert float(filed.final_vat_amount) == 321.5
     assert filed.submission_reference == "REF-321"
-    assert filed.is_amendment is True
-    assert filed.amends_item_id == amended_item.id
+    # mark_filed writes the closing facts only. The chain columns are written by
+    # create_amendment, at the birth of a separate record (D-10).
+    assert filed.amends_id is None
+    assert filed.superseded_at is None
 
     assert (
         repo.mark_filed(

@@ -22,6 +22,7 @@ from app.vat.repositories.vat_invoice_repository import VatInvoiceRepository
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
+from app.vat.services import vat_amendment_service as amendment
 from app.vat.services import (
     vat_filing_service as filing,
 )
@@ -96,6 +97,12 @@ class VatReportService:
 
     def get_closing_readiness(self, item_id: int):
         return filing.get_closing_readiness(self.work_item_repo, item_id=item_id)
+
+    def create_amendment(self, **kwargs):
+        return amendment.create_amendment(self.work_item_repo, **kwargs)
+
+    def list_chain(self, **kwargs):
+        return amendment.list_chain(self.work_item_repo, **kwargs)
 
     # ── Queries ──────────────────────────────────────────────────────────────
 

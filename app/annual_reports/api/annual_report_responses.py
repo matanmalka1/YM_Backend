@@ -20,6 +20,14 @@ REPORT_TRANSITION_RESPONSES = error_responses(
 )
 
 # Single-report writes that are not status transitions.
+# Creating an amendment: the original must exist, be closed, and not already
+# have one (§4.1.6).
+REPORT_AMEND_RESPONSES = error_responses(
+    bad_request_response(description="ניתן לתקן רק דוח שהוגש"),
+    not_found_response(description="הדוח השנתי לא נמצא"),
+    conflict_response(description="לדוח זה כבר קיים תיקון"),
+)
+
 REPORT_UPDATE_RESPONSES = error_responses(
     bad_request_response(description="נתוני עדכון הדוח אינם תקינים או שהדוח הוגש ונעול"),
     not_found_response(description="הדוח המבוקש לא נמצא"),

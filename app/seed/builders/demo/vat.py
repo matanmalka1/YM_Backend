@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import BusinessStatus
 from app.common.enums import ObligationStatus, ObligationType, VatType
+from app.common.obligation_chain import link_amendment
 from app.common.obligation_closing import compute_closed_late
 from app.common.period_utils import parse_period_year
 from app.tax_calendar.services.tax_calendar_materialization_service import (
@@ -279,23 +280,36 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
 
     db.flush()
 
-    # Add amendments to some filed items
-    closed_by_client: dict[int, list[VatWorkItem]] = defaultdict(list)
-    for work_item in work_items:
-        if work_item.status == ObligationStatus.SUBMITTED:
-            closed_by_client[get_seed_client_record_id(work_item)].append(work_item)
+    # Amend some closed periods (D-10/D-21). An amendment is a second row for the
+    # *same* period, opening at IN_PROGRESS with the original's figures copied —
+    # not, as this seed previously built it, a later period pointed at an earlier
+    # one. It carries no due date (D-14), so it is never late.
+    for original in list(work_items):
+        if original.status != ObligationStatus.SUBMITTED or rng.random() >= 0.2:
+            continue
+        amendment = VatWorkItem(
+            client_record_id=original.client_record_id,
+            created_by=original.created_by,
+            assigned_to=original.assigned_to,
+            period=original.period,
+            period_type=original.period_type,
+            status=ObligationStatus.IN_PROGRESS,
+            total_output_vat=original.total_output_vat,
+            total_input_vat=original.total_input_vat,
+            net_vat=original.net_vat,
+            total_output_net=original.total_output_net,
+            total_input_net=original.total_input_net,
+            tax_calendar_entry_id=original.tax_calendar_entry_id,
+            created_at=original.closed_at or created_at,
+        )
+        link_amendment(amendment, original)
+        cr = get_seed_client_record(original)
+        if cr is not None:
+            attach_seed_client_context(amendment, cr)
+        db.add(amendment)
+        work_items.append(amendment)
 
-    for filed_items in closed_by_client.values():
-        filed_items.sort(key=lambda item: item.period)
-        for index in range(1, len(filed_items)):
-            if rng.random() < 0.2:
-                filed_items[index].is_amendment = True
-                filed_items[index].amends_item_id = filed_items[index - 1].id
-                ref = (
-                    filed_items[index].submission_reference
-                    or f"VAT-{filed_items[index].period.replace('-', '')}-{rng.randint(1000, 9999)}"
-                )
-                filed_items[index].submission_reference = f"{ref}-AMD"
+    db.flush()
 
     # Sweep: fix any onboarding-created items not reached above.
     db.expire_all()

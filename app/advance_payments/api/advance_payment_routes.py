@@ -3,6 +3,7 @@ import logging
 from fastapi import APIRouter, Depends, Query, status
 
 from app.advance_payments.api.advance_payment_responses import (
+    ADVANCE_PAYMENT_AMEND_RESPONSES,
     ADVANCE_PAYMENT_BULK_REFRESH_TURNOVER_RESPONSES,
     ADVANCE_PAYMENT_CREATE_RESPONSES,
     ADVANCE_PAYMENT_DELETE_RESPONSES,
@@ -357,3 +358,63 @@ def bulk_update_advance_rate(
         return BulkRateUpdateResponse(updated=updated, skipped=skipped)
 
     return idem.execute(payload=request.model_dump_json().encode(), fn=_run)
+
+
+@router.post(
+    "/{payment_id}/amend",
+    response_model=AdvancePaymentRow,
+    status_code=201,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=ADVANCE_PAYMENT_AMEND_RESPONSES,
+)
+def create_advance_payment_amendment(
+    client_record_id: PathId,
+    payment_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """
+    Open a correction of a closed advance period as a new record (D-10, D-21).
+
+    Advisor only. The original stays closed and keeps its figures; the new record
+    copies them — including the payment that was actually made — and opens at
+    "in progress". Returns the amendment, not the original.
+    """
+    service = AdvancePaymentService(db)
+    amendment = service.create_amendment(
+        client_record_id=client_record_id,
+        payment_id=payment_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )
+    resolution = TurnoverLookupRepository(db).resolve_turnover(
+        client_record_id, amendment.period, amendment.period_months_count
+    )
+    return _to_row(amendment, resolution)
+
+
+@router.get(
+    "/{payment_id}/chain",
+    response_model=list[AdvancePaymentRow],
+    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+)
+def list_advance_payment_chain(
+    client_record_id: PathId,
+    payment_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """Every payment for this period, oldest first — the correction history.
+
+    The one read that deliberately includes superseded records; every other list
+    shows the chain as a single row (D-12).
+    """
+    service = AdvancePaymentService(db)
+    lookup = TurnoverLookupRepository(db)
+    return [
+        _to_row(
+            record,
+            lookup.resolve_turnover(client_record_id, record.period, record.period_months_count),
+        )
+        for record in service.list_chain(client_record_id=client_record_id, payment_id=payment_id)
+    ]

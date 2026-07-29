@@ -16,9 +16,7 @@ from app.tax_calendar.schemas.tax_calendar_grouped import (
 from app.utils.time_utils import israel_today
 
 
-def _date_value(value, fallback: date) -> date:
-    if value is None:
-        return fallback
+def _date_value(value) -> date:
     if isinstance(value, datetime):
         return value.date()
     return value
@@ -232,7 +230,9 @@ def _effective_due_dates(entry, rows: list) -> tuple[date | None, date | None]:
         if due is not None
     ]
     if not due_dates:
-        return _regulatory_due_date(entry), _regulatory_due_date(entry)
+        if not rows:
+            return _regulatory_due_date(entry), _regulatory_due_date(entry)
+        return None, None
     return min(due_dates), max(due_dates)
 
 
@@ -245,13 +245,14 @@ def _row_due_date(obligation_type, row, entry_due_date: date) -> date | None:
     deadline. A CUSTOM-deadline report has ``filing_deadline`` NULL by design and
     genuinely has no computed date.
 
-    VAT and advance rows do fall back, because ``due_date_effective`` is a snapshot
-    of that very entry and is null only on legacy rows.
+    VAT and advance rows also never borrow the entry's date. Amendments keep the
+    entry link but deliberately carry no deadline of their own.
     """
     if obligation_type == ObligationType.ANNUAL_REPORT:
         value = getattr(row, "filing_deadline", None)
-        return None if value is None else _date_value(value, entry_due_date)
-    return _date_value(getattr(row, "due_date_effective", None), entry_due_date)
+        return None if value is None else _date_value(value)
+    value = getattr(row, "due_date_effective", None)
+    return None if value is None else _date_value(value)
 
 
 def _done_count(rows: list) -> int:

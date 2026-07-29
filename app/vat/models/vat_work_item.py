@@ -32,6 +32,7 @@ from sqlalchemy import (
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.common.enums import SubmissionMethod, VatType
+from app.common.obligation_chain import AmendableMixin
 from app.database import Base
 
 if TYPE_CHECKING:
@@ -41,7 +42,7 @@ from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
 
-class VatWorkItem(Base):
+class VatWorkItem(AmendableMixin, Base):
     __tablename__ = "vat_work_items"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
@@ -98,11 +99,7 @@ class VatWorkItem(Base):
     closed_late: Mapped[bool | None] = mapped_column(nullable=True)
     submission_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    # Amendment tracking
-    is_amendment: Mapped[bool] = mapped_column(nullable=False, default=False)
-    amends_item_id: Mapped[int | None] = mapped_column(
-        ForeignKey("vat_work_items.id"), nullable=True
-    )
+    # Amendment chain: amends_id / superseded_at come from AmendableMixin (D-10, D-12)
 
     # Cross-domain link to regulatory calendar fact
     tax_calendar_entry_id: Mapped[int] = mapped_column(
@@ -128,18 +125,31 @@ class VatWorkItem(Base):
         back_populates="work_item",
         cascade="all, delete-orphan",
     )
-    original_item: Mapped[VatWorkItem | None] = relationship(
+    original: Mapped[VatWorkItem | None] = relationship(
         "VatWorkItem",
-        foreign_keys="[VatWorkItem.amends_item_id]",
+        foreign_keys="[VatWorkItem.amends_id]",
         remote_side="VatWorkItem.id",
         uselist=False,
     )
 
     __table_args__ = (
+        # §4.1.13: at most one row per client+period that is not deleted, not an
+        # amendment, and not cancelled. Each exclusion was added for its own
+        # reason (D-22 / D-10 / D-23); getting the predicate wrong reintroduces
+        # exactly the conflict each one exists to prevent.
         Index(
             "uq_vat_work_item_client_record_period",
             "client_record_id",
             "period",
+            unique=True,
+            postgresql_where=text(
+                "deleted_at IS NULL AND amends_id IS NULL AND status <> 'canceled'"
+            ),
+        ),
+        # A chain never forks: a record has at most one amendment.
+        Index(
+            "uq_vat_work_item_amends",
+            "amends_id",
             unique=True,
             postgresql_where=text("deleted_at IS NULL"),
         ),
@@ -150,18 +160,20 @@ class VatWorkItem(Base):
             "tax_calendar_entry_id",
             postgresql_where=text("deleted_at IS NULL"),
         ),
+        # Both carry the chain-tip predicate because every read that uses them
+        # now carries it too (D-12).
         Index(
             "ix_vat_work_items_turnover_lookup",
             "client_record_id",
             "period",
             "status",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text("deleted_at IS NULL AND superseded_at IS NULL"),
         ),
         Index(
             "ix_vat_work_items_active_due_client",
             "due_date_effective",
             "client_record_id",
-            postgresql_where=text("deleted_at IS NULL"),
+            postgresql_where=text("deleted_at IS NULL AND superseded_at IS NULL"),
         ),
     )
 

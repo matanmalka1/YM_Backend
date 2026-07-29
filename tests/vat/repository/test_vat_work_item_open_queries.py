@@ -27,9 +27,7 @@ def test_list_open_up_to_period_excludes_later_final_and_deleted_items(
     current = _item(repo, client.id, user.id, "2026-03", ObligationStatus.AWAITING_INPUT)
     _item(repo, client.id, user.id, "2026-04", ObligationStatus.AWAITING_INPUT)
     _item(repo, client.id, user.id, "2026-02", ObligationStatus.SUBMITTED)
-    deleted = _item(
-        repo, deleted_client.id, user.id, "2026-02", ObligationStatus.AWAITING_INPUT
-    )
+    deleted = _item(repo, deleted_client.id, user.id, "2026-02", ObligationStatus.AWAITING_INPUT)
     deleted.deleted_at = utcnow()
     test_db.commit()
 

@@ -1,8 +1,6 @@
 from datetime import date
 from types import SimpleNamespace
 
-import pytest
-
 from app.common.enums import SubmissionMethod
 from app.vat.vat_report_queries import (
     deadline_fields_from_snapshot,
@@ -80,10 +78,24 @@ class TestGetVatDeadlineFields:
         assert result["submission_deadline"] == effective
         assert result["statutory_deadline"] == effective
 
-    def test_missing_effective_due_date_raises(self):
+    def test_missing_effective_due_date_yields_no_deadline(self):
+        """An amendment has no due date (D-14), so it has no deadline fields.
+
+        This used to raise. It cannot any more: a correction is not a new
+        obligation, and every read of a record without a deadline — the work
+        queue, the export, the client summary — would have crashed on the first
+        amendment ever created.
+        """
+
         class _Item:
             id = 123
             due_date_effective = None
 
-        with pytest.raises(ValueError, match="missing due_date_effective"):
-            get_vat_deadline_fields(_Item(), SubmissionMethod.MANUAL)
+        result = get_vat_deadline_fields(_Item(), SubmissionMethod.MANUAL)
+
+        assert result["submission_deadline"] is None
+        assert result["statutory_deadline"] is None
+        assert result["extended_deadline"] is None
+        assert result["days_until_deadline"] is None
+        # Not False: a record that cannot be late must not read as "on time".
+        assert result["is_overdue"] is None

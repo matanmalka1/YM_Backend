@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import date
 from typing import Literal
 
-from sqlalchemy import Integer, String, asc, case, cast, desc, func, select
+from sqlalchemy import Integer, String, asc, case, cast, desc, func
 from sqlalchemy.orm import Session
 
 from app.advance_payments.models.advance_payment import AdvancePayment, paid_in_full_expr
@@ -14,6 +14,7 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import select_obligations
 from app.common.repositories.base_repository import BaseRepository
 from app.core.api_types import SortOrder
 from app.legal_entities.models.legal_entity import LegalEntity
@@ -57,6 +58,7 @@ def _overview_filters(
     filters = [
         advance_payment_year_range_filter(year),
         AdvancePayment.deleted_at.is_(None),
+        AdvancePayment.chain_tip_clause(),
     ]
     if month is not None:
         filters.append(advance_payment_matches_month_expr(month))
@@ -113,9 +115,10 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         month: int | None,
         statuses: list[ObligationStatus],
     ) -> list[AdvancePayment]:
-        stmt = scope_to_active_clients_stmt(select(AdvancePayment), AdvancePayment).where(
+        stmt = scope_to_active_clients_stmt(
+            select_obligations(AdvancePayment), AdvancePayment
+        ).where(
             advance_payment_year_range_filter(year),
-            AdvancePayment.deleted_at.is_(None),
         )
         if month is not None:
             stmt = stmt.where(advance_payment_matches_month_expr(month))
@@ -152,7 +155,9 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         )
 
         count_stmt = (
-            scope_to_active_clients_stmt(select(func.count(AdvancePayment.id)), AdvancePayment)
+            scope_to_active_clients_stmt(
+                select_obligations(AdvancePayment, func.count(AdvancePayment.id)), AdvancePayment
+            )
             .outerjoin(LegalEntity, LegalEntity.id == ClientRecord.legal_entity_id)
             .where(*filters)
         )
@@ -163,7 +168,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         direction = desc if order is SortOrder.desc else asc
         stmt = (
             scope_to_active_clients_stmt(
-                select(
+                select_obligations(
+                    AdvancePayment,
                     AdvancePayment,
                     ClientRecord.office_client_number,
                     func.coalesce(LegalEntity.official_name, "").label("client_name"),
@@ -193,20 +199,19 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             AdvancePayment.client_record_id == client_record_id,
             advance_payment_year_range_filter(year),
             paid_in_full_expr(),
-            AdvancePayment.deleted_at.is_(None),
         )
 
     def sum_paid_by_client_year(self, client_record_id: int, year: int) -> float:
         result = self.db.scalar(
-            select(func.coalesce(func.sum(AdvancePayment.paid_amount), 0)).where(
-                *self._paid_by_client_year_filters(client_record_id, year)
-            )
+            select_obligations(
+                AdvancePayment, func.coalesce(func.sum(AdvancePayment.paid_amount), 0)
+            ).where(*self._paid_by_client_year_filters(client_record_id, year))
         )
         return float(result)
 
     def count_paid_by_client_year(self, client_record_id: int, year: int) -> int:
         result = self.db.scalar(
-            select(func.count(AdvancePayment.id)).where(
+            select_obligations(AdvancePayment, func.count(AdvancePayment.id)).where(
                 *self._paid_by_client_year_filters(client_record_id, year)
             )
         )
@@ -221,7 +226,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             AdvancePayment.due_date,
         )
         stmt = scope_to_active_clients_stmt(
-            select(
+            select_obligations(
+                AdvancePayment,
                 AdvancePayment.client_record_id,
                 func.coalesce(func.sum(AdvancePayment.expected_amount), 0).label("total_expected"),
                 func.coalesce(func.sum(AdvancePayment.paid_amount), 0).label("total_paid"),
@@ -242,7 +248,6 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             AdvancePayment,
         ).where(
             advance_payment_year_range_filter(year),
-            AdvancePayment.deleted_at.is_(None),
         )
         if month is not None:
             stmt = stmt.where(advance_payment_matches_month_expr(month))
@@ -257,7 +262,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             AdvancePayment.due_date,
         )
         rows = self.db.execute(
-            select(
+            select_obligations(
+                AdvancePayment,
                 func.coalesce(func.sum(AdvancePayment.expected_amount), 0).label("total_expected"),
                 func.coalesce(func.sum(AdvancePayment.paid_amount), 0).label("total_paid"),
                 func.count(AdvancePayment.id).label("total_count"),
@@ -279,7 +285,6 @@ class AdvancePaymentAggregationRepository(BaseRepository):
             ).where(
                 AdvancePayment.client_record_id == client_record_id,
                 advance_payment_year_range_filter(year),
-                AdvancePayment.deleted_at.is_(None),
             )
         ).one()
         return {
@@ -314,7 +319,8 @@ class AdvancePaymentAggregationRepository(BaseRepository):
         )
         stmt = (
             scope_to_active_clients_stmt(
-                select(
+                select_obligations(
+                    AdvancePayment,
                     func.coalesce(func.sum(AdvancePayment.expected_amount), 0),
                     func.coalesce(func.sum(AdvancePayment.paid_amount), 0),
                 ),

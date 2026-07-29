@@ -64,6 +64,26 @@ def get_vat_work_item_actions(
             ]
         )
 
+    # Amendment (D-10): the one act still available on a closed record. Offered
+    # only while the record is the tip of its chain — a period may hold exactly
+    # one correction, and a chain that forked would give it two "latest" rows.
+    if (
+        _is_advisor(user_role)
+        and status == ObligationStatus.SUBMITTED
+        and item.superseded_at is None
+    ):
+        actions.append(
+            mutation_action(
+                key="create_amendment",
+                label="צור דוח מתקן",
+                confirm_title="יצירת דוח מתקן",
+                confirm_message=(
+                    "ייווצר דוח חדש לאותה תקופה, עם העתק של כל החשבוניות. "
+                    "הדוח הנוכחי יישאר סגור ללא שינוי."
+                ),
+            )
+        )
+
     return actions
 
 

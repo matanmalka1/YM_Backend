@@ -28,6 +28,7 @@ from sqlalchemy import Integer, cast, func, literal, select
 from sqlalchemy.orm import Session
 
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import select_obligations
 from app.common.period_utils import parse_period
 from app.vat.models.vat_work_item import VatWorkItem
 
@@ -88,7 +89,8 @@ class VatTurnoverRepository:
                 wanted_months.update(expand_span(period, months_count))
 
         rows = self.db.execute(
-            select(
+            select_obligations(
+                VatWorkItem,
                 VatWorkItem.client_record_id,
                 VatWorkItem.period,
                 VatWorkItem.id,
@@ -98,10 +100,12 @@ class VatTurnoverRepository:
                 VatWorkItem.client_record_id.in_(spans_by_client),
                 VatWorkItem.period.in_(wanted_months),
                 VatWorkItem.status.in_(RESOLVABLE_STATUSES),
-                VatWorkItem.deleted_at.is_(None),
             )
         ).all()
-        # (client, period) is unique among non-deleted work items, so one row each.
+        # One row per (client, period): unique among rows that are neither deleted
+        # nor superseded, which is what the scope above selects. Without the
+        # chain-tip half, an amended period would yield two rows and this dict
+        # would silently keep whichever the database returned last.
         by_month = {(row.client_record_id, row.period): row for row in rows}
 
         resolved: dict[tuple[int, str], VatSpanTurnover | None] = {}
@@ -149,11 +153,18 @@ def covering_work_items_select(*, client_record_id, period, months_count):
     span_start_month = cast(func.substr(period, 6, 2), Integer)
     vat_month = cast(func.substr(VatWorkItem.period, 6, 2), Integer)
     return (
+        # Hand-built rather than via ``select_obligations``: this is a correlated
+        # subquery projecting ``literal(1)``, not a select over the model. The two
+        # scope predicates are therefore applied here explicitly. The chain-tip
+        # half is load-bearing for the HAVING below — an amended month would
+        # contribute two rows, the count would exceed ``months_count``, and a
+        # fully covered span would report as *not* covered.
         select(literal(1))
         .select_from(VatWorkItem)
         .where(
             VatWorkItem.client_record_id == client_record_id,
             VatWorkItem.deleted_at.is_(None),
+            VatWorkItem.chain_tip_clause(),
             VatWorkItem.status.in_(RESOLVABLE_STATUSES),
             func.substr(VatWorkItem.period, 1, 4) == func.substr(period, 1, 4),
             vat_month >= span_start_month,

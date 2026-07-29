@@ -6,6 +6,7 @@ from sqlalchemy import Integer, case, cast, func, select
 from sqlalchemy.orm import Session
 
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import select_obligations
 from app.common.repositories.base_repository import BaseRepository
 from app.vat.models.vat_enums import InvoiceType
 from app.vat.models.vat_invoice import VatInvoice
@@ -22,11 +23,10 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
         year: int,
     ):
         return self.db.scalar(
-            select(func.sum(VatWorkItem.total_output_vat)).where(
+            select_obligations(VatWorkItem, func.sum(VatWorkItem.total_output_vat)).where(
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.period.like(f"{year}-%"),
                 VatWorkItem.status == ObligationStatus.SUBMITTED,
-                VatWorkItem.deleted_at.is_(None),
             )
         )
 
@@ -63,7 +63,8 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
         )
 
         stmt = (
-            select(
+            select_obligations(
+                VatWorkItem,
                 VatWorkItem,
                 func.coalesce(net_sq.c.output_net, 0).label("output_net"),
                 func.coalesce(net_sq.c.input_net, 0).label("input_net"),
@@ -71,7 +72,6 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             .outerjoin(net_sq, VatWorkItem.id == net_sq.c.work_item_id)
             .where(
                 VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.deleted_at.is_(None),
             )
         )
         if period_year_after is not None:
@@ -86,11 +86,10 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
         Returns the scalar sum (Decimal or None if no FILED items exist).
         """
         return self.db.scalar(
-            select(func.sum(VatWorkItem.total_output_net)).where(
+            select_obligations(VatWorkItem, func.sum(VatWorkItem.total_output_net)).where(
                 VatWorkItem.client_record_id == client_record_id,
                 VatWorkItem.period.like(f"{year}-%"),
                 VatWorkItem.status == ObligationStatus.SUBMITTED,
-                VatWorkItem.deleted_at.is_(None),
             )
         )
 
@@ -103,7 +102,8 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             return {}
 
         rows = self.db.execute(
-            select(
+            select_obligations(
+                VatWorkItem,
                 VatWorkItem.client_record_id,
                 func.sum(VatWorkItem.total_output_net),
             )
@@ -112,7 +112,6 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.period >= f"{year}-01",
                 VatWorkItem.period <= f"{year}-12",
                 VatWorkItem.status == ObligationStatus.SUBMITTED,
-                VatWorkItem.deleted_at.is_(None),
             )
             .group_by(VatWorkItem.client_record_id)
         ).all()
@@ -125,7 +124,8 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
         period_year_before: int | None = None,
     ) -> list[dict[str, object]]:
         year_expr = cast(func.substr(VatWorkItem.period, 1, 4), Integer).label("year")
-        stmt = select(
+        stmt = select_obligations(
+            VatWorkItem,
             year_expr,
             func.sum(VatWorkItem.total_output_vat).label("total_output_vat"),
             func.sum(VatWorkItem.total_input_vat).label("total_input_vat"),
@@ -136,7 +136,6 @@ class VatClientSummaryRepository(BaseRepository[VatWorkItem]):
             ),
         ).where(
             VatWorkItem.client_record_id == client_record_id,
-            VatWorkItem.deleted_at.is_(None),
         )
         if period_year_after is not None:
             stmt = stmt.where(func.substr(VatWorkItem.period, 1, 4) >= str(period_year_after))

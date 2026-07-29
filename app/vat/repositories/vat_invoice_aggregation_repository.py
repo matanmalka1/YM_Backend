@@ -144,6 +144,10 @@ class VatInvoiceAggregationRepository(BaseRepository[VatInvoice]):
                 VatInvoice.invoice_type == InvoiceType.INCOME,
                 VatWorkItem.period.like(f"{year}-%"),
                 VatWorkItem.deleted_at.is_(None),
+                # An amendment is born holding a copy of every invoice, so an
+                # amended period's invoices exist under two work items. Without
+                # this, the ceiling check sees the period's income twice.
+                VatWorkItem.chain_tip_clause(),
             )
         )
         return Decimal(str(result or 0))
@@ -167,6 +171,7 @@ class VatInvoiceAggregationRepository(BaseRepository[VatInvoice]):
                 VatInvoice.invoice_type == InvoiceType.EXPENSE,
                 VatWorkItem.period.like(f"{year}-%"),
                 VatWorkItem.deleted_at.is_(None),
+                VatWorkItem.chain_tip_clause(),
             )
             .group_by(VatInvoice.expense_category)
         ).all()
