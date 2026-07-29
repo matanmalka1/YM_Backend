@@ -200,7 +200,6 @@ def client(test_db):
             pass
 
     original_expire = background_jobs_module.expire_overdue_requests
-    original_signature_service = background_jobs_module.SignatureRequestService
     main_module.app.dependency_overrides[get_db] = override_get_db
     try:
         background_jobs_module.expire_overdue_requests = lambda repo: 0
@@ -210,7 +209,6 @@ def client(test_db):
     finally:
         main_module.app.dependency_overrides.pop(get_db, None)
         background_jobs_module.expire_overdue_requests = original_expire
-        background_jobs_module.SignatureRequestService = original_signature_service
 
 
 @pytest.fixture(scope="function")

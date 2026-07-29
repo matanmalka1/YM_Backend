@@ -39,7 +39,6 @@ class SignatureRequestFactory:
         business: Business | None = None,
         business_id: int | None = None,
         created_by: int | None = None,
-        annual_report_id: int | None = None,
         document_id: int | None = None,
         request_type: SignatureRequestType = SignatureRequestType.CUSTOM,
         title: str | None = None,
@@ -81,7 +80,6 @@ class SignatureRequestFactory:
             if business_id is not None
             else getattr(business, "id", None),
             "created_by": created_by,
-            "annual_report_id": annual_report_id,
             "document_id": document_id,
             "request_type": request_type,
             "title": title or f"Test Signature Request {sequence}",
