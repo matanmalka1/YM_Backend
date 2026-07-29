@@ -7,11 +7,13 @@ from app.audit.audit_constants import (
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import ObligationStatus, SubmissionMethod
+from app.common.obligation_closing import CLOSING_ASSIGNEE_REQUIRED_ISSUE
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
+from app.vat.schemas.vat_report import VatClosingReadinessResponse
 from app.vat.vat_audit import work_item_metadata
 from app.vat.vat_data_entry_common import assert_transition_allowed
 from app.vat.vat_messages import (
@@ -57,11 +59,39 @@ def _validate_amendment(
         current_item = work_item_repo.get_by_id(current_item.amends_item_id)
 
 
+def get_closing_readiness(
+    work_item_repo: VatWorkItemRepository,
+    *,
+    item_id: int,
+) -> VatClosingReadinessResponse:
+    """The shared "can this be closed, and what is missing" gate (§4.1.8).
+
+    Mirrors exactly what :func:`file_vat_return` enforces — assignee (D-15) and a
+    final amount. An override supplied at filing time satisfies the amount gate,
+    so its absence here is advisory, not a hard block.
+    """
+    item = work_item_repo.get_by_id(item_id)
+    if not item:
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
+
+    issues: list[str] = []
+    if item.assigned_to is None:
+        issues.append(CLOSING_ASSIGNEE_REQUIRED_ISSUE)
+    if item.net_vat is None:
+        issues.append(FINAL_VAT_AMOUNT_REQUIRED)
+
+    return VatClosingReadinessResponse(
+        work_item_id=item_id,
+        is_ready=not issues,
+        issues=issues,
+    )
+
+
 def file_vat_return(
     work_item_repo: VatWorkItemRepository,
     *,
     item_id: int,
-    filed_by: int,
+    closed_by: int,
     submission_method: SubmissionMethod,
     override_amount: float | None = None,
     override_justification: str | None = None,
@@ -104,7 +134,7 @@ def file_vat_return(
         writer.record_action(
             ENTITY_VAT_WORK_ITEM,
             item_id,
-            filed_by,
+            closed_by,
             ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
             old_value={"final_vat_amount": str(item.net_vat)},
             new_value={"final_vat_amount": str(override_amount)},
@@ -119,7 +149,7 @@ def file_vat_return(
         item_id=item_id,
         final_vat_amount=final_amount,
         submission_method=submission_method,
-        filed_by=filed_by,
+        closed_by=closed_by,
         is_overridden=is_overridden,
         override_justification=override_justification if is_overridden else None,
         submission_reference=submission_reference,
@@ -131,12 +161,13 @@ def file_vat_return(
     writer.record_action(
         ENTITY_VAT_WORK_ITEM,
         item_id,
-        filed_by,
+        closed_by,
         ACTION_VAT_WORK_ITEM_FILED,
         new_value={
             "final_vat_amount": str(final_amount),
             "submission_method": submission_method.value,
             "is_overridden": is_overridden,
+            "closed_late": item.closed_late,
         },
         actor_display_name=actor_display_name,
         metadata_json=work_item_metadata(item),

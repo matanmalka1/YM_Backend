@@ -66,7 +66,11 @@ class AnnualReport(Base):
     filing_deadline: Mapped[datetime | None] = mapped_column(nullable=True)
     custom_deadline_note: Mapped[str | None] = mapped_column(String, nullable=True)
 
-    submitted_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    # Closing facts (set when status → SUBMITTED)
+    closed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    closed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    # NULL means "no due date at close" (D-32), never "unknown" — written once, at the close
+    closed_late: Mapped[bool | None] = mapped_column(nullable=True)
     ita_reference: Mapped[str | None] = mapped_column(String, nullable=True)
     assessment_amount: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)
     refund_due: Mapped[Decimal | None] = mapped_column(Numeric(14, 2), nullable=True)

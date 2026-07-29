@@ -36,7 +36,7 @@ def test_reports_vat_compliance_endpoint(
         period="2026-01",
         period_type=VatType.MONTHLY,
         status=ObligationStatus.SUBMITTED,
-        filed_at=datetime(2026, 3, 1, 9, 0, 0),
+        closed_at=datetime(2026, 3, 1, 9, 0, 0),
         updated_at=now,
         tax_calendar_entry_id=jan_entry.id,
         due_date_original=jan_entry.due_date,

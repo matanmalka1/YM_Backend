@@ -41,6 +41,7 @@ from app.audit.services.audit_entity_audit_writer_service import (
     EntityAuditWriter,
 )
 from app.common.enums import EntityType, ObligationStatus
+from app.common.obligation_closing import compute_closed_late
 from app.common.obligation_lifecycle import ORDERED_STAGES, stages_between
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
@@ -305,16 +306,11 @@ def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[Annua
             )
             created_at = datetime.now(UTC) - timedelta(days=rng.randint(0, 400))
             updated_at = min(datetime.now(UTC), created_at + timedelta(days=rng.randint(0, 60)))
-            submitted_at = None
-            if status in (
-                ObligationStatus.SUBMITTED,
-                ObligationStatus.SUBMITTED,
-            ):
-                submitted_at = min(
-                    datetime.now(UTC), created_at + timedelta(days=rng.randint(1, 180))
-                )
-                if updated_at < submitted_at:
-                    updated_at = submitted_at
+            closed_at = None
+            if status == ObligationStatus.SUBMITTED:
+                closed_at = min(datetime.now(UTC), created_at + timedelta(days=rng.randint(1, 180)))
+                if updated_at < closed_at:
+                    updated_at = closed_at
 
             tax_calendar_entry = TaxCalendarMaterializationService(db).ensure_annual_entry(year)
             report = AnnualReport(
@@ -329,7 +325,7 @@ def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[Annua
                 custom_deadline_note="המועד עודכן בהתאם לאישור ארכה"
                 if deadline_type == DeadlineType.CUSTOM
                 else None,
-                submitted_at=submitted_at,
+                closed_at=closed_at,
                 has_rental_income=rng.random() < 0.3,
                 has_capital_gains=rng.random() < 0.25,
                 has_foreign_income=rng.random() < 0.2,
@@ -342,6 +338,14 @@ def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[Annua
                 created_by=rng.choice(advisors) if advisors else fallback_user_id,
                 assigned_to=rng.choice(advisors) if advisors else None,
             )
+            if closed_at is not None:
+                # A closed obligation always names its author and assignee (D-13/D-15)
+                report.closed_by = report.assigned_to or report.created_by
+                report.assigned_to = report.assigned_to or report.closed_by
+                report.closed_late = compute_closed_late(
+                    closed_at.replace(tzinfo=None),
+                    filing_deadline.date() if filing_deadline else None,
+                )
             if cr is not None:
                 attach_seed_client_context(report, cr)
             db.add(report)
@@ -365,7 +369,7 @@ def create_annual_report_details(db, rng: Random, reports) -> None:
             ObligationStatus.SUBMITTED,
             ObligationStatus.SUBMITTED,
         ):
-            upper = report.submitted_at or report.updated_at or datetime.now(UTC)
+            upper = report.closed_at or report.updated_at or datetime.now(UTC)
             candidate = report.created_at + timedelta(days=rng.randint(7, 45))
             client_approved_at = min(candidate, upper)
         db.add(

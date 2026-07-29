@@ -6,6 +6,9 @@ from decimal import ROUND_HALF_UP, Decimal
 from sqlalchemy.orm import Session
 
 from app.advance_payments.advance_payment_constants import (
+    ADVANCE_PAYMENT_EXPECTED_NOT_COMPUTED_ISSUE,
+    ADVANCE_PAYMENT_NOT_READY_TO_CLOSE,
+    ADVANCE_PAYMENT_TURNOVER_UNKNOWN_ISSUE,
     BULK_GENERATE_CLIENT_CHUNK_SIZE,
 )
 from app.advance_payments.models.advance_payment import AdvancePayment, TurnoverSource
@@ -19,6 +22,9 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
     TurnoverLookupRepository,
     TurnoverResolution,
 )
+from app.advance_payments.schemas.advance_payment import (
+    AdvancePaymentClosingReadinessResponse,
+)
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
@@ -30,8 +36,14 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationStatus, ObligationType
+from app.common.obligation_closing import (
+    CLOSING_ASSIGNEE_REQUIRED_ISSUE,
+    compute_closed_late,
+)
 from app.common.obligation_lifecycle import (
+    LOCKED_MESSAGE,
     assert_transition_allowed,
+    is_locked,
     is_terminal,
     stage_index,
     stages_between,
@@ -101,6 +113,7 @@ class BulkRefreshTurnoverResult:
     skipped_no_vat: int = 0
     skipped_not_filed: int = 0
     skipped_paid: int = 0
+    skipped_closed: int = 0
 
 
 class AdvancePaymentService:
@@ -127,6 +140,7 @@ class AdvancePaymentService:
             "period": payment.period,
             "period_months_count": payment.period_months_count,
             "due_date": payment.due_date,
+            "assigned_to": payment.assigned_to,
             "expected_amount": payment.expected_amount,
             "paid_amount": payment.paid_amount,
             "payment_method": payment.payment_method,
@@ -142,7 +156,16 @@ class AdvancePaymentService:
             "withheld_amount": payment.withheld_amount,
             "status": payment.status,
             "paid_at": payment.paid_at,
+            "closed_at": payment.closed_at,
+            "closed_by": payment.closed_by,
+            "closed_late": payment.closed_late,
         }
+
+    @staticmethod
+    def _assert_unlocked(payment: AdvancePayment) -> None:
+        """Nothing on a closed record changes (D-13) — not figures, metadata, or notes."""
+        if is_locked(payment.status):
+            raise AppError(LOCKED_MESSAGE, ErrorCode.OBLIGATION_LOCKED)
 
     def _actor_kwargs(self, actor_id: int | None, actor_name: str | None) -> dict:
         if actor_id is None:
@@ -326,6 +349,102 @@ class AdvancePaymentService:
             )
         return payment
 
+    # ─── Closing gate ─────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _closing_issues(payment: AdvancePayment) -> list[str]:
+        """What blocks this period from being closed (§4.1.8).
+
+        Payment in full is not a gate (D-16). "Expected amount is computed" means
+        the row can state what should be paid: an override, a rate to derive it
+        from, or a hand-entered expected amount (which bulk repricing preserves).
+        """
+        issues: list[str] = []
+        if payment.assigned_to is None:
+            issues.append(CLOSING_ASSIGNEE_REQUIRED_ISSUE)
+        if payment.turnover_amount is None:
+            issues.append(ADVANCE_PAYMENT_TURNOVER_UNKNOWN_ISSUE)
+        expected_computable = (
+            payment.override_amount is not None
+            or payment.advance_rate is not None
+            or payment.expected_amount > 0
+        )
+        if not expected_computable:
+            issues.append(ADVANCE_PAYMENT_EXPECTED_NOT_COMPUTED_ISSUE)
+        return issues
+
+    def get_closing_readiness(
+        self, client_record_id: int, payment_id: int
+    ) -> AdvancePaymentClosingReadinessResponse:
+        payment = self.get_payment_for_client(client_record_id, payment_id)
+        issues = self._closing_issues(payment)
+        return AdvancePaymentClosingReadinessResponse(
+            advance_payment_id=payment.id,
+            is_ready=not issues,
+            issues=issues,
+        )
+
+    # ─── Manual status transition ─────────────────────────────────────────────
+
+    def transition_status_for_client(
+        self,
+        client_record_id: int,
+        payment_id: int,
+        *,
+        new_status: ObligationStatus,
+        note: str | None = None,
+        actor_id: int,
+        actor_name: str | None = None,
+    ) -> AdvancePayment:
+        """One advisor-driven step on the shared ladder (§4.1.9).
+
+        Money still advances the record on its own (D-8's shortcut); this is the
+        human route — including the close, which only a person may perform. On
+        SUBMITTED the closing gate is asserted and the closing facts are written:
+        who, when, and whether it was late (D-13, D-20).
+        """
+        self._get_record_or_raise(client_record_id)
+        payment = self.repo.get_by_id_for_client_record(payment_id, client_record_id)
+        if not payment:
+            raise NotFoundError(
+                f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
+                ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
+            )
+        assert_transition_allowed(payment.status, new_status, reason=note)
+
+        fields: dict = {"status": new_status}
+        if new_status == ObligationStatus.SUBMITTED:
+            issues = self._closing_issues(payment)
+            if issues:
+                raise AppError(
+                    ADVANCE_PAYMENT_NOT_READY_TO_CLOSE.format(issues="; ".join(issues)),
+                    ErrorCode.ADVANCE_PAYMENT_NOT_READY,
+                )
+            close_time = utcnow()
+            fields["closed_at"] = close_time
+            fields["closed_by"] = actor_id
+            fields["closed_late"] = compute_closed_late(
+                close_time, payment.due_date_effective or payment.due_date
+            )
+
+        old_status = payment.status
+        updated = self.repo.update_payment(payment, **fields)
+        metadata = self._audit_metadata(updated)
+        if new_status == ObligationStatus.SUBMITTED:
+            metadata["closed_by"] = updated.closed_by
+            metadata["closed_late"] = updated.closed_late
+        self._audit.record_status_change(
+            ENTITY_ADVANCE_PAYMENT,
+            updated.id,
+            actor_id,
+            old_status,
+            new_status,
+            note=note,
+            metadata_json=metadata,
+            **self._actor_kwargs(actor_id, actor_name),
+        )
+        return updated
+
     # ─── Create ───────────────────────────────────────────────────────────────
 
     def create_payment_for_client(
@@ -333,6 +452,7 @@ class AdvancePaymentService:
         client_record_id: int,
         period: str,
         period_months_count: int | None,
+        assigned_to: int | None = None,
         expected_amount=None,
         paid_amount=None,
         payment_method=None,
@@ -388,6 +508,7 @@ class AdvancePaymentService:
         )
         payment = self.repo.create(
             client_record_id=client_record_id,
+            assigned_to=assigned_to,
             period=period,
             period_months_count=period_months_count,
             due_date=entry.due_date,
@@ -439,6 +560,7 @@ class AdvancePaymentService:
         "turnover_amount",
         "override_amount",
         "withheld_amount",
+        "assigned_to",
     }
 
     def update_payment_for_client(
@@ -457,6 +579,7 @@ class AdvancePaymentService:
                 f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
                 ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
+        self._assert_unlocked(payment)
         filtered = {k: v for k, v in fields.items() if k in self._ALLOWED_UPDATE_FIELDS}
 
         # A hand-typed turnover must stop claiming VAT provenance, otherwise the
@@ -540,8 +663,14 @@ class AdvancePaymentService:
             if payment is None:
                 skipped.append((payment_id, "not_found"))
                 continue
+            # A closed period is immutable (D-13). Checked before the money
+            # questions: a closed-but-underpaid period must be skipped as closed,
+            # not topped up.
+            if is_locked(payment.status):
+                skipped.append((payment_id, "closed"))
+                continue
             # Money, not lifecycle: this asks whether there is anything left to
-            # top up, which a closed-but-underpaid period would answer wrongly.
+            # top up.
             if payment.is_paid_in_full:
                 skipped.append((payment_id, "already_paid"))
                 continue
@@ -700,6 +829,8 @@ class AdvancePaymentService:
                 f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
                 ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
+        # A closed period is never removed — it is kept and reported (D-13, D-22).
+        self._assert_unlocked(payment)
         self._soft_delete_payment(payment, actor_id=actor_id, actor_name=actor_name, reason=reason)
 
     def _soft_delete_payment(
@@ -960,6 +1091,7 @@ class AdvancePaymentService:
                 ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
             )
 
+        self._assert_unlocked(payment)
         resolution = TurnoverLookupRepository(self.db).resolve_turnover(
             client_record_id, payment.period, payment.period_months_count
         )
@@ -1017,6 +1149,11 @@ class AdvancePaymentService:
 
         result = BulkRefreshTurnoverResult()
         for payment in payments:
+            # A closed period is immutable (D-13) — skipped, not raised: one
+            # closed row must not block its neighbours in a bulk sweep.
+            if is_locked(payment.status):
+                result.skipped_closed += 1
+                continue
             # Money, not lifecycle: the question is whether the amounts are
             # settled, and a settled row now sits at awaiting_verification rather
             # than submitted. Snapshotting rewrites expected_amount, which is a

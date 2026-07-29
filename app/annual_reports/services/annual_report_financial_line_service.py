@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.annual_reports.annual_report_financial_line_helpers import (
     assert_client_allows_financial_mutation,
+    assert_report_unlocked,
     audit_scalar,
     expense_line_snapshot,
     income_line_snapshot,
@@ -82,6 +83,7 @@ class AnnualReportFinancialLineService:
         actor_name: str | None = None,
     ) -> IncomeLineResponse:
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         valid_sources = {e.value for e in IncomeSourceType}
         if source_type not in valid_sources:
@@ -118,6 +120,7 @@ class AnnualReportFinancialLineService:
         **fields,
     ) -> IncomeLineResponse:
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         if "source_type" in fields and fields["source_type"] is not None:
             valid_sources = {e.value for e in IncomeSourceType}
@@ -167,6 +170,7 @@ class AnnualReportFinancialLineService:
         actor_name: str | None = None,
     ) -> None:
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         line = self.income_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:
@@ -206,6 +210,7 @@ class AnnualReportFinancialLineService:
         actor_name: str | None = None,
     ) -> ExpenseLineResponse:
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         valid_categories = {e.value for e in ExpenseCategoryType}
         if category not in valid_categories:
@@ -254,6 +259,7 @@ class AnnualReportFinancialLineService:
         **fields,
     ) -> ExpenseLineResponse:
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         if "category" in fields and fields["category"] is not None:
             valid_categories = {e.value for e in ExpenseCategoryType}
@@ -303,6 +309,7 @@ class AnnualReportFinancialLineService:
         actor_name: str | None = None,
     ) -> None:
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         assert_client_allows_financial_mutation(self.db, report.client_record_id)
         line = self.expense_repo.get_by_report_and_line_id(report_id, line_id)
         if not line:

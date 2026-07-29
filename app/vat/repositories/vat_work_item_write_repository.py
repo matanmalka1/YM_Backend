@@ -11,6 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.common.enums import ObligationStatus, SubmissionMethod
+from app.common.obligation_closing import compute_closed_late
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
 from app.vat.models.vat_work_item import VatWorkItem
@@ -240,7 +241,7 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         item_id: int,
         final_vat_amount: float,
         submission_method: SubmissionMethod,
-        filed_by: int,
+        closed_by: int,
         is_overridden: bool = False,
         override_justification: str | None = None,
         submission_reference: str | None = None,
@@ -256,8 +257,9 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
         item.status = ObligationStatus.SUBMITTED
         item.final_vat_amount = final_vat_amount
         item.submission_method = submission_method
-        item.filed_at = utcnow()
-        item.filed_by = filed_by
+        item.closed_at = utcnow()
+        item.closed_by = closed_by
+        item.closed_late = compute_closed_late(item.closed_at, item.due_date_effective)
         item.is_overridden = is_overridden
         item.override_justification = override_justification
         item.submission_reference = submission_reference

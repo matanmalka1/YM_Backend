@@ -9,12 +9,14 @@ from sqlalchemy import select
 from app.advance_payments.models.advance_payment import AdvancePayment, PaymentMethod
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType, ObligationStatus, ObligationType
+from app.common.obligation_closing import compute_closed_late
 from app.common.obligation_plan import advance_payment_obligation_plan
 from app.common.period_utils import parse_period_year
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
 )
+from app.users.models.user import User, UserRole
 from app.vat.models.vat_work_item import VatWorkItem
 
 from ..shared.client_refs import get_seed_client_record, get_seed_client_record_id
@@ -70,6 +72,7 @@ def _apply_payment_fields(
     le: LegalEntity | None = None,
     db=None,
     client_record_id: int | None = None,
+    advisors: list[int] | None = None,
 ) -> None:
     rate = Decimal(str(le.advance_rate)) if le and le.advance_rate else Decimal("0")
     vat_turnover = (
@@ -96,6 +99,17 @@ def _apply_payment_fields(
         period_dt = datetime.strptime(f"{period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
         paid_at = period_dt + timedelta(days=rng.randint(14, 45))
         payment.paid_at = min(paid_at, datetime.now(UTC))
+        if status == ObligationStatus.SUBMITTED:
+            # A closed obligation names its assignee and author (D-13/D-15)
+            payment.assigned_to = payment.assigned_to or (
+                rng.choice(advisors) if advisors else None
+            )
+            payment.closed_at = payment.paid_at
+            payment.closed_by = payment.assigned_to
+            payment.closed_late = compute_closed_late(
+                payment.closed_at.replace(tzinfo=None),
+                payment.due_date_effective or payment.due_date,
+            )
     elif status == ObligationStatus.IN_PROGRESS:
         # A part-paid period: in progress with an outstanding balance, which is
         # what `partial` described before it stopped being a status.
@@ -121,6 +135,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
     mat = TaxCalendarMaterializationService(db)
     payments: list[AdvancePayment] = []
 
+    advisors = list(db.scalars(select(User.id).where(User.role == UserRole.ADVISOR)).all())
     _crs = [get_seed_client_record(b) for b in businesses if get_seed_client_record(b) is not None]
     _le_ids = list({cr.legal_entity_id for cr in _crs})
     legal_entity_map: dict[int, LegalEntity] = {
@@ -170,7 +185,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
 
                 if existing:
                     _apply_payment_fields(
-                        rng, existing, status, plan.period, le, db, client_record_id
+                        rng, existing, status, plan.period, le, db, client_record_id, advisors
                     )
                     payments.append(existing)
                     continue
@@ -187,7 +202,9 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
                     status=ObligationStatus.AWAITING_INPUT,
                     tax_calendar_entry_id=entry.id,
                 )
-                _apply_payment_fields(rng, payment, status, plan.period, le, db, client_record_id)
+                _apply_payment_fields(
+                    rng, payment, status, plan.period, le, db, client_record_id, advisors
+                )
                 db.add(payment)
                 payments.append(payment)
 
@@ -213,7 +230,7 @@ def create_advance_payments(db, rng: Random, cfg, businesses) -> list[AdvancePay
         cr = straggler_cr_map.get(p.client_record_id)
         le = legal_entity_map.get(cr.legal_entity_id) if cr else None
         status = _resolve_status(p.period, current_year, rng)
-        _apply_payment_fields(rng, p, status, p.period, le, db, p.client_record_id)
+        _apply_payment_fields(rng, p, status, p.period, le, db, p.client_record_id, advisors)
 
     db.flush()
     return payments

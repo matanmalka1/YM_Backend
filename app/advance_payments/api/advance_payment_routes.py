@@ -5,7 +5,9 @@ from fastapi import APIRouter, Depends, Query, status
 from app.advance_payments.api.advance_payment_responses import (
     ADVANCE_PAYMENT_BULK_REFRESH_TURNOVER_RESPONSES,
     ADVANCE_PAYMENT_CREATE_RESPONSES,
+    ADVANCE_PAYMENT_DELETE_RESPONSES,
     ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES,
+    ADVANCE_PAYMENT_TRANSITION_RESPONSES,
     ADVANCE_PAYMENT_UPDATE_RESPONSES,
 )
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
@@ -13,10 +15,12 @@ from app.advance_payments.repositories.advance_payment_turnover_lookup_repositor
     TurnoverResolution,
 )
 from app.advance_payments.schemas.advance_payment import (
+    AdvancePaymentClosingReadinessResponse,
     AdvancePaymentCreateRequest,
     AdvancePaymentDeleteRequest,
     AdvancePaymentListResponse,
     AdvancePaymentRow,
+    AdvancePaymentStatusTransitionRequest,
     AdvancePaymentUpdateRequest,
     AnnualKPIResponse,
     AvailableTurnover,
@@ -122,6 +126,7 @@ def create_advance_payment(
         client_record_id=client_record_id,
         period=request.period,
         period_months_count=request.period_months_count,
+        assigned_to=request.assigned_to,
         turnover_amount=request.turnover_amount,
         advance_rate=request.advance_rate,
         override_amount=request.override_amount,
@@ -165,6 +170,7 @@ def refresh_advance_payment_turnover_bulk(
         skipped_no_vat=result.skipped_no_vat,
         skipped_not_filed=result.skipped_not_filed,
         skipped_paid=result.skipped_paid,
+        skipped_closed=result.skipped_closed,
     )
 
 
@@ -196,6 +202,54 @@ def get_advance_payment(
     user: CurrentUser,
 ):
     payment = AdvancePaymentService(db).get_payment_for_client(client_record_id, payment_id)
+    resolution = TurnoverLookupRepository(db).resolve_turnover(
+        client_record_id, payment.period, payment.period_months_count
+    )
+    return _to_row(payment, resolution)
+
+
+@router.get(
+    "/{payment_id}/readiness",
+    response_model=AdvancePaymentClosingReadinessResponse,
+    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+)
+def get_advance_payment_readiness(
+    client_record_id: PathId,
+    payment_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """Can this period be closed, and if not, what is missing (§4.1.8)."""
+    return AdvancePaymentService(db).get_closing_readiness(client_record_id, payment_id)
+
+
+@router.post(
+    "/{payment_id}/status",
+    response_model=AdvancePaymentRow,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=ADVANCE_PAYMENT_TRANSITION_RESPONSES,
+)
+def transition_advance_payment_status(
+    client_record_id: PathId,
+    payment_id: PathId,
+    request: AdvancePaymentStatusTransitionRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """Move the period one step on the shared obligation ladder.
+
+    Advisor only. Backward moves require a note; moving to SUBMITTED asserts the
+    closing gate and records who closed the period and whether it was late.
+    """
+    service = AdvancePaymentService(db)
+    payment = service.transition_status_for_client(
+        client_record_id,
+        payment_id,
+        new_status=request.status,
+        note=request.note,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )
     resolution = TurnoverLookupRepository(db).resolve_turnover(
         client_record_id, payment.period, payment.period_months_count
     )
@@ -253,7 +307,7 @@ def refresh_advance_payment_turnover(
     "/{payment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+    responses=ADVANCE_PAYMENT_DELETE_RESPONSES,
 )
 def delete_advance_payment(
     client_record_id: PathId,

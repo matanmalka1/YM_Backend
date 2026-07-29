@@ -49,8 +49,8 @@ def _seed_work_items(db, client_record_id: int, created_by: int):
             total_output_net=Decimal("0.00"),
             total_input_net=Decimal("0.00"),
             final_vat_amount=Decimal("600.00"),
-            filed_at=datetime(2026, 2, 15),
-            filed_by=created_by,
+            closed_at=datetime(2026, 2, 15),
+            closed_by=created_by,
             tax_calendar_entry_id=jan_entry.id,
             due_date_original=jan_entry.due_date,
             due_date_effective=jan_entry.due_date,
@@ -97,7 +97,7 @@ def test_vat_client_work_items_endpoint(client, test_db, advisor_headers, vat_cl
     assert payload["items"][1]["period"] == "2026-01"
     assert payload["items"][0]["client_name"] == vat_client.full_name
     # Thin list DTO: detail-only fields are not part of list rows.
-    assert "filed_by_name" not in payload["items"][1]
+    assert "closed_by_name" not in payload["items"][1]
     assert "statutory_deadline" not in payload["items"][1]
     assert "override_justification" not in payload["items"][1]
 

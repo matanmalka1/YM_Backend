@@ -21,6 +21,7 @@ from app.annual_reports.services.annual_report_readiness_service import AnnualRe
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.annual_reports.services.annual_report_tax_service import AnnualReportTaxService
 from app.common.enums import ObligationStatus
+from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, ConflictError, NotFoundError
 
 
@@ -232,9 +233,11 @@ def test_financial_line_mutations_clear_saved_tax_for_pre_submission_report(
     assert report.refund_due is None
 
 
-def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(
+def test_financial_line_mutation_is_locked_for_submitted_report(
     test_db, actor_user, client_factory
 ):
+    """W3/D-13: the mutation itself is forbidden on a submitted report, which is
+    what keeps its saved tax result intact."""
     c = client_factory(full_name="AR create extra SUBMITTED-TAX", id_number="ARCESUBMITTED-TAX")
     report = AnnualReportService(test_db).create_report(
         c.id, 2026, "corporation", actor_user.id, actor_user.full_name
@@ -246,9 +249,11 @@ def test_financial_line_mutation_does_not_clear_saved_tax_for_submitted_report(
     )
     test_db.refresh(report)
 
-    AnnualReportFinancialLineService(test_db).add_income(
-        report.id, "salary", Decimal("100.00"), actor_id=actor_user.id
-    )
+    with pytest.raises(AppError) as exc_info:
+        AnnualReportFinancialLineService(test_db).add_income(
+            report.id, "salary", Decimal("100.00"), actor_id=actor_user.id
+        )
+    assert exc_info.value.code == ErrorCode.OBLIGATION_LOCKED
 
     test_db.refresh(report)
     assert report.status == ObligationStatus.SUBMITTED

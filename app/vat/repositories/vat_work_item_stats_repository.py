@@ -10,7 +10,7 @@ class VatWorkItemStatsRepository(BaseRepository[VatWorkItem]):
     def __init__(self, db: Session):
         self.db = db
 
-    def count_filed_by_period_type(self, period: str, vat_type: VatType) -> int:
+    def count_closed_by_period_type(self, period: str, vat_type: VatType) -> int:
         return self.db.scalar(
             select(func.count(VatWorkItem.id)).where(
                 VatWorkItem.period == period,
@@ -20,7 +20,7 @@ class VatWorkItemStatsRepository(BaseRepository[VatWorkItem]):
             )
         )
 
-    def count_filed_by_period_types(
+    def count_closed_by_period_types(
         self, period_types: list[tuple[str, VatType]]
     ) -> dict[tuple[str, VatType], int]:
         if not period_types:

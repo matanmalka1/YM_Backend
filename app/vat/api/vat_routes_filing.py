@@ -4,15 +4,31 @@ from typing import Annotated
 
 from fastapi import APIRouter, Depends
 
+from app.core.openapi_responses import not_found_response
 from app.core.path_params import PathId
-from app.users.api.user_deps import DBSession, require_role
+from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import User, UserRole
 from app.vat.api.vat_responses import VAT_WORK_ITEM_TRANSITION_RESPONSES
 from app.vat.api.vat_serializers import serialize_work_item
-from app.vat.schemas.vat_report import FileVatReturnRequest, VatWorkItemResponse
+from app.vat.schemas.vat_report import (
+    FileVatReturnRequest,
+    VatClosingReadinessResponse,
+    VatWorkItemResponse,
+)
 from app.vat.services.vat_report_service import VatReportService
 
 router = APIRouter(prefix="/vat", tags=["vat-reports"])
+
+
+@router.get(
+    "/work-items/{item_id}/readiness",
+    response_model=VatClosingReadinessResponse,
+    responses=not_found_response(description='פריט עבודה למע"מ לא נמצא'),
+)
+def get_closing_readiness(item_id: PathId, db: DBSession, user: CurrentUser):
+    """Return list of issues blocking this VAT period from being filed."""
+    service = VatReportService(db)
+    return service.get_closing_readiness(item_id)
 
 
 @router.post(
@@ -35,7 +51,7 @@ def file_vat_return(
     service = VatReportService(db)
     item = service.file_vat_return(
         item_id=item_id,
-        filed_by=current_user.id,
+        closed_by=current_user.id,
         submission_method=request.submission_method,
         override_amount=float(request.override_amount)
         if request.override_amount is not None

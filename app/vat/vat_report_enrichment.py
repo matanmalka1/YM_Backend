@@ -56,7 +56,7 @@ def get_work_item_enriched(
 ) -> dict:
     """Return work item + client/user enrichment data."""
     item = get_work_item(work_item_repo, item_id)
-    user_ids = [uid for uid in [item.assigned_to, item.filed_by] if uid]
+    user_ids = [uid for uid in [item.assigned_to, item.closed_by] if uid]
     users = user_repo.list_by_ids(user_ids) if user_ids else []
     user_map = {u.id: u.full_name for u in users}
     client_maps = _build_client_maps(work_item_repo.db, [item.client_record_id])
@@ -103,7 +103,7 @@ def get_client_items_enriched(
         page_size=page_size,
         filters=filters,
     )
-    user_ids = list({uid for item in items for uid in [item.assigned_to, item.filed_by] if uid})
+    user_ids = list({uid for item in items for uid in [item.assigned_to, item.closed_by] if uid})
     users = user_repo.list_by_ids(user_ids) if user_ids else []
     client_maps = _build_client_maps(work_item_repo.db, [client_record_id])
     return {
@@ -149,7 +149,7 @@ def get_list_enriched(
             client_name=client_name,
         )
     client_record_ids = list({item.client_record_id for item in items})
-    user_ids = list({uid for item in items for uid in [item.assigned_to, item.filed_by] if uid})
+    user_ids = list({uid for item in items for uid in [item.assigned_to, item.closed_by] if uid})
     users = user_repo.list_by_ids(user_ids) if user_ids else []
     client_maps = _build_client_maps(work_item_repo.db, client_record_ids)
     return {

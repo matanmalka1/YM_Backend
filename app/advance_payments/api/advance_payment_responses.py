@@ -47,7 +47,20 @@ ADVANCE_PAYMENT_BULK_REFRESH_TURNOVER_RESPONSES = error_responses(
 )
 
 ADVANCE_PAYMENT_UPDATE_RESPONSES = error_responses(
-    bad_request_response(description="נתוני עדכון המקדמה אינם תקינים"),
+    bad_request_response(description="נתוני עדכון המקדמה אינם תקינים, או שהמקדמה סגורה"),
     not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
     conflict_response(description="לא ניתן לעדכן את המקדמה במצב הנוכחי"),
+)
+
+# The single-step ladder move (advisor only). 400 covers an invalid step, a
+# backward move without a note, a locked record, and a close that fails the gate.
+ADVANCE_PAYMENT_TRANSITION_RESPONSES = error_responses(
+    bad_request_response(description="המעבר אינו חוקי, או שהמקדמה אינה מוכנה לסגירה"),
+    not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+)
+
+# Delete is refused on a closed period (D-13/D-22) — that refusal is the 400.
+ADVANCE_PAYMENT_DELETE_RESPONSES = error_responses(
+    bad_request_response(description="לא ניתן למחוק מקדמה סגורה"),
+    not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
 )

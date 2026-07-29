@@ -15,6 +15,7 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
+from ..annual_report_financial_line_helpers import assert_report_unlocked
 from ..annual_report_messages import ANNEX_LINE_NOT_FOUND, ANNEX_VALIDATION_ERROR
 from .annual_report_base_service import AnnualReportBaseService
 
@@ -64,6 +65,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         actor_name: str | None = None,
     ) -> AnnexDataLineResponse:
         report = self._get_or_raise(report_id)
+        assert_report_unlocked(report)
         data = self._validate_annex_data(schedule, data)
         schedule_entry = self.annex_repo.get_or_create_schedule_entry(report_id, schedule)  # type: ignore[attr-defined]
         line_number = self.annex_repo.next_line_number(schedule_entry.id)  # type: ignore[attr-defined]
@@ -88,6 +90,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         actor_name: str | None = None,
     ) -> AnnexDataLineResponse:
         report = self._get_or_raise(report_id)
+        assert_report_unlocked(report)
         existing = self.annex_repo.get_by_id(line_id)  # type: ignore[attr-defined]
         if not existing or existing.annual_report_id != report_id:
             raise NotFoundError(
@@ -121,6 +124,7 @@ class AnnualReportAnnexService(AnnualReportBaseService):
         actor_name: str | None = None,
     ) -> None:
         report = self._get_or_raise(report_id)
+        assert_report_unlocked(report)
         existing = self.annex_repo.get_by_id(line_id)  # type: ignore[attr-defined]
         if not existing or existing.annual_report_id != report_id:
             raise NotFoundError(

@@ -23,6 +23,7 @@ from app.annual_reports.repositories.annual_report_repository import (
     AnnualReportRepository,
 )
 from app.annual_reports.schemas.annual_report_financials import ReadinessCheckResponse
+from app.common.obligation_closing import CLOSING_ASSIGNEE_REQUIRED_ISSUE
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
@@ -38,7 +39,7 @@ class AnnualReportReadinessService:
         self.income_repo = AnnualReportIncomeRepository(db)
 
     def get_readiness_check(self, report_id: int) -> ReadinessCheckResponse:
-        total_checks = 4
+        total_checks = 5
         report = self.report_repo.get_by_id(report_id)
         if not report:
             raise NotFoundError(
@@ -48,6 +49,11 @@ class AnnualReportReadinessService:
 
         issues: list[str] = []
         passed = 0
+
+        if report.assigned_to is None:
+            issues.append(CLOSING_ASSIGNEE_REQUIRED_ISSUE)
+        else:
+            passed += 1
 
         schedules = self.report_repo.get_schedules(report_id)
         required = [s for s in schedules if s.is_required]

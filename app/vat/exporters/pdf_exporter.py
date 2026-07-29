@@ -120,7 +120,7 @@ def export_vat_to_pdf(
 
     for p in periods:
         status_str = p.status.value if hasattr(p.status, "value") else str(p.status)
-        filed = p.filed_at.strftime("%d/%m/%Y") if p.filed_at else "—"
+        filed = p.closed_at.strftime("%d/%m/%Y") if p.closed_at else "—"
         final = _fmt(p.final_vat_amount)
         table_data.append(
             [

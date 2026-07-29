@@ -80,7 +80,7 @@ def submit_report(
         changed_by_name=user.full_name,
         note=body.note,
         ita_reference=body.ita_reference,
-        submitted_at=body.submitted_at,
+        closed_at=body.closed_at,
         submission_method=body.submission_method.value if body.submission_method else None,
     )
     detail = service.get_detail_report(report_id)

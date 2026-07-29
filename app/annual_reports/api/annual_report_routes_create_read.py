@@ -2,9 +2,12 @@ from fastapi import APIRouter, Depends, Query, Response, status
 
 from app.annual_reports.api.annual_report_responses import (
     REPORT_CREATE_RESPONSES,
+    REPORT_DELETE_RESPONSES,
+    REPORT_UPDATE_RESPONSES,
 )
 from app.annual_reports.schemas.annual_report_requests import (
     AnnualReportCreateRequest,
+    AnnualReportMetadataUpdateRequest,
 )
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportDetailResponse,
@@ -116,11 +119,36 @@ def get_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     return detail
 
 
+@router.patch(
+    "/{report_id}",
+    response_model=AnnualReportDetailResponse,
+    responses=REPORT_UPDATE_RESPONSES,
+)
+def update_annual_report_metadata(
+    report_id: PathId,
+    request: AnnualReportMetadataUpdateRequest,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """Reassign the report — required so the assignee closing gate is satisfiable."""
+    service = AnnualReportService(db)
+    service.update_metadata(
+        report_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+        assigned_to=request.assigned_to,
+    )
+    detail = service.get_detail_report(report_id)
+    if detail is None:
+        raise NotFoundError("הדוח לא נמצא", ErrorCode.ANNUAL_REPORT_NOT_FOUND)
+    return detail
+
+
 @router.delete(
     "/{report_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR))],
-    responses=not_found_response(description="הדוח המבוקש לא נמצא"),
+    responses=REPORT_DELETE_RESPONSES,
 )
 def delete_annual_report(report_id: PathId, db: DBSession, user: CurrentUser):
     """Soft-delete an annual report (ADVISOR only)."""

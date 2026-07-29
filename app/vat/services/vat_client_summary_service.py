@@ -48,7 +48,7 @@ def get_client_summary(
             total_output_net=Decimal(str(output_net)),
             total_input_net=Decimal(str(input_net)),
             final_vat_amount=r.final_vat_amount,
-            filed_at=r.filed_at,
+            closed_at=r.closed_at,
             **get_vat_deadline_fields(r, r.submission_method),
         )
         for r, output_net, input_net in raw_periods

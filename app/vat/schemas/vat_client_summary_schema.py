@@ -20,7 +20,7 @@ class VatPeriodRow(BaseModel):
     total_output_net: ApiDecimal = Decimal("0")
     total_input_net: ApiDecimal = Decimal("0")
     final_vat_amount: ApiDecimal | None = None
-    filed_at: ApiDateTime | None = None
+    closed_at: ApiDateTime | None = None
     submission_deadline: date | None = None
     statutory_deadline: date | None = None
     extended_deadline: date | None = None

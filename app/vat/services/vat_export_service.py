@@ -50,7 +50,7 @@ def _load(db: Session, client_record_id: int, year: int):
             total_output_net=r.total_output_net,
             total_input_net=r.total_input_net,
             final_vat_amount=r.final_vat_amount,
-            filed_at=r.filed_at,
+            closed_at=r.closed_at,
             **get_vat_deadline_fields(r, r.submission_method),
         )
         for r, *_ in all_periods

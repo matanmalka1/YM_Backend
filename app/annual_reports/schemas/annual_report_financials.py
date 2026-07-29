@@ -9,6 +9,7 @@ from pydantic import AliasChoices, BaseModel, Field, model_validator
 
 from app.annual_reports.models.annual_report_expense_line import ExpenseCategoryType
 from app.annual_reports.models.annual_report_income_line import IncomeSourceType
+from app.common.obligation_closing import ClosingReadiness
 from app.core.api_types import ApiDateTime, ApiDecimal
 from app.core.schemas.validation import NonEmptyUpdateMixin
 
@@ -176,10 +177,10 @@ class AdvancesSummary(BaseModel):
 # ── Readiness check ───────────────────────────────────────────────────────────
 
 
-class ReadinessCheckResponse(BaseModel):
+class ReadinessCheckResponse(ClosingReadiness):
+    """The shared closing-gate shape plus this domain's extras."""
+
     annual_report_id: int
-    is_ready: bool
-    issues: list[str]
     completion_pct: float  # 0.0–100.0, rounded to 1 decimal
 
 

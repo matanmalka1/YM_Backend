@@ -53,7 +53,7 @@ from app.vat.repositories.vat_invoice_aggregation_repository import (
 # Statuses in which auto-population is permitted
 _ALLOWED_STATUSES = {
     ObligationStatus.AWAITING_INPUT,
-    ObligationStatus.AWAITING_INPUT,
+    ObligationStatus.INPUT_RECEIVED,
     ObligationStatus.IN_PROGRESS,
 }
 

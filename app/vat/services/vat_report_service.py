@@ -94,6 +94,9 @@ class VatReportService:
     def file_vat_return(self, **kwargs):
         return filing.file_vat_return(self.work_item_repo, **kwargs)
 
+    def get_closing_readiness(self, item_id: int):
+        return filing.get_closing_readiness(self.work_item_repo, item_id=item_id)
+
     # ── Queries ──────────────────────────────────────────────────────────────
 
     def get_work_item(self, item_id: int):

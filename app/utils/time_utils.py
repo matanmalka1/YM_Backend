@@ -32,6 +32,16 @@ def israel_today() -> date:
     return datetime.now(ISRAEL_TZ).date()
 
 
+def israel_date(dt: datetime) -> date:
+    """The Israel-local calendar date of a naive-UTC timestamp.
+
+    Deadlines are Israel dates; reading a UTC timestamp's ``.date()`` against one
+    misreads the two hours around midnight.
+    """
+
+    return dt.replace(tzinfo=UTC).astimezone(ISRAEL_TZ).date()
+
+
 def start_of_day(d: date) -> datetime:
     """Naive midnight at the start of ``d``.
 

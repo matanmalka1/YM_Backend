@@ -1,11 +1,10 @@
 """
 VAT Work Item ORM model.
 
-Tracks the full lifecycle of a client's VAT reporting period:
-  PENDING_MATERIALS → MATERIAL_RECEIVED → DATA_ENTRY_IN_PROGRESS
-  → READY_FOR_REVIEW → FILED
+Tracks the full lifecycle of a client's VAT reporting period through the shared
+ObligationStatus ladder (app/common/obligation_lifecycle.py).
 
-Once FILED the period is immutable — no invoices may be added or edited.
+Once SUBMITTED the period is immutable — no invoices may be added or edited.
 
 Israeli context:
   VAT (מע"מ) is reported monthly or bi-monthly to the Israel Tax Authority.
@@ -86,15 +85,17 @@ class VatWorkItem(Base):
         Numeric(12, 2), nullable=False, default=Decimal("0.00")
     )
 
-    # Filing details (set when status → FILED)
+    # Filing details (set when status → SUBMITTED)
     final_vat_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     is_overridden: Mapped[bool] = mapped_column(nullable=False, default=False)
     override_justification: Mapped[str | None] = mapped_column(Text, nullable=True)
     submission_method: Mapped[SubmissionMethod | None] = mapped_column(
         pg_enum(SubmissionMethod), nullable=True
     )
-    filed_at: Mapped[datetime | None] = mapped_column(nullable=True)
-    filed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    closed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    closed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    # NULL means "no due date at close" (D-32), never "unknown" — written once, at the close
+    closed_late: Mapped[bool | None] = mapped_column(nullable=True)
     submission_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # Amendment tracking

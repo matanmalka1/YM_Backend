@@ -21,22 +21,27 @@ REPORT_TRANSITION_RESPONSES = error_responses(
 
 # Single-report writes that are not status transitions.
 REPORT_UPDATE_RESPONSES = error_responses(
-    bad_request_response(description="נתוני עדכון הדוח אינם תקינים"),
+    bad_request_response(description="נתוני עדכון הדוח אינם תקינים או שהדוח הוגש ונעול"),
     not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 
 REPORT_TAX_CALCULATION_RESPONSES = error_responses(
-    bad_request_response(description="נתוני חישוב המס אינם תקינים"),
+    bad_request_response(description="נתוני חישוב המס אינם תקינים או שהדוח הוגש ונעול"),
     not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 
 # Income / expense / annex line writes.
 REPORT_LINE_WRITE_RESPONSES = error_responses(
-    bad_request_response(description="נתוני השורה אינם תקינים"),
+    bad_request_response(description="נתוני השורה אינם תקינים או שהדוח הוגש ונעול"),
     not_found_response(description="הדוח המבוקש לא נמצא"),
 )
 
 REPORT_SCHEDULE_WRITE_RESPONSES = error_responses(
-    bad_request_response(description="נתוני הנספח אינם תקינים"),
+    bad_request_response(description="נתוני הנספח אינם תקינים או שהדוח הוגש ונעול"),
+    not_found_response(description="הדוח המבוקש לא נמצא"),
+)
+
+REPORT_DELETE_RESPONSES = error_responses(
+    bad_request_response(description="דוח שהוגש נעול ואינו ניתן למחיקה"),
     not_found_response(description="הדוח המבוקש לא נמצא"),
 )

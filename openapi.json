@@ -3151,6 +3151,98 @@
           }
         }
       },
+      "patch": {
+        "tags": [
+          "annual-reports"
+        ],
+        "summary": "Update Annual Report Metadata",
+        "description": "Reassign the report — required so the assignee closing gate is satisfiable.",
+        "operationId": "update_annual_report_metadata_api_v1_annual_reports__report_id__patch",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Report Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AnnualReportMetadataUpdateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualReportDetailResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      },
       "delete": {
         "tags": [
           "annual-reports"
@@ -3173,6 +3265,16 @@
         "responses": {
           "204": {
             "description": "Successful Response"
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
           },
           "404": {
             "description": "Resource not found",
@@ -13756,6 +13858,204 @@
           "204": {
             "description": "Successful Response"
           },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/readiness": {
+      "get": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Get Advance Payment Readiness",
+        "description": "Can this period be closed, and if not, what is missing (§4.1.8).",
+        "operationId": "get_advance_payment_readiness_api_v1_clients__client_record_id__advance_payments__payment_id__readiness_get",
+        "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancePaymentClosingReadinessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/status": {
+      "post": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Transition Advance Payment Status",
+        "description": "Move the period one step on the shared obligation ladder.\n\nAdvisor only. Backward moves require a note; moving to SUBMITTED asserts the\nclosing gate and records who closed the period and whether it was late.",
+        "operationId": "transition_advance_payment_status_api_v1_clients__client_record_id__advance_payments__payment_id__status_post",
+        "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdvancePaymentStatusTransitionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancePaymentRow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "404": {
             "description": "Resource not found",
             "content": {
@@ -16486,6 +16786,70 @@
           },
           "403": {
             "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vat/work-items/{item_id}/readiness": {
+      "get": {
+        "tags": [
+          "vat-reports"
+        ],
+        "summary": "Get Closing Readiness",
+        "description": "Return list of issues blocking this VAT period from being filed.",
+        "operationId": "get_closing_readiness_api_v1_vat_work_items__item_id__readiness_get",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatClosingReadinessResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
             "content": {
               "application/json": {
                 "schema": {
@@ -19919,6 +20283,33 @@
         ],
         "title": "ActiveClientSummary"
       },
+      "AdvancePaymentClosingReadinessResponse": {
+        "properties": {
+          "is_ready": {
+            "type": "boolean",
+            "title": "Is Ready"
+          },
+          "issues": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "advance_payment_id": {
+            "type": "integer",
+            "title": "Advance Payment Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_ready",
+          "issues",
+          "advance_payment_id"
+        ],
+        "title": "AdvancePaymentClosingReadinessResponse",
+        "description": "The shared closing-gate shape (§4.1.8) for an advance payment."
+      },
       "AdvancePaymentCollectionsReportResponse": {
         "properties": {
           "year": {
@@ -20009,6 +20400,17 @@
               }
             ],
             "title": "Period Months Count"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
           },
           "turnover_amount": {
             "anyOf": [
@@ -20626,6 +21028,17 @@
             "type": "integer",
             "title": "Client Record Id"
           },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          },
           "period": {
             "type": "string",
             "title": "Period"
@@ -20705,6 +21118,43 @@
               }
             ],
             "title": "Payment Reference"
+          },
+          "closed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time",
+                "examples": [
+                  "2026-01-02T03:04:05Z"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed At"
+          },
+          "closed_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed By"
+          },
+          "closed_late": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed Late"
           },
           "annual_report_id": {
             "anyOf": [
@@ -20886,11 +21336,6 @@
             ],
             "title": "Timing Status",
             "readOnly": true
-          },
-          "paid_late": {
-            "type": "boolean",
-            "title": "Paid Late",
-            "readOnly": true
           }
         },
         "type": "object",
@@ -20906,10 +21351,32 @@
           "calculated_amount",
           "created_at",
           "delta",
-          "timing_status",
-          "paid_late"
+          "timing_status"
         ],
         "title": "AdvancePaymentRow"
+      },
+      "AdvancePaymentStatusTransitionRequest": {
+        "properties": {
+          "status": {
+            "$ref": "#/components/schemas/ObligationStatus"
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "status"
+        ],
+        "title": "AdvancePaymentStatusTransitionRequest"
       },
       "AdvancePaymentUpdateRequest": {
         "properties": {
@@ -21041,6 +21508,17 @@
               }
             ],
             "title": "Withheld Amount"
+          },
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
           }
         },
         "additionalProperties": false,
@@ -21767,7 +22245,7 @@
             ],
             "title": "Custom Deadline Note"
           },
-          "submitted_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -21780,7 +22258,29 @@
                 "type": "null"
               }
             ],
-            "title": "Submitted At"
+            "title": "Closed At"
+          },
+          "closed_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed By"
+          },
+          "closed_late": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed Late"
           },
           "ita_reference": {
             "anyOf": [
@@ -22226,7 +22726,7 @@
             ],
             "title": "Days Until Deadline"
           },
-          "submitted_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -22239,7 +22739,7 @@
                 "type": "null"
               }
             ],
-            "title": "Submitted At"
+            "title": "Closed At"
           },
           "assessment_amount": {
             "anyOf": [
@@ -22330,6 +22830,24 @@
           "total"
         ],
         "title": "AnnualReportListResponse"
+      },
+      "AnnualReportMetadataUpdateRequest": {
+        "properties": {
+          "assigned_to": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned To"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "title": "AnnualReportMetadataUpdateRequest"
       },
       "AnnualReportResponse": {
         "properties": {
@@ -22432,7 +22950,7 @@
             ],
             "title": "Custom Deadline Note"
           },
-          "submitted_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -22445,7 +22963,29 @@
                 "type": "null"
               }
             ],
-            "title": "Submitted At"
+            "title": "Closed At"
+          },
+          "closed_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed By"
+          },
+          "closed_late": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed Late"
           },
           "ita_reference": {
             "anyOf": [
@@ -24920,7 +25460,8 @@
             "enum": [
               "already_paid",
               "no_amount",
-              "not_found"
+              "not_found",
+              "closed"
             ],
             "title": "Reason"
           }
@@ -25012,6 +25553,10 @@
           "skipped_paid": {
             "type": "integer",
             "title": "Skipped Paid"
+          },
+          "skipped_closed": {
+            "type": "integer",
+            "title": "Skipped Closed"
           }
         },
         "type": "object",
@@ -25019,7 +25564,8 @@
           "refreshed",
           "skipped_no_vat",
           "skipped_not_filed",
-          "skipped_paid"
+          "skipped_paid",
+          "skipped_closed"
         ],
         "title": "BulkRefreshTurnoverResponse"
       },
@@ -30849,10 +31395,6 @@
       },
       "ReadinessCheckResponse": {
         "properties": {
-          "annual_report_id": {
-            "type": "integer",
-            "title": "Annual Report Id"
-          },
           "is_ready": {
             "type": "boolean",
             "title": "Is Ready"
@@ -30864,6 +31406,10 @@
             "type": "array",
             "title": "Issues"
           },
+          "annual_report_id": {
+            "type": "integer",
+            "title": "Annual Report Id"
+          },
           "completion_pct": {
             "type": "number",
             "title": "Completion Pct"
@@ -30871,12 +31417,13 @@
         },
         "type": "object",
         "required": [
-          "annual_report_id",
           "is_ready",
           "issues",
+          "annual_report_id",
           "completion_pct"
         ],
-        "title": "ReadinessCheckResponse"
+        "title": "ReadinessCheckResponse",
+        "description": "The shared closing-gate shape plus this domain's extras."
       },
       "RecentActivityItem": {
         "properties": {
@@ -33305,7 +33852,7 @@
       },
       "SubmitRequest": {
         "properties": {
-          "submitted_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -33318,7 +33865,7 @@
                 "type": "null"
               }
             ],
-            "title": "Submitted At"
+            "title": "Closed At"
           },
           "ita_reference": {
             "anyOf": [
@@ -35882,6 +36429,33 @@
         ],
         "title": "VatClientSummaryResponse"
       },
+      "VatClosingReadinessResponse": {
+        "properties": {
+          "is_ready": {
+            "type": "boolean",
+            "title": "Is Ready"
+          },
+          "issues": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Issues"
+          },
+          "work_item_id": {
+            "type": "integer",
+            "title": "Work Item Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "is_ready",
+          "issues",
+          "work_item_id"
+        ],
+        "title": "VatClosingReadinessResponse",
+        "description": "The shared closing-gate shape (§4.1.8) for a VAT period."
+      },
       "VatComplianceReportItemResponse": {
         "properties": {
           "client_record_id": {
@@ -36774,7 +37348,7 @@
             ],
             "title": "Final Vat Amount"
           },
-          "filed_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -36787,7 +37361,7 @@
                 "type": "null"
               }
             ],
-            "title": "Filed At"
+            "title": "Closed At"
           },
           "submission_deadline": {
             "anyOf": [
@@ -37183,7 +37757,7 @@
             "type": "boolean",
             "title": "Is Overridden"
           },
-          "filed_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -37196,7 +37770,7 @@
                 "type": "null"
               }
             ],
-            "title": "Filed At"
+            "title": "Closed At"
           },
           "updated_at": {
             "type": "string",
@@ -37482,7 +38056,7 @@
               }
             ]
           },
-          "filed_at": {
+          "closed_at": {
             "anyOf": [
               {
                 "type": "string",
@@ -37495,9 +38069,9 @@
                 "type": "null"
               }
             ],
-            "title": "Filed At"
+            "title": "Closed At"
           },
-          "filed_by": {
+          "closed_by": {
             "anyOf": [
               {
                 "type": "integer"
@@ -37506,9 +38080,9 @@
                 "type": "null"
               }
             ],
-            "title": "Filed By"
+            "title": "Closed By"
           },
-          "filed_by_name": {
+          "closed_by_name": {
             "anyOf": [
               {
                 "type": "string"
@@ -37517,7 +38091,18 @@
                 "type": "null"
               }
             ],
-            "title": "Filed By Name"
+            "title": "Closed By Name"
+          },
+          "closed_late": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Closed Late"
           },
           "submission_reference": {
             "anyOf": [

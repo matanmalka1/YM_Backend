@@ -36,3 +36,12 @@ BULK_GENERATE_CLIENT_CHUNK_SIZE = 25
 # flagged as a mismatch. 1 ILS absorbs rounding; anything above it is a real
 # disagreement the advisor should look at.
 VAT_TURNOVER_MISMATCH_TOLERANCE = Decimal("1.00")
+
+# Closing-gate issues (§4.1.8): what blocks an advance from being closed. Payment
+# in full is deliberately NOT a gate — the advisor decides when a period is
+# settled, and a part-paid period closes with an outstanding difference (D-16).
+ADVANCE_PAYMENT_TURNOVER_UNKNOWN_ISSUE = "המחזור לתקופה אינו ידוע"
+ADVANCE_PAYMENT_EXPECTED_NOT_COMPUTED_ISSUE = (
+    "לא ניתן לגזור סכום מקדמה — חסר שיעור מקדמה או סכום ידני"
+)
+ADVANCE_PAYMENT_NOT_READY_TO_CLOSE = "לא ניתן לסגור את המקדמה: {issues}"

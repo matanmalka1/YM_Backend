@@ -52,7 +52,7 @@ def test_get_work_item_includes_user_names_and_deadline_fields(
     body = get_resp.json()
     assert body["id"] == item_id
     assert body["assigned_to_name"] == "VAT Assignee"
-    assert body["filed_by_name"] == test_user.full_name
+    assert body["closed_by_name"] == test_user.full_name
     assert body["submission_deadline"] == "2026-09-24"
     assert isinstance(body["days_until_deadline"], int)
     assert isinstance(body["is_overdue"], bool)

@@ -7,6 +7,9 @@ from sqlalchemy.orm import Session
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
     AdvancePaymentAggregationRepository,
 )
+from app.annual_reports.annual_report_financial_line_helpers import (
+    assert_report_unlocked,
+)
 from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     TAX_CONFLICT_ERROR,
@@ -175,6 +178,7 @@ class AnnualReportTaxService:
                 ErrorCode.ANNUAL_REPORT_TAX_CONFLICT,
             )
         report = self._get_report_or_raise(report_id)
+        assert_report_unlocked(report)
         updated = self.report_repo.update(report.id, tax_due=tax_due, refund_due=refund_due)
         return TaxCalculationSaveResponse(
             annual_report_id=report_id,

@@ -23,7 +23,7 @@ def test_vat_compliance_groups_same_client_by_period_type(
         period="2026-01",
         status=ObligationStatus.SUBMITTED,
     )
-    item1.filed_at = datetime(2026, 2, 10, 9, 0, 0)
+    item1.closed_at = datetime(2026, 2, 10, 9, 0, 0)
     item1.updated_at = now
     item2 = create_linked_vat_work_item(
         test_db,

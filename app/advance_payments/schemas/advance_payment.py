@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import date, datetime
+from datetime import date
 from decimal import Decimal
 from typing import Literal
 
@@ -19,6 +19,7 @@ from app.advance_payments.models.advance_payment import (
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverResolution,
 )
+from app.common.obligation_closing import ClosingReadiness
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.utils.time_utils import israel_today
@@ -70,6 +71,7 @@ class VatTurnoverMismatch(BaseModel):
 class AdvancePaymentRow(BaseModel):
     id: int
     client_record_id: int
+    assigned_to: int | None = None
     period: str
     period_months_count: int
     due_date: date
@@ -80,6 +82,10 @@ class AdvancePaymentRow(BaseModel):
     paid_at: ApiDateTime | None = None
     payment_method: PaymentMethod | None = None
     payment_reference: str | None = None
+    # Closing facts — written once when the advisor closes the period (D-13/D-20).
+    closed_at: ApiDateTime | None = None
+    closed_by: int | None = None
+    closed_late: bool | None = None
     annual_report_id: int | None = None
     notes: str | None = None
     turnover_amount: ApiDecimal | None = None
@@ -108,15 +114,6 @@ class AdvancePaymentRow(BaseModel):
             return "overdue"
         return "on_time"
 
-    @computed_field
-    @property
-    def paid_late(self) -> bool:
-        if self.paid_at is None or self.status != ObligationStatus.SUBMITTED:
-            return False
-        paid_date = self.paid_at.date() if isinstance(self.paid_at, datetime) else self.paid_at
-        effective = self.due_date_effective or self.due_date
-        return paid_date > effective
-
     model_config = {"from_attributes": True, "use_enum_values": True}
 
 
@@ -127,6 +124,7 @@ class AdvancePaymentListResponse(PaginatedResponse[AdvancePaymentRow]):
 class AdvancePaymentCreateRequest(BaseModel):
     period: PeriodStr
     period_months_count: int | None = Field(None, ge=1, le=2)
+    assigned_to: int | None = None
     turnover_amount: ApiDecimal | None = Field(None, ge=0)
     advance_rate: ApiDecimal | None = Field(None, ge=0)
     override_amount: ApiDecimal | None = Field(None, ge=0)
@@ -163,6 +161,7 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
     turnover_amount: ApiDecimal | None = Field(None, ge=0)
     override_amount: ApiDecimal | None = Field(None, ge=0)
     withheld_amount: ApiDecimal | None = Field(None, ge=0)
+    assigned_to: int | None = None
 
     @model_validator(mode="after")
     def _reject_null_for_required(self) -> AdvancePaymentUpdateRequest:
@@ -171,6 +170,17 @@ class AdvancePaymentUpdateRequest(NonEmptyUpdateMixin):
             if field in self.model_fields_set and getattr(self, field) is None:
                 raise ValueError(f"השדה {field} לא יכול להיות null")
         return self
+
+
+class AdvancePaymentClosingReadinessResponse(ClosingReadiness):
+    """The shared closing-gate shape (§4.1.8) for an advance payment."""
+
+    advance_payment_id: int
+
+
+class AdvancePaymentStatusTransitionRequest(BaseModel):
+    status: ObligationStatus
+    note: str | None = None
 
 
 class AdvancePaymentDeleteRequest(BaseModel):
@@ -372,6 +382,8 @@ class BulkRefreshTurnoverResponse(BaseModel):
     skipped_no_vat: int
     skipped_not_filed: int
     skipped_paid: int
+    # Closed periods are immutable (D-13) — a bulk sweep skips them, never errors.
+    skipped_closed: int
 
 
 class BulkMarkPaidRequest(BaseModel):
@@ -401,7 +413,8 @@ class BulkMarkPaidRequest(BaseModel):
 
 class BulkMarkPaidSkippedItem(BaseModel):
     id: int
-    reason: Literal["already_paid", "no_amount", "not_found"]
+    # "closed": the period is submitted/canceled and immutable (D-13).
+    reason: Literal["already_paid", "no_amount", "not_found", "closed"]
 
 
 class BulkMarkPaidResponse(BaseModel):

@@ -62,7 +62,7 @@ def export_vat_to_excel(
         ws.cell(
             row=row,
             column=7,
-            value=p.filed_at.strftime("%d/%m/%Y") if p.filed_at else "",
+            value=p.closed_at.strftime("%d/%m/%Y") if p.closed_at else "",
         )
         totals["output"] += p.total_output_vat
         totals["input"] += p.total_input_vat

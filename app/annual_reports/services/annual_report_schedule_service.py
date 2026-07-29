@@ -5,18 +5,19 @@ from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError, NotFoundError
 
 from ..annual_report_constants import SCHEDULE_FLAGS
+from ..annual_report_financial_line_helpers import assert_report_unlocked
 from ..annual_report_messages import INVALID_SCHEDULE_ERROR, SCHEDULE_NOT_FOUND
 from .annual_report_base_service import AnnualReportBaseService
 
 
 class AnnualReportScheduleService(AnnualReportBaseService):
     def add_schedule(self, report_id: int, schedule: str, notes: str | None = None):
-        self._get_or_raise(report_id)
+        assert_report_unlocked(self._get_or_raise(report_id))
         s = self._parse_schedule(schedule)
         return self.repo.add_schedule(report_id, s, notes=notes)
 
     def complete_schedule(self, report_id: int, schedule: str):
-        self._get_or_raise(report_id)
+        assert_report_unlocked(self._get_or_raise(report_id))
         s = self._parse_schedule(schedule)
         entry = self.repo.mark_schedule_complete(report_id, s)
         if not entry:

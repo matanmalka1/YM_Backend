@@ -5,6 +5,7 @@ from datetime import date
 from pydantic import BaseModel, Field, field_validator
 
 from app.common.enums import ObligationStatus, SubmissionMethod, VatType
+from app.common.obligation_closing import ClosingReadiness
 from app.core.action_schemas import ActionDescriptor
 from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, PeriodStr
 from app.core.schemas.validation import NonEmptyUpdateMixin
@@ -63,9 +64,10 @@ class VatWorkItemResponse(BaseModel):
     is_overridden: bool
     override_justification: str | None = None
     submission_method: SubmissionMethod | None = None  # שם חדש במודל
-    filed_at: ApiDateTime | None = None
-    filed_by: int | None = None
-    filed_by_name: str | None = None
+    closed_at: ApiDateTime | None = None
+    closed_by: int | None = None
+    closed_by_name: str | None = None
+    closed_late: bool | None = None  # NULL = no due date at close (D-32), never False
     submission_reference: str | None = None
     is_amendment: bool = False
     amends_item_id: int | None = None
@@ -106,7 +108,7 @@ class VatWorkItemListItem(BaseModel):
     net_vat: ApiDecimal
     final_vat_amount: ApiDecimal | None = None
     is_overridden: bool
-    filed_at: ApiDateTime | None = None
+    closed_at: ApiDateTime | None = None
     updated_at: ApiDateTime
     # Derived deadline fields shown in the "מועד הגשה" column
     submission_deadline: date | None = None
@@ -225,3 +227,9 @@ class FileVatReturnRequest(BaseModel):
     submission_reference: str | None = None
     is_amendment: bool = False
     amends_item_id: int | None = None
+
+
+class VatClosingReadinessResponse(ClosingReadiness):
+    """The shared closing-gate shape (§4.1.8) for a VAT period."""
+
+    work_item_id: int

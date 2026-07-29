@@ -25,6 +25,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         period: str,
         period_months_count: int,
         due_date: date,
+        assigned_to: int | None = None,
         expected_amount=None,
         paid_amount: Decimal | None = None,
         payment_method=None,
@@ -43,6 +44,7 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
     ) -> AdvancePayment:
         payment = AdvancePayment(
             client_record_id=client_record_id,
+            assigned_to=assigned_to,
             period=period,
             period_months_count=period_months_count,
             due_date=due_date,

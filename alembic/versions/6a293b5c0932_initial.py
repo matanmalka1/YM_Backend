@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: dc5f03405059
+Revision ID: 6a293b5c0932
 Revises: 
-Create Date: 2026-07-28 12:08:27.417262
+Create Date: 2026-07-29 12:37:20.939923
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = 'dc5f03405059'
+revision: str = '6a293b5c0932'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -309,7 +309,9 @@ def upgrade() -> None:
     sa.Column('deadline_type', sa.Enum('standard', 'extended', 'custom', name='filingdeadlinetype'), nullable=False),
     sa.Column('filing_deadline', sa.DateTime(), nullable=True),
     sa.Column('custom_deadline_note', sa.String(), nullable=True),
-    sa.Column('submitted_at', sa.DateTime(), nullable=True),
+    sa.Column('closed_at', sa.DateTime(), nullable=True),
+    sa.Column('closed_by', sa.Integer(), nullable=True),
+    sa.Column('closed_late', sa.Boolean(), nullable=True),
     sa.Column('ita_reference', sa.String(), nullable=True),
     sa.Column('assessment_amount', sa.Numeric(precision=14, scale=2), nullable=True),
     sa.Column('refund_due', sa.Numeric(precision=14, scale=2), nullable=True),
@@ -329,6 +331,7 @@ def upgrade() -> None:
     sa.Column('deleted_by', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['assigned_to'], ['users.id'], ),
     sa.ForeignKeyConstraint(['client_record_id'], ['client_records.id'], ),
+    sa.ForeignKeyConstraint(['closed_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['deleted_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['tax_calendar_entry_id'], ['tax_calendar_entries.id'], ondelete='RESTRICT'),
@@ -459,8 +462,9 @@ def upgrade() -> None:
     sa.Column('is_overridden', sa.Boolean(), nullable=False),
     sa.Column('override_justification', sa.Text(), nullable=True),
     sa.Column('submission_method', sa.Enum('online', 'manual', 'representative', name='submissionmethod'), nullable=True),
-    sa.Column('filed_at', sa.DateTime(), nullable=True),
-    sa.Column('filed_by', sa.Integer(), nullable=True),
+    sa.Column('closed_at', sa.DateTime(), nullable=True),
+    sa.Column('closed_by', sa.Integer(), nullable=True),
+    sa.Column('closed_late', sa.Boolean(), nullable=True),
     sa.Column('submission_reference', sa.String(length=100), nullable=True),
     sa.Column('is_amendment', sa.Boolean(), nullable=False),
     sa.Column('amends_item_id', sa.Integer(), nullable=True),
@@ -475,9 +479,9 @@ def upgrade() -> None:
     sa.ForeignKeyConstraint(['amends_item_id'], ['vat_work_items.id'], ),
     sa.ForeignKeyConstraint(['assigned_to'], ['users.id'], ),
     sa.ForeignKeyConstraint(['client_record_id'], ['client_records.id'], ),
+    sa.ForeignKeyConstraint(['closed_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['created_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['deleted_by'], ['users.id'], ),
-    sa.ForeignKeyConstraint(['filed_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['tax_calendar_entry_id'], ['tax_calendar_entries.id'], ondelete='RESTRICT'),
     sa.PrimaryKeyConstraint('id')
     )
@@ -492,6 +496,7 @@ def upgrade() -> None:
     op.create_table('advance_payments',
     sa.Column('id', sa.Integer(), autoincrement=True, nullable=False),
     sa.Column('client_record_id', sa.Integer(), nullable=False),
+    sa.Column('assigned_to', sa.Integer(), nullable=True),
     sa.Column('period', sa.String(length=7), nullable=False),
     sa.Column('period_months_count', sa.Integer(), nullable=False),
     sa.Column('due_date', sa.Date(), nullable=False),
@@ -511,6 +516,9 @@ def upgrade() -> None:
     sa.Column('paid_at', sa.DateTime(), nullable=True),
     sa.Column('payment_method', sa.Enum('bank_transfer', 'credit_card', 'check', 'direct_debit', 'cash', 'other', name='paymentmethod'), nullable=True),
     sa.Column('payment_reference', sa.String(length=100), nullable=True),
+    sa.Column('closed_at', sa.DateTime(), nullable=True),
+    sa.Column('closed_by', sa.Integer(), nullable=True),
+    sa.Column('closed_late', sa.Boolean(), nullable=True),
     sa.Column('annual_report_id', sa.Integer(), nullable=True),
     sa.Column('tax_calendar_entry_id', sa.Integer(), nullable=False),
     sa.Column('notes', sa.String(length=500), nullable=True),
@@ -521,7 +529,9 @@ def upgrade() -> None:
     sa.Column('restored_at', sa.DateTime(), nullable=True),
     sa.Column('restored_by', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['annual_report_id'], ['annual_reports.id'], ),
+    sa.ForeignKeyConstraint(['assigned_to'], ['users.id'], ),
     sa.ForeignKeyConstraint(['client_record_id'], ['client_records.id'], ),
+    sa.ForeignKeyConstraint(['closed_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['deleted_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['restored_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['tax_calendar_entry_id'], ['tax_calendar_entries.id'], ondelete='RESTRICT'),

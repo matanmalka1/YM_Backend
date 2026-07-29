@@ -1,4 +1,10 @@
-"""INV-05 regression: timing_status and paid_late must use due_date_effective, not due_date."""
+"""INV-05 regression: timing_status must use due_date_effective, not due_date.
+
+The paid-lateness half of this invariant moved in W3: ``paid_late`` was a
+computed row field and is now the stored ``closed_late`` fact, written once at
+the close. Its effective-date precedence is asserted in
+tests/advance_payments/api/test_advance_payment_status_transitions.py.
+"""
 
 from datetime import UTC, date, datetime
 from decimal import Decimal
@@ -47,38 +53,3 @@ class TestTimingStatus:
             paid_amount=Decimal("100"),
         )
         assert row.timing_status == "on_time"
-
-
-class TestPaidLate:
-    def test_paid_after_effective_date_is_late(self):
-        """paid_at after due_date_effective → paid_late=True."""
-        row = _row(
-            due_date=date(2099, 2, 15),
-            due_date_effective=date(2026, 2, 15),
-            status=ObligationStatus.SUBMITTED,
-            paid_amount=Decimal("100"),
-            paid_at=datetime(2026, 3, 1, tzinfo=UTC),
-        )
-        assert row.paid_late is True
-
-    def test_paid_before_effective_date_not_late(self):
-        """paid_at before due_date_effective → paid_late=False."""
-        row = _row(
-            due_date=date(2020, 2, 15),
-            due_date_effective=date(2026, 3, 1),
-            status=ObligationStatus.SUBMITTED,
-            paid_amount=Decimal("100"),
-            paid_at=datetime(2026, 2, 1, tzinfo=UTC),
-        )
-        assert row.paid_late is False
-
-    def test_paid_after_due_date_but_on_time_vs_effective(self):
-        """paid_at after legacy due_date but before due_date_effective → NOT late."""
-        row = _row(
-            due_date=date(2026, 2, 15),
-            due_date_effective=date(2026, 3, 15),
-            status=ObligationStatus.SUBMITTED,
-            paid_amount=Decimal("100"),
-            paid_at=datetime(2026, 3, 1, tzinfo=UTC),
-        )
-        assert row.paid_late is False

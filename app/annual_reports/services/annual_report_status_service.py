@@ -14,6 +14,7 @@ from app.audit.audit_constants import (
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import ObligationStatus
+from app.common.obligation_closing import compute_closed_late
 from app.common.obligation_lifecycle import (
     assert_transition_allowed,
 )
@@ -22,6 +23,7 @@ from app.core.exceptions import AppError, NotFoundError
 from app.utils.time_utils import utcnow
 
 from ..annual_report_deadlines import extended_deadline, standard_deadline
+from ..annual_report_financial_line_helpers import assert_report_unlocked
 from ..annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
     CUSTOM_DEADLINE_LABEL,
@@ -88,7 +90,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         assessment_amount: float | None = None,
         refund_due: float | None = None,
         tax_due: float | None = None,
-        submitted_at: datetime | None = None,
+        closed_at: datetime | None = None,
         submission_method: str | None = None,
         actor_type: str = "user",
     ) -> AnnualReportResponse:
@@ -114,7 +116,9 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         update_fields: dict = {"status": ns}
 
         if ns == ObligationStatus.SUBMITTED:
-            update_fields["submitted_at"] = submitted_at or utcnow()
+            close_time = closed_at or utcnow()
+            update_fields["closed_at"] = close_time
+            update_fields["closed_by"] = changed_by
             if ita_reference:
                 update_fields["ita_reference"] = ita_reference
             if submission_method:
@@ -126,6 +130,13 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
                         client_type=report.client_type,
                         submission_method=sm,
                     )
+            # Lateness is judged against the deadline as recalculated by this very
+            # submission (the method may move it), not the one the report carried in.
+            effective_deadline = update_fields.get("filing_deadline", report.filing_deadline)
+            update_fields["closed_late"] = compute_closed_late(
+                close_time,
+                effective_deadline.date() if effective_deadline else None,
+            )
             # Assessment and tax outcome used to be recorded on a separate `closed`
             # status that followed `submitted`. The two were one act, so they merged.
             if assessment_amount is not None:
@@ -138,6 +149,14 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         old_status = report.status
         updated = self.repo.update(report_id, report=report, **update_fields)
 
+        status_change_metadata = {
+            "client_record_id": report.client_record_id,
+            "tax_year": report.tax_year,
+        }
+        if ns == ObligationStatus.SUBMITTED:
+            status_change_metadata["closed_by"] = changed_by
+            status_change_metadata["closed_late"] = update_fields["closed_late"]
+
         EntityAuditWriter(self.db).record_status_change(
             ENTITY_ANNUAL_REPORT,
             report_id,
@@ -147,10 +166,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             note=note,
             actor_type=actor_type,
             actor_display_name=changed_by_name,
-            metadata_json={
-                "client_record_id": report.client_record_id,
-                "tax_year": report.tax_year,
-            },
+            metadata_json=status_change_metadata,
         )
 
         if (
@@ -213,6 +229,7 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
         changed_by_name: str | None = None,
     ):
         report = self._get_or_raise_for_update(report_id)
+        assert_report_unlocked(report)
         old_value = _deadline_snapshot(report)
         # Partial update: when deadline_type is omitted, keep the existing type
         # (only custom_deadline_note is being changed).

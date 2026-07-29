@@ -34,7 +34,7 @@ class TaxStatusStatsService:
         required_by_type = self.client_repo.count_active_by_vat_types(
             [VatType.MONTHLY, VatType.BIMONTHLY]
         )
-        submitted_by_period_type = self.vat_repo.count_filed_by_period_types(
+        submitted_by_period_type = self.vat_repo.count_closed_by_period_types(
             [
                 (monthly_period, VatType.MONTHLY),
                 (bimonthly_period, VatType.BIMONTHLY),

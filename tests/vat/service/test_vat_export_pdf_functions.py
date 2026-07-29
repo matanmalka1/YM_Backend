@@ -91,7 +91,7 @@ def test_export_vat_to_pdf_generates_file_when_reportlab_available_or_raises():
         total_input_vat=Decimal("20.00"),
         net_vat=Decimal("150.00"),
         final_vat_amount=Decimal("150.00"),
-        filed_at=datetime.now(UTC) - timedelta(days=1),
+        closed_at=datetime.now(UTC) - timedelta(days=1),
         submission_deadline=None,
         statutory_deadline=None,
         extended_deadline=None,

@@ -10,6 +10,7 @@ from sqlalchemy import select
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import BusinessStatus
 from app.common.enums import ObligationStatus, ObligationType, VatType
+from app.common.obligation_closing import compute_closed_late
 from app.common.period_utils import parse_period_year
 from app.tax_calendar.services.tax_calendar_materialization_service import (
     TaxCalendarMaterializationService,
@@ -138,10 +139,15 @@ def _promote_to_filed(rng: Random, item: VatWorkItem, cfg) -> None:
     item.status = ObligationStatus.SUBMITTED
     item.submission_method = rng.choice(list(SubmissionMethod))
     period_dt = datetime.strptime(f"{item.period}-01", "%Y-%m-%d").replace(tzinfo=UTC)
-    filed_at = period_dt + timedelta(days=rng.randint(15, 45))
+    closed_at = period_dt + timedelta(days=rng.randint(15, 45))
     reference_now = datetime.combine(cfg.reference_date, datetime.min.time(), tzinfo=UTC)
-    item.filed_at = min(filed_at, reference_now)
-    item.filed_by = item.assigned_to or item.created_by
+    item.closed_at = min(closed_at, reference_now)
+    item.closed_by = item.assigned_to or item.created_by
+    # A closed obligation always names its assignee (D-15)
+    item.assigned_to = item.assigned_to or item.closed_by
+    item.closed_late = compute_closed_late(
+        item.closed_at.replace(tzinfo=None), item.due_date_effective
+    )
     if not item.submission_reference:
         item.submission_reference = f"VAT-{item.period.replace('-', '')}-{rng.randint(1000, 9999)}"
 
@@ -252,14 +258,18 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 attach_seed_client_context(work_item, cr)
             if status == ObligationStatus.SUBMITTED:
                 work_item.submission_method = rng.choice(list(SubmissionMethod))
-                filed_at_candidate = max(
+                closed_at_candidate = max(
                     created_at, datetime.now(UTC) - timedelta(days=rng.randint(1, 90))
                 )
                 reference_now = datetime.combine(
                     cfg.reference_date, datetime.min.time(), tzinfo=UTC
                 )
-                work_item.filed_at = min(reference_now, filed_at_candidate)
-                work_item.filed_by = work_item.assigned_to or work_item.created_by
+                work_item.closed_at = min(reference_now, closed_at_candidate)
+                work_item.closed_by = work_item.assigned_to or work_item.created_by
+                work_item.assigned_to = work_item.assigned_to or work_item.closed_by
+                work_item.closed_late = compute_closed_late(
+                    work_item.closed_at.replace(tzinfo=None), work_item.due_date_effective
+                )
                 work_item.submission_reference = (
                     f"VAT-{work_item.period.replace('-', '')}-{rng.randint(1000, 9999)}"
                 )
@@ -270,12 +280,12 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
     db.flush()
 
     # Add amendments to some filed items
-    filed_by_client: dict[int, list[VatWorkItem]] = defaultdict(list)
+    closed_by_client: dict[int, list[VatWorkItem]] = defaultdict(list)
     for work_item in work_items:
         if work_item.status == ObligationStatus.SUBMITTED:
-            filed_by_client[get_seed_client_record_id(work_item)].append(work_item)
+            closed_by_client[get_seed_client_record_id(work_item)].append(work_item)
 
-    for filed_items in filed_by_client.values():
+    for filed_items in closed_by_client.values():
         filed_items.sort(key=lambda item: item.period)
         for index in range(1, len(filed_items)):
             if rng.random() < 0.2:

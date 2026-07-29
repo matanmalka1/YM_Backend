@@ -9,7 +9,7 @@ def _service(test_db, required: int, submitted: int) -> TaxStatusStatsService:
     service = TaxStatusStatsService(test_db)
     service.client_repo = SimpleNamespace(count_active_by_vat_type=lambda _vat_type: required)
     service.vat_repo = SimpleNamespace(
-        count_filed_by_period_type=lambda _period, _vat_type: submitted
+        count_closed_by_period_type=lambda _period, _vat_type: submitted
     )
     return service
 

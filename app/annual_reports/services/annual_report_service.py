@@ -18,6 +18,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
     VatWorkItemWriteRepository as VatWorkItemRepository,
 )
 
+from ..annual_report_financial_line_helpers import assert_report_unlocked
 from ..annual_report_messages import ANNUAL_REPORT_DELETED_REASON, ANNUAL_REPORT_NOT_FOUND
 from .annual_report_annex_service import AnnualReportAnnexService
 from .annual_report_create_service import AnnualReportCreateService
@@ -57,11 +58,46 @@ class AnnualReportService(
                 ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
 
+    def update_metadata(
+        self,
+        report_id: int,
+        *,
+        actor_id: int,
+        actor_name: str | None = None,
+        assigned_to: int | None,
+    ):
+        """Reassign the report. The one report-level field editable outside the
+        status flow — required so the D-15 closing gate (assignee) is satisfiable
+        after creation."""
+        report = self.repo.get_by_id(report_id)
+        if not report:
+            raise NotFoundError(
+                ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
+                ErrorCode.ANNUAL_REPORT_NOT_FOUND,
+            )
+        assert_report_unlocked(report)
+        old_value = {"assigned_to": report.assigned_to}
+        updated = self.repo.update(report_id, report=report, assigned_to=assigned_to)
+        EntityAuditWriter(self.db).record_update(
+            ENTITY_ANNUAL_REPORT,
+            report_id,
+            actor_id,
+            old_value=old_value,
+            new_value={"assigned_to": assigned_to},
+            actor_display_name=actor_name,
+            metadata_json={
+                "client_record_id": report.client_record_id,
+                "tax_year": report.tax_year,
+            },
+        )
+        return updated
+
     def delete_report(self, report_id: int, actor_id: int, actor_name: str) -> bool:
         """Soft-delete an annual report. Returns False if not found."""
         report = self.repo.get_by_id(report_id)
         if not report:
             return False
+        assert_report_unlocked(report)
         self._cancel_pending_signature_requests(
             report_id, actor_id, actor_name, ANNUAL_REPORT_DELETED_REASON
         )

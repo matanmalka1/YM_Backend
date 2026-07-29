@@ -119,7 +119,9 @@ class AnnualReportRowFactory:
         deadline_type: FilingDeadlineType = FilingDeadlineType.STANDARD,
         filing_deadline: datetime | None = None,
         custom_deadline_note: str | None = None,
-        submitted_at: datetime | None = None,
+        closed_at: datetime | None = None,
+        closed_by: int | None = None,
+        closed_late: bool | None = None,
         ita_reference: str | None = None,
         assessment_amount: Decimal | int | str | None = None,
         refund_due: Decimal | int | str | None = None,
@@ -162,7 +164,9 @@ class AnnualReportRowFactory:
             "deadline_type": deadline_type,
             "filing_deadline": filing_deadline,
             "custom_deadline_note": custom_deadline_note,
-            "submitted_at": submitted_at,
+            "closed_at": closed_at,
+            "closed_by": closed_by,
+            "closed_late": closed_late,
             "ita_reference": ita_reference,
             "assessment_amount": (
                 None if assessment_amount is None else Decimal(str(assessment_amount))

@@ -118,7 +118,7 @@ class AnnualReportBaseService:
         target.days_until_deadline = days_until_deadline
         target.is_overdue = days_until_deadline < 0 and source.status in {
             ObligationStatus.AWAITING_INPUT,
-            ObligationStatus.AWAITING_INPUT,
+            ObligationStatus.INPUT_RECEIVED,
             ObligationStatus.IN_PROGRESS,
             ObligationStatus.AWAITING_VERIFICATION,
         }

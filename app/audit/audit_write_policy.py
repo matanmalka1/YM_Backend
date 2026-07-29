@@ -142,7 +142,17 @@ _FORBIDDEN_KEY_SUBSTRINGS = (
 
 # Client context columns shared by client-scoped metadata.
 _AR_META = frozenset(
-    {"client_record_id", "tax_year", "section", "line_id", "schedule_id", "line_number"}
+    {
+        "client_record_id",
+        "tax_year",
+        "section",
+        "line_id",
+        "schedule_id",
+        "line_number",
+        # The closing act names its author and lateness (D-13/D-20)
+        "closed_by",
+        "closed_late",
+    }
 )
 _CHARGE_META = frozenset({"client_record_id", "business_id", "annual_report_id", "invoice_id"})
 _BUSINESS_META = frozenset({"client_record_id", "business_id"})
@@ -271,6 +281,9 @@ _ADVANCE_PAYMENT_META = frozenset(
         "annual_report_id",
         "source",
         "vat_work_item_ids",
+        # The closing act names its author and lateness (D-13/D-20)
+        "closed_by",
+        "closed_late",
     }
 )
 _ADVANCE_PAYMENT_FIELDS = frozenset(
@@ -293,6 +306,11 @@ _ADVANCE_PAYMENT_FIELDS = frozenset(
         "withheld_amount",
         "status",
         "paid_at",
+        "assigned_to",
+        # The closing act (D-13/D-20)
+        "closed_at",
+        "closed_by",
+        "closed_late",
     }
 )
 _DOCUMENT_META = frozenset(
@@ -564,6 +582,11 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "tax_year"}),
         metadata_allowed=_AR_META,
     ),
+    _ar(ACTION_UPDATED): ActionPolicy(
+        value_fields=frozenset({"assigned_to"}),
+        metadata_required=frozenset({"client_record_id", "tax_year"}),
+        metadata_allowed=_AR_META,
+    ),
     _ar(ACTION_STATUS_CHANGED): ActionPolicy(
         value_fields=_STATUS_ONLY,
         metadata_required=frozenset({"client_record_id", "tax_year"}),
@@ -655,7 +678,9 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_allowed=_VAT_WORK_ITEM_META,
     ),
     ACTION_VAT_WORK_ITEM_FILED: ActionPolicy(
-        value_fields=frozenset({"final_vat_amount", "submission_method", "is_overridden"}),
+        value_fields=frozenset(
+            {"final_vat_amount", "submission_method", "is_overridden", "closed_late"}
+        ),
         metadata_required=frozenset({"client_record_id"}),
         metadata_allowed=_VAT_WORK_ITEM_META,
     ),

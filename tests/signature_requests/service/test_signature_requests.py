@@ -152,6 +152,8 @@ def test_signed_annual_report_approval_is_preserved_and_retried(
     )
     report_entity = AnnualReportRepository(test_db).get_by_id(report.id)
     report_entity.status = ObligationStatus.AWAITING_VERIFICATION
+    # The closing gate requires an assignee (D-15); auto-submit runs the same gate.
+    report_entity.assigned_to = test_user.id
     test_db.flush()
 
     service = SignatureRequestService(test_db)

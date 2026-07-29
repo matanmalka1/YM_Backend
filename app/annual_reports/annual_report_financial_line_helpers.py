@@ -1,4 +1,4 @@
-"""Shared helpers for annual-report financial line mutations and audit payloads."""
+"""Shared helpers for annual-report mutations and audit payloads."""
 
 from decimal import Decimal
 from enum import Enum
@@ -12,8 +12,10 @@ from app.annual_reports.annual_report_messages import (
 )
 from app.clients.client_enums import ClientStatus
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.enums import ObligationStatus
+from app.common.obligation_lifecycle import LOCKED_MESSAGE
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError
 
 
 def audit_scalar(field_name: str, value):
@@ -49,6 +51,17 @@ def expense_line_snapshot(line) -> dict:
         ),
         "description": audit_scalar("description", line.description),
     }
+
+
+def assert_report_unlocked(report) -> None:
+    """D-13: nothing on a submitted report changes — every change is an amendment.
+
+    Answers a different question from :func:`assert_client_allows_financial_mutation`:
+    that one asks about the *client's* standing, this one about the *report's* own
+    lifecycle. Mutation paths need both.
+    """
+    if report.status == ObligationStatus.SUBMITTED:
+        raise AppError(LOCKED_MESSAGE, ErrorCode.OBLIGATION_LOCKED)
 
 
 def assert_client_allows_financial_mutation(db: Session, client_record_id: int) -> None:

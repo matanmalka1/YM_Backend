@@ -273,6 +273,8 @@ def test_signature_annual_report_auto_submit_system_audit_and_no_signature_dupli
         select(AnnualReport).where(AnnualReport.id == report.id)
     ).scalar_one()
     report_entity.status = ObligationStatus.AWAITING_VERIFICATION
+    # The closing gate requires an assignee (D-15); auto-submit runs the same gate.
+    report_entity.assigned_to = report_entity.created_by
     report_entity.tax_due = Decimal("100.00")
     AnnualReportIncomeRepository(test_db).create_for_report(
         report.id,

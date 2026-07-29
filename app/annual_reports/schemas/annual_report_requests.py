@@ -29,8 +29,6 @@ class AnnualReportCreateRequest(BaseModel):
     has_depreciation: bool = False
 
 
-
-
 class StatusTransitionRequest(BaseModel):
     status: ObligationStatus  # enum — לא str חופשי
     note: str | None = None
@@ -54,13 +52,15 @@ class DeadlineUpdateRequest(NonEmptyUpdateMixin):
         return self
 
 
+class AnnualReportMetadataUpdateRequest(NonEmptyUpdateMixin):
+    assigned_to: int | None = None
+
+
 class SubmitRequest(BaseModel):
-    submitted_at: ApiDateTime | None = None
+    closed_at: ApiDateTime | None = None
     ita_reference: str | None = None
     submission_method: SubmissionMethod | None = None
     note: str | None = None
-
-
 
 
 class ScheduleAddRequest(BaseModel):

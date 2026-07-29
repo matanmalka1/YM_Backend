@@ -115,7 +115,7 @@ def test_mark_filed_persists_amendment_and_reference_fields(
         item_id=item.id,
         final_vat_amount=321.5,
         submission_method=SubmissionMethod.ONLINE,
-        filed_by=user.id,
+        closed_by=user.id,
         is_overridden=True,
         override_justification="manual override",
         submission_reference="REF-321",
@@ -135,7 +135,7 @@ def test_mark_filed_persists_amendment_and_reference_fields(
             item_id=999999,
             final_vat_amount=1.0,
             submission_method=SubmissionMethod.MANUAL,
-            filed_by=user.id,
+            closed_by=user.id,
         )
         is None
     )

@@ -106,6 +106,7 @@ class AdvancePayment(SoftDeletableMixin, Base):
     client_record_id: Mapped[int] = mapped_column(
         ForeignKey("client_records.id"), nullable=False, index=True
     )
+    assigned_to: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
     # ── Period ────────────────────────────────────────────────────────────────
     period: Mapped[str] = mapped_column(
@@ -162,6 +163,14 @@ class AdvancePayment(SoftDeletableMixin, Base):
     )
     # Bank/authority reference (אסמכתה) of the payment, as reported by the client.
     payment_reference: Mapped[str | None] = mapped_column(String(100), nullable=True)
+
+    # ── Closing facts (set when status → SUBMITTED) ───────────────────────────
+    # paid_at is the payment event; closed_at is the closing act — they differ
+    # when an advisor settles a part-paid or unpaid period (D-16).
+    closed_at: Mapped[datetime | None] = mapped_column(nullable=True)
+    closed_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+    # NULL means "no due date at close" (D-32), never "unknown" — written once, at the close
+    closed_late: Mapped[bool | None] = mapped_column(nullable=True)
 
     # ── Cross-domain links ────────────────────────────────────────────────────
     annual_report_id: Mapped[int | None] = mapped_column(

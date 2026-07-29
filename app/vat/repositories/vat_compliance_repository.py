@@ -60,14 +60,14 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.client_record_id,
                 VatWorkItem.period_type,
                 VatWorkItem.period,
-                VatWorkItem.filed_at,
+                VatWorkItem.closed_at,
                 VatWorkItem.due_date_effective,
             ),
             VatWorkItem,
         ).where(
             func.substr(VatWorkItem.period, 1, 4) == year_str,
             VatWorkItem.status == ObligationStatus.SUBMITTED,
-            VatWorkItem.filed_at.isnot(None),
+            VatWorkItem.closed_at.isnot(None),
             VatWorkItem.deleted_at.is_(None),
             VatWorkItem.client_record_id.in_(client_record_ids),
         )

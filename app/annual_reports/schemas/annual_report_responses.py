@@ -27,7 +27,9 @@ class AnnualReportResponse(BaseModel):
     is_overdue: bool = False
     days_until_deadline: int | None = None
     custom_deadline_note: str | None = None
-    submitted_at: ApiDateTime | None = None
+    closed_at: ApiDateTime | None = None
+    closed_by: int | None = None
+    closed_late: bool | None = None  # NULL = no deadline at close (D-32), never False
     ita_reference: str | None = None
     assessment_amount: ApiDecimal | None = None
     refund_due: ApiDecimal | None = None
@@ -69,7 +71,7 @@ class AnnualReportListItem(BaseModel):
     filing_deadline: ApiDateTime | None = None
     is_overdue: bool = False
     days_until_deadline: int | None = None
-    submitted_at: ApiDateTime | None = None
+    closed_at: ApiDateTime | None = None
     assessment_amount: ApiDecimal | None = None
     refund_due: ApiDecimal | None = None
     tax_due: ApiDecimal | None = None

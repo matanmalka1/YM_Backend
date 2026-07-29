@@ -3,6 +3,7 @@ from enum import Enum
 
 from sqlalchemy.orm import Session
 
+from app.annual_reports.annual_report_financial_line_helpers import assert_report_unlocked
 from app.annual_reports.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from app.annual_reports.models.annual_report_detail import AnnualReportDetail
 from app.annual_reports.repositories.annual_report_detail_repository import (
@@ -38,6 +39,7 @@ class AnnualReportDetailService:
                 ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
                 ErrorCode.ANNUAL_REPORT_NOT_FOUND,
             )
+        assert_report_unlocked(report)
         existing = self.repo.get_by_report_id(report_id)
         changes = {
             key: value
