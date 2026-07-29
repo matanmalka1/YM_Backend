@@ -117,7 +117,19 @@ def test_bulk_mark_paid_rejects_duplicates(client, test_db, advisor_headers, cli
     assert resp.status_code == 422
 
 
-def test_bulk_mark_paid_forbidden_for_secretary(client, test_db, secretary_headers, client_factory):
+def test_bulk_mark_paid_still_advisor_only_pending_d17(
+    client, test_db, secretary_headers, client_factory
+):
+    """Pins the *interim* state, not the target one.
+
+    D-17/§4.1.9: "Recording a payment that arrived is clerical work, not a
+    judgement; the judgement is the close, and that stays with the advisor."
+    Marking periods paid is therefore expected to open to the secretary, and
+    this 403 is expected to flip.
+
+    **Scheduled for W7**, alongside the `POST /status` split — see
+    `test_advance_payment_status_transitions.py`.
+    """
     record = _client_record(client_factory)
     payment = _payment(test_db, record, "2026-09")
 

@@ -58,7 +58,26 @@ def test_forward_one_step(client, test_db, advisor_headers, create_client_with_b
     assert resp.json()["status"] == "input_received"
 
 
-def test_forward_is_advisor_only(client, test_db, secretary_headers, create_client_with_business):
+def test_transitions_still_carry_the_blanket_advisor_restriction_pending_d17(
+    client, test_db, secretary_headers, create_client_with_business
+):
+    """Pins the *interim* state, not the target one.
+
+    D-17/§4.1.9 names advance payments as the outlier whose blanket advisor-only
+    write restriction retires: a secretary may move an obligation through the
+    working stages, and only an advisor closes, sends back, cancels, amends or
+    deletes. A forward step to `input_received` is exactly the clerical move
+    D-17 hands to the secretary — so this 403 is wrong under the target model
+    and is expected to flip.
+
+    It cannot flip by relaxing `require_role` on the route: `POST /status`
+    multiplexes forward, backward, cancel and close behind one endpoint, so
+    authorisation has to become per-transition. VAT is the model — separate
+    routes per act, `ready-for-review` open to both roles, `send-back` advisor
+    only.
+
+    **Scheduled for W7.** When D-17 lands, delete this test and assert the split.
+    """
     _c, business = create_client_with_business(full_name="Adv Role", id_number="ADV-TR-002")
     payment = _make_payment(test_db, business)
 
