@@ -356,25 +356,6 @@ class ClientRecordRepository:
             self.db.scalars(self._active_query().order_by(LegalEntity.official_name.asc())).all()
         )
 
-    def get_signer_name_by_legal_entity_id(self, legal_entity_id: int) -> str | None:
-        """Return the display name for signature use: Person.full_name (OWNER) or LegalEntity.official_name."""
-        row = self.db.execute(
-            select(Person.full_name, LegalEntity.official_name)
-            .select_from(LegalEntity)
-            .outerjoin(
-                PersonLegalEntityLink,
-                (PersonLegalEntityLink.legal_entity_id == LegalEntity.id)
-                & (PersonLegalEntityLink.role == PersonLegalEntityRole.OWNER),
-            )
-            .outerjoin(Person, Person.id == PersonLegalEntityLink.person_id)
-            .where(LegalEntity.id == legal_entity_id)
-            .order_by(PersonLegalEntityLink.id.asc())
-        ).first()
-        if row is None:
-            return None
-        person_name, official_name = row
-        return person_name or official_name or None
-
     def count_by_status(
         self,
         search: str | None = None,

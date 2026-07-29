@@ -364,21 +364,12 @@ def create_annual_report_details(db, rng: Random, reports) -> None:
 
         if db.scalars(select(ARD).where(ARD.report_id == report.id)).first():
             continue
-        client_approved_at = None
-        if report.status in (
-            ObligationStatus.SUBMITTED,
-            ObligationStatus.SUBMITTED,
-        ):
-            upper = report.closed_at or report.updated_at or datetime.now(UTC)
-            candidate = report.created_at + timedelta(days=rng.randint(7, 45))
-            client_approved_at = min(candidate, upper)
         db.add(
             AnnualReportDetail(
                 report_id=report.id,
                 pension_contribution=_random_decimal(rng, 0, 15_000),
                 donation_amount=_random_decimal(rng, 0, 6_000),
                 other_credits=_random_decimal(rng, 0, 3_500),
-                client_approved_at=client_approved_at,
                 internal_notes=rng.choice(
                     [None, "ממתין לאישור לקוח", "לעדכן נתוני שכר", 'לבדוק קלטי מע"מ']
                 ),

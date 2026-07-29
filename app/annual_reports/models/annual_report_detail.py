@@ -21,7 +21,7 @@ class AnnualReportDetail(Base):
     Metadata columns only. Derived credit-point values are sourced directly from
     AnnualReportCreditPoint rows and are not persisted here.
 
-    METADATA columns (client_approved_at, internal_notes, amendment_reason,
+    METADATA columns (internal_notes, amendment_reason,
     pension_contribution, donation_amount, other_credits):
         Real business events written directly by service operations.
         Written ONLY via AnnualReportDetailRepository.update_meta().
@@ -44,9 +44,6 @@ class AnnualReportDetail(Base):
     pension_contribution: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     donation_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
     other_credits: Mapped[Decimal | None] = mapped_column(Numeric(12, 2), nullable=True)
-
-    # ── Client approval ───────────────────────────────────────────────────
-    client_approved_at: Mapped[datetime | None] = mapped_column(nullable=True)
 
     # ── Internal notes ────────────────────────────────────────────────────
     internal_notes: Mapped[str | None] = mapped_column(Text, nullable=True)

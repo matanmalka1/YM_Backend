@@ -112,7 +112,6 @@ def create_signature_requests(
 ):
     requests: list[SignatureRequest] = []
     clients_by_id = {client.id: client for client in clients}
-    reports_by_client = _group_by_client_record(annual_reports)
     documents_by_client = _group_by_client_record(documents)
     existing_count = int(
         db.execute(select(func.count()).select_from(SignatureRequest)).scalar_one()
@@ -135,7 +134,6 @@ def create_signature_requests(
         if not client:
             continue
         for business in _pick_businesses(rng, client_businesses, cfg.signature_requests_per_client):
-            report = _pick_for_client(rng, reports_by_client, client.id)
             document = _pick_for_client(rng, documents_by_client, client.id)
             if status_idx < len(status_cycle):
                 status = status_cycle[status_idx]
@@ -169,7 +167,6 @@ def create_signature_requests(
                 client_record_id=get_seed_client_record_id(business),
                 business_id=business.id,
                 created_by=rng.choice(users).id,
-                annual_report_id=report.id if report else None,
                 document_id=document.id if document else None,
                 request_type=request_type,
                 title=f"{title_prefix} - {client.full_name}",

@@ -82,7 +82,6 @@ from app.audit.audit_constants import (
     ACTION_REMINDER_FAILED,
     ACTION_REMINDER_FIRED,
     ACTION_RESTORED,
-    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
     ACTION_SIGNATURE_REQUEST_CANCELED,
     ACTION_SIGNATURE_REQUEST_CREATED,
     ACTION_SIGNATURE_REQUEST_DECLINED,
@@ -602,7 +601,6 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
                 "pension_contribution",
                 "donation_amount",
                 "other_credits",
-                "client_approved_at",
                 "internal_notes",
                 "amendment_reason",
             }
@@ -789,10 +787,6 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_allowed=_SIGNATURE_BASE_META,
     ),
     ACTION_SIGNATURE_REQUEST_SENT: ActionPolicy(
-        metadata_required=frozenset({"client_record_id", "signer_name"}),
-        metadata_allowed=_SIGNATURE_BASE_META,
-    ),
-    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED: ActionPolicy(
         metadata_required=frozenset({"client_record_id", "signer_name"}),
         metadata_allowed=_SIGNATURE_BASE_META,
     ),

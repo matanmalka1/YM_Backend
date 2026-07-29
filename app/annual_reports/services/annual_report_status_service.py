@@ -5,6 +5,7 @@ from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.schemas.annual_report_responses import (
     AnnualReportResponse,
 )
+from app.annual_reports.services.annual_report_base_service import AnnualReportBaseService
 from app.annual_reports.services.annual_report_readiness_service import (
     AnnualReportReadinessService,
 )
@@ -30,11 +31,8 @@ from ..annual_report_messages import (
     DEADLINE_UPDATED_NOTE,
     INVALID_ANNUAL_REPORT_STATUS,
     INVALID_DEADLINE_TYPE_ERROR,
-    REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON,
     REPORT_NOT_READY_FOR_SUBMISSION,
-    STATUS_CHANGE_CANCEL_SIGNATURE_REASON,
 )
-from ..annual_report_status_signature_helper import AnnualReportSignatureHelper
 
 
 def _deadline_note(deadline_type, filing_deadline, custom_deadline_note):
@@ -57,7 +55,7 @@ def _deadline_snapshot(report):
     }
 
 
-class AnnualReportStatusService(AnnualReportSignatureHelper):
+class AnnualReportStatusService(AnnualReportBaseService):
     def _get_or_raise_for_update(self, report_id: int) -> AnnualReport:
         """Fetch annual report with a row-level lock for status transitions."""
         report = self.repo.get_by_id_for_update(report_id)
@@ -108,10 +106,6 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
 
         if ns == ObligationStatus.SUBMITTED:
             self._assert_filing_readiness(report_id)
-
-        client_record_for_signature = None
-        if ns == ObligationStatus.AWAITING_VERIFICATION:
-            client_record_for_signature = self._get_signature_client_context(report)
 
         update_fields: dict = {"status": ns}
 
@@ -168,35 +162,6 @@ class AnnualReportStatusService(AnnualReportSignatureHelper):
             actor_display_name=changed_by_name,
             metadata_json=status_change_metadata,
         )
-
-        if (
-            old_status == ObligationStatus.AWAITING_VERIFICATION
-            and ns != ObligationStatus.AWAITING_VERIFICATION
-        ):
-            self._cancel_pending_signature_requests(
-                report_id,
-                changed_by,
-                changed_by_name,
-                STATUS_CHANGE_CANCEL_SIGNATURE_REASON,
-                actor_type=actor_type,
-            )
-
-        if ns == ObligationStatus.AWAITING_VERIFICATION:
-            if changed_by is None:
-                raise AppError(
-                    "יצירת בקשת חתימה לדוח שנתי דורשת משתמש מבצע",
-                    ErrorCode.ANNUAL_REPORT_INVALID_STATUS,
-                )
-            self._cancel_pending_signature_requests(
-                report_id,
-                changed_by,
-                changed_by_name,
-                REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON,
-            )
-            assert client_record_for_signature is not None
-            self._trigger_signature_request(
-                updated, changed_by, changed_by_name, client_record_for_signature
-            )
 
         return self._to_responses([updated])[0]
 

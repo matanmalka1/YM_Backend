@@ -118,7 +118,6 @@ def signature_request_lifecycle_event(sig_request, audit_event) -> dict:
             "signature_request_id": sig_request.id,
             "request_type": sig_request.request_type.value,
             "status": sig_request.status.value,
-            "annual_report_id": sig_request.annual_report_id,
             "document_id": sig_request.document_id,
             "signer_name": sig_request.signer_name,
             "reason": audit_event.note if audit_type == ACTION_SIGNATURE_REQUEST_DECLINED else None,

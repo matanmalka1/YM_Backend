@@ -22481,21 +22481,6 @@
             ],
             "title": "Other Credits"
           },
-          "client_approved_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "examples": [
-                  "2026-01-02T03:04:05Z"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Approved At"
-          },
           "internal_notes": {
             "anyOf": [
               {
@@ -22593,21 +22578,6 @@
               }
             ],
             "title": "Other Credits"
-          },
-          "client_approved_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "examples": [
-                  "2026-01-02T03:04:05Z"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Approved At"
           },
           "internal_notes": {
             "anyOf": [
@@ -31854,21 +31824,6 @@
             ],
             "title": "Other Credits"
           },
-          "client_approved_at": {
-            "anyOf": [
-              {
-                "type": "string",
-                "format": "date-time",
-                "examples": [
-                  "2026-01-02T03:04:05Z"
-                ]
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Client Approved At"
-          },
           "internal_notes": {
             "anyOf": [
               {
@@ -31927,7 +31882,7 @@
           "report_id"
         ],
         "title": "ReportDetailResponse",
-        "description": "AnnualReportDetail — ניכויים, אישור לקוח, הערות."
+        "description": "AnnualReportDetail — ניכויים, הערות."
       },
       "ResetPasswordRequest": {
         "properties": {
@@ -32502,17 +32457,6 @@
             ],
             "title": "Business Id"
           },
-          "annual_report_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annual Report Id"
-          },
           "document_id": {
             "anyOf": [
               {
@@ -32669,18 +32613,6 @@
             ],
             "title": "Signer Phone"
           },
-          "annual_report_id": {
-            "anyOf": [
-              {
-                "type": "integer",
-                "exclusiveMinimum": 0.0
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annual Report Id"
-          },
           "document_id": {
             "anyOf": [
               {
@@ -32836,17 +32768,6 @@
               }
             ],
             "title": "Storage Key"
-          },
-          "annual_report_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annual Report Id"
           },
           "document_id": {
             "anyOf": [
@@ -33162,17 +33083,6 @@
             ],
             "title": "Storage Key"
           },
-          "annual_report_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annual Report Id"
-          },
           "document_id": {
             "anyOf": [
               {
@@ -33344,9 +33254,7 @@
         "type": "string",
         "enum": [
           "engagement_agreement",
-          "annual_report_approval",
           "power_of_attorney",
-          "vat_return_approval",
           "custom"
         ],
         "title": "SignatureRequestType"
@@ -33466,17 +33374,6 @@
               }
             ],
             "title": "Storage Key"
-          },
-          "annual_report_id": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Annual Report Id"
           },
           "document_id": {
             "anyOf": [

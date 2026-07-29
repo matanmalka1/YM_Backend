@@ -11,15 +11,11 @@ schedules, annexes, detail, deadline — and a submitted report is never deleted
 from datetime import datetime
 from decimal import Decimal
 
-from app.annual_reports.services.annual_report_detail_service import (
-    AnnualReportDetailService,
-)
 from app.annual_reports.services.annual_report_financial_line_service import (
     AnnualReportFinancialLineService,
 )
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.common.enums import ObligationStatus
-from app.utils.time_utils import utcnow
 
 API = "/api/v1/annual-reports"
 
@@ -45,12 +41,6 @@ def _ready_for_submit(
         None,
         actor_id=test_user.id,
         actor_name=test_user.full_name,
-    )
-    AnnualReportDetailService(test_db).update_detail(
-        report.id,
-        actor_id=test_user.id,
-        actor_name=test_user.full_name,
-        client_approved_at=utcnow(),
     )
     # Last: income mutations clear saved tax_due while pre-submission, so the
     # readiness-satisfying fields are written after every line mutation.

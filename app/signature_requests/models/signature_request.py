@@ -27,15 +27,11 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum as PyEnum
-from typing import TYPE_CHECKING
 
 from sqlalchemy import ForeignKey, Index, String, Text, text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
-
-if TYPE_CHECKING:
-    from app.annual_reports.models.annual_report_model import AnnualReport
 from app.utils.enum_utils import pg_enum
 from app.utils.time_utils import utcnow
 
@@ -50,9 +46,7 @@ class SignatureRequestStatus(str, PyEnum):
 
 class SignatureRequestType(str, PyEnum):
     ENGAGEMENT_AGREEMENT = "engagement_agreement"  # הסכם התקשרות
-    ANNUAL_REPORT_APPROVAL = "annual_report_approval"  # אישור דוח שנתי
     POWER_OF_ATTORNEY = "power_of_attorney"  # ייפוי כוח
-    VAT_RETURN_APPROVAL = "vat_return_approval"  # אישור דוח מע"מ
     CUSTOM = "custom"  # חתימה כללית
 
 
@@ -73,9 +67,6 @@ class SignatureRequest(Base):
     created_by: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
 
     # ── Cross-domain links ────────────────────────────────────────────────────
-    annual_report_id: Mapped[int | None] = mapped_column(
-        ForeignKey("annual_reports.id"), nullable=True, index=True
-    )
     document_id: Mapped[int | None] = mapped_column(
         ForeignKey("permanent_documents.id"), nullable=True
     )
@@ -130,16 +121,9 @@ class SignatureRequest(Base):
     deleted_at: Mapped[datetime.datetime | None] = mapped_column(nullable=True)
     deleted_by: Mapped[int | None] = mapped_column(ForeignKey("users.id"), nullable=True)
 
-    # ── Relationships ─────────────────────────────────────────────────────────
-    annual_report: Mapped[AnnualReport | None] = relationship(
-        "AnnualReport",
-        foreign_keys="[SignatureRequest.annual_report_id]",
-        viewonly=True,
-    )
     __table_args__ = (
         Index("idx_sig_request_client_record", "client_record_id"),
         Index("idx_sig_request_business", "business_id"),
-        Index("idx_sig_request_annual_report", "annual_report_id"),
         Index("idx_sig_request_status", "status"),
         Index(
             "idx_sig_request_pending_sent_active",

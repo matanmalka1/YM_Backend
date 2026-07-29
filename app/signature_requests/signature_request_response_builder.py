@@ -94,7 +94,6 @@ class SignatureRequestResponseBuilder:
             signer_name=metadata.get("signer_name"),
             signer_email=metadata.get("signer_email"),
             business_id=metadata.get("business_id"),
-            annual_report_id=metadata.get("annual_report_id"),
             document_id=metadata.get("document_id"),
             ip_address=metadata.get("ip_address"),
             user_agent=metadata.get("user_agent"),

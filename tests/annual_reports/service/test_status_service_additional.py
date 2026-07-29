@@ -2,17 +2,13 @@ import pytest
 from sqlalchemy import select
 
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.repositories.annual_report_repository import AnnualReportRepository
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.audit.audit_constants import ACTION_STATUS_CHANGED, ENTITY_ANNUAL_REPORT, entity_action
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import ObligationStatus
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import AppError, NotFoundError
-from app.signature_requests.repositories.signature_request_repository import (
-    SignatureRequestRepository,
-)
+from app.core.exceptions import AppError
 from tests.helpers.identity import seed_client_identity
 
 
@@ -45,46 +41,6 @@ def test_transition_rejects_unknown_status(test_db, actor_user):
             report.id, "not-a-status", actor_user.id, actor_user.full_name
         )
     assert exc.value.code == "ANNUAL_REPORT.INVALID_STATUS"
-
-
-def test_pending_client_creates_real_client_scoped_signature_request(test_db, actor_user):
-    crm_client, report = _create_report(
-        test_db,
-        actor_user.id,
-        full_name="Pending Signature Person",
-        id_number="ARSTAT002",
-    )
-    service = AnnualReportService(test_db)
-    _move_to_in_preparation(service, report.id, actor_user.id)
-
-    result = service.transition_status(
-        report.id, "awaiting_verification", actor_user.id, actor_user.full_name
-    )
-
-    pending = SignatureRequestRepository(test_db).list_pending_by_annual_report(report.id)
-    assert result.status == ObligationStatus.AWAITING_VERIFICATION.value
-    assert len(pending) == 1
-    assert pending[0].client_record_id == crm_client.id
-    assert pending[0].business_id is None
-    assert pending[0].signer_name == "Pending Signature Person"
-
-
-def test_pending_client_blocks_when_client_record_missing(test_db, actor_user, monkeypatch):
-    from app.clients.repositories.client_record_repository import ClientRecordRepository
-
-    _client, report = _create_report(test_db, actor_user.id, id_number="ARSTAT003")
-    service = AnnualReportService(test_db)
-    _move_to_in_preparation(service, report.id, actor_user.id)
-    monkeypatch.setattr(ClientRecordRepository, "get_by_id", lambda self, _id: None)
-
-    with pytest.raises(NotFoundError) as exc:
-        service.transition_status(report.id, "awaiting_verification", actor_user.id, actor_user.full_name)
-
-    assert exc.value.code == "CLIENT_RECORD.NOT_FOUND"
-    assert (
-        AnnualReportRepository(test_db).get_by_id(report.id).status
-        == ObligationStatus.IN_PROGRESS
-    )
 
 
 def test_update_deadline_invalid_and_custom_paths(test_db, actor_user):

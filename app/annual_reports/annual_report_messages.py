@@ -2,7 +2,6 @@ MISSING_TAX_CALCULATION_ISSUE = "חסר חישוב מס — יש לשמור את
 TAX_CONFLICT_ERROR = "לא ניתן לשמור גם חוב מס וגם החזר מס בו-זמנית"
 INCOMPLETE_REQUIRED_SCHEDULE_ISSUE = "נספח נדרש לא הושלם: {label}"
 MISSING_REPORT_INCOME_ISSUE = "לא הוזנו נתוני הכנסה לדוח"
-CLIENT_NOT_APPROVED_REPORT_ISSUE = "הדוח לא אושר על ידי הלקוח"
 ANNUAL_REPORT_NOT_FOUND = "דוח שנתי {report_id} לא נמצא"
 ANNUAL_REPORT_CLIENT_NOT_FOUND = "לקוח {client_record_id} לא נמצא"
 INVALID_CLIENT_TYPE_ERROR = "סוג לקוח לא חוקי: '{client_type}'"
@@ -23,8 +22,6 @@ INVALID_ANNUAL_REPORT_STATUS = "סטטוס לא חוקי: '{new_status}'"
 INVALID_STATUS_TRANSITION = (
     "לא ניתן לעבור מ-'{current_status}' ל-'{new_status}'. סטטוסים הבאים מותרים: {allowed}"
 )
-STATUS_CHANGE_CANCEL_SIGNATURE_REASON = "מעבר סטטוס — ביטול בקשת חתימה"
-REENTER_PENDING_CLIENT_CANCEL_SIGNATURE_REASON = "כניסה חוזרת ל-PENDING_CLIENT"
 DEADLINE_UPDATED_NOTE = "המועד האחרון עודכן ל-{deadline_type}: {filing_deadline}"
 CUSTOM_DEADLINE_LABEL = "מותאם אישית"
 ANNEX_VALIDATION_ERROR = "נתוני הנספח אינם תקינים: {error}"
@@ -55,8 +52,4 @@ EXPENSE_CATEGORY_LABELS: dict[str, str] = {
     "other": "אחר",
 }
 ANNUAL_DEADLINE_REMINDER_MESSAGE = "תזכורת: מועד מס בעוד {days_before} ימים ({due_date})"
-ANNUAL_REPORT_APPROVAL_TITLE = "אישור דוח שנתי {tax_year}"
-ANNUAL_REPORT_DELETED_REASON = "דוח נמחק"
-REPORT_AMEND_CANCEL_SIGNATURE_REASON = "תיקון דוח — ביטול בקשת חתימה"
-ANNUAL_REPORT_SIGNER_NAME_MISSING = "לא נמצא שם לקוח תקין לבקשת חתימה"
 CLIENT_FALLBACK_NAME = "לקוח #{client_record_id}"

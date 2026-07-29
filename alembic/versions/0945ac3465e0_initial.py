@@ -1,8 +1,8 @@
 """initial
 
-Revision ID: 6a293b5c0932
+Revision ID: 0945ac3465e0
 Revises: 
-Create Date: 2026-07-29 12:37:20.939923
+Create Date: 2026-07-29 14:11:06.304398
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.
-revision: str = '6a293b5c0932'
+revision: str = '0945ac3465e0'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -563,7 +563,6 @@ def upgrade() -> None:
     sa.Column('pension_contribution', sa.Numeric(precision=12, scale=2), nullable=True),
     sa.Column('donation_amount', sa.Numeric(precision=12, scale=2), nullable=True),
     sa.Column('other_credits', sa.Numeric(precision=12, scale=2), nullable=True),
-    sa.Column('client_approved_at', sa.DateTime(), nullable=True),
     sa.Column('internal_notes', sa.Text(), nullable=True),
     sa.Column('amendment_reason', sa.String(length=500), nullable=True),
     sa.Column('created_at', sa.DateTime(), nullable=False),
@@ -832,9 +831,8 @@ def upgrade() -> None:
     sa.Column('client_record_id', sa.Integer(), nullable=False),
     sa.Column('business_id', sa.Integer(), nullable=True),
     sa.Column('created_by', sa.Integer(), nullable=False),
-    sa.Column('annual_report_id', sa.Integer(), nullable=True),
     sa.Column('document_id', sa.Integer(), nullable=True),
-    sa.Column('request_type', sa.Enum('engagement_agreement', 'annual_report_approval', 'power_of_attorney', 'vat_return_approval', 'custom', name='signaturerequesttype'), nullable=False),
+    sa.Column('request_type', sa.Enum('engagement_agreement', 'power_of_attorney', 'custom', name='signaturerequesttype'), nullable=False),
     sa.Column('title', sa.String(), nullable=False),
     sa.Column('description', sa.Text(), nullable=True),
     sa.Column('content_hash', sa.String(), nullable=True),
@@ -859,7 +857,6 @@ def upgrade() -> None:
     sa.Column('signed_document_key', sa.String(), nullable=True),
     sa.Column('deleted_at', sa.DateTime(), nullable=True),
     sa.Column('deleted_by', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['annual_report_id'], ['annual_reports.id'], ),
     sa.ForeignKeyConstraint(['business_id'], ['businesses.id'], ),
     sa.ForeignKeyConstraint(['canceled_by'], ['users.id'], ),
     sa.ForeignKeyConstraint(['client_record_id'], ['client_records.id'], ),
@@ -869,12 +866,10 @@ def upgrade() -> None:
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('signing_token')
     )
-    op.create_index('idx_sig_request_annual_report', 'signature_requests', ['annual_report_id'], unique=False)
     op.create_index('idx_sig_request_business', 'signature_requests', ['business_id'], unique=False)
     op.create_index('idx_sig_request_client_record', 'signature_requests', ['client_record_id'], unique=False)
     op.create_index('idx_sig_request_pending_sent_active', 'signature_requests', ['status', 'sent_at'], unique=False, postgresql_where=sa.text('deleted_at IS NULL'))
     op.create_index('idx_sig_request_status', 'signature_requests', ['status'], unique=False)
-    op.create_index(op.f('ix_signature_requests_annual_report_id'), 'signature_requests', ['annual_report_id'], unique=False)
     op.create_index(op.f('ix_signature_requests_business_id'), 'signature_requests', ['business_id'], unique=False)
     op.create_index(op.f('ix_signature_requests_client_record_id'), 'signature_requests', ['client_record_id'], unique=False)
     op.create_table('notifications',
@@ -945,12 +940,10 @@ def downgrade() -> None:
     op.drop_table('notifications')
     op.drop_index(op.f('ix_signature_requests_client_record_id'), table_name='signature_requests')
     op.drop_index(op.f('ix_signature_requests_business_id'), table_name='signature_requests')
-    op.drop_index(op.f('ix_signature_requests_annual_report_id'), table_name='signature_requests')
     op.drop_index('idx_sig_request_status', table_name='signature_requests')
     op.drop_index('idx_sig_request_pending_sent_active', table_name='signature_requests', postgresql_where=sa.text('deleted_at IS NULL'))
     op.drop_index('idx_sig_request_client_record', table_name='signature_requests')
     op.drop_index('idx_sig_request_business', table_name='signature_requests')
-    op.drop_index('idx_sig_request_annual_report', table_name='signature_requests')
     op.drop_table('signature_requests')
     op.drop_index(op.f('ix_invoices_charge_id'), table_name='invoices')
     op.drop_table('invoices')

@@ -132,9 +132,6 @@ ACTION_SIGNATURE_REQUEST_SIGNED = entity_action(ENTITY_SIGNATURE_REQUEST, "signe
 ACTION_SIGNATURE_REQUEST_DECLINED = entity_action(ENTITY_SIGNATURE_REQUEST, "declined")
 ACTION_SIGNATURE_REQUEST_CANCELED = entity_action(ENTITY_SIGNATURE_REQUEST, "canceled")
 ACTION_SIGNATURE_REQUEST_EXPIRED = entity_action(ENTITY_SIGNATURE_REQUEST, "expired")
-ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED = entity_action(
-    ENTITY_SIGNATURE_REQUEST, "annual_report_signed"
-)
 
 # ---------------------------------------------------------------------------
 # Phase-8 remaining audited-domain actions (pre-namespaced).

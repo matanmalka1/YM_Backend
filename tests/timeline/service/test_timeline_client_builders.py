@@ -38,10 +38,9 @@ def test_document_and_signature_lifecycle_builder_events():
     )
     signature_request = SimpleNamespace(
         id=15,
-        request_type=SignatureRequestType.ANNUAL_REPORT_APPROVAL,
+        request_type=SignatureRequestType.POWER_OF_ATTORNEY,
         created_at=datetime(2026, 1, 6, 12, 0),
         status=SignatureRequestStatus.PENDING_SIGNATURE,
-        annual_report_id=8,
         document_id=9,
         signer_name="Signer",
         decline_reason=None,
@@ -63,9 +62,8 @@ def test_document_and_signature_lifecycle_builder_events():
     assert signature_event["timestamp"] == datetime(2026, 1, 6, 13, 0)
     assert signature_event["metadata"] == {
         "signature_request_id": 15,
-        "request_type": "annual_report_approval",
+        "request_type": "power_of_attorney",
         "status": "pending_signature",
-        "annual_report_id": 8,
         "document_id": 9,
         "signer_name": "Signer",
         "reason": None,

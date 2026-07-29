@@ -4,9 +4,7 @@ from datetime import date
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
-from app.common.enums import ObligationStatus
 from app.common.repositories.base_repository import BaseRepository
 from app.signature_requests.models.signature_request import (
     SignatureRequest,
@@ -34,7 +32,6 @@ class SignatureRequestCrudMixin:
         description: str | None = None,
         signer_email: str | None = None,
         signer_phone: str | None = None,
-        annual_report_id: int | None = None,
         document_id: int | None = None,
         storage_key: str | None = None,
         content_hash: str | None = None,
@@ -53,7 +50,6 @@ class SignatureRequestCrudMixin:
             signer_name=signer_name,
             signer_email=signer_email,
             signer_phone=signer_phone,
-            annual_report_id=annual_report_id,
             document_id=document_id,
             storage_key=storage_key,
             content_hash=content_hash,
@@ -289,39 +285,6 @@ class SignatureRequestCrudMixin:
                 setattr(entity, key, value)
         self.db.flush()
         return entity
-
-    def list_pending_by_annual_report(self, annual_report_id: int) -> list[SignatureRequest]:
-        """Return all PENDING_SIGNATURE requests linked to the given annual report."""
-        stmt = select(SignatureRequest).where(
-            SignatureRequest.annual_report_id == annual_report_id,
-            SignatureRequest.status == SignatureRequestStatus.PENDING_SIGNATURE,
-            SignatureRequest.deleted_at.is_(None),
-        )
-        return self.db.scalars(stmt).all()
-
-    def list_signed_annual_report_approvals_pending_submission(
-        self, *, limit: int = 100
-    ) -> list[SignatureRequest]:
-        """Lock signed approvals whose linked report still awaits the client."""
-        stmt = (
-            select(SignatureRequest)
-            .join(AnnualReport, AnnualReport.id == SignatureRequest.annual_report_id)
-            .where(
-                SignatureRequest.request_type == SignatureRequestType.ANNUAL_REPORT_APPROVAL,
-                SignatureRequest.status == SignatureRequestStatus.SIGNED,
-                SignatureRequest.signed_at.isnot(None),
-                SignatureRequest.deleted_at.is_(None),
-                AnnualReport.status == ObligationStatus.AWAITING_VERIFICATION,
-                AnnualReport.deleted_at.is_(None),
-            )
-            .order_by(
-                SignatureRequest.signed_at.asc(),
-                SignatureRequest.id.asc(),
-            )
-            .limit(limit)
-            .with_for_update(skip_locked=True)
-        )
-        return self.db.scalars(stmt).all()
 
     def list_expired_pending(self) -> list[SignatureRequest]:
         """Find PENDING_SIGNATURE requests whose expires_at has passed."""

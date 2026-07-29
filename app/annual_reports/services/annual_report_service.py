@@ -19,7 +19,7 @@ from app.vat.repositories.vat_work_item_write_repository import (
 )
 
 from ..annual_report_financial_line_helpers import assert_report_unlocked
-from ..annual_report_messages import ANNUAL_REPORT_DELETED_REASON, ANNUAL_REPORT_NOT_FOUND
+from ..annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from .annual_report_annex_service import AnnualReportAnnexService
 from .annual_report_create_service import AnnualReportCreateService
 from .annual_report_query_service import AnnualReportQueryService
@@ -98,9 +98,6 @@ class AnnualReportService(
         if not report:
             return False
         assert_report_unlocked(report)
-        self._cancel_pending_signature_requests(
-            report_id, actor_id, actor_name, ANNUAL_REPORT_DELETED_REASON
-        )
         result = self.repo.soft_delete(report_id, deleted_by=actor_id)
         if result:
             EntityAuditWriter(self.db).record_delete(

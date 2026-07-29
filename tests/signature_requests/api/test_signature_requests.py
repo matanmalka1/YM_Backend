@@ -1,37 +1,13 @@
 from datetime import date
-from decimal import Decimal
 
-from sqlalchemy import select
-
-from app.annual_reports.models.annual_report_income_line import IncomeSourceType
-from app.annual_reports.models.annual_report_model import AnnualReport
-from app.annual_reports.repositories.annual_report_detail_repository import (
-    AnnualReportDetailRepository,
-)
-from app.annual_reports.repositories.annual_report_income_repository import (
-    AnnualReportIncomeRepository,
-)
-from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.audit.audit_constants import (
-    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
-    ACTION_SIGNATURE_REQUEST_CANCELED,
     ACTION_SIGNATURE_REQUEST_DECLINED,
-    ACTION_SIGNATURE_REQUEST_SIGNED,
     ACTION_SIGNATURE_REQUEST_VIEWED,
-    ACTION_STATUS_CHANGED,
-    ENTITY_ANNUAL_REPORT,
-    ENTITY_SIGNATURE_REQUEST,
-    entity_action,
 )
-from app.audit.models.audit_entity_audit_log import EntityAuditLog
-from app.audit.repositories.audit_entity_audit_log_repository import EntityAuditLogRepository
 from app.businesses.models.business import Business
-from app.common.enums import ObligationStatus
-from app.signature_requests.models.signature_request import SignatureRequestStatus
 from app.signature_requests.repositories.signature_request_repository import (
     SignatureRequestRepository,
 )
-from app.timeline.services.timeline_service import TimelineService
 
 
 def _business(create_client_with_business) -> Business:
@@ -255,111 +231,6 @@ def test_signature_request_audit_ordering_embedded_chronological_generic_newest_
         "signature_request.sent",
         "signature_request.created",
     ]
-
-
-def test_signature_annual_report_auto_submit_system_audit_and_no_signature_duplicate(
-    client, test_db, advisor_headers, create_client_with_business, actor_user
-):
-    business = _business(create_client_with_business)
-    report = AnnualReportService(test_db).create_report(
-        client_record_id=business.client_id,
-        tax_year=2026,
-        client_type="corporation",
-        created_by=actor_user.id,
-        created_by_name="Advisor",
-        deadline_type="standard",
-    )
-    report_entity = test_db.execute(
-        select(AnnualReport).where(AnnualReport.id == report.id)
-    ).scalar_one()
-    report_entity.status = ObligationStatus.AWAITING_VERIFICATION
-    # The closing gate requires an assignee (D-15); auto-submit runs the same gate.
-    report_entity.assigned_to = report_entity.created_by
-    report_entity.tax_due = Decimal("100.00")
-    AnnualReportIncomeRepository(test_db).create_for_report(
-        report.id,
-        IncomeSourceType.SALARY,
-        Decimal("1000.00"),
-    )
-    test_db.flush()
-
-    create_resp = client.post(
-        "/api/v1/signature-requests",
-        headers=advisor_headers,
-        json={
-            "business_id": business.id,
-            "client_record_id": business.client_id,
-            "request_type": "annual_report_approval",
-            "title": "Annual report approval",
-            "signer_name": "Annual Signer",
-            "annual_report_id": report.id,
-        },
-    )
-    payload = create_resp.json()
-    sibling_resp = client.post(
-        "/api/v1/signature-requests",
-        headers=advisor_headers,
-        json={
-            "business_id": business.id,
-            "client_record_id": business.client_id,
-            "request_type": "annual_report_approval",
-            "title": "Annual report approval sibling",
-            "signer_name": "Annual Signer",
-            "annual_report_id": report.id,
-        },
-    )
-    sibling_payload = sibling_resp.json()
-
-    approve_resp = client.post(f"/sign/{payload['signing_token']}/approve")
-    assert approve_resp.status_code == 200
-    assert report_entity.status == ObligationStatus.SUBMITTED
-    detail = AnnualReportDetailRepository(test_db).get_by_report_id(report.id)
-    assert detail is not None
-    assert detail.client_approved_at is not None
-
-    sibling = SignatureRequestRepository(test_db).get_by_id(sibling_payload["id"])
-    assert sibling.status == SignatureRequestStatus.CANCELED
-    assert sibling.canceled_by is None
-    sibling_audit_rows = EntityAuditLogRepository(test_db).list_by_entity(
-        ENTITY_SIGNATURE_REQUEST, sibling.id
-    )
-    sibling_cancel_rows = [
-        row for row in sibling_audit_rows if row.action == ACTION_SIGNATURE_REQUEST_CANCELED
-    ]
-    assert len(sibling_cancel_rows) == 1
-    assert sibling_cancel_rows[0].actor_type == "system"
-    assert sibling_cancel_rows[0].performed_by is None
-
-    audit_rows = EntityAuditLogRepository(test_db).list_by_entity(
-        ENTITY_SIGNATURE_REQUEST, payload["id"]
-    )
-    signature_actions = [row.action for row in audit_rows]
-    assert signature_actions.count(ACTION_SIGNATURE_REQUEST_SIGNED) == 1
-    assert signature_actions.count(ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED) == 1
-
-    ar_status_rows = test_db.scalars(
-        select(EntityAuditLog).where(
-            EntityAuditLog.entity_type == ENTITY_ANNUAL_REPORT,
-            EntityAuditLog.entity_id == report.id,
-            EntityAuditLog.action == entity_action(ENTITY_ANNUAL_REPORT, ACTION_STATUS_CHANGED),
-        )
-    ).all()
-    submitted_rows = [
-        row
-        for row in ar_status_rows
-        if isinstance(row.new_value, dict) and row.new_value.get("status") == "submitted"
-    ]
-    assert len(submitted_rows) == 1
-    assert submitted_rows[0].actor_type == "system"
-    assert submitted_rows[0].performed_by is None
-
-    timeline_events, _ = TimelineService(test_db).get_client_timeline(
-        business.client_id, page=1, page_size=100
-    )
-    event_types = [event["event_type"] for event in timeline_events]
-    assert event_types.count("signature_request_signed") == 1
-    assert "signature_request_created" not in event_types
-    assert "signature_request_viewed" not in event_types
 
 
 def test_list_pending_returns_only_pending(

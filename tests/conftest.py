@@ -1,6 +1,5 @@
 import os
 from datetime import date
-from types import SimpleNamespace
 
 import pytest
 from fastapi.testclient import TestClient
@@ -205,13 +204,6 @@ def client(test_db):
     main_module.app.dependency_overrides[get_db] = override_get_db
     try:
         background_jobs_module.expire_overdue_requests = lambda repo: 0
-        background_jobs_module.SignatureRequestService = lambda db: SimpleNamespace(
-            reconcile_signed_annual_report_approvals=lambda: SimpleNamespace(
-                processed=0,
-                submitted=0,
-                failed=0,
-            )
-        )
 
         with TestClient(main_module.app) as test_client:
             yield test_client

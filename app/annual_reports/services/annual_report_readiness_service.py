@@ -5,16 +5,12 @@ from sqlalchemy.orm import Session
 from app.annual_reports.annual_report_labels import SCHEDULE_LABELS
 from app.annual_reports.annual_report_messages import (
     ANNUAL_REPORT_NOT_FOUND,
-    CLIENT_NOT_APPROVED_REPORT_ISSUE,
     INCOMPLETE_REQUIRED_SCHEDULE_ISSUE,
     MISSING_REPORT_INCOME_ISSUE,
     MISSING_TAX_CALCULATION_ISSUE,
 )
 from app.annual_reports.models.annual_report_schedule_entry import (
     AnnualReportScheduleEntry,
-)
-from app.annual_reports.repositories.annual_report_detail_repository import (
-    AnnualReportDetailRepository,
 )
 from app.annual_reports.repositories.annual_report_income_repository import (
     AnnualReportIncomeRepository,
@@ -35,11 +31,10 @@ class AnnualReportReadinessService:
 
     def __init__(self, db: Session):
         self.report_repo = AnnualReportRepository(db)
-        self.detail_repo = AnnualReportDetailRepository(db)
         self.income_repo = AnnualReportIncomeRepository(db)
 
     def get_readiness_check(self, report_id: int) -> ReadinessCheckResponse:
-        total_checks = 5
+        total_checks = 4
         report = self.report_repo.get_by_id(report_id)
         if not report:
             raise NotFoundError(
@@ -69,14 +64,8 @@ class AnnualReportReadinessService:
         else:
             passed += 1
 
-        detail = self.detail_repo.get_by_report_id(report_id)
         if report.tax_due is None and report.refund_due is None:
             issues.append(MISSING_TAX_CALCULATION_ISSUE)
-        else:
-            passed += 1
-
-        if not detail or not detail.client_approved_at:
-            issues.append(CLIENT_NOT_APPROVED_REPORT_ISSUE)
         else:
             passed += 1
 

@@ -34,7 +34,7 @@ def _signature_request(signature_request_factory, business, test_user):
         client_record_id=business.client_id,
         business_id=business.id,
         created_by=test_user.id,
-        request_type=SignatureRequestType.ANNUAL_REPORT_APPROVAL,
+        request_type=SignatureRequestType.POWER_OF_ATTORNEY,
         title="Approve report",
         signer_name="Signer",
         status=SignatureRequestStatus.PENDING_SIGNATURE,

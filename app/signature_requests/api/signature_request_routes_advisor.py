@@ -54,7 +54,6 @@ def create_signature_request(
         signer_name=request.signer_name,
         signer_email=request.signer_email,
         signer_phone=request.signer_phone,
-        annual_report_id=request.annual_report_id,
         document_id=request.document_id,
         content_to_hash=request.content_to_hash,
         sent_by=user.id,

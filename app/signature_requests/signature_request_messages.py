@@ -13,6 +13,3 @@ DOCUMENT_SIGNED_BY_SIGNER_NOTE = "מסמך אושר ונחתם על ידי הח�
 DECLINED_WITHOUT_REASON_NOTE = "החותם דחה את הבקשה ללא הסבר."
 INVALID_FILTER_STATUS = "סטטוס '{status}' אינו חוקי. ערכים חוקיים: {valid_statuses}"
 SYSTEM_USER_NAME = "מערכת"
-ANNUAL_REPORT_SIGNED_NOTE = "אישור לקוח נרשם לדוח שנתי מספר {annual_report_id}."
-AUTO_SUBMITTED_AFTER_SIGNATURE_NOTE = "הדוח הוגש אוטומטית לאחר אישור לקוח"
-AUTO_ADVANCE_ANNUAL_REPORT_ERROR = "שגיאה בקידום אוטומטי של דוח שנתי %s לאחר חתימה"

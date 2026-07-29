@@ -102,17 +102,9 @@ SIGNATURE_COPY = {
         "חתימה על הסכם התקשרות",
         "נא לאשר את תנאי ההתקשרות והשירותים השוטפים לשנה הקרובה",
     ),
-    SignatureRequestType.ANNUAL_REPORT_APPROVAL: (
-        "אישור דוח שנתי לפני הגשה",
-        "נא לעבור על תקציר הדוח השנתי ולאשר הגשה לרשות המסים",
-    ),
     SignatureRequestType.POWER_OF_ATTORNEY: (
         "חתימה על ייפוי כוח",
         "נא לחתום על ייפוי כוח כדי שנוכל לטפל בפניות מול הרשויות",
-    ),
-    SignatureRequestType.VAT_RETURN_APPROVAL: (
-        'אישור דוח מע"מ תקופתי',
-        "נא לאשר את סכום הדיווח לפני שידור הדוח במערכת",
     ),
     SignatureRequestType.CUSTOM: (
         "חתימה על מסמך לקוח",

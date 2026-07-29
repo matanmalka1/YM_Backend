@@ -36,19 +36,15 @@ def _create(
     *,
     user_id: int,
     title: str,
-    annual_report_id: int | None = None,
 ):
     now = utcnow()
     req = repo.create_pending(
         client_record_id=business.client_id,
         business_id=business.id,
         created_by=user_id,
-        request_type=SignatureRequestType.CUSTOM
-        if annual_report_id is None
-        else SignatureRequestType.ANNUAL_REPORT_APPROVAL,
+        request_type=SignatureRequestType.CUSTOM,
         title=title,
         signer_name="Signer",
-        annual_report_id=annual_report_id,
         signing_token=f"token-{business.id}-{title}",
         sent_at=now,
         expires_at=now + timedelta(days=14),
@@ -115,38 +111,6 @@ def test_signature_request_repository_pending_and_expired_queries(
     assert canceled.id not in [item.id for item in repo.list_expired_pending()]
 
 
-def test_repository_update_missing_id_and_pending_by_annual_report(
-    test_db, user_factory, create_client_with_business, annual_report_row_factory
-):
+def test_repository_update_missing_id_returns_none(test_db):
     repo = SignatureRequestRepository(test_db)
-    user = _user(user_factory)
-    business = _business(create_client_with_business, suffix="AR")
-    report = annual_report_row_factory(client_record_id=business.client_id, tax_year=2026)
-    other_report = annual_report_row_factory(client_record_id=business.client_id, tax_year=2025)
     assert repo.update(999999, status=SignatureRequestStatus.CANCELED) is None
-    pending = _create(
-        repo,
-        business,
-        user_id=user.id,
-        title="Annual Pending",
-        annual_report_id=report.id,
-    )
-    canceled = _create(
-        repo,
-        business,
-        user_id=user.id,
-        title="Annual Canceled",
-        annual_report_id=report.id,
-    )
-    repo.update(canceled.id, status=SignatureRequestStatus.CANCELED)
-    other = _create(
-        repo,
-        business,
-        user_id=user.id,
-        title="Different Report",
-        annual_report_id=other_report.id,
-    )
-    repo.update(pending.id, status=SignatureRequestStatus.PENDING_SIGNATURE)
-    repo.update(other.id, status=SignatureRequestStatus.PENDING_SIGNATURE)
-    assert [item.id for item in repo.list_pending_by_annual_report(report.id)] == [pending.id]
-    assert canceled.id not in [item.id for item in repo.list_pending_by_annual_report(report.id)]

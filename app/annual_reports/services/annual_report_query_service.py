@@ -123,7 +123,6 @@ class AnnualReportQueryService(AnnualReportBaseService):
         response.schedules = [ScheduleEntryResponse.model_validate(s) for s in schedules]
 
         if detail:
-            response.client_approved_at = detail.client_approved_at
             response.internal_notes = detail.internal_notes
             response.amendment_reason = detail.amendment_reason
 

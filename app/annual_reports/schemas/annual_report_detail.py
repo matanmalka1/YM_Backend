@@ -7,13 +7,12 @@ from app.core.schemas.validation import NonEmptyUpdateMixin
 
 
 class ReportDetailResponse(BaseModel):
-    """AnnualReportDetail — ניכויים, אישור לקוח, הערות."""
+    """AnnualReportDetail — ניכויים, הערות."""
 
     report_id: int
     pension_contribution: ApiDecimal | None = None
     donation_amount: ApiDecimal | None = None
     other_credits: ApiDecimal | None = None
-    client_approved_at: ApiDateTime | None = None
     internal_notes: str | None = None
     amendment_reason: str | None = None
     created_at: ApiDateTime | None = None
@@ -26,6 +25,5 @@ class AnnualReportDetailUpdateRequest(NonEmptyUpdateMixin):
     pension_contribution: ApiDecimal | None = Field(None, ge=0)
     donation_amount: ApiDecimal | None = Field(None, ge=0)
     other_credits: ApiDecimal | None = Field(None, ge=0)
-    client_approved_at: ApiDateTime | None = None
     internal_notes: str | None = None
     amendment_reason: str | None = None

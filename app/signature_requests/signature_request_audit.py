@@ -7,7 +7,6 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 
 from app.audit.audit_constants import (
-    ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED,
     ACTION_SIGNATURE_REQUEST_CANCELED,
     ACTION_SIGNATURE_REQUEST_CREATED,
     ACTION_SIGNATURE_REQUEST_DECLINED,
@@ -40,8 +39,6 @@ def signature_request_metadata(
         metadata["signer_email"] = req.signer_email
     if req.business_id is not None:
         metadata["business_id"] = req.business_id
-    if req.annual_report_id is not None:
-        metadata["annual_report_id"] = req.annual_report_id
     if req.document_id is not None:
         metadata["document_id"] = req.document_id
     if ip_address:
@@ -143,7 +140,6 @@ def record_signature_system_action(
 
 
 __all__ = [
-    "ACTION_SIGNATURE_REQUEST_ANNUAL_REPORT_SIGNED",
     "ACTION_SIGNATURE_REQUEST_CANCELED",
     "ACTION_SIGNATURE_REQUEST_CREATED",
     "ACTION_SIGNATURE_REQUEST_DECLINED",

@@ -1,4 +1,6 @@
-def test_get_detail_returns_blank_when_missing(client, advisor_headers, annual_report_service_factory):
+def test_get_detail_returns_blank_when_missing(
+    client, advisor_headers, annual_report_service_factory
+):
     report = annual_report_service_factory(
         client_full_name="Annual Report Client",
         client_id_number="333333333",
@@ -17,7 +19,6 @@ def test_get_detail_returns_blank_when_missing(client, advisor_headers, annual_r
     assert data["pension_contribution"] is None
     assert data["donation_amount"] is None
     assert data["other_credits"] is None
-    assert data["client_approved_at"] is None
     assert data["internal_notes"] is None
     # Dead duplicate float copies removed (api-todo 35b). Canonical refund_due/
     # tax_due live on the main report DTO, not on ReportDetailResponse.
@@ -39,7 +40,6 @@ def test_update_detail_creates_and_updates(client, advisor_headers, annual_repor
         json={
             "pension_contribution": 1200.5,
             "donation_amount": 300.0,
-            "client_approved_at": "2026-02-15T12:00:00",
             "internal_notes": "Initial review complete",
         },
     )
@@ -48,7 +48,6 @@ def test_update_detail_creates_and_updates(client, advisor_headers, annual_repor
     first = first_response.json()
     assert first["pension_contribution"] == "1200.50"
     assert first["donation_amount"] == "300.00"
-    assert first["client_approved_at"] == "2026-02-15T12:00:00Z"
     assert first["internal_notes"] == "Initial review complete"
     assert first["updated_at"] is None
     assert "tax_refund_amount" not in first

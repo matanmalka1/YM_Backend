@@ -1,5 +1,3 @@
-from types import SimpleNamespace
-
 import pytest
 
 from app.core import background_jobs
@@ -50,28 +48,4 @@ def test_run_startup_expiry_rolls_back_on_failure(monkeypatch):
 
     assert session.committed is False
     assert session.rolled_back is True
-    assert session.closed is True
-
-
-def test_run_startup_annual_report_signature_reconciliation_commits(monkeypatch):
-    session = _FakeSession()
-
-    class _FakeSignatureRequestService:
-        def __init__(self, db):
-            assert db is session
-
-        def reconcile_signed_annual_report_approvals(self):
-            return SimpleNamespace(processed=1, submitted=1, failed=0)
-
-    monkeypatch.setattr(background_jobs, "SessionLocal", lambda: session)
-    monkeypatch.setattr(
-        background_jobs,
-        "SignatureRequestService",
-        _FakeSignatureRequestService,
-    )
-
-    background_jobs.run_startup_annual_report_signature_reconciliation()
-
-    assert session.committed is True
-    assert session.rolled_back is False
     assert session.closed is True

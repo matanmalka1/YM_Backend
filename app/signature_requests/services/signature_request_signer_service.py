@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.signature_requests.models.signature_request import (
@@ -76,8 +74,7 @@ def sign_request(
     token: str,
     ip_address: str | None = None,
     user_agent: str | None = None,
-) -> tuple[SignatureRequest, int | None, datetime | None]:
-    """Returns (req, annual_report_id, signed_at) so the façade can handle cross-domain side-effects."""
+) -> SignatureRequest:
     req = get_by_token_or_raise_for_update(repo, token)
     assert_pending(req)
     if check_not_expired(req):
@@ -103,7 +100,7 @@ def sign_request(
         note=DOCUMENT_SIGNED_BY_SIGNER_NOTE,
     )
 
-    return req, req.annual_report_id, now
+    return req
 
 
 def decline_request(

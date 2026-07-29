@@ -22,7 +22,6 @@ class SignatureRequestAuditItemResponse(BaseModel):
     signer_name: str | None = None
     signer_email: str | None = None
     business_id: int | None = None
-    annual_report_id: int | None = None
     document_id: int | None = None
     ip_address: str | None = None
     user_agent: str | None = None
@@ -51,7 +50,6 @@ class SignatureRequestResponse(BaseModel):
     status: SignatureRequestStatus
     content_hash: str | None = None
     storage_key: str | None = None
-    annual_report_id: int | None = None
     document_id: int | None = None
     created_at: ApiDateTime
     updated_at: ApiDateTime | None = None
@@ -88,7 +86,6 @@ class SignatureRequestCreateRequest(BaseModel):
     signer_name: str = Field(min_length=2, max_length=100)
     signer_email: EmailStr | None = None
     signer_phone: str | None = None
-    annual_report_id: int | None = Field(None, gt=0)
     document_id: int | None = Field(None, gt=0)
     content_to_hash: str | None = None  # service computes SHA-256
     expiry_days: int = Field(14, ge=1, le=90)

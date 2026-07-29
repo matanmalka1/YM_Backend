@@ -6,7 +6,6 @@ from app.common.repositories.base_repository import BaseRepository
 
 _META_COLUMNS = frozenset(
     {
-        "client_approved_at",
         "internal_notes",
         "amendment_reason",
         "pension_contribution",
