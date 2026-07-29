@@ -30,7 +30,12 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationStatus, ObligationType
-from app.common.obligation_lifecycle import is_terminal, stage_index
+from app.common.obligation_lifecycle import (
+    assert_transition_allowed,
+    is_terminal,
+    stage_index,
+    stages_between,
+)
 from app.common.obligation_plan import advance_payment_obligation_plan
 from app.common.period_utils import parse_period_year
 from app.core.error_codes import ErrorCode
@@ -201,10 +206,10 @@ class AdvancePaymentService:
         return calculated, expected
 
     @staticmethod
-    def _status_after_payment(
+    def _payment_status_steps(
         current: ObligationStatus, paid_amount, expected_amount
-    ) -> ObligationStatus:
-        """Where a money event leaves the lifecycle.
+    ) -> tuple[ObligationStatus, ...]:
+        """Each stage a money event walks through, in order — empty when it stays put.
 
         Status used to be *derived* from the amounts on every write, which had two
         consequences. Recomputing the expected amount could silently drag a settled
@@ -220,21 +225,52 @@ class AdvancePaymentService:
         - a terminal record is untouched, and the stage never goes down
 
         Reaching `in_progress` from `awaiting_input` crosses two stages. That is two
-        real transitions performed by one event, not a skipped stage — see
-        ``stages_between``.
+        real transitions performed by one event, not a skipped stage: the shared
+        graph validates each step and the caller records each one.
         """
         if is_terminal(current):
-            return current
+            return ()
         paid = Decimal(str(paid_amount or 0))
         if paid <= 0:
-            return current
+            return ()
         expected = Decimal(str(expected_amount or 0))
         target = (
             ObligationStatus.AWAITING_VERIFICATION
             if expected > 0 and paid >= expected
             else ObligationStatus.IN_PROGRESS
         )
-        return target if stage_index(target) > stage_index(current) else current
+        if stage_index(target) <= stage_index(current):
+            return ()
+        steps = stages_between(current, target)
+        previous = current
+        for step in steps:
+            assert_transition_allowed(previous, step)
+            previous = step
+        return steps
+
+    def _record_status_steps(
+        self,
+        payment: AdvancePayment,
+        from_status: ObligationStatus,
+        steps: tuple[ObligationStatus, ...],
+        *,
+        actor_id: int | None,
+        actor_name: str | None,
+        source: str | None = None,
+    ) -> None:
+        """One ``status_changed`` audit row per stage crossed, like the other domains."""
+        previous = from_status
+        for step in steps:
+            self._audit.record_status_change(
+                ENTITY_ADVANCE_PAYMENT,
+                payment.id,
+                actor_id,
+                previous,
+                step,
+                metadata_json=self._audit_metadata(payment, source=source),
+                **self._actor_kwargs(actor_id, actor_name),
+            )
+            previous = step
 
     def _invalidate_annual_report_tax(self, client_record_id: int, periods) -> None:
         """Clear the persisted tax of any open annual report these periods feed.
@@ -347,6 +383,9 @@ class AdvancePaymentService:
             period,
             period_months_count,
         )
+        status_steps = self._payment_status_steps(
+            ObligationStatus.AWAITING_INPUT, paid_amount, resolved_expected
+        )
         payment = self.repo.create(
             client_record_id=client_record_id,
             period=period,
@@ -366,9 +405,7 @@ class AdvancePaymentService:
             calculated_amount=calculated_amount,
             override_amount=override_amount,
             withheld_amount=withheld_amount,
-            status=self._status_after_payment(
-                ObligationStatus.AWAITING_INPUT, paid_amount, resolved_expected
-            ),
+            status=status_steps[-1] if status_steps else ObligationStatus.AWAITING_INPUT,
         )
         payment = mat.link_advance_payment(payment)
         self._audit.record_action(
@@ -379,6 +416,14 @@ class AdvancePaymentService:
             new_value=self._audit_snapshot(payment),
             metadata_json=self._audit_metadata(payment, source=audit_source),
             **self._actor_kwargs(actor_id, actor_name),
+        )
+        self._record_status_steps(
+            payment,
+            ObligationStatus.AWAITING_INPUT,
+            status_steps,
+            actor_id=actor_id,
+            actor_name=actor_name,
+            source=audit_source,
         )
         return payment
 
@@ -435,11 +480,15 @@ class AdvancePaymentService:
             )
             filtered["calculated_amount"] = calculated_amount
             filtered["expected_amount"] = new_expected
+        old_status = payment.status
+        status_steps: tuple[ObligationStatus, ...] = ()
         status_inputs = {"paid_amount", "expected_amount", "turnover_amount", "override_amount"}
         if status_inputs & filtered.keys():
             paid = filtered.get("paid_amount", payment.paid_amount)
             expected = filtered.get("expected_amount", payment.expected_amount)
-            filtered["status"] = self._status_after_payment(payment.status, paid, expected)
+            status_steps = self._payment_status_steps(old_status, paid, expected)
+            if status_steps:
+                filtered["status"] = status_steps[-1]
 
         old_snapshot = self._audit_snapshot(payment)
         updated = self.repo.update_payment(payment, **filtered)
@@ -452,6 +501,9 @@ class AdvancePaymentService:
             new_value=self._audit_snapshot(updated),
             metadata_json=self._audit_metadata(updated),
             **self._actor_kwargs(actor_id, actor_name),
+        )
+        self._record_status_steps(
+            updated, old_status, status_steps, actor_id=actor_id, actor_name=actor_name
         )
         self._invalidate_annual_report_tax(client_record_id, [updated.period])
         return updated
@@ -497,15 +549,18 @@ class AdvancePaymentService:
                 skipped.append((payment_id, "no_amount"))
                 continue
 
+            # Recording money in bulk moves the period to awaiting verification,
+            # not to submitted. Someone still has to confirm it was reported.
+            old_status = payment.status
+            status_steps = self._payment_status_steps(
+                old_status, payment.expected_amount, payment.expected_amount
+            )
             fields: dict = {
                 "paid_amount": payment.expected_amount,
                 "paid_at": paid_at,
-                # Recording money in bulk moves the period to awaiting verification,
-                # not to submitted. Someone still has to confirm it was reported.
-                "status": self._status_after_payment(
-                    payment.status, payment.expected_amount, payment.expected_amount
-                ),
             }
+            if status_steps:
+                fields["status"] = status_steps[-1]
             if payment_method is not None:
                 fields["payment_method"] = payment_method
             if reference_prefix:
@@ -522,6 +577,14 @@ class AdvancePaymentService:
                 new_value=self._audit_snapshot(saved),
                 metadata_json=self._audit_metadata(saved, source="bulk_mark_paid"),
                 **self._actor_kwargs(actor_id, actor_name),
+            )
+            self._record_status_steps(
+                saved,
+                old_status,
+                status_steps,
+                actor_id=actor_id,
+                actor_name=actor_name,
+                source="bulk_mark_paid",
             )
             updated.append(saved.id)
             settled_periods_by_client.setdefault(saved.client_record_id, []).append(saved.period)
@@ -571,16 +634,17 @@ class AdvancePaymentService:
                 withheld_amount=payment.withheld_amount,
                 fallback_expected=payment.expected_amount,
             )
+            old_status = payment.status
+            status_steps = self._payment_status_steps(old_status, payment.paid_amount, new_expected)
+            fields: dict = {
+                "advance_rate": advance_rate,
+                "calculated_amount": calculated_amount,
+                "expected_amount": new_expected,
+            }
+            if status_steps:
+                fields["status"] = status_steps[-1]
             old_snapshot = self._audit_snapshot(payment)
-            saved = self.repo.update_payment(
-                payment,
-                advance_rate=advance_rate,
-                calculated_amount=calculated_amount,
-                expected_amount=new_expected,
-                status=self._status_after_payment(
-                    payment.status, payment.paid_amount, new_expected
-                ),
-            )
+            saved = self.repo.update_payment(payment, **fields)
             self._audit.record_action(
                 ENTITY_ADVANCE_PAYMENT,
                 saved.id,
@@ -590,6 +654,14 @@ class AdvancePaymentService:
                 new_value=self._audit_snapshot(saved),
                 metadata_json=self._audit_metadata(saved, source="bulk_rate_update"),
                 **self._actor_kwargs(actor_id, actor_name),
+            )
+            self._record_status_steps(
+                saved,
+                old_status,
+                status_steps,
+                actor_id=actor_id,
+                actor_name=actor_name,
+                source="bulk_rate_update",
             )
             updated += 1
 
@@ -978,16 +1050,19 @@ class AdvancePaymentService:
         calculated_amount, new_expected = self._compute_amounts(
             resolution.amount, payment.advance_rate, payment.override_amount
         )
+        old_status = payment.status
+        status_steps = self._payment_status_steps(old_status, payment.paid_amount, new_expected)
+        fields: dict = {
+            "turnover_amount": resolution.amount,
+            "turnover_source": resolution.source,
+            "turnover_snapshot_at": utcnow(),
+            "calculated_amount": calculated_amount,
+            "expected_amount": new_expected,
+        }
+        if status_steps:
+            fields["status"] = status_steps[-1]
         old_snapshot = self._audit_snapshot(payment)
-        updated = self.repo.update_payment(
-            payment,
-            turnover_amount=resolution.amount,
-            turnover_source=resolution.source,
-            turnover_snapshot_at=utcnow(),
-            calculated_amount=calculated_amount,
-            expected_amount=new_expected,
-            status=self._status_after_payment(payment.status, payment.paid_amount, new_expected),
-        )
+        updated = self.repo.update_payment(payment, **fields)
         self._audit.record_action(
             ENTITY_ADVANCE_PAYMENT,
             updated.id,
@@ -1000,6 +1075,14 @@ class AdvancePaymentService:
                 "vat_work_item_ids": resolution.vat_work_item_ids,
             },
             **self._actor_kwargs(actor_id, actor_name),
+        )
+        self._record_status_steps(
+            updated,
+            old_status,
+            status_steps,
+            actor_id=actor_id,
+            actor_name=actor_name,
+            source=resolution.source.value,
         )
         # Snapshotting rewrites expected_amount, which moves a row into or out of
         # paid-in-full — and that changes the annual report's advances_paid.

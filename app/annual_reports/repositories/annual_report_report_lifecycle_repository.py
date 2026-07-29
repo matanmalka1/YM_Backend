@@ -29,14 +29,8 @@ class AnnualReportLifecycleRepository:
 
     def _overdue_stmt(self, tax_year: int | None = None):
         now = utcnow()
-        open_statuses = [
-            ObligationStatus.AWAITING_INPUT,
-            ObligationStatus.AWAITING_INPUT,
-            ObligationStatus.IN_PROGRESS,
-            ObligationStatus.AWAITING_VERIFICATION,
-        ]
         stmt = self._active_client_stmt().where(
-            AnnualReport.status.in_(open_statuses),
+            AnnualReport.status.notin_(RESOLVED_OBLIGATION_STATUSES),
             AnnualReport.filing_deadline < now,
             AnnualReport.filing_deadline.isnot(None),
             AnnualReport.deleted_at.is_(None),

@@ -28,6 +28,7 @@ from typing import Any, NoReturn
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
+    ACTION_ADVANCE_PAYMENT_STATUS_CHANGED,
     ACTION_ADVANCE_PAYMENT_TURNOVER_REFRESHED,
     ACTION_ADVANCE_PAYMENT_UPDATED,
     ACTION_ANNEX_LINE_ADDED,
@@ -500,6 +501,11 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
     ),
     ACTION_ADVANCE_PAYMENT_UPDATED: ActionPolicy(
         value_fields=_ADVANCE_PAYMENT_FIELDS,
+        metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META,
+    ),
+    ACTION_ADVANCE_PAYMENT_STATUS_CHANGED: ActionPolicy(
+        value_fields=_STATUS_ONLY,
         metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
         metadata_allowed=_ADVANCE_PAYMENT_META,
     ),

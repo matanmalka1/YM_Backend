@@ -1,4 +1,6 @@
 import logging
+from collections.abc import Mapping
+from typing import Any
 
 from sqlalchemy.orm import Session
 
@@ -25,8 +27,9 @@ from app.clients.repositories.client_record_read_repository import (
     get_full_record,
 )
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.clients.schemas.client_create_validation import validate_liability_ranges
 from app.core.error_codes import ErrorCode
-from app.core.exceptions import ForbiddenError, NotFoundError
+from app.core.exceptions import AppError, ForbiddenError, NotFoundError
 from app.legal_entities.repositories.legal_entity_repository import LegalEntityRepository
 from app.legal_entities.repositories.person_repository import PersonRepository
 from app.users.models.user import UserRole
@@ -57,6 +60,7 @@ class ClientUpdateService:
         existing = get_full_record(self.db, client_id)
         if not existing:
             raise NotFoundError(f"לקוח {client_id} לא נמצא", ErrorCode.CLIENT_RECORD_NOT_FOUND)
+        self._validate_liability_ranges_against_record(existing, fields)
         new_status = fields.get("status")
         new_entity_type = fields.get("entity_type")
         old_entity_type = existing.get("entity_type")
@@ -132,6 +136,52 @@ class ClientUpdateService:
                 },
             )
         return updated
+
+    _LIABILITY_RANGE_TRIGGER_FIELDS = frozenset(
+        {
+            "vat_liable_from",
+            "vat_liable_to",
+            "advance_liable_from",
+            "advance_liable_to",
+            "annual_liable_from",
+            "annual_liable_to",
+            "vat_reporting_frequency",
+            "advance_payment_frequency",
+        }
+    )
+
+    def _validate_liability_ranges_against_record(
+        self, existing: Mapping[str, object], fields: dict
+    ) -> None:
+        """Validate the liability ranges the PATCH would leave behind, not just what it carries.
+
+        The schema can only order a range when both ends are in the request, and can
+        only match a range to a frequency the request states — so a one-sided PATCH
+        inverting a persisted range, or a range landing on a client with no matching
+        frequency, used to surface as the DB CheckConstraint's 500. Merging the
+        request over the persisted record lets the same rules answer cleanly.
+        """
+        if not (self._LIABILITY_RANGE_TRIGGER_FIELDS & fields.keys()):
+            return
+
+        def effective(name: str) -> Any:
+            return fields[name] if name in fields else existing.get(name)
+
+        try:
+            validate_liability_ranges(
+                vat_liable_from=effective("vat_liable_from"),
+                vat_liable_to=effective("vat_liable_to"),
+                advance_liable_from=effective("advance_liable_from"),
+                advance_liable_to=effective("advance_liable_to"),
+                annual_liable_from=effective("annual_liable_from"),
+                annual_liable_to=effective("annual_liable_to"),
+                vat_reporting_frequency=effective("vat_reporting_frequency"),
+                vat_reporting_frequency_known=True,
+                advance_payment_frequency=effective("advance_payment_frequency"),
+                advance_payment_frequency_known=True,
+            )
+        except ValueError as exc:
+            raise AppError(str(exc), ErrorCode.CLIENT_LIABILITY_RANGE_INVALID) from exc
 
     def _legal_entity_audit_snapshot(self, legal_entity, fields: dict) -> dict:
         if legal_entity is None:

@@ -155,7 +155,7 @@ MANUAL_SUCCESS_OVERRIDES: dict[tuple[str, str], Any] = {
         "total": 2,
         "statuses": [
             {
-                "status": "collecting_docs",
+                "status": "in_progress",
                 "count": 1,
                 "clients": [
                     {
