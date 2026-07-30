@@ -9,6 +9,7 @@ from sqlalchemy import select
 from app.advance_payments.models.advance_payment import AdvancePayment, PaymentMethod
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType, ObligationStatus, ObligationType
+from app.common.obligation_chain import record_closing_lateness
 from app.common.obligation_closing import compute_closed_late
 from app.common.obligation_plan import advance_payment_obligation_plan
 from app.common.period_utils import parse_period_year
@@ -106,9 +107,12 @@ def _apply_payment_fields(
             )
             payment.closed_at = payment.paid_at
             payment.closed_by = payment.assigned_to
-            payment.closed_late = compute_closed_late(
-                payment.closed_at.replace(tzinfo=None),
-                payment.due_date_effective or payment.due_date,
+            record_closing_lateness(
+                payment,
+                compute_closed_late(
+                    payment.closed_at.replace(tzinfo=None),
+                    payment.due_date_effective or payment.due_date,
+                ),
             )
     elif status == ObligationStatus.IN_PROGRESS:
         # A part-paid period: in progress with an outstanding balance, which is

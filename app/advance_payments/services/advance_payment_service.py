@@ -37,7 +37,7 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationStatus, ObligationType
-from app.common.obligation_chain import assert_deletable
+from app.common.obligation_chain import assert_deletable, closing_lateness_fields
 from app.common.obligation_closing import (
     CLOSING_ASSIGNEE_REQUIRED_ISSUE,
     compute_closed_late,
@@ -434,11 +434,12 @@ class AdvancePaymentService:
             close_time = utcnow()
             fields["closed_at"] = close_time
             fields["closed_by"] = actor_id
-            closed_late = compute_closed_late(
-                close_time, payment.due_date_effective or payment.due_date
+            fields.update(
+                closing_lateness_fields(
+                    payment,
+                    compute_closed_late(close_time, payment.due_date_effective or payment.due_date),
+                )
             )
-            fields["closed_late"] = closed_late
-            fields["chain_closed_late"] = closed_late
 
         old_status = payment.status
         updated = self.repo.update_payment(payment, **fields)

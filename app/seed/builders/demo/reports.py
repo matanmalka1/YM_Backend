@@ -41,6 +41,7 @@ from app.audit.services.audit_entity_audit_writer_service import (
     EntityAuditWriter,
 )
 from app.common.enums import EntityType, ObligationStatus
+from app.common.obligation_chain import record_closing_lateness
 from app.common.obligation_closing import compute_closed_late
 from app.common.obligation_lifecycle import ORDERED_STAGES, stages_between
 from app.tax_calendar.services.tax_calendar_materialization_service import (
@@ -342,9 +343,12 @@ def create_annual_reports(db, rng: Random, cfg, businesses, users) -> list[Annua
                 # A closed obligation always names its author and assignee (D-13/D-15)
                 report.closed_by = report.assigned_to or report.created_by
                 report.assigned_to = report.assigned_to or report.closed_by
-                report.closed_late = compute_closed_late(
-                    closed_at.replace(tzinfo=None),
-                    filing_deadline.date() if filing_deadline else None,
+                record_closing_lateness(
+                    report,
+                    compute_closed_late(
+                        closed_at.replace(tzinfo=None),
+                        filing_deadline.date() if filing_deadline else None,
+                    ),
                 )
             if cr is not None:
                 attach_seed_client_context(report, cr)

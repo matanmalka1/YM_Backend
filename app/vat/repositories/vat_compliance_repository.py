@@ -50,7 +50,14 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
         return list(rows), count
 
     def get_filed_items_for_clients(self, year: int, client_record_ids: list[int]) -> list:
-        """Filed work items for a specific set of clients — used after page selection."""
+        """Filed work items for a specific set of clients — used after page selection.
+
+        Lateness is read, not recomputed: it was decided once at the close (D-20)
+        and ``chain_closed_late`` carries the period's answer across corrections
+        (D-34). Projecting ``due_date_effective`` and comparing it to
+        ``closed_at`` here would ask the question a second time, and answer it
+        differently — an amendment has no due date at all.
+        """
         if not client_record_ids:
             return []
         year_str = str(year)
@@ -60,8 +67,8 @@ class VatComplianceRepository(BaseRepository[VatWorkItem]):
                 VatWorkItem.client_record_id,
                 VatWorkItem.period_type,
                 VatWorkItem.period,
-                VatWorkItem.closed_at,
-                VatWorkItem.due_date_effective,
+                VatWorkItem.closed_late,
+                VatWorkItem.chain_closed_late,
             ),
             VatWorkItem,
         ).where(

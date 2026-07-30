@@ -32,11 +32,14 @@ class VatComplianceReportService:
         on_time_map: dict[tuple[int, str], int] = {}
         late_map: dict[tuple[int, str], int] = {}
         for fi in filed_items:
-            deadline = fi.due_date_effective
-            if deadline is None:
+            # The period's answer first, this row's only as the fallback: rows
+            # closed before `chain_closed_late` existed carry the old fact alone.
+            # NULL in both means the period never had a deadline (D-32) — it is
+            # neither on time nor late, and counting it either way would invent
+            # a performance number for a period nobody could have been late on.
+            is_late = fi.chain_closed_late if fi.chain_closed_late is not None else fi.closed_late
+            if is_late is None:
                 continue
-            filed_date = fi.closed_at.date() if hasattr(fi.closed_at, "date") else fi.closed_at
-            is_late = filed_date > deadline
             bucket = late_map if is_late else on_time_map
             period_type = str(fi.period_type.value)
             key = (fi.client_record_id, period_type)

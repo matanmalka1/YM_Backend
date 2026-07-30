@@ -10,7 +10,7 @@ from sqlalchemy import select
 from app.annual_reports.models.annual_report_enums import SubmissionMethod
 from app.businesses.models.business import BusinessStatus
 from app.common.enums import ObligationStatus, ObligationType, VatType
-from app.common.obligation_chain import link_amendment
+from app.common.obligation_chain import link_amendment, record_closing_lateness
 from app.common.obligation_closing import compute_closed_late
 from app.common.period_utils import parse_period_year
 from app.tax_calendar.services.tax_calendar_materialization_service import (
@@ -146,8 +146,8 @@ def _promote_to_filed(rng: Random, item: VatWorkItem, cfg) -> None:
     item.closed_by = item.assigned_to or item.created_by
     # A closed obligation always names its assignee (D-15)
     item.assigned_to = item.assigned_to or item.closed_by
-    item.closed_late = compute_closed_late(
-        item.closed_at.replace(tzinfo=None), item.due_date_effective
+    record_closing_lateness(
+        item, compute_closed_late(item.closed_at.replace(tzinfo=None), item.due_date_effective)
     )
     if not item.submission_reference:
         item.submission_reference = f"VAT-{item.period.replace('-', '')}-{rng.randint(1000, 9999)}"
@@ -268,8 +268,11 @@ def create_vat_work_items(db, rng: Random, cfg, businesses, users) -> list[VatWo
                 work_item.closed_at = min(reference_now, closed_at_candidate)
                 work_item.closed_by = work_item.assigned_to or work_item.created_by
                 work_item.assigned_to = work_item.assigned_to or work_item.closed_by
-                work_item.closed_late = compute_closed_late(
-                    work_item.closed_at.replace(tzinfo=None), work_item.due_date_effective
+                record_closing_lateness(
+                    work_item,
+                    compute_closed_late(
+                        work_item.closed_at.replace(tzinfo=None), work_item.due_date_effective
+                    ),
                 )
                 work_item.submission_reference = (
                     f"VAT-{work_item.period.replace('-', '')}-{rng.randint(1000, 9999)}"

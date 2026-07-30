@@ -15,6 +15,7 @@ from app.audit.audit_constants import (
 )
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import ObligationStatus
+from app.common.obligation_chain import closing_lateness_fields
 from app.common.obligation_closing import compute_closed_late
 from app.common.obligation_lifecycle import (
     assert_transition_allowed,
@@ -127,12 +128,15 @@ class AnnualReportStatusService(AnnualReportBaseService):
             # Lateness is judged against the deadline as recalculated by this very
             # submission (the method may move it), not the one the report carried in.
             effective_deadline = update_fields.get("filing_deadline", report.filing_deadline)
-            closed_late = compute_closed_late(
-                close_time,
-                effective_deadline.date() if effective_deadline else None,
+            update_fields.update(
+                closing_lateness_fields(
+                    report,
+                    compute_closed_late(
+                        close_time,
+                        effective_deadline.date() if effective_deadline else None,
+                    ),
+                )
             )
-            update_fields["closed_late"] = closed_late
-            update_fields["chain_closed_late"] = closed_late
             # Assessment and tax outcome used to be recorded on a separate `closed`
             # status that followed `submitted`. The two were one act, so they merged.
             if assessment_amount is not None:

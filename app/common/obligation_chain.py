@@ -347,18 +347,37 @@ def withdraw_amendment(amendment, original, *, actor_id: int) -> None:
     original.superseded_at = None
 
 
-def record_closing_lateness(record, closed_late: bool | None) -> None:
-    """Write both lateness facts at a close (D-20, D-34).
+def closing_lateness_fields(record, closed_late: bool | None) -> dict[str, bool | None]:
+    """The two lateness columns a close writes, as update fields (D-20, D-34).
 
     ``closed_late`` is this row's own act. ``chain_closed_late`` is the period's,
     and on a record that corrects nothing they are the same answer — so it is
     written here rather than left NULL, or every display site would have to
     coalesce the two and the one that forgot would report a late period as
-    on time. An amendment overwrites it from its original in
-    :func:`link_amendment`.
+    on time.
+
+    **On an amendment they are not the same answer, and the period's must not be
+    overwritten.** A correction has no due date (D-14), so its own answer is
+    always ``None``; the period's was carried onto it at birth by
+    :func:`link_amendment`. Writing both from ``closed_late`` erases exactly the
+    fact D-34 exists to preserve — and erases it at the moment the correction is
+    filed, which is when the period starts being counted again.
+
+    Returned as fields rather than assigned, because two of the three domains
+    close through a dict handed to ``repo.update``. The rule has to be reachable
+    from there, or those two keep their own copy of it — which is how it was
+    lost in the first place.
     """
-    record.closed_late = closed_late
-    record.chain_closed_late = closed_late
+    return {
+        "closed_late": closed_late,
+        "chain_closed_late": record.chain_closed_late if record.is_amendment else closed_late,
+    }
+
+
+def record_closing_lateness(record, closed_late: bool | None) -> None:
+    """Write both lateness facts onto ``record`` — see :func:`closing_lateness_fields`."""
+    for column, value in closing_lateness_fields(record, closed_late).items():
+        setattr(record, column, value)
 
 
 def link_amendment(amendment, original) -> None:
