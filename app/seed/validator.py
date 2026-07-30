@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, aliased
 
+from app.advance_payments.advance_payment_calculator import (
+    calculate_advance_payment_amounts,
+)
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.binders.models.binder import Binder
@@ -157,14 +160,14 @@ class SeedIntegrityValidator:
             if p.turnover_amount is None or p.advance_rate is None:
                 # Incomplete source snapshot — formula not applicable.
                 continue
-            expected_calc = (
-                Decimal(str(p.turnover_amount)) * Decimal(str(p.advance_rate)) / 100
-            ).quantize(Decimal("0.01"), ROUND_HALF_UP)
+            expected_calc, expected_final = calculate_advance_payment_amounts(
+                p.turnover_amount,
+                p.advance_rate,
+                p.override_amount,
+                withheld_amount=p.withheld_amount,
+            )
             if Decimal(str(p.calculated_amount)).quantize(Decimal("0.01")) != expected_calc:
                 self._errors.append(f"AdvancePayment {p.id}: calculated_amount mismatch")
-            expected_final = (
-                p.override_amount if p.override_amount is not None else p.calculated_amount
-            )
             if Decimal(str(p.expected_amount)) != Decimal(str(expected_final)):
                 self._errors.append(f"AdvancePayment {p.id}: expected_amount mismatch")
 

@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 from random import Random
 
 from sqlalchemy import select
 
+from app.advance_payments.advance_payment_calculator import (
+    calculate_advance_payment_amounts,
+)
 from app.advance_payments.models.advance_payment import AdvancePayment, PaymentMethod
 from app.clients.models.client_record import ClientRecord
 from app.common.enums import EntityType, ObligationStatus, ObligationType
@@ -85,12 +88,17 @@ def _apply_payment_fields(
         if vat_turnover is not None
         else Decimal(str(round(rng.uniform(10_000, 150_000), 2)))
     )
-    calculated_amount = (turnover_amount * rate / 100).quantize(Decimal("0.01"), ROUND_HALF_UP)
+    calculated_amount, expected_amount = calculate_advance_payment_amounts(
+        turnover_amount,
+        rate,
+        override_amount=None,
+        withheld_amount=payment.withheld_amount,
+    )
     payment.advance_rate = rate
     payment.turnover_amount = turnover_amount
     payment.calculated_amount = calculated_amount
     payment.override_amount = None
-    payment.expected_amount = calculated_amount
+    payment.expected_amount = expected_amount
 
     payment.status = status
     if status in (ObligationStatus.SUBMITTED, ObligationStatus.AWAITING_VERIFICATION):

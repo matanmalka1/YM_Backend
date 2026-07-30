@@ -1,4 +1,4 @@
-"""Tests for _compute_amounts, calculation snapshots, VAT refresh, and update recompute."""
+"""Tests for amount calculation, snapshots, VAT refresh, and update recompute."""
 
 from decimal import Decimal
 from itertools import count
@@ -7,6 +7,9 @@ import pytest
 from pydantic import ValidationError as PydanticValidationError
 from sqlalchemy import select
 
+from app.advance_payments.advance_payment_calculator import (
+    calculate_advance_payment_amounts,
+)
 from app.advance_payments.models.advance_payment import TurnoverSource
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
@@ -85,10 +88,9 @@ def _vat_item(
     )
 
 
-class TestComputeAmounts:
-    def test_both_provided(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+class TestCalculateAdvancePaymentAmounts:
+    def test_both_provided(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("50000"),
             advance_rate=Decimal("2.5"),
             override_amount=None,
@@ -96,9 +98,8 @@ class TestComputeAmounts:
         assert calc == Decimal("1250.00")
         assert expected == Decimal("1250.00")
 
-    def test_override_replaces_expected(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_override_replaces_expected(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("50000"),
             advance_rate=Decimal("2.5"),
             override_amount=Decimal("1000"),
@@ -106,9 +107,8 @@ class TestComputeAmounts:
         assert calc == Decimal("1250.00")
         assert expected == Decimal("1000.00")
 
-    def test_no_rate_no_turnover_falls_back(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_no_rate_no_turnover_falls_back(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=None,
             advance_rate=None,
             override_amount=None,
@@ -117,18 +117,16 @@ class TestComputeAmounts:
         assert calc == Decimal("0.00")
         assert expected == Decimal("500")
 
-    def test_rounding_half_up(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, _ = svc._compute_amounts(
+    def test_rounding_half_up(self):
+        calc, _ = calculate_advance_payment_amounts(
             turnover_amount=Decimal("33333"),
             advance_rate=Decimal("3"),
             override_amount=None,
         )
         assert calc == Decimal("999.99")
 
-    def test_missing_rate_alone_yields_none_calc(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_missing_rate_alone_yields_none_calc(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("50000"),
             advance_rate=None,
             override_amount=None,
@@ -136,9 +134,8 @@ class TestComputeAmounts:
         assert calc == Decimal("0.00")
         assert expected == Decimal("0.00")
 
-    def test_withheld_deducted_from_calculated(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_withheld_deducted_from_calculated(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("50000"),
             advance_rate=Decimal("2.5"),
             override_amount=None,
@@ -148,9 +145,8 @@ class TestComputeAmounts:
         assert calc == Decimal("1250.00")
         assert expected == Decimal("950.00")
 
-    def test_withheld_floors_expected_at_zero(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_withheld_floors_expected_at_zero(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("1000"),
             advance_rate=Decimal("2.5"),
             override_amount=None,
@@ -159,9 +155,8 @@ class TestComputeAmounts:
         assert calc == Decimal("25.00")
         assert expected == Decimal("0.00")
 
-    def test_override_wins_over_withheld(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_override_wins_over_withheld(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("50000"),
             advance_rate=Decimal("2.5"),
             override_amount=Decimal("1000"),
@@ -170,9 +165,8 @@ class TestComputeAmounts:
         assert calc == Decimal("1250.00")
         assert expected == Decimal("1000.00")
 
-    def test_no_withheld_behaves_as_before(self, test_db):
-        svc = AdvancePaymentService(test_db)
-        calc, expected = svc._compute_amounts(
+    def test_no_withheld_behaves_as_before(self):
+        calc, expected = calculate_advance_payment_amounts(
             turnover_amount=Decimal("50000"),
             advance_rate=Decimal("2.5"),
             override_amount=None,

@@ -1,10 +1,13 @@
 import logging
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import ROUND_HALF_UP, Decimal
+from decimal import Decimal
 
 from sqlalchemy.orm import Session
 
+from app.advance_payments.advance_payment_calculator import (
+    calculate_advance_payment_amounts,
+)
 from app.advance_payments.advance_payment_constants import (
     ADVANCE_PAYMENT_EXPECTED_NOT_COMPUTED_ISSUE,
     ADVANCE_PAYMENT_NOT_READY_TO_CLOSE,
@@ -202,32 +205,6 @@ class AdvancePaymentService:
         raise NotFoundError(
             "תדירות מקדמות לא מוגדרת ללקוח", ErrorCode.ADVANCE_PAYMENT_FREQUENCY_NOT_SET
         )
-
-    def _compute_amounts(
-        self,
-        turnover_amount,
-        advance_rate,
-        override_amount,
-        withheld_amount=None,
-        fallback_expected=None,
-    ) -> tuple[Decimal, Decimal]:
-        # calculated_amount always stays gross (turnover × rate) — withheld_amount
-        # is a deduction line applied only when deriving expected_amount, never
-        # folded into calculated_amount itself.
-        calculated = Decimal("0.00")
-        if turnover_amount is not None and advance_rate is not None:
-            calculated = (
-                Decimal(str(turnover_amount)) * Decimal(str(advance_rate)) / 100
-            ).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        if override_amount is not None:
-            # override_amount is the final say — it wins even over withheld_amount.
-            expected = Decimal(str(override_amount))
-        elif fallback_expected is not None and calculated == 0:
-            expected = Decimal(str(fallback_expected))
-        else:
-            withheld = Decimal(str(withheld_amount or 0))
-            expected = max(Decimal("0.00"), calculated - withheld)
-        return calculated, expected
 
     @staticmethod
     def _payment_status_steps(
@@ -498,7 +475,7 @@ class AdvancePaymentService:
             le = LegalEntityRepository(self.db).get_by_id(record.legal_entity_id)
             advance_rate = le.advance_rate if le else None
 
-        calculated_amount, resolved_expected = self._compute_amounts(
+        calculated_amount, resolved_expected = calculate_advance_payment_amounts(
             turnover_amount,
             advance_rate,
             override_amount,
@@ -607,7 +584,7 @@ class AdvancePaymentService:
             effective_r = payment.advance_rate
             effective_o = filtered.get("override_amount", payment.override_amount)
             effective_w = filtered.get("withheld_amount", payment.withheld_amount)
-            calculated_amount, new_expected = self._compute_amounts(
+            calculated_amount, new_expected = calculate_advance_payment_amounts(
                 effective_t, effective_r, effective_o, withheld_amount=effective_w
             )
             filtered["calculated_amount"] = calculated_amount
@@ -765,7 +742,7 @@ class AdvancePaymentService:
             if payment.status != ObligationStatus.AWAITING_INPUT:
                 skipped += 1
                 continue
-            calculated_amount, new_expected = self._compute_amounts(
+            calculated_amount, new_expected = calculate_advance_payment_amounts(
                 payment.turnover_amount,
                 advance_rate,
                 payment.override_amount,
@@ -1193,7 +1170,7 @@ class AdvancePaymentService:
         actor_name: str | None,
     ) -> AdvancePayment:
         """Freeze a resolved turnover onto the payment and record why."""
-        calculated_amount, new_expected = self._compute_amounts(
+        calculated_amount, new_expected = calculate_advance_payment_amounts(
             resolution.amount, payment.advance_rate, payment.override_amount
         )
         old_status = payment.status
