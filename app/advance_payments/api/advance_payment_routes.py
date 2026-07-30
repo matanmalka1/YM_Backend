@@ -10,6 +10,7 @@ from app.advance_payments.api.advance_payment_responses import (
     ADVANCE_PAYMENT_REFRESH_TURNOVER_RESPONSES,
     ADVANCE_PAYMENT_TRANSITION_RESPONSES,
     ADVANCE_PAYMENT_UPDATE_RESPONSES,
+    ADVANCE_PAYMENT_WITHDRAW_RESPONSES,
 )
 from app.advance_payments.repositories.advance_payment_turnover_lookup_repository import (
     TurnoverLookupRepository,
@@ -391,6 +392,41 @@ def create_advance_payment_amendment(
         client_record_id, amendment.period, amendment.period_months_count
     )
     return _to_row(amendment, resolution)
+
+
+@router.post(
+    "/{payment_id}/withdraw",
+    response_model=AdvancePaymentRow,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=ADVANCE_PAYMENT_WITHDRAW_RESPONSES,
+)
+def withdraw_advance_payment_amendment(
+    client_record_id: PathId,
+    payment_id: PathId,
+    db: DBSession,
+    user: CurrentUser,
+):
+    """
+    Take back a correction that was never filed, returning the period to its
+    closed payment (D-12).
+
+    Advisor only. The correction is removed and the payment it corrected becomes
+    the period's one visible row again, in one transaction — either both or
+    neither, because a period with no visible row and a period counted twice are
+    the two ways this can go wrong. The withdrawn correction stays readable in
+    ``GET /chain``. Returns the restored original, not the withdrawn amendment.
+    """
+    service = AdvancePaymentService(db)
+    original = service.withdraw_amendment(
+        client_record_id=client_record_id,
+        payment_id=payment_id,
+        actor_id=user.id,
+        actor_name=user.full_name,
+    )
+    resolution = TurnoverLookupRepository(db).resolve_turnover(
+        client_record_id, original.period, original.period_months_count
+    )
+    return _to_row(original, resolution)
 
 
 @router.get(

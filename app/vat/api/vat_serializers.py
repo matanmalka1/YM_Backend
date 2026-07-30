@@ -84,8 +84,10 @@ def serialize_work_item(
     service: VatReportService,
     item_id: int,
     user_role: UserRole | str | None = None,
+    *,
+    include_deleted: bool = False,
 ) -> VatWorkItemResponse:
-    enriched = service.get_work_item_enriched(item_id)
+    enriched = service.get_work_item_enriched(item_id, include_deleted=include_deleted)
     return serialize_enriched_work_item(
         enriched["item"],
         office_client_number_map=enriched["office_client_number_map"],

@@ -38,6 +38,8 @@ class AnnualReportResponse(BaseModel):
     # another; `superseded_at` set => a later record corrects this one.
     amends_id: int | None = None
     superseded_at: ApiDateTime | None = None
+    # Derived. Only the chain read ever returns a withdrawn record; it marks them.
+    is_withdrawn: bool = False
     ita_reference: str | None = None
     assessment_amount: ApiDecimal | None = None
     refund_due: ApiDecimal | None = None

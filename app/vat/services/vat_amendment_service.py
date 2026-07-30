@@ -11,10 +11,20 @@ figures and invoices — and opens the copy at ``in_progress``. Nothing is being
 waited for, because the material already exists; only the numbers are wrong.
 """
 
-from app.audit.audit_constants import ACTION_VAT_WORK_ITEM_AMENDED, ENTITY_VAT_WORK_ITEM
+from app.audit.audit_constants import (
+    ACTION_VAT_WORK_ITEM_AMENDED,
+    ACTION_VAT_WORK_ITEM_AMENDMENT_WITHDRAWN,
+    ENTITY_VAT_WORK_ITEM,
+)
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import ObligationStatus
-from app.common.obligation_chain import assert_amendable, copy_for_amendment, select_chain
+from app.common.obligation_chain import (
+    assert_amendable,
+    assert_withdrawable,
+    copy_for_amendment,
+    select_chain,
+    withdraw_amendment,
+)
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.vat.models.vat_work_item import VatWorkItem
@@ -79,6 +89,58 @@ def create_amendment(
     )
 
     return amendment
+
+
+def withdraw(
+    work_item_repo: VatWorkItemRepository,
+    *,
+    item_id: int,
+    actor_id: int,
+    actor_display_name: str | None = None,
+) -> VatWorkItem:
+    """Take back an open correction and return the period to its filed record.
+
+    Both rows are locked, and **the original first** — ascending id, since an
+    amendment is always the younger row. ``create_amendment`` locks the original
+    too, so a withdrawal and a correction racing on one period queue behind the
+    same row instead of deadlocking on opposite orders. The gate is re-checked
+    after the lock: without that, two withdrawals both pass it and the second
+    revives an original that is already live.
+
+    The copied invoices stay attached to the withdrawn row. That is the same state
+    as any soft-deleted work item's invoices, and it is what makes the withdrawal
+    readable afterwards: the correction's figures are still there to look at.
+
+    Returns the original, not the amendment: it is the record the office works
+    with from here.
+    """
+    requested = work_item_repo.get(item_id, include_deleted=False)
+    if requested is None:
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
+    assert_withdrawable(requested)
+
+    original = work_item_repo.get_by_id_for_update(requested.amends_id)
+    amendment = work_item_repo.get_by_id_for_update(item_id)
+    if original is None or amendment is None:
+        raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
+    assert_withdrawable(amendment)
+
+    status_before = amendment.status.value
+    metadata = work_item_metadata(amendment)
+    withdraw_amendment(amendment, original, actor_id=actor_id)
+    work_item_repo.db.flush()
+
+    EntityAuditWriter(work_item_repo.db).record_action(
+        ENTITY_VAT_WORK_ITEM,
+        amendment.id,
+        actor_id,
+        ACTION_VAT_WORK_ITEM_AMENDMENT_WITHDRAWN,
+        old_value={"status": status_before, "amends_id": original.id},
+        actor_display_name=actor_display_name,
+        metadata_json={**metadata, "restored_original_id": original.id},
+    )
+
+    return original
 
 
 def list_chain(work_item_repo: VatWorkItemRepository, *, item_id: int) -> list[VatWorkItem]:

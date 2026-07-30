@@ -101,6 +101,9 @@ class VatReportService:
     def create_amendment(self, **kwargs):
         return amendment.create_amendment(self.work_item_repo, **kwargs)
 
+    def withdraw_amendment(self, **kwargs):
+        return amendment.withdraw(self.work_item_repo, **kwargs)
+
     def list_chain(self, **kwargs):
         return amendment.list_chain(self.work_item_repo, **kwargs)
 
@@ -131,9 +134,13 @@ class VatReportService:
             period,
         )
 
-    def get_work_item_enriched(self, item_id: int) -> dict:
+    def get_work_item_enriched(self, item_id: int, *, include_deleted: bool = False) -> dict:
         return vat_report_enrichment.get_work_item_enriched(
-            self.work_item_repo, self.user_repo, self.invoice_repo, item_id
+            self.work_item_repo,
+            self.user_repo,
+            self.invoice_repo,
+            item_id,
+            include_deleted=include_deleted,
         )
 
     def get_client_items_enriched(

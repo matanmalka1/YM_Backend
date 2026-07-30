@@ -27,6 +27,7 @@ from typing import Any, NoReturn
 
 from app.audit.audit_constants import (
     ACTION_ADVANCE_PAYMENT_AMENDED,
+    ACTION_ADVANCE_PAYMENT_AMENDMENT_WITHDRAWN,
     ACTION_ADVANCE_PAYMENT_CREATED,
     ACTION_ADVANCE_PAYMENT_DELETED,
     ACTION_ADVANCE_PAYMENT_STATUS_CHANGED,
@@ -36,6 +37,7 @@ from app.audit.audit_constants import (
     ACTION_ANNEX_LINE_DELETED,
     ACTION_ANNEX_LINE_UPDATED,
     ACTION_ANNUAL_REPORT_AMENDED,
+    ACTION_ANNUAL_REPORT_AMENDMENT_WITHDRAWN,
     ACTION_ANNUAL_REPORT_DEADLINE_UPDATED,
     ACTION_ANNUAL_REPORT_DETAIL_UPDATED,
     ACTION_AUTHORITY_CONTACT_CREATED,
@@ -105,6 +107,7 @@ from app.audit.audit_constants import (
     ACTION_VAT_INVOICE_DELETED,
     ACTION_VAT_INVOICE_UPDATED,
     ACTION_VAT_WORK_ITEM_AMENDED,
+    ACTION_VAT_WORK_ITEM_AMENDMENT_WITHDRAWN,
     ACTION_VAT_WORK_ITEM_AMOUNT_OVERRIDDEN,
     ACTION_VAT_WORK_ITEM_CREATED,
     ACTION_VAT_WORK_ITEM_DELETED,
@@ -535,6 +538,13 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "period", "tax_year"}),
         metadata_allowed=_ADVANCE_PAYMENT_META,
     ),
+    # Recorded on the amendment, like the birth it undoes; the revived original is
+    # named in metadata so its own trail is reachable from here.
+    ACTION_ADVANCE_PAYMENT_AMENDMENT_WITHDRAWN: ActionPolicy(
+        value_fields=frozenset({"status", "amends_id"}),
+        metadata_required=frozenset({"client_record_id", "period", "restored_original_id"}),
+        metadata_allowed=_ADVANCE_PAYMENT_META | frozenset({"restored_original_id"}),
+    ),
     ACTION_ADVANCE_PAYMENT_DELETED: ActionPolicy(
         value_fields=_ADVANCE_PAYMENT_FIELDS,
         metadata_required=frozenset({"client_record_id", "period", "tax_year", "reason"}),
@@ -628,6 +638,11 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         metadata_required=frozenset({"client_record_id", "tax_year"}),
         metadata_allowed=_AR_META,
     ),
+    ACTION_ANNUAL_REPORT_AMENDMENT_WITHDRAWN: ActionPolicy(
+        value_fields=frozenset({"status", "amends_id"}),
+        metadata_required=frozenset({"client_record_id", "tax_year", "restored_original_id"}),
+        metadata_allowed=_AR_META | frozenset({"restored_original_id"}),
+    ),
     ACTION_INCOME_ADDED: ActionPolicy(
         value_fields=_INCOME_FIELDS,
         metadata_required=frozenset({"client_record_id", "tax_year", "section", "line_id"}),
@@ -707,6 +722,11 @@ ACTION_POLICIES: dict[str, ActionPolicy] = {
         value_fields=frozenset({"amends_id", "period"}),
         metadata_required=frozenset({"client_record_id"}),
         metadata_allowed=_VAT_WORK_ITEM_META,
+    ),
+    ACTION_VAT_WORK_ITEM_AMENDMENT_WITHDRAWN: ActionPolicy(
+        value_fields=frozenset({"status", "amends_id"}),
+        metadata_required=frozenset({"client_record_id", "restored_original_id"}),
+        metadata_allowed=_VAT_WORK_ITEM_META | frozenset({"restored_original_id"}),
     ),
     ACTION_VAT_WORK_ITEM_UPDATED: ActionPolicy(
         value_fields=frozenset({"assigned_to", "pending_materials_note"}),

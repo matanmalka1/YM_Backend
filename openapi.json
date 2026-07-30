@@ -3286,6 +3286,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -3925,6 +3935,100 @@
         ],
         "responses": {
           "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AnnualReportResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/annual-reports/{report_id}/withdraw": {
+      "post": {
+        "tags": [
+          "annual-reports"
+        ],
+        "summary": "Withdraw Amendment",
+        "description": "Take back a correction that was never filed, returning the year to its filed\nreport (D-12).\n\nAdvisor only. The correction is removed and the report it corrected becomes\nthe year's one visible row again, in one transaction — either both or neither,\nbecause a year with no visible report and a year counted twice are the two\nways this can go wrong. The withdrawn correction stays readable in\n``GET /chain``. Returns the restored original, not the withdrawn amendment.",
+        "operationId": "withdraw_amendment_api_v1_annual_reports__report_id__withdraw_post",
+        "parameters": [
+          {
+            "name": "report_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Report Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -14050,6 +14154,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -14501,6 +14615,110 @@
         ],
         "responses": {
           "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdvancePaymentRow"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/withdraw": {
+      "post": {
+        "tags": [
+          "advance-payments"
+        ],
+        "summary": "Withdraw Advance Payment Amendment",
+        "description": "Take back a correction that was never filed, returning the period to its\nclosed payment (D-12).\n\nAdvisor only. The correction is removed and the payment it corrected becomes\nthe period's one visible row again, in one transaction — either both or\nneither, because a period with no visible row and a period counted twice are\nthe two ways this can go wrong. The withdrawn correction stays readable in\n``GET /chain``. Returns the restored original, not the withdrawn amendment.",
+        "operationId": "withdraw_advance_payment_amendment_api_v1_clients__client_record_id__advance_payments__payment_id__withdraw_post",
+        "parameters": [
+          {
+            "name": "client_record_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Client Record Id"
+            }
+          },
+          {
+            "name": "payment_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Payment Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -16468,6 +16686,16 @@
               }
             }
           },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
           "422": {
             "description": "Validation Error",
             "content": {
@@ -17351,6 +17579,100 @@
         ],
         "responses": {
           "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/VatWorkItemResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Resource not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorEnvelope"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/vat/work-items/{item_id}/withdraw": {
+      "post": {
+        "tags": [
+          "vat-reports"
+        ],
+        "summary": "Withdraw Amendment",
+        "description": "Take back a correction that was never filed, returning the period to its\nfiled record (D-12).\n\nAdvisor only. The correction is removed and the record it corrected becomes\nthe period's one visible row again, in one transaction — either both or\nneither, because a period with no visible row and a period counted twice are\nthe two ways this can go wrong. The withdrawn correction stays readable in\n``GET /chain``. Returns the restored original, not the withdrawn amendment.",
+        "operationId": "withdraw_amendment_api_v1_vat_work_items__item_id__withdraw_post",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "title": "Item Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
             "description": "Successful Response",
             "content": {
               "application/json": {
@@ -21734,6 +22056,11 @@
             ],
             "title": "Superseded At"
           },
+          "is_withdrawn": {
+            "type": "boolean",
+            "title": "Is Withdrawn",
+            "default": false
+          },
           "annual_report_id": {
             "anyOf": [
               {
@@ -22898,6 +23225,11 @@
             ],
             "title": "Superseded At"
           },
+          "is_withdrawn": {
+            "type": "boolean",
+            "title": "Is Withdrawn",
+            "default": false
+          },
           "ita_reference": {
             "anyOf": [
               {
@@ -23609,6 +23941,11 @@
               }
             ],
             "title": "Superseded At"
+          },
+          "is_withdrawn": {
+            "type": "boolean",
+            "title": "Is Withdrawn",
+            "default": false
           },
           "ita_reference": {
             "anyOf": [
@@ -38314,6 +38651,17 @@
               "2026-01-02T03:04:05Z"
             ]
           },
+          "amends_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amends Id"
+          },
           "submission_deadline": {
             "anyOf": [
               {
@@ -38685,6 +39033,11 @@
               }
             ],
             "title": "Superseded At"
+          },
+          "is_withdrawn": {
+            "type": "boolean",
+            "title": "Is Withdrawn",
+            "default": false
           },
           "created_by": {
             "type": "integer",

@@ -71,4 +71,15 @@ ADVANCE_PAYMENT_AMEND_RESPONSES = error_responses(
 ADVANCE_PAYMENT_DELETE_RESPONSES = error_responses(
     bad_request_response(description="לא ניתן למחוק מקדמה סגורה"),
     not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+    # An amendment is a link in a chain: removing it would hide the payment it
+    # corrects (D-12).
+    conflict_response(description="לא ניתן למחוק מקדמה מתקנת — יש לבטל אותה"),
+)
+
+# Withdrawing a correction: the target must be an amendment, must still be open,
+# and must be the tip of its chain (D-12).
+ADVANCE_PAYMENT_WITHDRAW_RESPONSES = error_responses(
+    bad_request_response(description="הרשומה אינה מקדמה מתקנת, או שהיא כבר נסגרה"),
+    not_found_response(description="תשלום המקדמה המבוקש לא נמצא"),
+    conflict_response(description="למקדמה המתקנת עצמה כבר קיים תיקון"),
 )

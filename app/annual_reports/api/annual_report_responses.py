@@ -52,4 +52,15 @@ REPORT_SCHEDULE_WRITE_RESPONSES = error_responses(
 REPORT_DELETE_RESPONSES = error_responses(
     bad_request_response(description="דוח שהוגש נעול ואינו ניתן למחיקה"),
     not_found_response(description="הדוח המבוקש לא נמצא"),
+    # An amendment is a link in a chain: removing it would hide the report it
+    # corrects (D-12).
+    conflict_response(description="לא ניתן למחוק דוח מתקן — יש לבטל אותו"),
+)
+
+# Withdrawing a correction: the target must be an amendment, must still be open,
+# and must be the tip of its chain (D-12).
+REPORT_WITHDRAW_RESPONSES = error_responses(
+    bad_request_response(description="הדוח אינו דוח מתקן, או שהוא כבר הוגש"),
+    not_found_response(description="הדוח המבוקש לא נמצא"),
+    conflict_response(description="לדוח המתקן עצמו כבר קיים תיקון"),
 )

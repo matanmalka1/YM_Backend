@@ -77,6 +77,8 @@ class VatWorkItemResponse(BaseModel):
     # `superseded_at` set => a later record corrects this one, so it is not the tip.
     amends_id: int | None = None
     superseded_at: ApiDateTime | None = None
+    # Derived. Only the chain read ever returns a withdrawn record; it marks them.
+    is_withdrawn: bool = False
     created_by: int
     assigned_to: int | None = None
     assigned_to_name: str | None = None
@@ -116,6 +118,10 @@ class VatWorkItemListItem(BaseModel):
     is_overridden: bool
     closed_at: ApiDateTime | None = None
     updated_at: ApiDateTime
+    # Not rendered: the list's delete control needs it. An amendment is never
+    # deletable (D-12), and a button the backend answers with 409 is worse than
+    # no button.
+    amends_id: int | None = None
     # Derived deadline fields shown in the "מועד הגשה" column
     submission_deadline: date | None = None
     extended_deadline: date | None = None

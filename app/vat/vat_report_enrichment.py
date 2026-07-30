@@ -53,9 +53,11 @@ def get_work_item_enriched(
     user_repo: UserRepository,
     invoice_repo: VatInvoiceRepository,
     item_id: int,
+    *,
+    include_deleted: bool = False,
 ) -> dict:
     """Return work item + client/user enrichment data."""
-    item = get_work_item(work_item_repo, item_id)
+    item = get_work_item(work_item_repo, item_id, include_deleted=include_deleted)
     user_ids = [uid for uid in [item.assigned_to, item.closed_by] if uid]
     users = user_repo.list_by_ids(user_ids) if user_ids else []
     user_map = {u.id: u.full_name for u in users}

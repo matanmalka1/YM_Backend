@@ -12,9 +12,21 @@ rate, and what was expected against what was paid.
 """
 
 from app.advance_payments.models.advance_payment import AdvancePayment
-from app.audit.audit_constants import ACTION_ADVANCE_PAYMENT_AMENDED, ENTITY_ADVANCE_PAYMENT
+from app.audit.audit_constants import (
+    ACTION_ADVANCE_PAYMENT_AMENDED,
+    ACTION_ADVANCE_PAYMENT_AMENDMENT_WITHDRAWN,
+    ENTITY_ADVANCE_PAYMENT,
+)
 from app.common.enums import ObligationStatus
-from app.common.obligation_chain import assert_amendable, copy_for_amendment, select_chain
+from app.common.obligation_chain import (
+    assert_amendable,
+    assert_withdrawable,
+    copy_for_amendment,
+    select_chain,
+    withdraw_amendment,
+)
+from app.core.error_codes import ErrorCode
+from app.core.exceptions import NotFoundError
 
 
 def create_amendment(
@@ -54,6 +66,55 @@ def create_amendment(
     )
 
     return amendment
+
+
+def withdraw(
+    service,
+    *,
+    client_record_id: int,
+    payment_id: int,
+    actor_id: int,
+    actor_name: str | None = None,
+) -> AdvancePayment:
+    """Take back an open correction and return the period to its closed payment.
+
+    Client scope is resolved first, through the domain's own scoped read — the
+    lock is taken by primary key and would not check ownership. Both rows are then
+    locked, **the original first**; see
+    :func:`app.vat.services.vat_amendment_service.withdraw` for why the order and
+    the re-check after the lock are not optional.
+
+    Returns the original, not the amendment: it is the record the office works
+    with from here.
+    """
+    requested = service.get_payment_for_client(client_record_id, payment_id)
+    assert_withdrawable(requested)
+
+    original = service.repo.get_by_id_for_update(requested.amends_id)
+    amendment = service.repo.get_by_id_for_update(payment_id)
+    if original is None or amendment is None:
+        raise NotFoundError(
+            f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
+            ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
+        )
+    assert_withdrawable(amendment)
+
+    status_before = amendment.status.value
+    metadata = service._audit_metadata(amendment)
+    withdraw_amendment(amendment, original, actor_id=actor_id)
+    service.repo.db.flush()
+
+    service._audit.record_action(
+        ENTITY_ADVANCE_PAYMENT,
+        amendment.id,
+        actor_id,
+        ACTION_ADVANCE_PAYMENT_AMENDMENT_WITHDRAWN,
+        old_value={"status": status_before, "amends_id": original.id},
+        actor_display_name=actor_name,
+        metadata_json={**metadata, "restored_original_id": original.id},
+    )
+
+    return original
 
 
 def list_chain(service, *, client_record_id: int, payment_id: int) -> list[AdvancePayment]:

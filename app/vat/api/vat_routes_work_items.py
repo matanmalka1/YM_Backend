@@ -5,7 +5,10 @@ from fastapi import APIRouter, Depends, status
 from app.core.path_params import PathId
 from app.users.api.user_deps import CurrentUser, DBSession, require_role
 from app.users.models.user import UserRole
-from app.vat.api.vat_responses import VAT_WORK_ITEM_MUTATION_RESPONSES
+from app.vat.api.vat_responses import (
+    VAT_WORK_ITEM_DELETE_RESPONSES,
+    VAT_WORK_ITEM_MUTATION_RESPONSES,
+)
 from app.vat.api.vat_serializers import serialize_work_item
 from app.vat.schemas.vat_report import (
     VatWorkItemResponse,
@@ -42,7 +45,7 @@ def update_work_item_metadata(
     "/work-items/{item_id}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(require_role(UserRole.ADVISOR, UserRole.SECRETARY))],
-    responses=VAT_WORK_ITEM_MUTATION_RESPONSES,
+    responses=VAT_WORK_ITEM_DELETE_RESPONSES,
 )
 def delete_work_item(
     item_id: PathId,

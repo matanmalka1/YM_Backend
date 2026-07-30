@@ -4,6 +4,7 @@ from app.annual_reports.api.annual_report_responses import (
     REPORT_AMEND_RESPONSES,
     REPORT_TRANSITION_RESPONSES,
     REPORT_UPDATE_RESPONSES,
+    REPORT_WITHDRAW_RESPONSES,
 )
 from app.annual_reports.schemas.annual_report_requests import (
     DeadlineUpdateRequest,
@@ -145,6 +146,30 @@ def create_amendment(
     """
     service = AnnualReportService(db)
     return service.create_amendment(
+        report_id=report_id,
+        actor_id=user.id,
+        actor_display_name=user.full_name,
+    )
+
+
+@router.post(
+    "/{report_id}/withdraw",
+    response_model=AnnualReportResponse,
+    dependencies=[Depends(require_role(UserRole.ADVISOR))],
+    responses=REPORT_WITHDRAW_RESPONSES,
+)
+def withdraw_amendment(report_id: PathId, db: DBSession, user: CurrentUser):
+    """
+    Take back a correction that was never filed, returning the year to its filed
+    report (D-12).
+
+    Advisor only. The correction is removed and the report it corrected becomes
+    the year's one visible row again, in one transaction — either both or neither,
+    because a year with no visible report and a year counted twice are the two
+    ways this can go wrong. The withdrawn correction stays readable in
+    ``GET /chain``. Returns the restored original, not the withdrawn amendment.
+    """
+    return AnnualReportService(db).withdraw_amendment(
         report_id=report_id,
         actor_id=user.id,
         actor_display_name=user.full_name,

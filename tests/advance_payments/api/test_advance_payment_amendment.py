@@ -65,3 +65,110 @@ def test_create_amendment_returns_null_due_date(
 
         assert filtered.status_code == 200
         assert body["id"] not in {item["id"] for item in filtered.json()["items"]}
+
+
+def _submitted_original(test_db, *, client_record_id: int, period: str, assigned_to: int):
+    original = create_linked_advance_payment(
+        test_db,
+        client_record_id=client_record_id,
+        period=period,
+        due_date=date(2026, 12, 15),
+        expected_amount=Decimal("1000.00"),
+        paid_amount=Decimal("1000.00"),
+        assigned_to=assigned_to,
+        status=ObligationStatus.SUBMITTED,
+    )
+    test_db.commit()
+    return original
+
+
+def _amend(client, headers, client_record_id: int, payment_id: int) -> int:
+    resp = client.post(
+        f"/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/amend",
+        headers=headers,
+    )
+    assert resp.status_code == 201
+    return resp.json()["id"]
+
+
+def test_withdrawing_an_amendment_restores_the_original_and_frees_the_chain(
+    client, test_db, advisor_headers, create_client_with_business, test_user
+):
+    """The whole point of the act: the period comes back, and can be corrected again.
+
+    The second amendment is what proves the ``amends_id`` slot was freed — its
+    unique index excludes deleted rows only, so a withdrawal that moved the
+    correction to ``CANCELED`` instead would fail here on a unique violation.
+    """
+    crm_client, _business = create_client_with_business(
+        full_name="Advance Withdraw Client", id_number="ADV-WD-001"
+    )
+    original = _submitted_original(
+        test_db, client_record_id=crm_client.id, period="2026-08", assigned_to=test_user.id
+    )
+    amendment_id = _amend(client, advisor_headers, crm_client.id, original.id)
+
+    resp = client.post(
+        f"/api/v1/clients/{crm_client.id}/advance-payments/{amendment_id}/withdraw",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 200
+    body = resp.json()
+    assert body["id"] == original.id
+    assert body["status"] == ObligationStatus.SUBMITTED.value
+    assert body["superseded_at"] is None
+    assert body["amends_id"] is None
+    assert _amend(client, advisor_headers, crm_client.id, original.id) != amendment_id
+
+
+def test_a_withdrawn_amendment_stays_in_the_chain(
+    client, test_db, advisor_headers, create_client_with_business, test_user
+):
+    """The one read that shows what happened, not what counts."""
+    crm_client, _business = create_client_with_business(
+        full_name="Advance Withdraw Client", id_number="ADV-WD-002"
+    )
+    original = _submitted_original(
+        test_db, client_record_id=crm_client.id, period="2026-09", assigned_to=test_user.id
+    )
+    amendment_id = _amend(client, advisor_headers, crm_client.id, original.id)
+    assert (
+        client.post(
+            f"/api/v1/clients/{crm_client.id}/advance-payments/{amendment_id}/withdraw",
+            headers=advisor_headers,
+        ).status_code
+        == 200
+    )
+
+    chain = client.get(
+        f"/api/v1/clients/{crm_client.id}/advance-payments/{original.id}/chain",
+        headers=advisor_headers,
+    )
+
+    assert chain.status_code == 200
+    records = {record["id"]: record for record in chain.json()}
+    assert set(records) == {original.id, amendment_id}
+    assert records[amendment_id]["is_withdrawn"] is True
+    assert records[original.id]["is_withdrawn"] is False
+    assert records[original.id]["superseded_at"] is None
+
+
+def test_withdrawing_a_payment_that_is_not_an_amendment_is_rejected(
+    client, test_db, advisor_headers, create_client_with_business, test_user
+):
+    """Withdrawing undoes a link; a standalone payment has none to undo."""
+    crm_client, _business = create_client_with_business(
+        full_name="Advance Withdraw Client", id_number="ADV-WD-003"
+    )
+    original = _submitted_original(
+        test_db, client_record_id=crm_client.id, period="2026-10", assigned_to=test_user.id
+    )
+
+    resp = client.post(
+        f"/api/v1/clients/{crm_client.id}/advance-payments/{original.id}/withdraw",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 400
+    assert resp.json()["error"]["code"] == "OBLIGATION.NOT_AN_AMENDMENT"

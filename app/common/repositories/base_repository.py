@@ -67,7 +67,21 @@ class BaseRepository(Generic[ModelType]):
         return {row.id: row for row in rows}
 
     def get_by_id_for_update(self, entity_id: int, /) -> ModelType | None:
-        stmt = self.select_base().where(self.model.id == entity_id).with_for_update()
+        """The row, locked until the transaction ends.
+
+        ``populate_existing`` is not optional here. A plain ``SELECT`` whose row is
+        already in the identity map returns the *loaded* object and leaves its
+        attributes untouched — so a caller that read the entity before taking the
+        lock would re-check its gate against the state it saw beforehand, which is
+        exactly the state the lock exists to stop trusting. The lock would be held
+        and the decision still stale.
+        """
+        stmt = (
+            self.select_base()
+            .where(self.model.id == entity_id)
+            .with_for_update()
+            .execution_options(populate_existing=True)
+        )
         return self.db.scalars(stmt).first()
 
     def add(self, entity: ModelType) -> ModelType:

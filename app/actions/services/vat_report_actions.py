@@ -17,6 +17,13 @@ def get_vat_work_item_actions(
     user_role: UserRole | str | None = None,
 ) -> list[ActionDescriptor]:
     """Return available actions for a VAT work item."""
+    # A withdrawn correction is reachable from exactly one read — the chain
+    # history — and nothing can be done to it there: it is a record of what was
+    # tried, not a row anyone still works on. Offering actions on it would put
+    # keys in the contract that every one of their endpoints rejects.
+    if item.is_withdrawn:
+        return []
+
     status = item.status
     actions: list[ActionDescriptor] = []
 
@@ -80,6 +87,27 @@ def get_vat_work_item_actions(
                 confirm_message=(
                     "ייווצר דוח חדש לאותה תקופה, עם העתק של כל החשבוניות. "
                     "הדוח הנוכחי יישאר סגור ללא שינוי."
+                ),
+            )
+        )
+
+    # Withdrawing (D-12): the inverse act, offered while the correction is still
+    # open. Only on an amendment — an original has no link to undo — and only on
+    # the tip, which is the same condition the service asserts.
+    if (
+        _is_advisor(user_role)
+        and status != ObligationStatus.SUBMITTED
+        and item.is_amendment
+        and item.superseded_at is None
+    ):
+        actions.append(
+            mutation_action(
+                key="withdraw_amendment",
+                label="בטל תיקון",
+                confirm_title="ביטול הדוח המתקן",
+                confirm_message=(
+                    "הדוח המתקן יוסר, והדוח שהוגש יחזור להיות הדוח של התקופה. "
+                    "ההיסטוריה תישמר וניתן יהיה ליצור תיקון חדש."
                 ),
             )
         )

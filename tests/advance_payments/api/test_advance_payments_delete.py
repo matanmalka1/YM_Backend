@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal
 
 from sqlalchemy import select
 
@@ -10,6 +11,7 @@ from app.audit.audit_constants import (
     ENTITY_ADVANCE_PAYMENT,
 )
 from app.audit.models.audit_entity_audit_log import EntityAuditLog
+from app.common.enums import ObligationStatus
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -90,3 +92,47 @@ def test_delete_advance_payment_not_found(
 
     assert resp.status_code == 404
     assert resp.json()["error"]["code"] == "ADVANCE_PAYMENT.NOT_FOUND"
+
+
+def test_delete_advance_payment_rejects_an_amendment(
+    client, test_db, advisor_headers, create_client_with_business, test_user
+):
+    """An amendment is born open, so the lock gate lets it through.
+
+    Deleting it would leave the payment it corrects stamped as superseded — the
+    period would show no row at all, and it could be neither amended again nor
+    recreated.
+    """
+    crm_client, _business = create_client_with_business(
+        full_name="Advance Amendment Delete Client", id_number="ADV-AMEND-DEL-001"
+    )
+    repo = AdvancePaymentRepository(test_db)
+    original = create_linked_advance_payment(
+        test_db,
+        client_record_id=crm_client.id,
+        period="2026-07",
+        due_date=date(2026, 8, 15),
+        expected_amount=Decimal("1000.00"),
+        paid_amount=Decimal("1000.00"),
+        assigned_to=test_user.id,
+        status=ObligationStatus.SUBMITTED,
+    )
+    test_db.commit()
+    amendment = client.post(
+        f"/api/v1/clients/{crm_client.id}/advance-payments/{original.id}/amend",
+        headers=advisor_headers,
+    )
+    assert amendment.status_code == 201
+    amendment_id = amendment.json()["id"]
+
+    resp = client.request(
+        "DELETE",
+        f"/api/v1/clients/{crm_client.id}/advance-payments/{amendment_id}",
+        headers=advisor_headers,
+        json={"reason": "נוצר בטעות"},
+    )
+
+    assert resp.status_code == 409
+    assert resp.json()["error"]["code"] == "OBLIGATION.AMENDMENT_NOT_DELETABLE"
+    # The tip survives, so the period is still one visible row.
+    assert repo.get_by_id(amendment_id) is not None

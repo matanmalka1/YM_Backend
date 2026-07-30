@@ -47,8 +47,16 @@ def get_vat_deadline_fields(item, submission_method: SubmissionMethod | None = N
     return deadline_fields_from_snapshot(item, submission_method)
 
 
-def get_work_item(work_item_repo: VatWorkItemRepository, item_id: int):
-    item = work_item_repo.get_by_id(item_id)
+def get_work_item(
+    work_item_repo: VatWorkItemRepository, item_id: int, *, include_deleted: bool = False
+):
+    """One work item, 404 if absent.
+
+    ``include_deleted`` serves the amendment-chain read alone, which shows
+    withdrawn corrections (D-12). Every other caller wants the default: a
+    soft-deleted row is gone.
+    """
+    item = work_item_repo.get(item_id, include_deleted=include_deleted)
     if not item:
         raise NotFoundError(VAT_ITEM_NOT_FOUND.format(item_id=item_id), ErrorCode.VAT_NOT_FOUND)
     return item

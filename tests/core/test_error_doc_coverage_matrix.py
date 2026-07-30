@@ -20,10 +20,12 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     # vat
     ("POST", "/api/v1/vat/work-items"): {"400", "409"},
     ("PATCH", "/api/v1/vat/work-items/{item_id}"): {"400"},
-    ("DELETE", "/api/v1/vat/work-items/{item_id}"): {"400"},
+    ("DELETE", "/api/v1/vat/work-items/{item_id}"): {"400", "409"},
     ("POST", "/api/v1/vat/work-items/{item_id}/file"): {"400", "409"},
     # Amendment (D-10): 400 the original is not closed, 409 it already has one.
     ("POST", "/api/v1/vat/work-items/{item_id}/amend"): {"400", "409"},
+    # Withdrawal (D-12): 400 not an amendment / already filed, 409 it has its own.
+    ("POST", "/api/v1/vat/work-items/{item_id}/withdraw"): {"400", "409"},
     ("POST", "/api/v1/vat/work-items/{item_id}/invoices"): {"400", "409"},
     ("PATCH", "/api/v1/vat/work-items/{item_id}/invoices/{invoice_id}"): {"400", "409"},
     ("DELETE", "/api/v1/vat/work-items/{item_id}/invoices/{invoice_id}"): {"400"},
@@ -44,9 +46,10 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     # annual_reports
     ("POST", "/api/v1/annual-reports"): {"400", "409"},
     ("PATCH", "/api/v1/annual-reports/{report_id}"): {"400"},
-    ("DELETE", "/api/v1/annual-reports/{report_id}"): {"400"},
+    ("DELETE", "/api/v1/annual-reports/{report_id}"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/status"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/amend"): {"400", "409"},
+    ("POST", "/api/v1/annual-reports/{report_id}/withdraw"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/submit"): {"400", "409"},
     ("POST", "/api/v1/annual-reports/{report_id}/deadline"): {"400"},
     ("POST", "/api/v1/annual-reports/{report_id}/auto-populate"): {"400"},
@@ -67,7 +70,10 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     ("POST", "/api/v1/clients/{client_record_id}/advance-payments"): {"400", "409"},
     ("POST", "/api/v1/clients/{client_record_id}/advance-payments/generate"): {"400", "409"},
     ("PATCH", "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}"): {"400", "409"},
-    ("DELETE", "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}"): {"400"},
+    ("DELETE", "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}"): {
+        "400",
+        "409",
+    },
     (
         "POST",
         "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/status",
@@ -75,6 +81,10 @@ _EXPECTED: dict[tuple[str, str], set[str]] = {
     (
         "POST",
         "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/amend",
+    ): {"400", "409"},
+    (
+        "POST",
+        "/api/v1/clients/{client_record_id}/advance-payments/{payment_id}/withdraw",
     ): {"400", "409"},
     (
         "POST",

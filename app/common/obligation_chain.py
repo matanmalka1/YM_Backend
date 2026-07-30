@@ -30,17 +30,20 @@ deleting. Read :attr:`AmendableMixin.is_amendment` instead; it derives.
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, select
+from sqlalchemy import ForeignKey, or_, select
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import Mapped, declarative_mixin, declared_attr, mapped_column
 
 from app.common.enums import ObligationStatus
+from app.common.obligation_lifecycle import LOCKED_MESSAGE
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import AppError
 from app.utils.time_utils import utcnow
 
 AMEND_REQUIRES_CLOSED_MESSAGE = "רק רשומה סגורה ניתנת לתיקון"
 ALREADY_AMENDED_MESSAGE = "לרשומה זו כבר קיים תיקון"
+AMENDMENT_NOT_DELETABLE_MESSAGE = "רשומת תיקון אינה נמחקת — יש לבטל אותה"
+NOT_AN_AMENDMENT_MESSAGE = "רק רשומת תיקון ניתנת לביטול"
 
 
 @declarative_mixin
@@ -75,6 +78,18 @@ class AmendableMixin:
     @property
     def is_amendment(self) -> bool:
         return self.amends_id is not None
+
+    @property
+    def is_withdrawn(self) -> bool:
+        """Was this correction taken back (:func:`withdraw_amendment`).
+
+        Derived for the same reason ``is_amendment`` is: the state is already
+        stored, as a link that exists and a soft-delete that also exists. It is
+        exposed because the chain view is the one read that shows withdrawn links,
+        and it needs to mark them as such — every other read filters them out and
+        never sees this at all.
+        """
+        return self.is_amendment and self.deleted_at is not None
 
     @classmethod
     def chain_tip_clause(cls):
@@ -130,10 +145,22 @@ def select_chain(model, *, client_record_id: int, period_column, period_value):
 
     ``include_superseded`` is the whole point here — this is the one read that
     wants the corrected records, not the correction.
+
+    ``include_deleted`` is on for one row only: a **withdrawn** amendment
+    (:func:`withdraw_amendment`). A correction that was opened and taken back is
+    part of what happened to the period, and this is the only read that shows
+    what happened rather than what counts. Rows deleted for any other reason are
+    filtered back out — a row soft-deleted before any correction existed was
+    never a link in this chain, and showing it here would turn the history view
+    into a recycle bin.
     """
     return (
-        select_obligations(model, include_superseded=True)
-        .where(model.client_record_id == client_record_id, period_column == period_value)
+        select_obligations(model, include_superseded=True, include_deleted=True)
+        .where(
+            model.client_record_id == client_record_id,
+            period_column == period_value,
+            or_(model.deleted_at.is_(None), model.amends_id.is_not(None)),
+        )
         .order_by(model.id.asc())
     )
 
@@ -165,6 +192,96 @@ def assert_amendable(original) -> None:
             ErrorCode.OBLIGATION_ALREADY_AMENDED,
             status_code=409,
         )
+
+
+def assert_deletable(record) -> None:
+    """Raise if ``record`` is a link in a chain rather than a standalone record.
+
+    Deleting an amendment is not the local act it looks like. The stamp that made
+    it the tip lives on the *other* row, so soft-deleting the amendment alone
+    performs half of :func:`link_amendment` in reverse: the original keeps its
+    ``superseded_at`` and its claim on the period, and the period ends up with no
+    visible row at all — the original hidden as superseded, the amendment hidden
+    as deleted — while the unique index still counts the original as occupying
+    the slot. Every list, sum and count then reports the period as absent, and it
+    can be neither corrected again (``ALREADY_AMENDED``) nor recreated (unique
+    violation).
+
+    Taking a correction back is :func:`withdraw_amendment`, which performs both
+    halves. This gate exists so the plain ``DELETE`` route cannot perform one.
+    """
+    if record.is_amendment:
+        # 409 for the same reason as ALREADY_AMENDED: the request is well formed
+        # and the caller is permitted; the record's place in a chain forbids it.
+        raise AppError(
+            AMENDMENT_NOT_DELETABLE_MESSAGE,
+            ErrorCode.OBLIGATION_AMENDMENT_NOT_DELETABLE,
+            status_code=409,
+        )
+
+
+def assert_withdrawable(amendment) -> None:
+    """Raise unless ``amendment`` may be taken back right now.
+
+    Three conditions, none domain-specific:
+
+    - **It must be an amendment.** Withdrawing is defined as undoing a link; a
+      standalone record has none, and deleting one is a different act entirely.
+    - **It must not be closed.** Once a correction has been filed it is the
+      record of a filing, and D-13 puts it beyond change like any other closed
+      obligation. A wrong correction that was filed is corrected by amending
+      *it* — the chain grows, it does not shrink.
+    - **It must be the tip.** On ``original ← A ← B``, taking back ``A`` would
+      revive the original while ``B`` still points at ``A``: two rows with no
+      ``superseded_at`` for one period, which is the double count D-12 exists to
+      prevent. Withdrawing walks a chain back from its end, one link at a time.
+
+    ``CANCELED`` is deliberately **not** refused, and the condition above is
+    "closed", not "open": cancelling is terminal but it is not a filing, so there
+    is no filed record to protect. It also has to be allowed, because a cancelled
+    correction is otherwise a dead end — it keeps ``superseded_at IS NULL`` for
+    ever, so it stays its period's tip while the record it corrected stays hidden
+    as superseded, and the period can be neither corrected again nor recreated.
+    Withdrawing is the only way out of that state, and refusing it here would
+    leave the office with a period it cannot touch.
+    """
+    if not amendment.is_amendment:
+        raise AppError(NOT_AN_AMENDMENT_MESSAGE, ErrorCode.OBLIGATION_NOT_AN_AMENDMENT)
+    if amendment.status == ObligationStatus.SUBMITTED:
+        raise AppError(LOCKED_MESSAGE, ErrorCode.OBLIGATION_LOCKED)
+    if amendment.superseded_at is not None:
+        raise AppError(
+            ALREADY_AMENDED_MESSAGE,
+            ErrorCode.OBLIGATION_ALREADY_AMENDED,
+            status_code=409,
+        )
+
+
+def withdraw_amendment(amendment, original, *, actor_id: int) -> None:
+    """Take back an open correction: the exact inverse of :func:`link_amendment`.
+
+    Both writes belong to one act for the same reason the two writes at birth do
+    — a row carrying only one of them is either invisible to every read or
+    counted twice by all of them. Here that means the original returns to being
+    its period's one visible row in the same statement that removes the
+    correction.
+
+    The amendment is **soft-deleted** rather than moved to ``CANCELED``, and that
+    is the whole reason this needs no migration: ``deleted_at IS NULL`` is already
+    carried by the chain-tip reads *and* by the unique index on ``amends_id``, so
+    one write both stops the withdrawn row counting as a tip and frees the
+    original to be corrected again. A ``CANCELED`` amendment would keep
+    ``superseded_at IS NULL`` for ever — a permanent second tip for the period —
+    and would keep the ``amends_id`` slot, which its index does not exclude by
+    status.
+
+    ``chain_closed_late`` is deliberately not touched: it was copied *onto* the
+    amendment and the original's own answer never changed, so the period's
+    lateness (D-34) survives the round trip untouched.
+    """
+    amendment.deleted_at = utcnow()
+    amendment.deleted_by = actor_id
+    original.superseded_at = None
 
 
 def record_closing_lateness(record, closed_late: bool | None) -> None:

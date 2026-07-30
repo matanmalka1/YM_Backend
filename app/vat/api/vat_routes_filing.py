@@ -11,6 +11,7 @@ from app.users.models.user import User, UserRole
 from app.vat.api.vat_responses import (
     VAT_WORK_ITEM_AMEND_RESPONSES,
     VAT_WORK_ITEM_TRANSITION_RESPONSES,
+    VAT_WORK_ITEM_WITHDRAW_RESPONSES,
 )
 from app.vat.api.vat_serializers import serialize_work_item
 from app.vat.schemas.vat_report import (
@@ -93,6 +94,35 @@ def create_amendment(
     return serialize_work_item(service, amendment.id, current_user.role)
 
 
+@router.post(
+    "/work-items/{item_id}/withdraw",
+    response_model=VatWorkItemResponse,
+    responses=VAT_WORK_ITEM_WITHDRAW_RESPONSES,
+)
+def withdraw_amendment(
+    item_id: PathId,
+    db: DBSession,
+    current_user: Annotated[User, Depends(require_role(UserRole.ADVISOR))],
+):
+    """
+    Take back a correction that was never filed, returning the period to its
+    filed record (D-12).
+
+    Advisor only. The correction is removed and the record it corrected becomes
+    the period's one visible row again, in one transaction — either both or
+    neither, because a period with no visible row and a period counted twice are
+    the two ways this can go wrong. The withdrawn correction stays readable in
+    ``GET /chain``. Returns the restored original, not the withdrawn amendment.
+    """
+    service = VatReportService(db)
+    original = service.withdraw_amendment(
+        item_id=item_id,
+        actor_id=current_user.id,
+        actor_display_name=current_user.full_name,
+    )
+    return serialize_work_item(service, original.id, current_user.role)
+
+
 @router.get(
     "/work-items/{item_id}/chain",
     response_model=list[VatWorkItemResponse],
@@ -106,6 +136,6 @@ def list_amendment_chain(item_id: PathId, db: DBSession, user: CurrentUser):
     """
     service = VatReportService(db)
     return [
-        serialize_work_item(service, record.id, user.role)
+        serialize_work_item(service, record.id, user.role, include_deleted=True)
         for record in service.list_chain(item_id=item_id)
     ]

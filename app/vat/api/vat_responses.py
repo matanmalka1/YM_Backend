@@ -33,6 +33,21 @@ VAT_WORK_ITEM_MUTATION_RESPONSES = error_responses(
     not_found_response(description='פריט עבודה למע"מ לא נמצא'),
 )
 
+# Deleting carries one conflict the metadata PATCH cannot: an amendment is a link
+# in a chain and removing it would hide the record it corrects (D-12).
+VAT_WORK_ITEM_DELETE_RESPONSES = error_responses(
+    VAT_WORK_ITEM_MUTATION_RESPONSES,
+    conflict_response(description="לא ניתן למחוק רשומת תיקון — יש לבטל אותה"),
+)
+
+# Withdrawing a correction: the target must be an amendment, must still be open,
+# and must be the tip of its chain (D-12).
+VAT_WORK_ITEM_WITHDRAW_RESPONSES = error_responses(
+    bad_request_response(description="הרשומה אינה רשומת תיקון, או שהיא כבר הוגשה"),
+    not_found_response(description='פריט עבודה למע"מ לא נמצא'),
+    conflict_response(description="לרשומת התיקון עצמה כבר קיים תיקון"),
+)
+
 VAT_INVOICE_CREATE_RESPONSES = error_responses(
     bad_request_response(description="נתוני החשבונית אינם תקינים"),
     not_found_response(description='פריט עבודה למע"מ לא נמצא'),

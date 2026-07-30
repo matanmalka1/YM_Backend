@@ -14,10 +14,20 @@ figures are wrong.
 
 from app.annual_reports.annual_report_messages import ANNUAL_REPORT_NOT_FOUND
 from app.annual_reports.models.annual_report_model import AnnualReport
-from app.audit.audit_constants import ACTION_ANNUAL_REPORT_AMENDED, ENTITY_ANNUAL_REPORT
+from app.audit.audit_constants import (
+    ACTION_ANNUAL_REPORT_AMENDED,
+    ACTION_ANNUAL_REPORT_AMENDMENT_WITHDRAWN,
+    ENTITY_ANNUAL_REPORT,
+)
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.common.enums import ObligationStatus
-from app.common.obligation_chain import assert_amendable, copy_for_amendment, select_chain
+from app.common.obligation_chain import (
+    assert_amendable,
+    assert_withdrawable,
+    copy_for_amendment,
+    select_chain,
+    withdraw_amendment,
+)
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 
@@ -89,6 +99,64 @@ def create_amendment(
     )
 
     return amendment
+
+
+def withdraw(
+    report_repo,
+    *,
+    report_id: int,
+    actor_id: int,
+    actor_display_name: str | None = None,
+) -> AnnualReport:
+    """Take back an open correction and return the year to its filed report.
+
+    Both rows are locked, and **the original first** — see
+    :func:`app.vat.services.vat_amendment_service.withdraw` for why the order and
+    the re-check after the lock are not optional.
+
+    The copied material — detail, lines, credit-point reasons, schedules and their
+    annex data — stays attached to the withdrawn row, which is what keeps the
+    withdrawal readable afterwards.
+
+    Returns the original, not the amendment: it is the record the office works
+    with from here.
+    """
+    requested = report_repo.get(report_id)
+    if requested is None:
+        raise NotFoundError(
+            ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
+            ErrorCode.ANNUAL_REPORT_NOT_FOUND,
+        )
+    assert_withdrawable(requested)
+
+    original = report_repo.get_by_id_for_update(requested.amends_id)
+    amendment = report_repo.get_by_id_for_update(report_id)
+    if original is None or amendment is None:
+        raise NotFoundError(
+            ANNUAL_REPORT_NOT_FOUND.format(report_id=report_id),
+            ErrorCode.ANNUAL_REPORT_NOT_FOUND,
+        )
+    assert_withdrawable(amendment)
+
+    status_before = amendment.status.value
+    withdraw_amendment(amendment, original, actor_id=actor_id)
+    report_repo.db.flush()
+
+    EntityAuditWriter(report_repo.db).record_action(
+        ENTITY_ANNUAL_REPORT,
+        amendment.id,
+        actor_id,
+        ACTION_ANNUAL_REPORT_AMENDMENT_WITHDRAWN,
+        old_value={"status": status_before, "amends_id": original.id},
+        actor_display_name=actor_display_name,
+        metadata_json={
+            "client_record_id": amendment.client_record_id,
+            "tax_year": amendment.tax_year,
+            "restored_original_id": original.id,
+        },
+    )
+
+    return original
 
 
 def list_chain(report_repo, *, report_id: int) -> list[AnnualReport]:

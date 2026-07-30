@@ -11,6 +11,7 @@ from app.audit.audit_constants import ENTITY_ANNUAL_REPORT
 from app.audit.services.audit_entity_audit_writer_service import EntityAuditWriter
 from app.businesses.repositories.business_repository import BusinessRepository
 from app.clients.repositories.client_record_repository import ClientRecordRepository
+from app.common.obligation_chain import assert_deletable
 from app.core.error_codes import ErrorCode
 from app.core.exceptions import NotFoundError
 from app.users.repositories.user_repository import UserRepository
@@ -53,6 +54,9 @@ class AnnualReportService(
 
     def create_amendment(self, **kwargs):
         return amendment.create_amendment(self.repo, **kwargs)
+
+    def withdraw_amendment(self, **kwargs):
+        return amendment.withdraw(self.repo, **kwargs)
 
     def list_chain(self, **kwargs):
         return amendment.list_chain(self.repo, **kwargs)
@@ -105,6 +109,7 @@ class AnnualReportService(
         if not report:
             return False
         assert_report_unlocked(report)
+        assert_deletable(report)
         result = self.repo.soft_delete(report_id, deleted_by=actor_id)
         if result:
             EntityAuditWriter(self.db).record_delete(

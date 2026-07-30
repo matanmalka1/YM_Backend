@@ -37,6 +37,7 @@ from app.audit.services.audit_entity_audit_writer_service import EntityAuditWrit
 from app.clients.guards.client_record_guards import assert_client_record_is_active
 from app.clients.repositories.client_record_repository import ClientRecordRepository
 from app.common.enums import AdvancePaymentFrequency, ObligationStatus, ObligationType
+from app.common.obligation_chain import assert_deletable
 from app.common.obligation_closing import (
     CLOSING_ASSIGNEE_REQUIRED_ISSUE,
     compute_closed_late,
@@ -342,6 +343,9 @@ class AdvancePaymentService:
 
     def create_amendment(self, **kwargs) -> AdvancePayment:
         return amendment.create_amendment(self, **kwargs)
+
+    def withdraw_amendment(self, **kwargs) -> AdvancePayment:
+        return amendment.withdraw(self, **kwargs)
 
     def list_chain(self, **kwargs) -> list[AdvancePayment]:
         return amendment.list_chain(self, **kwargs)
@@ -854,8 +858,12 @@ class AdvancePaymentService:
 
         Shared by the advisor's explicit delete and the stale-cadence cleanup;
         ``reason`` is required metadata on ``advance_payment.deleted``, so every
-        path that removes a row has to say what removed it.
+        path that removes a row has to say what removed it. The chain gate lives
+        here rather than at the advisor's entry point because it is a fact about
+        the row, and the cleanup selects on cadence and due date — neither of
+        which excludes an amendment.
         """
+        assert_deletable(payment)
         old_snapshot = self._audit_snapshot(payment)
         self.repo.soft_delete(payment.id, deleted_by=actor_id)
         metadata = self._audit_metadata(payment)

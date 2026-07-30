@@ -111,6 +111,8 @@ class AdvancePaymentRow(BaseModel):
     # another; `superseded_at` set => a later record corrects this one.
     amends_id: int | None = None
     superseded_at: ApiDateTime | None = None
+    # Derived. Only the chain read ever returns a withdrawn record; it marks them.
+    is_withdrawn: bool = False
     annual_report_id: int | None = None
     notes: str | None = None
     turnover_amount: ApiDecimal | None = None
