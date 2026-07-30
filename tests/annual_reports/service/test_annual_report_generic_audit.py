@@ -85,7 +85,9 @@ def test_deadline_update_writes_generic_audit(test_db, test_user, annual_report_
     assert entry.new_value["deadline_type"] == "standard"
 
 
-def test_annex_add_update_delete_write_generic_audit(test_db, test_user, annual_report_service_factory):
+def test_annex_add_update_delete_write_generic_audit(
+    test_db, test_user, annual_report_service_factory
+):
     report = annual_report_service_factory(actor=test_user, deadline_type="custom")
     service = AnnualReportService(test_db)
     schedule = AnnualReportSchedule.SCHEDULE_B

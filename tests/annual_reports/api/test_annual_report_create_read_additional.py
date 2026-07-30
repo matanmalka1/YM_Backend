@@ -1,4 +1,6 @@
-def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_report_service_factory):
+def test_get_report_not_found_and_delete_paths(
+    client, advisor_headers, annual_report_service_factory
+):
     missing = client.get("/api/v1/annual-reports/999999", headers=advisor_headers)
     assert missing.status_code == 404
 
@@ -18,7 +20,9 @@ def test_get_report_not_found_and_delete_paths(client, advisor_headers, annual_r
     assert del_missing.status_code == 404
 
 
-def test_list_dto_thin_while_detail_dto_full(client, advisor_headers, annual_report_service_factory):
+def test_list_dto_thin_while_detail_dto_full(
+    client, advisor_headers, annual_report_service_factory
+):
     """Regression guard for the list/detail DTO split (items 35-37).
 
     GET /annual-reports rows must be the thin AnnualReportListItem (no

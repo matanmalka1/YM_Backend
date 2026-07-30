@@ -1,4 +1,6 @@
-def test_get_schedules_returns_entries_for_report(client, advisor_headers, annual_report_service_factory):
+def test_get_schedules_returns_entries_for_report(
+    client, advisor_headers, annual_report_service_factory
+):
     report_id = annual_report_service_factory().id
 
     create_resp = client.post(

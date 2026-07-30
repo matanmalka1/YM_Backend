@@ -80,5 +80,3 @@ def _expiry_task(db) -> None:
 
 async def daily_expiry_job() -> None:
     await _run_job("daily_expiry_job", _expiry_task)
-
-

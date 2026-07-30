@@ -103,7 +103,9 @@ def test_overview_filters_by_status_and_month(
         period_months_count=1,
         due_date=date(2026, 3, 15),
     )
-    repo.update_payment(feb, status=ObligationStatus.AWAITING_VERIFICATION, paid_amount=Decimal("1200"))
+    repo.update_payment(
+        feb, status=ObligationStatus.AWAITING_VERIFICATION, paid_amount=Decimal("1200")
+    )
 
     resp = client.get(
         "/api/v1/advance-payments/overview?year=2026&month=2&status=awaiting_verification&page=1&page_size=10",

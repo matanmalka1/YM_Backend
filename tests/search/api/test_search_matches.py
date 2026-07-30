@@ -142,7 +142,12 @@ def test_a_period_matches_vat_and_advance_payments_in_every_written_form(
 
 
 def test_a_tax_year_and_an_ita_reference_match_the_annual_report(
-    client, test_db, advisor_headers, test_user, create_client_with_business, annual_report_service_factory
+    client,
+    test_db,
+    advisor_headers,
+    test_user,
+    create_client_with_business,
+    annual_report_service_factory,
 ):
     crm_client, _ = create_client_with_business(full_name="לקוח שנתי")
     report = annual_report_service_factory(client=crm_client, actor=test_user, tax_year=2027)

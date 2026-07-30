@@ -86,7 +86,9 @@ def test_manual_financial_mutation_blocks_missing_client_record(
     assert exc_info.value.code == "CLIENT_RECORD.NOT_FOUND"
 
 
-def test_expense_delete_stores_old_value_snapshot(test_db, test_user, annual_report_service_factory):
+def test_expense_delete_stores_old_value_snapshot(
+    test_db, test_user, annual_report_service_factory
+):
     report = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
@@ -137,7 +139,9 @@ def test_income_add_stores_snapshot_payload(test_db, test_user, annual_report_se
     }
 
 
-def test_expense_add_stores_full_snapshot_payload(test_db, test_user, annual_report_service_factory):
+def test_expense_add_stores_full_snapshot_payload(
+    test_db, test_user, annual_report_service_factory
+):
     report = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
     line = service.add_expense(
@@ -163,7 +167,9 @@ def test_expense_add_stores_full_snapshot_payload(test_db, test_user, annual_rep
     }
 
 
-def test_income_update_audit_records_only_sent_fields(test_db, test_user, annual_report_service_factory):
+def test_income_update_audit_records_only_sent_fields(
+    test_db, test_user, annual_report_service_factory
+):
     report = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
     line = service.add_income(
@@ -299,7 +305,9 @@ def test_financial_line_repositories_reject_unsupported_update_fields(
         service.expense_repo.apply_updates(expense, {"created_at": None})
 
 
-def test_cannot_update_income_line_from_another_report(test_db, test_user, annual_report_service_factory):
+def test_cannot_update_income_line_from_another_report(
+    test_db, test_user, annual_report_service_factory
+):
     report_a = annual_report_service_factory(actor=test_user)
     report_b = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
@@ -350,7 +358,9 @@ def test_audit_scalar_supports_expected_scalar_values():
     assert audit_scalar("x", None) is None
 
 
-def test_cannot_delete_income_line_from_another_report(test_db, test_user, annual_report_service_factory):
+def test_cannot_delete_income_line_from_another_report(
+    test_db, test_user, annual_report_service_factory
+):
     report_a = annual_report_service_factory(actor=test_user)
     report_b = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
@@ -376,7 +386,9 @@ def test_cannot_delete_income_line_from_another_report(test_db, test_user, annua
     )
 
 
-def test_cannot_update_expense_line_from_another_report(test_db, test_user, annual_report_service_factory):
+def test_cannot_update_expense_line_from_another_report(
+    test_db, test_user, annual_report_service_factory
+):
     report_a = annual_report_service_factory(actor=test_user)
     report_b = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
@@ -409,7 +421,9 @@ def test_cannot_update_expense_line_from_another_report(test_db, test_user, annu
     )
 
 
-def test_cannot_delete_expense_line_from_another_report(test_db, test_user, annual_report_service_factory):
+def test_cannot_delete_expense_line_from_another_report(
+    test_db, test_user, annual_report_service_factory
+):
     report_a = annual_report_service_factory(actor=test_user)
     report_b = annual_report_service_factory(actor=test_user)
     service = AnnualReportFinancialLineService(test_db)
