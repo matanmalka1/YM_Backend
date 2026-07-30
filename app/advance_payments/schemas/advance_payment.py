@@ -24,6 +24,21 @@ from app.core.api_types import ApiDateTime, ApiDecimal, PaginatedResponse, Perio
 from app.core.schemas.validation import NonEmptyUpdateMixin
 from app.utils.time_utils import israel_today
 
+AdvancePaymentTimingStatus = Literal["overdue", "on_time", "not_applicable"]
+
+
+def _timing_status(
+    status: ObligationStatus,
+    due_date_effective: date | None,
+    due_date: date | None,
+) -> AdvancePaymentTimingStatus:
+    effective = due_date_effective or due_date
+    if effective is None:
+        return "not_applicable"
+    if status != ObligationStatus.SUBMITTED and israel_today() > effective:
+        return "overdue"
+    return "on_time"
+
 
 class AvailableTurnover(BaseModel):
     """VAT turnover this period *could* be snapshotted from.
@@ -74,7 +89,9 @@ class AdvancePaymentRow(BaseModel):
     assigned_to: int | None = None
     period: str
     period_months_count: int
-    due_date: date
+    # Original obligations always have a deadline. Amendments deliberately do
+    # not: they correct an existing obligation instead of creating a new one.
+    due_date: date | None
     due_date_effective: date | None = None
     expected_amount: ApiDecimal
     paid_amount: ApiDecimal
@@ -116,11 +133,8 @@ class AdvancePaymentRow(BaseModel):
 
     @computed_field
     @property
-    def timing_status(self) -> Literal["overdue", "on_time"]:
-        effective = self.due_date_effective or self.due_date
-        if self.status != ObligationStatus.SUBMITTED and israel_today() > effective:
-            return "overdue"
-        return "on_time"
+    def timing_status(self) -> AdvancePaymentTimingStatus:
+        return _timing_status(self.status, self.due_date_effective, self.due_date)
 
     model_config = {"from_attributes": True, "use_enum_values": True}
 
@@ -211,7 +225,8 @@ class AdvancePaymentOverviewRow(BaseModel):
     id_number: str | None = None
     period: str
     period_months_count: int
-    due_date: date
+    # Chain-tip amendments have no deadline of their own (D-14).
+    due_date: date | None
     due_date_effective: date | None = None
     expected_amount: ApiDecimal
     paid_amount: ApiDecimal
@@ -236,11 +251,8 @@ class AdvancePaymentOverviewRow(BaseModel):
 
     @computed_field
     @property
-    def timing_status(self) -> Literal["overdue", "on_time"]:
-        effective = self.due_date_effective or self.due_date
-        if self.status != ObligationStatus.SUBMITTED and israel_today() > effective:
-            return "overdue"
-        return "on_time"
+    def timing_status(self) -> AdvancePaymentTimingStatus:
+        return _timing_status(self.status, self.due_date_effective, self.due_date)
 
     model_config = {"from_attributes": False, "use_enum_values": True}
 

@@ -88,6 +88,9 @@ def _overview_filters(
             filters.append(not_paid_expr)
             filters.append(effective_due_date_expr < today)
         else:
+            # An amendment has no deadline of its own. It is neither on time nor
+            # overdue, even when the copied payment amount is already settled.
+            filters.append(effective_due_date_expr.is_not(None))
             filters.append((paid_in_full_expr()) | (effective_due_date_expr >= today))
     if vat_mismatch is not None:
         mismatch_expr = vat_turnover_mismatch_expr()

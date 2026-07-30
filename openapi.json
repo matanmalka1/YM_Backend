@@ -21268,8 +21268,15 @@
             "title": "Period Months Count"
           },
           "due_date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Due Date"
           },
           "due_date_effective": {
@@ -21455,7 +21462,8 @@
             "type": "string",
             "enum": [
               "overdue",
-              "on_time"
+              "on_time",
+              "not_applicable"
             ],
             "title": "Timing Status",
             "readOnly": true
@@ -21574,8 +21582,15 @@
             "title": "Period Months Count"
           },
           "due_date": {
-            "type": "string",
-            "format": "date",
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
             "title": "Due Date"
           },
           "due_date_effective": {
@@ -21895,7 +21910,8 @@
             "type": "string",
             "enum": [
               "overdue",
-              "on_time"
+              "on_time",
+              "not_applicable"
             ],
             "title": "Timing Status",
             "readOnly": true
