@@ -1,3 +1,10 @@
+from decimal import Decimal
+
+from app.annual_reports.models.annual_report_credit_point_reason import (
+    AnnualReportCreditPoint,
+    CreditPointReason,
+)
+from app.annual_reports.models.annual_report_model import AnnualReport
 from app.annual_reports.services.annual_report_service import AnnualReportService
 from app.common.enums import ObligationStatus
 
@@ -41,6 +48,92 @@ def _amend(client, headers, original_id: int) -> int:
     resp = client.post(f"/api/v1/annual-reports/{original_id}/amend", headers=headers)
     assert resp.status_code == 201
     return resp.json()["id"]
+
+
+def test_amendment_copies_the_whole_material(
+    client, test_db, advisor_headers, test_user, client_factory, annual_report_service_factory
+):
+    """D-21: the correction starts from everything the original held.
+
+    Every child table is represented, because each is copied by its own parent
+    key and the detail's is named differently from the rest — ``report_id``
+    where the lines and schedules use ``annual_report_id``. A copy that names
+    the wrong column does not fail quietly; it fails the whole amendment.
+    """
+    crm_client = client_factory()
+    original_id = annual_report_service_factory(actor=test_user, client=crm_client).id
+
+    assert (
+        client.patch(
+            f"/api/v1/annual-reports/{original_id}/details",
+            headers=advisor_headers,
+            json={"pension_contribution": "1200.50", "internal_notes": "מקור"},
+        ).status_code
+        == 200
+    )
+    assert (
+        client.post(
+            f"/api/v1/annual-reports/{original_id}/income",
+            headers=advisor_headers,
+            json={"source_type": "salary", "amount": "5000.00", "description": "משכורת"},
+        ).status_code
+        == 201
+    )
+    assert (
+        client.post(
+            f"/api/v1/annual-reports/{original_id}/expenses",
+            headers=advisor_headers,
+            json={"category": "office_rent", "amount": "900.00"},
+        ).status_code
+        == 201
+    )
+    assert (
+        client.post(
+            f"/api/v1/annual-reports/{original_id}/annex/schedule_b",
+            headers=advisor_headers,
+            json={"data": {"rental_income": 12000}, "notes": "שורת נספח"},
+        ).status_code
+        == 201
+    )
+    test_db.add(
+        AnnualReportCreditPoint(
+            annual_report_id=original_id,
+            reason=CreditPointReason.RESIDENT,
+            points=Decimal("2.25"),
+        )
+    )
+    test_db.commit()
+    _force_submitted(test_db, original_id)
+
+    amendment_id = _amend(client, advisor_headers, original_id)
+
+    test_db.expire_all()
+    amendment = test_db.get(AnnualReport, amendment_id)
+    assert amendment.detail is not None
+    assert amendment.detail.report_id == amendment_id
+    assert amendment.detail.pension_contribution == Decimal("1200.50")
+    assert amendment.detail.internal_notes == "מקור"
+    assert [(line.source_type.value, line.amount) for line in amendment.income_lines] == [
+        ("salary", Decimal("5000.00"))
+    ]
+    assert [(line.category.value, line.amount) for line in amendment.expense_lines] == [
+        ("office_rent", Decimal("900.00"))
+    ]
+    assert [(cp.reason, cp.points) for cp in amendment.credit_points] == [
+        (CreditPointReason.RESIDENT, Decimal("2.25"))
+    ]
+    copied_entries = {entry.schedule.value: entry for entry in amendment.schedule_entries}
+    assert "schedule_b" in copied_entries
+    assert [line.data for line in copied_entries["schedule_b"].annex_lines] == [
+        {"rental_income": 12000}
+    ]
+
+    # The original keeps its own material — the copy re-parents nothing.
+    original = test_db.get(AnnualReport, original_id)
+    assert original.detail is not None and original.detail.report_id == original_id
+    assert len(original.income_lines) == 1
+    assert len(original.expense_lines) == 1
+    assert len(original.credit_points) == 1
 
 
 def test_withdrawing_an_amendment_restores_the_original_and_frees_the_chain(

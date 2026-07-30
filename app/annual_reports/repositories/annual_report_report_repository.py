@@ -60,9 +60,10 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
         self.db.flush()
 
         if original.detail is not None:
-            self.db.add(
-                copy_child(original.detail, parent_fk="annual_report_id", parent_id=amendment.id)
-            )
+            # The detail's parent key is ``report_id``, not ``annual_report_id``
+            # like every other child's — its own column name, and the copy has to
+            # use it or the row is inserted with no parent at all.
+            self.db.add(copy_child(original.detail, parent_fk="report_id", parent_id=amendment.id))
         for line in (*original.income_lines, *original.expense_lines, *original.credit_points):
             self.db.add(copy_child(line, parent_fk="annual_report_id", parent_id=amendment.id))
 
