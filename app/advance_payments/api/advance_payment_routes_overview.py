@@ -64,6 +64,7 @@ def _to_overview_row(row: AdvancePaymentOverviewEnrichedRow) -> AdvancePaymentOv
         available_turnover=available,
         missing_turnover=row.payment.turnover_amount is None and available is None,
         advance_rate=row.advance_rate,
+        amends_id=row.payment.amends_id,
     )
 
 

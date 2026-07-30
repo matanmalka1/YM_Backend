@@ -85,6 +85,10 @@ class AnnualReportListItem(BaseModel):
     assessment_amount: ApiDecimal | None = None
     refund_due: ApiDecimal | None = None
     tax_due: ApiDecimal | None = None
+    # Not a figure the list renders — the row's own identity. A chain shows as one
+    # row everywhere (D-12), so without this the list cannot say *which* record of
+    # the year it is showing, and a correction reads as the original.
+    amends_id: int | None = None
 
     model_config = {"from_attributes": True}
 

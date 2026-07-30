@@ -21771,6 +21771,17 @@
             ],
             "title": "Withheld Amount"
           },
+          "amends_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amends Id"
+          },
           "delta": {
             "type": "string",
             "format": "decimal",
@@ -23703,6 +23714,17 @@
               }
             ],
             "title": "Tax Due"
+          },
+          "amends_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amends Id"
           }
         },
         "type": "object",

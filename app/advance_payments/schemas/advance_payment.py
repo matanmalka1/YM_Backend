@@ -245,6 +245,10 @@ class AdvancePaymentOverviewRow(BaseModel):
     missing_turnover: bool = False
     advance_rate: ApiDecimal | None = None  # snapshot from payment
     withheld_amount: ApiDecimal | None = None
+    # Not a figure the overview renders — the row's own identity. A chain shows as
+    # one row everywhere (D-12), so without this the overview cannot say *which*
+    # record of the period it is showing, and a correction reads as the original.
+    amends_id: int | None = None
 
     @computed_field(return_type=ApiDecimal)
     @property
