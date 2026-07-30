@@ -1171,7 +1171,10 @@ class AdvancePaymentService:
     ) -> AdvancePayment:
         """Freeze a resolved turnover onto the payment and record why."""
         calculated_amount, new_expected = calculate_advance_payment_amounts(
-            resolution.amount, payment.advance_rate, payment.override_amount
+            resolution.amount,
+            payment.advance_rate,
+            payment.override_amount,
+            withheld_amount=payment.withheld_amount,
         )
         old_status = payment.status
         status_steps = self._payment_status_steps(old_status, payment.paid_amount, new_expected)

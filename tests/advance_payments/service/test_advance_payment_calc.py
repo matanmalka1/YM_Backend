@@ -553,6 +553,33 @@ class TestRefreshTurnoverBulk:
         assert pending.turnover_amount is None
         assert absent.turnover_amount is None
 
+    def test_preserves_withheld_credit_when_recomputing_expected_amount(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
+        business = _business(create_client_with_business, advance_rate=Decimal("10"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-03",
+            period_months_count=1,
+            withheld_amount=Decimal("1250"),
+        )
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-03",
+            Decimal("20000"),
+            test_user.id,
+        )
+
+        result = svc.refresh_turnover_bulk(business.client_record_id, [payment.id])
+
+        assert result.refreshed == 1
+        assert payment.calculated_amount == Decimal("2000.00")
+        assert payment.withheld_amount == Decimal("1250.00")
+        assert payment.expected_amount == Decimal("750.00")
+
     def test_never_flips_a_settled_payment(
         self, test_db, test_user, create_client_with_business, vat_work_item_factory
     ):
@@ -797,6 +824,32 @@ class TestRefreshTurnoverFromVat:
         assert updated.calculated_amount == Decimal("6000.00")
         assert updated.expected_amount == Decimal("6000.00")
         assert updated.status == ObligationStatus.AWAITING_INPUT
+
+    def test_preserves_withheld_credit_when_recomputing_expected_amount(
+        self, test_db, test_user, create_client_with_business, vat_work_item_factory
+    ):
+        business = _business(create_client_with_business, advance_rate=Decimal("2.5"))
+        svc = AdvancePaymentService(test_db)
+        payment = svc.create_payment_for_client(
+            client_record_id=business.client_record_id,
+            period="2026-06",
+            period_months_count=1,
+            withheld_amount=Decimal("300"),
+        )
+        _vat_item(
+            vat_work_item_factory,
+            test_db,
+            business.client_record_id,
+            "2026-06",
+            Decimal("50000"),
+            test_user.id,
+        )
+
+        updated = svc.refresh_turnover_from_vat(business.client_record_id, payment.id)
+
+        assert updated.calculated_amount == Decimal("1250.00")
+        assert updated.withheld_amount == Decimal("300.00")
+        assert updated.expected_amount == Decimal("950.00")
 
     def test_pending_vat_requires_confirmation(
         self, test_db, test_user, create_client_with_business, vat_work_item_factory
