@@ -6,7 +6,13 @@ from sqlalchemy.orm import Session
 from app.annual_reports.models.annual_report_model import AnnualReport
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus
-from app.common.obligation_chain import copy_child, link_amendment, select_obligations
+from app.common.obligation_chain import (
+    copy_child,
+    link_amendment,
+    select_current_obligation,
+    select_obligations,
+    select_slot_occupant,
+)
 from app.common.repositories.base_repository import BaseRepository
 from app.utils.time_utils import utcnow
 
@@ -116,13 +122,29 @@ class AnnualReportRootRepository(BaseRepository[AnnualReport]):
             )
         )
 
+    def get_slot_occupant_for_year(
+        self, client_record_id: int, tax_year: int
+    ) -> AnnualReport | None:
+        """The report holding this year's slot, for creation gates only."""
+        return self.db.scalars(
+            select_slot_occupant(
+                AnnualReport,
+                client_record_id=client_record_id,
+                period_column=AnnualReport.tax_year,
+                period_value=tax_year,
+            )
+        ).first()
+
     def get_by_client_record_year(
         self, client_record_id: int, tax_year: int
     ) -> AnnualReport | None:
+        """The year's operational report — what it displays and what work acts on."""
         return self.db.scalars(
-            select_obligations(AnnualReport).where(
-                AnnualReport.client_record_id == client_record_id,
-                AnnualReport.tax_year == tax_year,
+            select_current_obligation(
+                AnnualReport,
+                client_record_id=client_record_id,
+                period_column=AnnualReport.tax_year,
+                period_value=tax_year,
             )
         ).first()
 

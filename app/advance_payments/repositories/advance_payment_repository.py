@@ -3,7 +3,7 @@
 from datetime import date
 from decimal import Decimal
 
-from sqlalchemy import exists, func, select
+from sqlalchemy import func
 
 from app.advance_payments.models.advance_payment import AdvancePayment
 from app.advance_payments.repositories.advance_payment_aggregation_repository import (
@@ -11,7 +11,12 @@ from app.advance_payments.repositories.advance_payment_aggregation_repository im
 )
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import ObligationStatus
-from app.common.obligation_chain import link_amendment, select_obligations
+from app.common.obligation_chain import (
+    link_amendment,
+    select_current_obligation,
+    select_obligations,
+    select_slot_occupant,
+)
 from app.common.repositories.base_repository import BaseRepository
 
 
@@ -186,9 +191,10 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
         """Payments in ``year`` left over from a different reporting cadence.
 
         A client whose frequency changed keeps rows whose ``period_months_count``
-        no longer matches the configured one. ``exists_for_period`` matches on the
-        ``YYYY-MM`` key alone, so those rows block the new schedule instead of
-        being replaced by it. Callers partition by status and due date themselves.
+        no longer matches the configured one. ``get_slot_occupant_for_period``
+        matches on the ``YYYY-MM`` key alone, so those rows block the new schedule
+        instead of being replaced by it. Callers partition by status and due date
+        themselves.
         """
         return list(
             self.db.scalars(
@@ -202,23 +208,27 @@ class AdvancePaymentRepository(BaseRepository[AdvancePayment]):
             ).all()
         )
 
-    def exists_for_period(self, client_record_id: int, period: str) -> bool:
-        return self.db.scalar(
-            select(
-                exists(
-                    select_obligations(AdvancePayment, AdvancePayment.id).where(
-                        AdvancePayment.client_record_id == client_record_id,
-                        AdvancePayment.period == period,
-                    )
-                )
+    def get_slot_occupant_for_period(
+        self, client_record_id: int, period: str
+    ) -> AdvancePayment | None:
+        """The payment holding this period's slot, for creation gates only."""
+        return self.db.scalars(
+            select_slot_occupant(
+                AdvancePayment,
+                client_record_id=client_record_id,
+                period_column=AdvancePayment.period,
+                period_value=period,
             )
-        )
+        ).first()
 
     def get_by_period(self, client_record_id: int, period: str) -> AdvancePayment | None:
+        """The period's operational payment — what it displays and what work acts on."""
         return self.db.scalars(
-            select_obligations(AdvancePayment).where(
-                AdvancePayment.client_record_id == client_record_id,
-                AdvancePayment.period == period,
+            select_current_obligation(
+                AdvancePayment,
+                client_record_id=client_record_id,
+                period_column=AdvancePayment.period,
+                period_value=period,
             )
         ).first()
 

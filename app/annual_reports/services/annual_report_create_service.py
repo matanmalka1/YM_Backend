@@ -80,7 +80,9 @@ class AnnualReportCreateService(AnnualReportBaseService):
         if assigned_to is not None:
             get_user_or_raise(self.user_repo, assigned_to)
 
-        existing = self.repo.get_by_client_record_year(client_record_id, tax_year)
+        # Slot occupancy, not visibility: a cancelled year is free to be created
+        # fresh (D-23) and a superseded original still holds its slot.
+        existing = self.repo.get_slot_occupant_for_year(client_record_id, tax_year)
         if existing:
             raise ConflictError(
                 ANNUAL_REPORT_ALREADY_EXISTS.format(

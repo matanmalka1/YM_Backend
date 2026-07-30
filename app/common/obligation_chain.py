@@ -30,7 +30,7 @@ deleting. Read :attr:`AmendableMixin.is_amendment` instead; it derives.
 
 from datetime import datetime
 
-from sqlalchemy import ForeignKey, or_, select
+from sqlalchemy import ForeignKey, case, or_, select
 from sqlalchemy import inspect as sa_inspect
 from sqlalchemy.orm import Mapped, declarative_mixin, declared_attr, mapped_column
 
@@ -162,6 +162,69 @@ def select_chain(model, *, client_record_id: int, period_column, period_value):
             or_(model.deleted_at.is_(None), model.amends_id.is_not(None)),
         )
         .order_by(model.id.asc())
+    )
+
+
+def select_slot_occupant(model, *, client_record_id: int, period_column, period_value):
+    """The row holding a period's slot, by the unique index's own predicate.
+
+    **The only query a creation gate may ask.** "Does this period already exist?"
+    and "which row does this period show?" read like the same question and are
+    not: the first is answered by the partial unique index in §4.1.13, the second
+    by the chain-tip scope in :func:`select_obligations`. Asking the second in
+    place of the first is wrong in both directions, and each direction fails
+    differently:
+
+    - A **cancelled** row is hidden from the index and visible to the chain-tip
+      scope. Using the tip query rejects the creation with a 409 for a slot the
+      database would have accepted — which is D-23 exactly: the returning client
+      whose period can never be reopened.
+    - A **superseded** original is visible to the index and hidden from the
+      chain-tip scope. Using the tip query lets the creation through to an
+      ``IntegrityError``, surfacing as a 500 rather than a conflict.
+
+    So the predicate here is the index's, restated in SQLAlchemy and nothing
+    else: not deleted, not an amendment, not cancelled. It is deliberately *not*
+    built on the chain-tip scope — ``include_superseded=True`` is what lets a
+    superseded original be seen holding its slot, which is the point.
+
+    At most one row can match, because the index says so; callers may take the
+    first without ordering.
+    """
+    return select_obligations(model, include_superseded=True).where(
+        model.client_record_id == client_record_id,
+        period_column == period_value,
+        model.amends_id.is_(None),
+        model.status != ObligationStatus.CANCELED,
+    )
+
+
+def select_current_obligation(model, *, client_record_id: int, period_column, period_value):
+    """The period's one operational row: what it shows and what work acts on.
+
+    The counterpart to :func:`select_slot_occupant`, and the reason both exist.
+    Once D-23 lets a cancelled period be created fresh, a period legitimately
+    holds more than one visible row — every cancelled attempt, plus the live one
+    — and a bare ``.first()`` over the chain-tip scope picks between them by
+    whatever order the plan happened to produce. That is not a theoretical
+    ordering nit: with a sequential scan the cancelled row is returned, so the
+    same lookup answers differently depending on the query plan.
+
+    Ordered rather than filtered. Cancelled rows stay reachable here because a
+    period whose only row is cancelled must still display as cancelled; they are
+    merely never preferred over a live one. Ties among them break on ``id``
+    descending, so the most recent attempt wins and the answer is stable.
+    """
+    return (
+        select_obligations(model)
+        .where(
+            model.client_record_id == client_record_id,
+            period_column == period_value,
+        )
+        .order_by(
+            case((model.status == ObligationStatus.CANCELED, 1), else_=0),
+            model.id.desc(),
+        )
     )
 
 

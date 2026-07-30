@@ -34,6 +34,11 @@ class VatWorkItemWriteRepository(BaseRepository[VatWorkItem]):
 
     # ── Read delegation ───────────────────────────────────────────────────────
 
+    def get_slot_occupant_for_period(
+        self, client_record_id: int, period: str
+    ) -> VatWorkItem | None:
+        return self._query.get_slot_occupant_for_period(client_record_id, period)
+
     def get_by_client_record_period(self, client_record_id: int, period: str) -> VatWorkItem | None:
         return self._query.get_by_client_record_period(client_record_id, period)
 

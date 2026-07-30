@@ -8,7 +8,11 @@ from sqlalchemy.orm import Session
 from app.clients.models.client_record import ClientRecord
 from app.clients.repositories.client_active_scope import scope_to_active_clients_stmt
 from app.common.enums import RESOLVED_OBLIGATION_STATUSES, ObligationStatus, VatType
-from app.common.obligation_chain import select_obligations
+from app.common.obligation_chain import (
+    select_current_obligation,
+    select_obligations,
+    select_slot_occupant,
+)
 from app.common.repositories.base_repository import BaseRepository
 from app.legal_entities.models.legal_entity import LegalEntity
 from app.vat.models.vat_work_item import VatWorkItem
@@ -52,11 +56,27 @@ class VatWorkItemQueryRepository(BaseRepository[VatWorkItem]):
             )
         return stmt
 
-    def get_by_client_record_period(self, client_record_id: int, period: str) -> VatWorkItem | None:
+    def get_slot_occupant_for_period(
+        self, client_record_id: int, period: str
+    ) -> VatWorkItem | None:
+        """The row holding this period's slot, for creation gates only."""
         return self.db.scalars(
-            select_obligations(VatWorkItem).where(
-                VatWorkItem.client_record_id == client_record_id,
-                VatWorkItem.period == period,
+            select_slot_occupant(
+                VatWorkItem,
+                client_record_id=client_record_id,
+                period_column=VatWorkItem.period,
+                period_value=period,
+            )
+        ).first()
+
+    def get_by_client_record_period(self, client_record_id: int, period: str) -> VatWorkItem | None:
+        """The period's operational row — what it displays and what work acts on."""
+        return self.db.scalars(
+            select_current_obligation(
+                VatWorkItem,
+                client_record_id=client_record_id,
+                period_column=VatWorkItem.period,
+                period_value=period,
             )
         ).first()
 

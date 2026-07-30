@@ -115,7 +115,9 @@ class ClientOnboardingOrchestrator:
                     plan.period,
                     plan.period_months_count,
                 )
-                item = self.vat_repo.get_by_client_record_period(client_record_id, plan.period)
+                # The question here is the creation gate's, so it is asked the
+                # same way: a cancelled period is owed again, not already held.
+                item = self.vat_repo.get_slot_occupant_for_period(client_record_id, plan.period)
                 if item is None and actor_id is not None:
                     try:
                         create_work_item(
@@ -160,7 +162,13 @@ class ClientOnboardingOrchestrator:
                     plan.period,
                     plan.period_months_count,
                 )
-                payment = self.advance_repo.get_by_period(client_record_id, plan.period)
+                # One lookup answers both branches, and it has to be the slot
+                # query for each: a cancelled period is owed again rather than
+                # already held, and re-dating a cancelled row would revive a
+                # schedule the office deliberately stopped.
+                payment = self.advance_repo.get_slot_occupant_for_period(
+                    client_record_id, plan.period
+                )
                 if payment is None:
                     try:
                         self.advance_service.create_payment_for_client(

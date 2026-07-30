@@ -40,7 +40,7 @@ def test_advance_payment_get_by_id_for_client_and_soft_delete(
     assert repo.get_by_id(payment.id) is None
 
 
-def test_advance_payment_exists_for_period_and_sum_paid(test_db, create_client_with_business):
+def test_advance_payment_slot_occupancy_and_sum_paid(test_db, create_client_with_business):
     repo = AdvancePaymentRepository(test_db)
     _client, business = create_client_with_business(
         full_name="Advance Repo Missing Client",
@@ -70,8 +70,8 @@ def test_advance_payment_exists_for_period_and_sum_paid(test_db, create_client_w
     )
     repo.update_payment(feb, paid_amount=Decimal("150.00"), status=ObligationStatus.IN_PROGRESS)
 
-    assert repo.exists_for_period(business.client_record_id, "2026-01") is True
-    assert repo.exists_for_period(business.client_record_id, "2026-03") is False
+    assert repo.get_slot_occupant_for_period(business.client_record_id, "2026-01") is not None
+    assert repo.get_slot_occupant_for_period(business.client_record_id, "2026-03") is None
     assert (
         AdvancePaymentAnalyticsRepository(test_db).sum_paid_by_client_year(
             business.client_record_id, 2026

@@ -491,7 +491,9 @@ class AdvancePaymentService:
             )
         # Period alignment and the supported months-count are validated once, by
         # TaxCalendarMaterializationService.ensure_periodic_entry below.
-        if self.repo.exists_for_period(client_record_id, period):
+        # Slot occupancy, not visibility: a cancelled period is free to be created
+        # fresh (D-23) and a superseded original still holds its slot.
+        if self.repo.get_slot_occupant_for_period(client_record_id, period):
             raise ConflictError(
                 f"תשלום מקדמה לתקופה {period} כבר קיים",
                 ErrorCode.ADVANCE_PAYMENT_CONFLICT,
@@ -998,7 +1000,7 @@ class AdvancePaymentService:
                 period,
                 period_months_count,
             )
-            if self.repo.exists_for_period(client_record_id, period):
+            if self.repo.get_slot_occupant_for_period(client_record_id, period):
                 skipped += 1
                 continue
             payment = self.create_payment_for_client(

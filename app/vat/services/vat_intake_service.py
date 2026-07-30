@@ -60,10 +60,10 @@ def create_work_item(
     effective_vat_type = resolve_effective_vat_type(legal_entity)
     _assert_client_reports_vat(effective_vat_type)
 
-    # WARNING: This check only filters for non-deleted items (deleted_at IS NULL).
-    # If we ever allow soft-deleting FILED items, this guard must be updated to
-    # also block creation when a FILED item exists for the same period, even if deleted.
-    existing = work_item_repo.get_by_client_record_period(client_record_id, period)
+    # Asked as slot occupancy, not as "is there a visible row": a cancelled period
+    # is free to be created fresh (D-23) and a superseded original still holds its
+    # slot. The chain-tip query answers both backwards.
+    existing = work_item_repo.get_slot_occupant_for_period(client_record_id, period)
     if existing:
         raise ConflictError(
             VAT_WORK_ITEM_CONFLICT.format(client_record_id=client_record_id, period=period),
