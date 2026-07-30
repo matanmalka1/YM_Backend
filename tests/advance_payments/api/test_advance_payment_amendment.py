@@ -1,7 +1,10 @@
 from datetime import date
 from decimal import Decimal
 
+from sqlalchemy import text
+
 from app.common.enums import ObligationStatus
+from app.utils.time_utils import utcnow
 from tests.helpers.tax_calendar_links import create_linked_advance_payment
 
 
@@ -152,6 +155,56 @@ def test_a_withdrawn_amendment_stays_in_the_chain(
     assert records[amendment_id]["is_withdrawn"] is True
     assert records[original.id]["is_withdrawn"] is False
     assert records[original.id]["superseded_at"] is None
+
+
+def test_a_correction_that_lands_before_the_lock_stops_the_second_one(
+    client, test_db, advisor_headers, create_client_with_business, test_user
+):
+    """The gate has to see the DB, not the row that was read before the lock.
+
+    The service resolves the payment through its client scope, locks it, and only
+    then checks ``assert_amendable`` — the check exists for the correction that
+    lands while it waits for the lock. The setup recreates the only thing that
+    makes it meaningful: the original is already in the session's identity map
+    with ``superseded_at IS NULL`` when the request starts, and the DB says it is
+    already corrected.
+
+    A true two-transaction race cannot be staged here — the suite runs one
+    connection inside one transaction — so this drives the same divergence
+    directly. Without the locked re-read, the second request passes the gate and
+    inserts, and the period ends up with two tips (or a 500 from the unique index
+    on ``amends_id``) instead of a 409.
+    """
+    crm_client, _business = create_client_with_business(
+        full_name="Advance Amend Race Client", id_number="ADV-AMEND-RACE-001"
+    )
+    original = _submitted_original(
+        test_db, client_record_id=crm_client.id, period="2026-11", assigned_to=test_user.id
+    )
+    # Load it, then move it underneath the ORM: the loaded object keeps the state
+    # it was read with, exactly as it would while another transaction opens a
+    # correction.
+    test_db.refresh(original)
+    test_db.execute(
+        text("UPDATE advance_payments SET superseded_at = :now WHERE id = :id"),
+        {"now": utcnow(), "id": original.id},
+    )
+    assert original.superseded_at is None
+
+    resp = client.post(
+        f"/api/v1/clients/{crm_client.id}/advance-payments/{original.id}/amend",
+        headers=advisor_headers,
+    )
+
+    assert resp.status_code == 409
+    assert resp.json()["error"]["code"] == "OBLIGATION.ALREADY_AMENDED"
+    assert (
+        test_db.execute(
+            text("SELECT count(*) FROM advance_payments WHERE amends_id = :id"),
+            {"id": original.id},
+        ).scalar()
+        == 0
+    )
 
 
 def test_withdrawing_a_payment_that_is_not_an_amendment_is_rejected(

@@ -37,8 +37,26 @@ def create_amendment(
     actor_id: int,
     actor_name: str | None = None,
 ) -> AdvancePayment:
-    """Open a correction of a closed advance period."""
-    original = service.get_payment_for_client(client_record_id, payment_id)
+    """Open a correction of a closed advance period.
+
+    Client scope is resolved first, through the domain's own scoped read — the
+    lock is taken by primary key and would not check ownership. The original is
+    then re-read **under the lock**, and the gate is checked against that row:
+    two advisors pressing "amend" on the same period would otherwise both pass
+    it and both insert, and only the unique index on ``amends_id`` would stop the
+    second — as a 500, rather than the conflict ``assert_amendable`` already
+    knows how to raise. The re-read repopulates the row the scoped read just put
+    in the identity map, so the gate sees the database and not what was read
+    before the wait.
+    """
+    requested = service.get_payment_for_client(client_record_id, payment_id)
+
+    original = service.repo.get_by_id_for_update(requested.id)
+    if original is None:
+        raise NotFoundError(
+            f"תשלום מקדמה {payment_id} לא נמצא עבור לקוח {client_record_id}",
+            ErrorCode.ADVANCE_PAYMENT_NOT_FOUND,
+        )
     assert_amendable(original)
 
     amendment = service.repo.create_amendment(
